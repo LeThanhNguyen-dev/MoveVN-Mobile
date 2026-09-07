@@ -1,187 +1,222 @@
 # MoveVN Mobile
 
-MoveVN Mobile la du an React Native su dung Expo, Expo Go va TypeScript.
+MoveVN Mobile là dự án **React Native** sử dụng **Expo**, **Expo Go** và **TypeScript**.
 
-Tai lieu nay huong dan cach cai dat, dang nhap Expo, chay ung dung tren dien thoai va kiem tra loi co ban trong qua trinh phat trien.
+Tài liệu này hướng dẫn cách cài đặt môi trường, đăng nhập Expo, chạy ứng dụng trên điện thoại và xử lý một số lỗi cơ bản trong quá trình phát triển.
 
-## Yeu cau moi truong
+## Yêu cầu môi trường
 
-Can cai san cac cong cu sau:
+Cần cài đặt sẵn các công cụ sau:
 
-- Node.js ban LTS hoac ban tuong thich voi Expo SDK hien tai
-- npm
-- Expo Go tren dien thoai iOS hoac Android
-- Tai khoan Expo neu dung Expo Go SDK 57 tren iPhone
+* Node.js phiên bản LTS hoặc phiên bản tương thích với Expo SDK hiện tại
+* npm
+* Expo Go trên điện thoại iOS hoặc Android
+* Tài khoản Expo nếu sử dụng Expo Go SDK 57 trên iPhone
 
-Kiem tra Node.js va npm:
+Kiểm tra phiên bản Node.js và npm:
 
 ```bash
 node -v
 npm -v
 ```
 
-Neu dung PowerShell tren Windows va gap loi `npm.ps1 cannot be loaded because running scripts is disabled`, hay dung `npm.cmd` thay cho `npm`.
+Nếu sử dụng PowerShell trên Windows và gặp lỗi:
 
-Vi du:
+```text
+npm.ps1 cannot be loaded because running scripts is disabled
+```
+
+hãy sử dụng `npm.cmd` thay cho `npm`.
+
+Ví dụ:
 
 ```bash
 npm.cmd install
 npm.cmd run start:lan
 ```
 
-## Cai dat du an
+## Cài đặt dự án
 
-Tai thu muc du an, chay:
+Tại thư mục dự án, chạy:
 
 ```bash
 npm.cmd install
 ```
 
-Lenh nay cai toan bo dependencies trong `package.json`.
+Lệnh này sẽ cài đặt toàn bộ dependencies được khai báo trong `package.json`.
 
-## Dang nhap Expo
+## Đăng nhập Expo
 
-Voi Expo Go SDK 57 tren iPhone, Expo yeu cau dang nhap cung mot tai khoan o ca hai noi:
+Với Expo Go SDK 57 trên iPhone, Expo yêu cầu đăng nhập cùng một tài khoản ở cả hai nơi:
 
-- Expo Go tren dien thoai
-- Expo CLI tren may tinh
+* Expo Go trên điện thoại
+* Expo CLI trên máy tính
 
-Kiem tra trang thai dang nhap tren may tinh:
+Kiểm tra trạng thái đăng nhập trên máy tính:
 
 ```bash
 npx.cmd expo whoami
 ```
 
-Neu ket qua la:
+Nếu kết quả là:
 
 ```text
 Not logged in
 ```
 
-thi dang nhap Expo CLI:
+thì đăng nhập Expo CLI bằng lệnh:
 
 ```bash
 npx.cmd expo login
 ```
 
-Neu ban dang nhap Expo bang Google, Apple, GitHub hoac trinh duyet, co the dung:
+Nếu bạn đăng nhập Expo bằng Google, Apple, GitHub hoặc thông qua trình duyệt, có thể sử dụng:
 
 ```bash
 npx.cmd expo login --browser
 ```
 
-Neu Windows bi loi khi tu mo trinh duyet, chay:
+Nếu Windows gặp lỗi khi tự động mở trình duyệt, chạy:
 
 ```powershell
 $env:BROWSER="none"
 npx.cmd expo login --browser
 ```
 
-Sau do copy link `https://expo.dev/login?...` trong terminal, dan vao trinh duyet, dang nhap, va giu terminal dang mo cho den khi CLI bao thanh cong.
+Sau đó:
 
-Dang nhap thanh cong khi:
+1. Sao chép đường dẫn `https://expo.dev/login?...` hiển thị trong terminal.
+2. Dán đường dẫn vào trình duyệt.
+3. Đăng nhập tài khoản Expo.
+4. Giữ terminal đang mở cho đến khi Expo CLI thông báo đăng nhập thành công.
+
+Kiểm tra lại bằng:
 
 ```bash
 npx.cmd expo whoami
 ```
 
-tra ve username Expo cua ban.
+Nếu lệnh trả về username Expo của bạn thì quá trình đăng nhập đã thành công.
 
-## Chay ung dung tren Expo Go
+## Chạy ứng dụng trên Expo Go
 
-Chay Metro dev server bang LAN:
+Chạy Metro Dev Server bằng mạng LAN:
 
 ```bash
 npm.cmd run start:lan
 ```
 
-Sau khi terminal hien QR code:
+Sau khi terminal hiển thị mã QR:
 
-- Mo Expo Go tren dien thoai
-- Dam bao dien thoai va may tinh dang dung cung mang Wi-Fi
-- Quet QR code trong terminal
+1. Mở Expo Go trên điện thoại.
+2. Đảm bảo điện thoại và máy tính đang kết nối cùng một mạng Wi-Fi.
+3. Quét mã QR hiển thị trong terminal.
+4. Chờ Expo Go tải và khởi chạy ứng dụng.
 
-Neu dung iPhone, co the quet bang Camera app hoac trong Expo Go.
+Nếu sử dụng iPhone, có thể quét mã QR bằng ứng dụng Camera hoặc trực tiếp trong Expo Go.
 
-## Chay khong can dang nhap
+## Chạy ứng dụng không cần đăng nhập
 
-Neu chi muon chay local va tranh yeu cau dang nhap cua Expo manifest signing, co the dung offline mode:
+Nếu chỉ muốn chạy ứng dụng local và tránh yêu cầu đăng nhập liên quan đến Expo manifest signing, có thể sử dụng chế độ offline:
 
 ```bash
 npm.cmd run start:offline
 ```
 
-Neu dang phat trien binh thuong va da dang nhap Expo CLI, uu tien dung:
+Nếu đang phát triển bình thường và đã đăng nhập Expo CLI, nên ưu tiên sử dụng:
 
 ```bash
 npm.cmd run start:lan
 ```
 
-## Lenh hay dung
+## Các lệnh thường sử dụng
+
+### Chạy ứng dụng qua mạng LAN
 
 ```bash
 npm.cmd run start:lan
 ```
 
-Chay app tren dien thoai qua Expo Go bang mang LAN.
+Chạy ứng dụng trên điện thoại thông qua Expo Go bằng mạng LAN.
+
+### Chạy ở chế độ offline
 
 ```bash
 npm.cmd run start:offline
 ```
 
-Chay Expo o che do offline, han che viec goi network cua CLI.
+Chạy Expo ở chế độ offline, hạn chế các kết nối mạng từ Expo CLI.
+
+### Xóa cache và chạy lại
 
 ```bash
 npm.cmd run start:clear
 ```
 
-Xoa cache Metro va chay lai dev server. Dung khi app bi loi cache, khong cap nhat code, hoac man hinh hien noi dung cu.
+Xóa cache của Metro và khởi động lại Dev Server.
+
+Nên sử dụng khi:
+
+* Ứng dụng gặp lỗi liên quan đến cache
+* Code mới không được cập nhật
+* Ứng dụng vẫn hiển thị nội dung cũ
+* Metro hoạt động không đúng sau khi thay đổi dependencies
+
+### Chạy trên Android
 
 ```bash
 npm.cmd run android
 ```
 
-Mo app tren Android emulator hoac thiet bi Android neu da cau hinh.
+Mở ứng dụng trên Android Emulator hoặc thiết bị Android nếu đã được cấu hình.
+
+### Chạy trên iOS
 
 ```bash
 npm.cmd run ios
 ```
 
-Mo app tren iOS simulator. Lenh nay can macOS.
+Mở ứng dụng trên iOS Simulator.
+
+> Lưu ý: iOS Simulator yêu cầu macOS.
+
+### Chạy trên Web
 
 ```bash
 npm.cmd run web
 ```
 
-Chay app tren trinh duyet web.
+Chạy ứng dụng trên trình duyệt web.
+
+### Kiểm tra TypeScript
 
 ```bash
 npm.cmd run typecheck
 ```
 
-Kiem tra TypeScript ma khong build app.
+Kiểm tra lỗi TypeScript mà không cần build ứng dụng.
 
-## Kiem tra cau hinh Expo
+## Kiểm tra cấu hình Expo
 
-Chay:
+Chạy:
 
 ```bash
 npx.cmd expo-doctor
 ```
 
-Neu ket qua hien tat ca checks passed thi dependencies va cau hinh Expo dang on.
+Nếu kết quả cho thấy tất cả các kiểm tra đều thành công thì dependencies và cấu hình Expo đang hoạt động bình thường.
 
-## Loi da gap va cach xu ly
+## Một số lỗi thường gặp và cách xử lý
 
-### Loi yeu cau dang nhap Expo Go va Expo CLI
+### 1. Expo Go yêu cầu đăng nhập Expo Go và Expo CLI
 
-Thong bao thuong gap:
+Thông báo thường gặp:
 
 ```text
 You need to be signed in to Expo Go and Expo CLI to open your project.
 ```
 
-Cach xu ly:
+Cách xử lý:
 
 ```bash
 npx.cmd expo login
@@ -189,74 +224,78 @@ npx.cmd expo whoami
 npm.cmd run start:lan
 ```
 
-Dam bao Expo Go tren dien thoai cung dang nhap dung tai khoan do.
+Đảm bảo Expo Go trên điện thoại cũng đang đăng nhập bằng cùng tài khoản Expo được sử dụng trên máy tính.
 
-### Loi sai SDK giua project va Expo Go
+### 2. Phiên bản SDK của project không tương thích với Expo Go
 
-Thong bao thuong gap:
+Thông báo thường gặp:
 
 ```text
 Project is incompatible with this version of Expo Go
 ```
 
-Nguyen nhan la version Expo SDK trong project khong khop voi version Expo Go tren dien thoai.
+Nguyên nhân thường là phiên bản Expo SDK trong project không tương thích với phiên bản Expo Go được cài đặt trên điện thoại.
 
-Project hien tai dang dung Expo SDK 57:
+Project hiện tại sử dụng Expo SDK 57:
 
 ```json
 "expo": "~57.0.20"
 ```
 
-Neu gap loi nay, chay:
+Nếu gặp lỗi này, chạy:
 
 ```bash
 npx.cmd expo-doctor
 npx.cmd expo install --fix
 ```
 
-Sau do chay lai:
+Sau đó xóa cache và chạy lại ứng dụng:
 
 ```bash
 npm.cmd run start:clear
 ```
 
-### Loi PowerShell chan npm
+### 3. PowerShell chặn npm
 
-Thong bao thuong gap:
+Thông báo thường gặp:
 
 ```text
 npm.ps1 cannot be loaded because running scripts is disabled on this system
 ```
 
-Cach nhanh nhat la dung `npm.cmd`:
+Cách đơn giản nhất là sử dụng `npm.cmd` thay cho `npm`:
 
 ```bash
 npm.cmd install
 npm.cmd run start:lan
 ```
 
-## Cau truc du an
+## Cấu trúc dự án
 
 ```text
-App.tsx             Component chinh cua ung dung
-index.ts            Entry point dang ky app voi Expo
-app.json            Cau hinh Expo app
-assets/             Anh icon, favicon va cac asset mac dinh
-package.json        Dependencies va scripts
-package-lock.json   Lockfile cua npm
-tsconfig.json       Cau hinh TypeScript
-.gitignore          Danh sach file va thu muc khong dua len Git
+App.tsx             Component chính của ứng dụng
+index.ts            Entry point đăng ký ứng dụng với Expo
+app.json            File cấu hình Expo
+assets/             Chứa icon, favicon, hình ảnh và các tài nguyên mặc định
+package.json        Khai báo dependencies và scripts của dự án
+package-lock.json   Lockfile của npm
+tsconfig.json       File cấu hình TypeScript
+.gitignore          Danh sách file và thư mục không được đưa lên Git
 ```
 
-## Ghi chu Git
+## Công nghệ sử dụng
 
-Khong nen dua cac file sau len Git:
+* React Native
+* Expo
+* Expo Go
+* TypeScript
+* Node.js
+* npm
 
-- `node_modules/`
-- `.expo/`
-- `.claude/`
-- `.env`
-- `.env.*`
-- build output nhu `dist/`, `web-build/`, `ios/`, `android/`
+## Ghi chú
 
-Da cau hinh trong `.gitignore` de tranh push nham cac file nay.
+* Nên chạy `npm.cmd install` sau khi clone project về máy.
+* Khi có thay đổi trong `package.json`, cần cài đặt lại dependencies.
+* Nếu ứng dụng không cập nhật code mới, hãy thử `npm.cmd run start:clear`.
+* Khi chạy trên thiết bị thật bằng LAN, máy tính và điện thoại cần kết nối cùng một mạng.
+* Nên chạy `npx.cmd expo-doctor` khi gặp vấn đề liên quan đến dependencies hoặc cấu hình Expo.
