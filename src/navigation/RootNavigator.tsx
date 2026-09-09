@@ -14,9 +14,14 @@ function getLandingRole(roles: UserRole[]): UserRole | null {
   return ["Admin", "Staff", "Owner", "Customer"].find((role) => roles.includes(role as UserRole)) as UserRole | null;
 }
 
+function getActiveLandingRole(roles: UserRole[], activeRole: UserRole | null): UserRole | null {
+  return activeRole && roles.includes(activeRole) ? activeRole : getLandingRole(roles);
+}
+
 export default function RootNavigator() {
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
+  const activeRole = useAuthStore((state) => state.activeRole);
   const hydrated = useAuthStore((state) => state.isHydrated);
   const [startupError, setStartupError] = useState("");
 
@@ -25,7 +30,7 @@ export default function RootNavigator() {
   if (!hydrated) return <Startup label="Đang mở MoveVN..." />;
   if (startupError && token) return <Startup label={startupError} />;
 
-  const role = user ? getLandingRole(user.roles) : null;
+  const role = user ? getActiveLandingRole(user.roles, activeRole) : null;
   return <NavigationContainer>
     {!token || !user ? <AuthNavigator />
       : role === "Customer" ? <CustomerNavigator user={user} />
