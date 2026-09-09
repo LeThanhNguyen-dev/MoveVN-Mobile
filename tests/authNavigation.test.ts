@@ -10,12 +10,13 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator", KeyboardAvoidingView: "KeyboardAvoidingView", Pressable: "Pressable",
-  ScrollView: "ScrollView", Switch: "Switch", Text: "Text", TextInput: "TextInput", View: "View",
+  ScrollView: "ScrollView", Text: "Text", TextInput: "TextInput", View: "View", Image: "Image",
   Platform: { OS: "android" }, StyleSheet: { create: (styles: unknown) => styles },
   Linking: { openURL: vi.fn() }, BackHandler: { addEventListener: () => ({ remove: vi.fn() }) },
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
-vi.mock("lucide-react-native", () => Object.fromEntries(["ArrowLeft", "ArrowRight", "Check", "Eye", "EyeOff", "KeyRound", "LogOut"].map((name) => [name, name])));
+vi.mock("lucide-react-native", () => Object.fromEntries(["ArrowLeft", "ArrowRight", "Check", "CheckCircle2", "CircleAlert", "Eye", "EyeOff", "LockKeyhole", "LogOut", "Mail", "Phone", "RotateCcw", "ShieldCheck", "UserRound"].map((name) => [name, name])));
+vi.mock("@/features/auth/components/AuthLayout", () => ({ AuthLayout: ({ children }: { children: React.ReactNode }) => children }));
 vi.mock("expo-secure-store", () => ({ getItemAsync: vi.fn(async () => null), setItemAsync: vi.fn(), deleteItemAsync: vi.fn() }));
 vi.mock("@/features/auth/services/googleAuth", () => ({ googleAvailable: false, signInWithGoogle: vi.fn() }));
 vi.mock("@/features/owner/services/ownerService", () => ({ registerOwnerOnboarding: vi.fn() }));
@@ -41,12 +42,16 @@ async function mount() {
   await act(async () => { tree = create(React.createElement(AuthFlow)); });
 }
 async function press(title: string) {
-  const button = tree!.root.findAll((node) => typeof node.type === "function" && node.props.title === title)[0];
+  const button = tree!.root.findAll((node) => typeof node.type === "function" && node.props.title === title)[0]
+    ?? tree!.root.findAll((node) => (node.type as unknown) === "Pressable" && node.props.accessibilityLabel === (title === "Tạo tài khoản" ? "open-register" : title === "Quên mật khẩu?" ? "open-forgot-password" : undefined))[0]
+    ?? tree!.root.findAll((node) => (node.type as unknown) === "Pressable" && node.findAll((child) => (child.type as unknown) === "Text" && child.children.includes(title)).length > 0)[0];
   expect(button).toBeDefined();
-  await act(async () => button!.props.onPress());
+  await act(async () => { button!.props.onPress(); await new Promise((resolve) => setTimeout(resolve, 0)); });
 }
 async function enter(label: string, value: string) {
-  const input = tree!.root.findAll((node) => (node.type as unknown) === "TextInput" && node.props.accessibilityLabel === label)[0];
+  const inputs = tree!.root.findAll((node) => (node.type as unknown) === "TextInput");
+  const input = inputs.find((node) => node.props.accessibilityLabel === label)
+    ?? (label.includes("OTP") ? inputs.find((node) => node.props.maxLength === 6) : undefined);
   await act(async () => input!.props.onChangeText(value));
 }
 
@@ -85,8 +90,8 @@ it("registers a customer, verifies the Register OTP and returns to login without
   await mount(); await press("Tạo tài khoản");
   await enter("Họ và tên", "Test User"); await enter("Email", "test@example.com");
   await enter("Số điện thoại", "0912345678"); await enter("Mật khẩu", "password"); await enter("Xác nhận mật khẩu", "password");
-  const toggle = tree!.root.findAll((node) => (node.type as unknown) === "Switch")[0];
-  await act(async () => toggle!.props.onValueChange(true));
+  const toggle = tree!.root.findAll((node) => (node.type as unknown) === "Pressable" && node.props.accessibilityLabel === "Đồng ý chính sách bảo mật và điều khoản sử dụng")[0];
+  await act(async () => toggle!.props.onPress());
   await press("Tạo tài khoản");
   expect(mocks.register).toHaveBeenCalledWith(expect.objectContaining({ role: "Customer", email: "test@example.com" }));
   expect(textOf()).toContain("Mã OTP");
@@ -99,7 +104,7 @@ it("registers a customer, verifies the Register OTP and returns to login without
 it("routes forgotten password through OTP reset and returns to login", async () => {
   await mount(); await press("Quên mật khẩu?"); await enter("Email", "test@example.com"); await press("Gửi OTP");
   expect(mocks.forgotPassword).toHaveBeenCalledWith({ email: "test@example.com" });
-  await enter("Mã OTP", "123456"); await enter("Mật khẩu mới", "password"); await enter("Xác nhận mật khẩu", "password");
+  await enter("Mã OTP", "123456"); await enter("Mật khẩu mới", "password"); await enter("Xác nhận mật khẩu mới", "password");
   await press("Đặt lại mật khẩu");
   expect(mocks.resetPassword).toHaveBeenCalledWith({ email: "test@example.com", otp: "123456", newPassword: "password", confirmPassword: "password" });
   expect(textOf()).toContain("Đã đặt lại mật khẩu");

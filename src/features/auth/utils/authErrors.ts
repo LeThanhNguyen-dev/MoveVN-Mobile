@@ -23,6 +23,8 @@ const errorMessages: Record<string, string> = {
   AUTH_1030: "Mật khẩu xác nhận không khớp.",
   AUTH_1031: "Mật khẩu hiện tại không đúng.",
   AUTH_1040: "Đăng nhập Google thất bại. Vui lòng thử lại.",
+  GOOGLE_UNAVAILABLE: "Đăng nhập Google chỉ dùng được trên bản dev build/native build.",
+  DEVELOPER_ERROR: "Cấu hình Google OAuth chưa khớp package name, SHA-1 hoặc web client id.",
   AUTH_1007: "Số điện thoại này đã tồn tại.",
   NETWORK: "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.",
 };
