@@ -1,10 +1,10 @@
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import AuthFlow from "./src/features/auth/components/AuthFlow";
+import RootNavigator from "./src/navigation/RootNavigator";
 
 export default function App() {
   return <SafeAreaProvider>
     <StatusBar style="dark" />
-    <AuthFlow />
+    <RootNavigator />
   </SafeAreaProvider>;
 }

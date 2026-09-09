@@ -95,6 +95,15 @@ export function toApiError(error: unknown): AppApiError {
     }
   }
 
+  if (error && typeof error === "object") {
+    const nativeError = error as { code?: unknown; message?: unknown };
+    const code = typeof nativeError.code === "string" ? nativeError.code : "UNKNOWN";
+    const message = typeof nativeError.message === "string" && nativeError.message.trim()
+      ? nativeError.message
+      : "Đã có lỗi xảy ra. Vui lòng thử lại.";
+    return new AppApiError({ code, message });
+  }
+
   return new AppApiError({ code: "UNKNOWN", message: "Đã có lỗi xảy ra. Vui lòng thử lại." });
 }
 
