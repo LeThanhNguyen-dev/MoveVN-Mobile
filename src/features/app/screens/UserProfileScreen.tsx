@@ -7,7 +7,6 @@ import {
   FileBadge,
   IdCard,
   Landmark,
-  LogOut,
   Mail,
   Pencil,
   Phone,
@@ -17,7 +16,6 @@ import {
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { toApiError, updateProfile, uploadAvatar } from "@/features/auth/services/authService";
-import { signOut } from "@/features/auth/services/authSession";
 import type { AuthUser, UserRole } from "@/features/auth/types";
 import { driverLicenseStatusLabel } from "@/features/driverLicenses/driverLicenseDisplay";
 import { getMyDriverLicense } from "@/features/driverLicenses/services/driverLicenseService";
@@ -339,18 +337,6 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
             </View>
           ) : null}
         </View>
-
-        <Pressable
-          accessibilityLabel="Đăng xuất"
-          accessibilityRole="button"
-          onPress={() => {
-            void signOut();
-          }}
-          style={styles.logoutButton}
-        >
-          <LogOut color="#FFFFFF" size={18} strokeWidth={2.3} />
-          <Text style={styles.logoutText}>Đăng xuất</Text>
-        </Pressable>
       </ScrollView>
 
       <Modal animationType="slide" onRequestClose={handleCloseSheet} transparent visible={sheetVisible}>
@@ -704,21 +690,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     paddingVertical: 6,
-  },
-  logoutButton: {
-    minHeight: 48,
-    borderRadius: 24,
-    backgroundColor: "#6B19FF",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 9,
-    paddingHorizontal: 18,
-  },
-  logoutText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "800",
   },
   sheetOverlay: {
     flex: 1,
