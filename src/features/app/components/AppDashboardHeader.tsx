@@ -1,7 +1,10 @@
 import { ArrowLeftRight, Bell, Heart, UserRound } from "lucide-react-native";
+import { useMemo } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { AuthUser, UserRole } from "@/features/auth/types";
+import type { Theme } from "@/theme/tokens";
+import { useTheme } from "@/theme/useTheme";
 
 const roleLabels: Record<UserRole, string> = {
   Admin: "quản trị",
@@ -13,6 +16,8 @@ const roleLabels: Record<UserRole, string> = {
 export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPress?: () => void; user: AuthUser }) {
   const activeRole = useAuthStore((state) => state.activeRole);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const switchableRole = activeRole === "Customer" && user.roles.includes("Owner")
     ? "Owner"
     : activeRole === "Owner" && user.roles.includes("Customer")
@@ -36,7 +41,7 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
           {user.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
           ) : (
-            <UserRound color="#6B19FF" size={24} />
+            <UserRound color={theme.brand} size={24} />
           )}
         </Pressable>
         <View style={styles.nameBlock}>
@@ -56,17 +61,17 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
               onPress={handleSwitchRole}
               style={styles.iconButton}
             >
-              <ArrowLeftRight color="#101936" size={21} strokeWidth={2.3} />
+              <ArrowLeftRight color={theme.text} size={21} strokeWidth={2.3} />
             </Pressable>
             <View style={styles.divider} />
           </>
         ) : null}
         <Pressable accessibilityLabel="Xe yêu thích" accessibilityRole="button" style={styles.iconButton}>
-          <Heart color="#101936" size={21} strokeWidth={2.3} />
+          <Heart color={theme.text} size={21} strokeWidth={2.3} />
         </Pressable>
         <View style={styles.divider} />
         <Pressable accessibilityLabel="Thông báo" accessibilityRole="button" style={styles.iconButton}>
-          <Bell color="#101936" size={21} strokeWidth={2.3} />
+          <Bell color={theme.text} size={21} strokeWidth={2.3} />
           <View style={styles.notificationDot} />
         </Pressable>
       </View>
@@ -74,7 +79,7 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   header: {
     minHeight: 56,
     flexDirection: "row",
@@ -93,7 +98,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#F1E7FF",
+    backgroundColor: theme.brandSoft,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -108,12 +113,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    color: "#746F7E",
+    color: theme.muted,
     fontSize: 12,
     fontWeight: "700",
   },
   name: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 16,
     fontWeight: "800",
     marginTop: 2,
@@ -133,7 +138,7 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 20,
-    backgroundColor: "#E8E1F2",
+    backgroundColor: theme.border,
   },
   notificationDot: {
     position: "absolute",
@@ -142,8 +147,8 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: "#F43F5E",
-    borderColor: "#FFFFFF",
+    backgroundColor: theme.danger,
+    borderColor: theme.onBrand,
     borderWidth: 1,
   },
 });
