@@ -9,6 +9,7 @@ import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
+import { useTheme } from "@/theme/useTheme";
 
 type OwnerTabKey = "vehicles" | "bookings" | "overview" | "messages" | "account";
 
@@ -23,9 +24,10 @@ const ownerTabs: MobileTabItem<OwnerTabKey>[] = [
 export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<OwnerTabKey>("overview");
   const [showProfile, setShowProfile] = useState(false);
+  const { theme } = useTheme();
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safe}>
+    <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
       {showProfile ? (
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />
       ) : (
@@ -59,6 +61,6 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#FAF6FF" },
+  safe: { flex: 1 },
   screen: { flex: 1 },
 });

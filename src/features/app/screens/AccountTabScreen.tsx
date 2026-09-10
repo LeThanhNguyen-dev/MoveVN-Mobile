@@ -11,13 +11,15 @@ import {
   KeyRound,
   LogOut,
   Monitor,
+  Moon,
   Scale,
   ShieldCheck,
+  Sun,
   UserPlus,
   UserRound,
   Wallet,
 } from "lucide-react-native";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View, type DimensionValue } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Switch, Text, View, type DimensionValue } from "react-native";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { signOut } from "@/features/auth/services/authSession";
 import { getCurrentUser } from "@/features/auth/services/authService";
@@ -26,6 +28,8 @@ import { getMyDriverLicense } from "@/features/driverLicenses/services/driverLic
 import type { DriverLicenseStatusResponse } from "@/features/driverLicenses/types";
 import { getMyApplication } from "@/features/owner/services/ownerService";
 import type { OwnerApplicationDto } from "@/features/owner/types";
+import type { Theme } from "@/theme/tokens";
+import { useTheme } from "@/theme/useTheme";
 
 type TabIcon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 
@@ -58,6 +62,9 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
   const updateUser = useAuthStore((state) => state.updateUser);
   const [ownerApp, setOwnerApp] = useState<OwnerApplicationDto | null>(null);
   const [driverLicense, setDriverLicense] = useState<DriverLicenseStatusResponse | null>(null);
+  const { mode, theme, toggleMode } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isDark = mode === "dark";
 
   useEffect(() => {
     let ignore = false;
@@ -110,7 +117,7 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
           key: "verification",
           label: "Xác minh tài khoản",
           icon: ShieldCheck,
-          accent: verifiedCount === verificationTotal ? "#059669" : "#6B19FF",
+          accent: verifiedCount === verificationTotal ? theme.success : theme.brand,
           value: `${verifiedCount}/${verificationTotal}`,
         },
       ],
@@ -148,7 +155,7 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
           {user.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
           ) : (
-            <UserRound color="#6B19FF" size={28} strokeWidth={2.3} />
+            <UserRound color={theme.brand} size={28} strokeWidth={2.3} />
           )}
         </View>
         <View style={styles.profileInfo}>
@@ -162,23 +169,52 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
             ))}
           </View>
         </View>
-        <ChevronRight color="#9A90A8" size={21} strokeWidth={2.4} />
+        <ChevronRight color={theme.faint} size={21} strokeWidth={2.4} />
       </Pressable>
 
       <Pressable accessibilityRole="button" onPress={handleRoleAction} style={styles.ownerCard}>
         <View style={styles.ownerIcon}>
           {roleAction.targetRole ? (
-            <ArrowLeftRight color="#6B19FF" size={22} strokeWidth={2.4} />
+            <ArrowLeftRight color={theme.brand} size={22} strokeWidth={2.4} />
           ) : (
-            <UserPlus color="#6B19FF" size={23} strokeWidth={2.4} />
+            <UserPlus color={theme.brand} size={23} strokeWidth={2.4} />
           )}
         </View>
         <View style={styles.ownerInfo}>
           <Text style={styles.ownerTitle}>{roleAction.title}</Text>
           <Text style={styles.ownerDescription}>{roleAction.description}</Text>
         </View>
-        <ChevronRight color="#6B19FF" size={21} strokeWidth={2.5} />
+        <ChevronRight color={theme.brand} size={21} strokeWidth={2.5} />
       </Pressable>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Giao diện</Text>
+        <View style={styles.menuCard}>
+          <View style={styles.menuRow}>
+            <View style={[styles.menuIcon, { backgroundColor: theme.brandSoft }]}>
+              {isDark ? (
+                <Moon color={theme.brand} size={20} strokeWidth={2.3} />
+              ) : (
+                <Sun color={theme.brand} size={20} strokeWidth={2.3} />
+              )}
+            </View>
+            <View style={styles.menuContent}>
+              <Text numberOfLines={1} style={styles.menuLabel}>Chế độ tối</Text>
+              <Text style={styles.themeHint}>{isDark ? "Đang dùng giao diện tối" : "Đang dùng giao diện sáng"}</Text>
+            </View>
+            <Switch
+              accessibilityLabel="Chuyển chế độ sáng tối"
+              accessibilityRole="switch"
+              onValueChange={() => {
+                void toggleMode();
+              }}
+              thumbColor={theme.onBrand}
+              trackColor={{ false: theme.divider, true: theme.brand }}
+              value={isDark}
+            />
+          </View>
+        </View>
+      </View>
 
       {sections.map((section) => (
         <View key={section.title} style={styles.section}>
@@ -197,7 +233,7 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
       ))}
 
       <Pressable accessibilityRole="button" onPress={() => { void signOut(); }} style={styles.logoutButton}>
-        <LogOut color="#DC2626" size={19} strokeWidth={2.4} />
+        <LogOut color={theme.danger} size={19} strokeWidth={2.4} />
         <Text style={styles.logoutText}>Đăng xuất</Text>
       </Pressable>
     </ScrollView>
@@ -207,6 +243,8 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
 function MenuRow({ item, last, progress }: { item: AccountMenuItem; last: boolean; progress?: number }) {
   const Icon = item.icon;
   const progressPercent: DimensionValue = `${Math.round((progress ?? 0) * 100)}%`;
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <Pressable accessibilityRole="button" onPress={item.onPress ?? (() => undefined)} style={[styles.menuRow, !last && styles.menuDivider]}>
@@ -224,7 +262,7 @@ function MenuRow({ item, last, progress }: { item: AccountMenuItem; last: boolea
           </View>
         ) : null}
       </View>
-      <ChevronRight color="#B0A7BB" size={19} strokeWidth={2.4} />
+      <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
     </Pressable>
   );
 }
@@ -260,10 +298,10 @@ function iconBackground(color: string) {
   return `${color}12`;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: "#FAF6FF",
+    backgroundColor: theme.background,
   },
   content: {
     paddingHorizontal: 20,
@@ -274,7 +312,7 @@ const styles = StyleSheet.create({
     minHeight: 104,
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E8E1F2",
+    borderColor: theme.border,
     backgroundColor: "transparent",
     flexDirection: "row",
     alignItems: "center",
@@ -285,7 +323,7 @@ const styles = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: 31,
-    backgroundColor: "#F1E7FF",
+    backgroundColor: theme.brandSoft,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -300,13 +338,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileName: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 16,
     lineHeight: 21,
     fontWeight: "800",
   },
   profileMeta: {
-    color: "#746F7E",
+    color: theme.muted,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: "600",
@@ -320,12 +358,12 @@ const styles = StyleSheet.create({
   },
   rolePill: {
     borderRadius: 999,
-    backgroundColor: "#F1E7FF",
+    backgroundColor: theme.brandSoft,
     paddingHorizontal: 9,
     paddingVertical: 4,
   },
   roleText: {
-    color: "#6B19FF",
+    color: theme.brand,
     fontSize: 11,
     lineHeight: 14,
     fontWeight: "800",
@@ -334,7 +372,7 @@ const styles = StyleSheet.create({
     minHeight: 82,
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#DACBFF",
+    borderColor: theme.brandBorder,
     backgroundColor: "transparent",
     flexDirection: "row",
     alignItems: "center",
@@ -346,7 +384,7 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -355,13 +393,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   ownerTitle: {
-    color: "#24143F",
+    color: theme.text,
     fontSize: 14,
     lineHeight: 19,
     fontWeight: "800",
   },
   ownerDescription: {
-    color: "#6C5D84",
+    color: theme.muted,
     fontSize: 11,
     lineHeight: 16,
     fontWeight: "600",
@@ -371,7 +409,7 @@ const styles = StyleSheet.create({
     marginTop: 22,
   },
   sectionTitle: {
-    color: "#625B6B",
+    color: theme.muted,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: "800",
@@ -381,7 +419,7 @@ const styles = StyleSheet.create({
   menuCard: {
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E8E1F2",
+    borderColor: theme.border,
     backgroundColor: "transparent",
     overflow: "hidden",
   },
@@ -395,7 +433,7 @@ const styles = StyleSheet.create({
   },
   menuDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#F0EBF6",
+    borderBottomColor: theme.divider,
   },
   menuIcon: {
     width: 38,
@@ -418,10 +456,17 @@ const styles = StyleSheet.create({
   menuLabel: {
     minWidth: 0,
     flex: 1,
-    color: "#101936",
+    color: theme.text,
     fontSize: 14,
     lineHeight: 19,
     fontWeight: "700",
+  },
+  themeHint: {
+    color: theme.muted,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "600",
+    marginTop: 2,
   },
   menuValue: {
     fontSize: 12,
@@ -431,7 +476,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 5,
     borderRadius: 999,
-    backgroundColor: "#EEE7F6",
+    backgroundColor: theme.surfaceAlt,
     overflow: "hidden",
   },
   progressFill: {
@@ -442,7 +487,7 @@ const styles = StyleSheet.create({
     minHeight: 54,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#FECACA",
+    borderColor: theme.dangerBorder,
     backgroundColor: "transparent",
     flexDirection: "row",
     alignItems: "center",
@@ -451,7 +496,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   logoutText: {
-    color: "#DC2626",
+    color: theme.danger,
     fontSize: 14,
     fontWeight: "800",
   },

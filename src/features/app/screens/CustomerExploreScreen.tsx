@@ -1,8 +1,13 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
 import type { AuthUser } from "@/features/auth/types";
+import type { Theme } from "@/theme/tokens";
+import { useTheme } from "@/theme/useTheme";
 
 export default function CustomerExploreScreen({ onAvatarPress, user }: { onAvatarPress?: () => void; user: AuthUser }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.content}>
       <AppDashboardHeader onAvatarPress={onAvatarPress} user={user} />
@@ -15,7 +20,7 @@ export default function CustomerExploreScreen({ onAvatarPress, user }: { onAvata
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
@@ -29,13 +34,13 @@ const styles = StyleSheet.create({
     paddingBottom: 44,
   },
   title: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 28,
     fontWeight: "800",
     textAlign: "center",
   },
   description: {
-    color: "#746F7E",
+    color: theme.muted,
     fontSize: 15,
     fontWeight: "500",
     lineHeight: 23,

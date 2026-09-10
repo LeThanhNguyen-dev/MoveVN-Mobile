@@ -1,6 +1,9 @@
 import type { ComponentType } from "react";
 import type { ReactNode } from "react";
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import type { Theme } from "@/theme/tokens";
+import { useTheme } from "@/theme/useTheme";
 
 type PlaceholderIcon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 
@@ -15,10 +18,12 @@ export default function TabPlaceholderScreen({
   icon: PlaceholderIcon;
   title: string;
 }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.content}>
       <View style={styles.iconWrap}>
-        <Icon color="#6B19FF" size={30} strokeWidth={2.4} />
+        <Icon color={theme.brand} size={30} strokeWidth={2.4} />
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
@@ -27,7 +32,7 @@ export default function TabPlaceholderScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   content: {
     flex: 1,
     alignItems: "center",
@@ -42,16 +47,16 @@ const styles = StyleSheet.create({
     borderRadius: 34,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F1E7FF",
+    backgroundColor: theme.brandSoft,
   },
   title: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 27,
     fontWeight: "800",
     textAlign: "center",
   },
   description: {
-    color: "#746F7E",
+    color: theme.muted,
     fontSize: 15,
     fontWeight: "500",
     lineHeight: 23,

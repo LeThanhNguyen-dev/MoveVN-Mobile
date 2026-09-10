@@ -1,6 +1,9 @@
 import type { ComponentType } from "react";
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { Theme } from "@/theme/tokens";
+import { useTheme } from "@/theme/useTheme";
 
 type TabIcon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 
@@ -22,6 +25,8 @@ export default function MobileBottomBar<T extends string>({
 }) {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 8);
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View style={[styles.shell, { paddingBottom: bottomPadding + 8 }]}>
@@ -29,7 +34,7 @@ export default function MobileBottomBar<T extends string>({
         {items.map((item) => {
           const active = item.key === activeKey;
           const Icon = item.icon;
-          const color = item.prominent || active ? "#6B19FF" : "#746F7E";
+          const color = item.prominent || active ? theme.brand : theme.muted;
 
           return (
             <Pressable
@@ -53,12 +58,12 @@ export default function MobileBottomBar<T extends string>({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   shell: {
     backgroundColor: "transparent",
     paddingHorizontal: 18,
     paddingTop: 6,
-    shadowColor: "#25123D",
+    shadowColor: theme.shadow,
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.12,
     shadowRadius: 20,
@@ -73,8 +78,8 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     borderRadius: 22,
     borderWidth: 0.7,
-    borderColor: "rgba(232, 225, 242, 0.82)",
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    borderColor: theme.barBorder,
+    backgroundColor: theme.barBg,
   },
   item: {
     width: "20%",
@@ -97,27 +102,27 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.94)",
-    borderColor: "#6B19FF",
+    backgroundColor: theme.prominentBg,
+    borderColor: theme.brand,
     borderWidth: 1,
-    shadowColor: "#6B19FF",
+    shadowColor: theme.brand,
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 6,
   },
   label: {
-    color: "#746F7E",
+    color: theme.muted,
     fontSize: 9.5,
     fontWeight: "700",
     maxWidth: 76,
     textAlign: "center",
   },
   activeLabel: {
-    color: "#6B19FF",
+    color: theme.brand,
   },
   prominentLabel: {
-    color: "#6B19FF",
+    color: theme.brand,
     fontSize: 10.5,
     marginTop: 1,
   },

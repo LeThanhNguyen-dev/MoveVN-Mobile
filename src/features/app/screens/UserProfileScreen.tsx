@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import {
   ArrowLeft,
@@ -23,6 +23,8 @@ import type { DriverLicenseStatusResponse } from "@/features/driverLicenses/type
 import { getMyApplication } from "@/features/owner/services/ownerService";
 import type { OwnerApplicationDto } from "@/features/owner/types";
 import type { UploadFileInput } from "@/types/upload";
+import type { Theme } from "@/theme/tokens";
+import { useTheme } from "@/theme/useTheme";
 
 const roleLabels: Record<UserRole, string> = {
   Admin: "Quản trị",
@@ -68,6 +70,8 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
   const [expandedKey, setExpandedKey] = useState<ExpandedKey>(null);
   const [driverLicense, setDriverLicense] = useState<DriverLicenseStatusResponse | null>(null);
   const [ownerApp, setOwnerApp] = useState<OwnerApplicationDto | null>(null);
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   useEffect(() => {
     let ignore = false;
@@ -167,7 +171,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
     <View style={styles.content}>
       <View style={styles.topBar}>
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
-          <ArrowLeft color="#101936" size={22} strokeWidth={2.3} />
+          <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
         <Text style={styles.topBarTitle}>Thông tin tài khoản</Text>
         <View style={styles.topBarSpacer} />
@@ -181,7 +185,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
             onPress={handleOpenSheet}
             style={styles.pencilButton}
           >
-            <Pencil color="#6B19FF" size={18} strokeWidth={2.3} />
+              <Pencil color={theme.brand} size={18} strokeWidth={2.3} />
           </Pressable>
 
           <View style={styles.profileRow}>
@@ -189,7 +193,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               {user.avatarUrl ? (
                 <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
               ) : (
-                <UserRound color="#6B19FF" size={34} />
+                <UserRound color={theme.brand} size={34} />
               )}
             </View>
             <View style={styles.profileInfo}>
@@ -212,7 +216,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 
           <View style={styles.row}>
             <View style={[styles.rowIcon, styles.rowIconStatic]}>
-              <Mail color="#6B19FF" size={18} strokeWidth={2.3} />
+              <Mail color={theme.brand} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
               <Text style={styles.rowLabel}>Email</Text>
@@ -226,7 +230,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 
           <View style={styles.row}>
             <View style={[styles.rowIcon, styles.rowIconStatic]}>
-              <Phone color="#6B19FF" size={18} strokeWidth={2.3} />
+              <Phone color={theme.brand} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
               <Text style={styles.rowLabel}>Số điện thoại</Text>
@@ -238,14 +242,14 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 
           <Pressable accessibilityRole="button" onPress={() => toggleExpanded("cccd")} style={styles.row}>
             <View style={[styles.rowIcon, cccdVerified ? styles.rowIconVerified : styles.rowIconUnverified]}>
-              <IdCard color={cccdVerified ? "#059669" : "#94A3B8"} size={18} strokeWidth={2.3} />
+              <IdCard color={cccdVerified ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
               <Text style={styles.rowLabel}>CCCD</Text>
               <VerifyBadge verified={cccdVerified} />
             </View>
             <ChevronDown
-              color="#746F7E"
+              color={theme.muted}
               size={18}
               strokeWidth={2.3}
               style={expandedKey === "cccd" ? styles.chevronOpen : null}
@@ -272,14 +276,14 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 
           <Pressable accessibilityRole="button" onPress={() => toggleExpanded("gplx")} style={styles.row}>
             <View style={[styles.rowIcon, gplxVerified ? styles.rowIconVerified : styles.rowIconUnverified]}>
-              <FileBadge color={gplxVerified ? "#059669" : "#94A3B8"} size={18} strokeWidth={2.3} />
+              <FileBadge color={gplxVerified ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
               <Text style={styles.rowLabel}>GPLX</Text>
               <VerifyBadge verified={gplxVerified} />
             </View>
             <ChevronDown
-              color="#746F7E"
+              color={theme.muted}
               size={18}
               strokeWidth={2.3}
               style={expandedKey === "gplx" ? styles.chevronOpen : null}
@@ -310,14 +314,14 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 
           <Pressable accessibilityRole="button" onPress={() => toggleExpanded("bank")} style={styles.row}>
             <View style={[styles.rowIcon, bankCompleted ? styles.rowIconVerified : styles.rowIconUnverified]}>
-              <Landmark color={bankCompleted ? "#059669" : "#94A3B8"} size={18} strokeWidth={2.3} />
+              <Landmark color={bankCompleted ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
               <Text style={styles.rowLabel}>Ngân hàng</Text>
               <VerifyBadge completed={bankCompleted} verified={bankCompleted} />
             </View>
             <ChevronDown
-              color="#746F7E"
+              color={theme.muted}
               size={18}
               strokeWidth={2.3}
               style={expandedKey === "bank" ? styles.chevronOpen : null}
@@ -357,7 +361,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                 onPress={handleCloseSheet}
                 style={styles.sheetCloseButton}
               >
-                <X color="#101936" size={22} strokeWidth={2.3} />
+                <X color={theme.text} size={22} strokeWidth={2.3} />
               </Pressable>
               <Text style={styles.sheetTitle}>Chỉnh sửa thông tin</Text>
               <View style={styles.sheetHeaderSpacer} />
@@ -377,10 +381,10 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   {sheetAvatarSource ? (
                     <Image source={{ uri: sheetAvatarSource }} style={styles.avatarImage} />
                   ) : (
-                    <UserRound color="#6B19FF" size={34} />
+                    <UserRound color={theme.brand} size={34} />
                   )}
                   <View style={styles.cameraBadge}>
-                    <Camera color="#FFFFFF" size={14} strokeWidth={2.3} />
+                    <Camera color={theme.onBrand} size={14} strokeWidth={2.3} />
                   </View>
                 </Pressable>
               </View>
@@ -391,7 +395,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   autoCapitalize="words"
                   editable={!isSaving}
                   placeholder="Nhập họ và tên"
-                  placeholderTextColor="#A7A1B3"
+                  placeholderTextColor={theme.placeholder}
                   style={styles.fieldInput}
                   value={fullName}
                   onChangeText={setFullName}
@@ -404,7 +408,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   editable={!isSaving}
                   keyboardType="phone-pad"
                   placeholder="Nhập số điện thoại"
-                  placeholderTextColor="#A7A1B3"
+                  placeholderTextColor={theme.placeholder}
                   style={styles.fieldInput}
                   value={phone}
                   onChangeText={setPhone}
@@ -437,6 +441,8 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 }
 
 function VerifyBadge({ completed, verified }: { completed?: boolean; verified: boolean }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   if (verified) {
     return (
       <View style={[styles.badge, styles.badgeVerified]}>
@@ -452,6 +458,8 @@ function VerifyBadge({ completed, verified }: { completed?: boolean; verified: b
 }
 
 function DetailLine({ label, value }: { label: string; value: string }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.detailLine}>
       <Text style={styles.detailLabel}>{label}</Text>
@@ -460,7 +468,7 @@ function DetailLine({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   content: {
     flex: 1,
   },
@@ -480,7 +488,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   topBarTitle: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 17,
     fontWeight: "800",
   },
@@ -498,7 +506,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8E1F2",
+    borderColor: theme.border,
     padding: 16,
   },
   pencilButton: {
@@ -516,7 +524,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   saveText: {
-    color: "#FFFFFF",
+    color: theme.onBrand,
     fontSize: 13,
     fontWeight: "800",
   },
@@ -530,7 +538,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#F1E7FF",
+    backgroundColor: theme.brandSoft,
     alignItems: "center",
     justifyContent: "center",
     overflow: "visible",
@@ -547,9 +555,9 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: "#6B19FF",
+    backgroundColor: theme.brand,
     borderWidth: 2,
-    borderColor: "#FFFFFF",
+    borderColor: theme.onBrand,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -559,7 +567,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   name: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 18,
     fontWeight: "800",
   },
@@ -581,11 +589,11 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8E1F2",
+    borderColor: theme.border,
     padding: 16,
   },
   cardTitle: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 15,
     fontWeight: "800",
     marginBottom: 6,
@@ -604,13 +612,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   rowIconStatic: {
-    backgroundColor: "#F1E7FF",
+    backgroundColor: theme.brandSoft,
   },
   rowIconVerified: {
-    backgroundColor: "#D1FAE5",
+    backgroundColor: theme.successSoft,
   },
   rowIconUnverified: {
-    backgroundColor: "#F1F5F9",
+    backgroundColor: theme.surfaceAlt,
   },
   rowBody: {
     flex: 1,
@@ -618,18 +626,18 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   rowLabel: {
-    color: "#746F7E",
+    color: theme.muted,
     fontSize: 12,
     fontWeight: "700",
   },
   rowValue: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 15,
     fontWeight: "700",
   },
   rowDivider: {
     height: 1,
-    backgroundColor: "#E8E1F2",
+    backgroundColor: theme.divider,
   },
   badge: {
     alignSelf: "flex-start",
@@ -638,28 +646,28 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   badgeVerified: {
-    backgroundColor: "#D1FAE5",
+    backgroundColor: theme.successSoft,
   },
   badgeUnverified: {
-    backgroundColor: "#F1F5F9",
+    backgroundColor: theme.surfaceAlt,
   },
   badgeText: {
     fontSize: 12,
     fontWeight: "700",
   },
   badgeTextVerified: {
-    color: "#059669",
+    color: theme.success,
   },
   badgeTextUnverified: {
-    color: "#94A3B8",
+    color: theme.faint,
   },
   chevronOpen: {
     transform: [{ rotate: "180deg" }],
   },
   detailBox: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: "#E8E1F2",
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -674,19 +682,19 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   detailLabel: {
-    color: "#746F7E",
+    color: theme.muted,
     fontSize: 13,
     fontWeight: "600",
   },
   detailValue: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 13,
     fontWeight: "700",
     textAlign: "right",
     flexShrink: 1,
   },
   detailEmpty: {
-    color: "#746F7E",
+    color: theme.muted,
     fontSize: 13,
     fontWeight: "600",
     paddingVertical: 6,
@@ -697,11 +705,11 @@ const styles = StyleSheet.create({
   },
   sheetBackdrop: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(16, 25, 54, 0.45)",
+    backgroundColor: theme.overlay,
   },
   sheet: {
     height: "67%",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: "hidden",
@@ -713,7 +721,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#E8E1F2",
+    borderBottomColor: theme.divider,
   },
   sheetCloseButton: {
     width: 40,
@@ -723,7 +731,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   sheetTitle: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 16,
     fontWeight: "800",
   },
@@ -743,41 +751,41 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   fieldLabel: {
-    color: "#746F7E",
+    color: theme.muted,
     fontSize: 13,
     fontWeight: "700",
   },
   fieldInput: {
-    color: "#101936",
+    color: theme.text,
     fontSize: 15,
     fontWeight: "600",
     borderWidth: 1,
-    borderColor: "#E8E1F2",
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 11,
-    backgroundColor: "#FAF6FF",
+    backgroundColor: theme.input,
   },
   fieldReadonly: {
-    color: "#746F7E",
+    color: theme.muted,
     fontSize: 15,
     fontWeight: "600",
     borderWidth: 1,
-    borderColor: "#E8E1F2",
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 11,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: theme.surfaceAlt,
   },
   sheetError: {
-    color: "#F43F5E",
+    color: theme.danger,
     fontSize: 13,
     fontWeight: "600",
   },
   sheetSaveButton: {
     minHeight: 48,
     borderRadius: 24,
-    backgroundColor: "#6B19FF",
+    backgroundColor: theme.brand,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 18,
