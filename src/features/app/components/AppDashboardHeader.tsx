@@ -1,5 +1,5 @@
 import { ArrowLeftRight, Bell, Heart, UserRound } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { AuthUser, UserRole } from "@/features/auth/types";
 
@@ -10,7 +10,7 @@ const roleLabels: Record<UserRole, string> = {
   Customer: "khách thuê",
 };
 
-export default function AppDashboardHeader({ user }: { user: AuthUser }) {
+export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPress?: () => void; user: AuthUser }) {
   const activeRole = useAuthStore((state) => state.activeRole);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
   const switchableRole = activeRole === "Customer" && user.roles.includes("Owner")
@@ -27,9 +27,18 @@ export default function AppDashboardHeader({ user }: { user: AuthUser }) {
   return (
     <View style={styles.header}>
       <View style={styles.identity}>
-        <View style={styles.avatar}>
-          <UserRound color="#6B19FF" size={24} />
-        </View>
+        <Pressable
+          accessibilityLabel="Xem thông tin tài khoản"
+          accessibilityRole="button"
+          onPress={onAvatarPress}
+          style={styles.avatar}
+        >
+          {user.avatarUrl ? (
+            <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
+          ) : (
+            <UserRound color="#6B19FF" size={24} />
+          )}
+        </Pressable>
         <View style={styles.nameBlock}>
           <Text style={styles.greeting}>Xin chào</Text>
           <Text numberOfLines={1} style={styles.name}>
@@ -87,6 +96,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1E7FF",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+  },
+  avatarImage: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
   },
   nameBlock: {
     minWidth: 0,
