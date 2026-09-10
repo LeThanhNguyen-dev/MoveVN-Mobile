@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LockKeyhole, Mail, Phone, ShieldCheck, UserRound } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -10,10 +10,14 @@ import { registerOwnerOnboarding } from "@/features/owner/services/ownerService"
 import { getFriendlyAuthError } from "../utils/authErrors";
 import { validateAuth, type AuthFields } from "../utils/validation";
 import type { AuthStackParamList } from "@/navigation/types";
+import { useTheme } from "@/theme/useTheme";
+import type { Theme } from "@/theme/tokens";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Register" | "OwnerRegister">;
 
 export default function RegistrationScreen({ navigation, route }: Props) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const isOwner = route.name === "OwnerRegister";
   const [fields, setFields] = useState<AuthFields>({ email: "", password: "", confirmPassword: "", fullName: "", phone: "", otp: "" });
   const [accepted, setAccepted] = useState(false);
@@ -33,15 +37,15 @@ export default function RegistrationScreen({ navigation, route }: Props) {
   return <AuthScreenLayout><View style={styles.stack}>
     <AuthScreenHeader description={isOwner ? "Chia sẻ chiếc xe của bạn với cộng đồng MoveVN." : "Bắt đầu hành trình cùng MoveVN."} onBack={() => navigation.goBack()} title={isOwner ? "Đăng ký chủ xe" : "Tạo tài khoản"} />
     {error ? <AuthNotice error message={error} /> : null}
-    <AuthField editable={!busy} icon={<UserRound color="#746F7E" size={19} />} label="Họ và tên" maxLength={200} onChangeText={(value) => update("fullName", value)} placeholder="Nguyễn Văn A" value={fields.fullName} />
-    <AuthField editable={!busy} icon={<Mail color="#746F7E" size={19} />} keyboardType="email-address" label="Email" onChangeText={(value) => update("email", value)} placeholder="ban@email.com" value={fields.email} />
-    <AuthField editable={!busy} icon={<Phone color="#746F7E" size={19} />} keyboardType="phone-pad" label="Số điện thoại" maxLength={10} onChangeText={(value) => update("phone", value)} placeholder="0912345678" value={fields.phone} />
-    <AuthField editable={!busy} icon={<LockKeyhole color="#746F7E" size={19} />} label="Mật khẩu" onChangeText={(value) => update("password", value)} password value={fields.password} />
-    <AuthField editable={!busy} icon={<ShieldCheck color="#746F7E" size={19} />} label="Xác nhận mật khẩu" onChangeText={(value) => update("confirmPassword", value)} password value={fields.confirmPassword} />
+    <AuthField editable={!busy} icon={<UserRound color={theme.muted} size={19} />} label="Họ và tên" maxLength={200} onChangeText={(value) => update("fullName", value)} placeholder="Nguyễn Văn A" value={fields.fullName} />
+    <AuthField editable={!busy} icon={<Mail color={theme.muted} size={19} />} keyboardType="email-address" label="Email" onChangeText={(value) => update("email", value)} placeholder="ban@email.com" value={fields.email} />
+    <AuthField editable={!busy} icon={<Phone color={theme.muted} size={19} />} keyboardType="phone-pad" label="Số điện thoại" maxLength={10} onChangeText={(value) => update("phone", value)} placeholder="0912345678" value={fields.phone} />
+    <AuthField editable={!busy} icon={<LockKeyhole color={theme.muted} size={19} />} label="Mật khẩu" onChangeText={(value) => update("password", value)} password value={fields.password} />
+    <AuthField editable={!busy} icon={<ShieldCheck color={theme.muted} size={19} />} label="Xác nhận mật khẩu" onChangeText={(value) => update("confirmPassword", value)} password value={fields.confirmPassword} />
     {!isOwner ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} onPress={() => setAccepted((value) => !value)} style={styles.terms}><View style={[styles.box, accepted && styles.boxSelected]}><Text style={styles.check}>{accepted ? "✓" : ""}</Text></View><Text style={styles.termsText}>Tôi đồng ý với chính sách bảo mật và điều khoản sử dụng.</Text></Pressable> : null}
     <AuthButton busy={busy} onPress={() => { void submit(); }} title={isOwner ? "Đăng ký chủ xe" : "Tạo tài khoản"} />
     <Pressable onPress={() => navigation.navigate("Login")}><Text style={styles.login}>Đã có tài khoản? <Text style={styles.link}>Đăng nhập</Text></Text></Pressable>
   </View></AuthScreenLayout>;
 }
 
-const styles = StyleSheet.create({ stack: { gap: 16 }, terms: { flexDirection: "row", alignItems: "flex-start", gap: 9 }, box: { width: 19, height: 19, borderRadius: 5, borderWidth: 1, borderColor: "#CFC5DD", alignItems: "center", justifyContent: "center" }, boxSelected: { borderColor: "#6B19FF", backgroundColor: "#6B19FF" }, check: { color: "#FFFFFF", fontSize: 13, fontWeight: "800" }, termsText: { flex: 1, color: "#625B6B", fontSize: 13, lineHeight: 20 }, login: { color: "#625B6B", textAlign: "center", fontSize: 14 }, link: { color: "#6B19FF", fontWeight: "700" } });
+const createStyles = (theme: Theme) => StyleSheet.create({ stack: { gap: 16 }, terms: { flexDirection: "row", alignItems: "flex-start", gap: 9 }, box: { width: 19, height: 19, borderRadius: 5, borderWidth: 1, borderColor: theme.border, alignItems: "center", justifyContent: "center" }, boxSelected: { borderColor: theme.brand, backgroundColor: theme.brand }, check: { color: theme.surface, fontSize: 13, fontWeight: "800" }, termsText: { flex: 1, color: theme.muted, fontSize: 13, lineHeight: 20 }, login: { color: theme.muted, textAlign: "center", fontSize: 14 }, link: { color: theme.brand, fontWeight: "700" } });

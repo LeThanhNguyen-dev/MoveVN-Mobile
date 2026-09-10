@@ -11,8 +11,9 @@ let storageQueue: Promise<void> = Promise.resolve();
 let hydration: Promise<AuthSession> | null = null;
 
 function roleFor(user: AuthUser | null, preferred: UserRole | null): UserRole | null {
-  return preferred && user?.roles.includes(preferred)
-    ? preferred : rolePriority.find((role) => user?.roles.includes(role)) ?? null;
+  const roles = user?.roles ?? [];
+  return preferred && roles.includes(preferred)
+    ? preferred : rolePriority.find((role) => roles.includes(role)) ?? null;
 }
 
 function persist(session: AuthSession, role: UserRole | null) {
@@ -53,7 +54,7 @@ export const useAuthStore = create<AuthState & { storageError: string | null }>(
     if (expected === generation) set({ user, activeRole });
   },
   setActiveRole: async (role) => {
-    if (!get().user?.roles.includes(role)) return;
+    if (!(get().user?.roles ?? []).includes(role)) return;
     const expected = generation;
     await persist({ token: get().token, user: get().user }, role);
     if (expected === generation) set({ activeRole: role });
