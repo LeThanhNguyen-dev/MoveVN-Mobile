@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     position: "relative",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#E8E1F2",
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   infoCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#E8E1F2",
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "180deg" }],
   },
   detailBox: {
-    backgroundColor: "#FAF6FF",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E8E1F2",
     borderRadius: 12,
