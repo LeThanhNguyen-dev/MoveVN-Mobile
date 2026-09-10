@@ -2,10 +2,10 @@ import { StyleSheet, Text, View } from "react-native";
 import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
 import type { AuthUser } from "@/features/auth/types";
 
-export default function CustomerExploreScreen({ user }: { user: AuthUser }) {
+export default function CustomerExploreScreen({ onAvatarPress, user }: { onAvatarPress?: () => void; user: AuthUser }) {
   return (
     <View style={styles.content}>
-      <AppDashboardHeader user={user} />
+      <AppDashboardHeader onAvatarPress={onAvatarPress} user={user} />
 
       <View style={styles.placeholder}>
         <Text style={styles.title}>Khám phá</Text>

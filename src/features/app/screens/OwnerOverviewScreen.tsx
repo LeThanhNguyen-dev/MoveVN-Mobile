@@ -3,10 +3,10 @@ import { StyleSheet, Text, View } from "react-native";
 import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
 import type { AuthUser } from "@/features/auth/types";
 
-export default function OwnerOverviewScreen({ user }: { user: AuthUser }) {
+export default function OwnerOverviewScreen({ onAvatarPress, user }: { onAvatarPress?: () => void; user: AuthUser }) {
   return (
     <View style={styles.content}>
-      <AppDashboardHeader user={user} />
+      <AppDashboardHeader onAvatarPress={onAvatarPress} user={user} />
 
       <View style={styles.placeholder}>
         <View style={styles.iconWrap}>
