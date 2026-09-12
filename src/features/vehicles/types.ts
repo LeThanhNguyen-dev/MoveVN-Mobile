@@ -16,6 +16,10 @@ export type VehicleListItemResponse = {
   featuredImage: string | null;
   averageRating: number;
   reviewCount: number;
+  distanceKm: number | null;
+  totalDynamicPrice: number | null;
+  rentalDays: number | null;
+  averageDailyPrice: number | null;
   nextAvailableDate: string | null;
   createdAt: string;
 };

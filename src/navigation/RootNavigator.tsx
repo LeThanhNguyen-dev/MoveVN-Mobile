@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import { useEffect, useMemo, useState } from "react";
+import { DarkTheme, DefaultTheme, NavigationContainer, type Theme as NavTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -28,7 +28,22 @@ export default function RootNavigator() {
   const activeRole = useAuthStore((state) => state.activeRole);
   const hydrated = useAuthStore((state) => state.isHydrated);
   const [startupError, setStartupError] = useState("");
-  const { mode } = useTheme();
+  const { mode, theme } = useTheme();
+
+  const navTheme: NavTheme = useMemo(() => {
+    const base = mode === "dark" ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: theme.brand,
+        background: theme.background,
+        card: theme.surface,
+        text: theme.text,
+        border: theme.border,
+      },
+    };
+  }, [mode, theme]);
 
   useEffect(() => {
     void initializeTheme();
@@ -39,7 +54,7 @@ export default function RootNavigator() {
   if (startupError && token) return <Startup label={startupError} />;
 
   const role = user ? getActiveLandingRole(user.roles, activeRole) : null;
-  return <NavigationContainer>
+  return <NavigationContainer theme={navTheme}>
     <StatusBar style={mode === "dark" ? "light" : "dark"} />
     {!token || !user ? <AuthNavigator />
       : role === "Customer" ? <CustomerNavigator user={user} />

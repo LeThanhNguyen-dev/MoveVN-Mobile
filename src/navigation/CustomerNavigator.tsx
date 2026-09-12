@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { CalendarCheck, Gift, LayoutGrid, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
-import CustomerExploreScreen from "@/features/app/screens/CustomerExploreScreen";
 import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
+import ExploreNavigator from "./ExploreNavigator";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
 import { useTheme } from "@/theme/useTheme";
 
@@ -23,7 +23,15 @@ const customerTabs: MobileTabItem<CustomerTabKey>[] = [
 export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
+  const [exploreRoute, setExploreRoute] = useState("ExploreMain");
   const { theme } = useTheme();
+
+  const handleExploreRouteChange = useCallback((routeName: string) => {
+    setExploreRoute(routeName);
+  }, []);
+
+  // Ẩn bottom bar khi vào List / Detail, chỉ hiện ở màn Khám phá chính.
+  const showBottomBar = activeTab !== "explore" || exploreRoute === "ExploreMain";
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -33,7 +41,11 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
         <>
           <View style={styles.screen}>
             {activeTab === "explore" ? (
-              <CustomerExploreScreen onAvatarPress={() => setShowProfile(true)} user={user} />
+              <ExploreNavigator
+                user={user}
+                onAvatarPress={() => setShowProfile(true)}
+                onRouteChange={handleExploreRouteChange}
+              />
             ) : activeTab === "trips" ? (
               <TabPlaceholderScreen
                 description="Các đơn thuê, lịch sử chuyến đi và trạng thái nhận/trả xe sẽ hiển thị ở đây."
@@ -56,7 +68,9 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
               <AccountTabScreen onProfilePress={() => setShowProfile(true)} user={user} />
             )}
           </View>
-          <MobileBottomBar activeKey={activeTab} items={customerTabs} onChange={setActiveTab} />
+          {showBottomBar ? (
+            <MobileBottomBar activeKey={activeTab} items={customerTabs} onChange={setActiveTab} />
+          ) : null}
         </>
       )}
     </SafeAreaView>

@@ -6,3 +6,20 @@ export type AuthStackParamList = {
   ResetPassword: { email: string };
   VerifyEmail: { email: string; purpose: "Register" | "VerifyEmail" };
 };
+
+export type ExploreStackParamList = {
+  ExploreMain: undefined;
+  VehicleList: {
+    type: "Car" | "Motorbike" | "";
+    province: string;
+    district: string;
+    areaId?: number;
+    startDate: string;
+    endDate: string;
+  };
+  VehicleDetail: {
+    vehicleId: number;
+    startDate?: string;
+    endDate?: string;
+  };
+};
