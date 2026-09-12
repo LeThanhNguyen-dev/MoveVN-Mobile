@@ -1,5 +1,5 @@
 import { CalendarDays, Car, MapPin, Motorbike, Search } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
 import type { AuthUser } from "@/features/auth/types";
@@ -10,6 +10,9 @@ import {
   formatPeriodSummary,
   getDefaultRentalPeriod,
 } from "@/features/vehicles/utils/rentalPeriod";
+import { loadSearchPrefs, saveSearchPrefs } from "@/features/vehicles/utils/searchPrefs";
+import { useFocusEffect } from "@react-navigation/native";
+import type { ExploreStackParamList } from "@/navigation/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
@@ -17,9 +20,11 @@ type VehicleTab = "Car" | "Motorbike";
 
 export default function CustomerExploreScreen({
   onAvatarPress,
+  onSearch,
   user,
 }: {
   onAvatarPress?: () => void;
+  onSearch?: (params: ExploreStackParamList["VehicleList"]) => void;
   user: AuthUser;
 }) {
   const { theme } = useTheme();
@@ -28,12 +33,30 @@ export default function CustomerExploreScreen({
   const [searchTab, setSearchTab] = useState<VehicleTab>("Car");
   const [province, setProvince] = useState("");
   const [district, setDistrict] = useState("");
+  const [areaId, setAreaId] = useState<number | undefined>(undefined);
   const [defaultPeriod] = useState(() => getDefaultRentalPeriod());
   const [startDate, setStartDate] = useState(defaultPeriod.startDate);
   const [endDate, setEndDate] = useState(defaultPeriod.endDate);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [areaVisible, setAreaVisible] = useState(false);
   const [error, setError] = useState("");
+
+  // Hiện sẵn địa điểm đã chọn lần gần nhất (lưu trên máy).
+  // Dùng focus (không chỉ mount) để quay về từ màn List vẫn thấy chỗ mới chọn.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      loadSearchPrefs().then((prefs) => {
+        if (cancelled || !prefs) return;
+        setProvince(prefs.province);
+        setDistrict(prefs.district);
+        setAreaId(prefs.areaId);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
 
   const rentalDays = calculateRentalDays(startDate, endDate);
   const periodText = formatPeriodSummary(startDate, endDate);
@@ -53,8 +76,15 @@ export default function CustomerExploreScreen({
       return;
     }
     setError("");
-    // TODO: navigate sang màn kết quả với params
-    // { type: searchTab, province, district, startDate, endDate }
+    void saveSearchPrefs({ province, district, areaId });
+    onSearch?.({
+      type: searchTab,
+      province,
+      district,
+      areaId,
+      startDate,
+      endDate,
+    });
   }
 
   return (
@@ -148,9 +178,11 @@ export default function CustomerExploreScreen({
         visible={areaVisible}
         province={province}
         district={district}
-        onApply={(p, d) => {
+        onApply={(p, d, id) => {
           setProvince(p);
           setDistrict(d);
+          setAreaId(id);
+          void saveSearchPrefs({ province: p, district: d, areaId: id });
         }}
         onClose={() => setAreaVisible(false)}
       />
