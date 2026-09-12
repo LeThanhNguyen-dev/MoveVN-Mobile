@@ -1,16 +1,17 @@
+import { Image } from "expo-image";
 import { Bike, Car, Heart, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react-native";
-import { useMemo, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { memo, useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { VehicleListItemResponse } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
 type VehicleListCardProps = {
   vehicle: VehicleListItemResponse;
-  onOpen: () => void;
-  onBook: () => void;
+  onOpen: (vehicleId: number) => void;
+  onBook: (vehicleId: number) => void;
   isFavorite?: boolean;
-  onToggleFavorite?: () => void;
+  onToggleFavorite?: (vehicleId: number) => void;
   favoriteLoading?: boolean;
 };
 
@@ -39,7 +40,7 @@ function getStatusLabel(vehicle: VehicleListItemResponse): string | null {  cons
   return null;
 }
 
-export default function VehicleListCard({
+function VehicleListCard({
   vehicle,
   onOpen,
   onBook,
@@ -62,12 +63,15 @@ export default function VehicleListCard({
   const showImage = vehicle.featuredImage && !imageFailed;
 
   return (
-    <Pressable onPress={onOpen} style={styles.card}>
+    <Pressable onPress={() => onOpen(vehicle.id)} style={styles.card}>
       <View style={styles.imageWrap}>
         {showImage ? (
           <Image
             source={{ uri: vehicle.featuredImage ?? "" }}
             style={styles.image}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={250}
             onError={() => setImageFailed(true)}
           />
         ) : (
@@ -85,7 +89,7 @@ export default function VehicleListCard({
         {onToggleFavorite ? (
           <Pressable
             disabled={favoriteLoading}
-            onPress={onToggleFavorite}
+            onPress={() => onToggleFavorite(vehicle.id)}
             style={styles.heart}
             accessibilityLabel={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
           >
@@ -149,13 +153,15 @@ export default function VehicleListCard({
           </View>
         </View>
 
-        <Pressable onPress={onBook} style={styles.bookButton}>
+        <Pressable onPress={() => onBook(vehicle.id)} style={styles.bookButton}>
           <Text style={styles.bookText}>Đặt ngay</Text>
         </Pressable>
       </View>
     </Pressable>
   );
 }
+
+export default memo(VehicleListCard);
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({

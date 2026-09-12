@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { ArrowLeft, CalendarDays, Check, ChevronDown, MapPin, SlidersHorizontal, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -16,6 +17,7 @@ import type { ExploreStackParamList } from "@/navigation/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import VehicleListCard, { formatVehicleCurrency } from "@/features/vehicles/components/VehicleListCard";
+import VehicleCardSkeleton from "@/features/vehicles/components/VehicleCardSkeleton";
 import VehicleFilterSheet, {
   EMPTY_FILTERS,
   getFuelLabel,
@@ -138,6 +140,13 @@ export default function VehicleListScreen({
         setPage(result.page);
         setTotalPages(result.totalPages);
         setTotalCount(result.totalCount);
+        const urls = result.items.map((item) => item.featuredImage).filter((u): u is string => !!u);
+        if (urls.length > 0) {
+          Image.prefetch(urls).then(
+            () => undefined,
+            () => undefined,
+          );
+        }
       } catch {
         if (replace) setError("Không tải được danh sách xe. Kéo xuống để thử lại.");
       } finally {
@@ -196,6 +205,36 @@ export default function VehicleListScreen({
       endDate,
     });
   }
+
+  const handleOpenCard = useCallback(
+    (vehicleId: number) => {
+      openDetail(vehicleId);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [navigation, startDate, endDate],
+  );
+
+  const handleToggleFavoriteCard = useCallback(
+    (vehicleId: number) => {
+      void handleToggleFavorite(vehicleId);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [favoriteIds, favLoadingId],
+  );
+
+  const renderCard = useCallback(
+    ({ item }: { item: VehicleListItemResponse }) => (
+      <VehicleListCard
+        vehicle={item}
+        onOpen={handleOpenCard}
+        onBook={handleOpenCard}
+        isFavorite={favoriteIds.has(item.id)}
+        favoriteLoading={favLoadingId === item.id}
+        onToggleFavorite={handleToggleFavoriteCard}
+      />
+    ),
+    [favoriteIds, favLoadingId, handleOpenCard, handleToggleFavoriteCard],
+  );
 
   const chips: Chip[] = useMemo(() => {
     const list: Chip[] = [];
@@ -336,6 +375,11 @@ export default function VehicleListScreen({
       <FlatList
         data={items}
         keyExtractor={(item) => String(item.id)}
+        renderItem={renderCard}
+        windowSize={7}
+        maxToRenderPerBatch={6}
+        initialNumToRender={6}
+        removeClippedSubviews
         contentContainerStyle={[styles.list, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.4}
@@ -355,10 +399,13 @@ export default function VehicleListScreen({
             ) : null}
             <View style={styles.countRow}>
               <Text style={styles.countText}>
-                {loading
+                {loading && items.length === 0
                   ? "Đang tìm xe..."
                   : `Tìm thấy ${totalCount} xe${rentalDays > 0 ? ` · ${rentalDays} ngày` : ""}`}
               </Text>
+              {loading && items.length > 0 ? (
+                <ActivityIndicator size="small" color={theme.brand} />
+              ) : null}
               <Pressable onPress={() => setSortVisible(true)} style={styles.sortButton}>
                 <Text numberOfLines={1} style={styles.sortText}>
                   {sortLabel}
@@ -369,21 +416,13 @@ export default function VehicleListScreen({
             {error ? <Text style={styles.error}>{error}</Text> : null}
           </View>
         }
-        renderItem={({ item }) => (
-          <VehicleListCard
-            vehicle={item}
-            onOpen={() => openDetail(item.id)}
-            onBook={() => openDetail(item.id)}
-            isFavorite={favoriteIds.has(item.id)}
-            favoriteLoading={favLoadingId === item.id}
-            onToggleFavorite={() => void handleToggleFavorite(item.id)}
-          />
-        )}
         ListEmptyComponent={
           loading ? (
-            <View style={styles.center}>
-              <ActivityIndicator color={theme.brand} />
-              <Text style={styles.muted}>Đang tìm xe phù hợp...</Text>
+            <View style={styles.skeletons}>
+              <VehicleCardSkeleton />
+              <VehicleCardSkeleton />
+              <VehicleCardSkeleton />
+              <VehicleCardSkeleton />
             </View>
           ) : (
             <View style={styles.center}>
@@ -441,7 +480,7 @@ export default function VehicleListScreen({
       <Modal visible={sortVisible} transparent animationType="fade" onRequestClose={() => setSortVisible(false)}>
         <View style={styles.sortOverlay}>
           <Pressable style={styles.sortBackdrop} onPress={() => setSortVisible(false)} />
-          <View style={styles.sortSheet}>
+          <View style={[styles.sortSheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
             <Text style={styles.sortTitle}>Sắp xếp</Text>
             {SORT_OPTIONS.map((o) => {
               const active = sortBy === o.value;
@@ -547,6 +586,7 @@ const createStyles = (theme: Theme) =>
     sortText: { color: theme.muted, fontSize: 12, fontWeight: "700", flexShrink: 1 },
     error: { color: theme.danger, fontSize: 12, fontWeight: "600" },
     center: { alignItems: "center", paddingVertical: 48, gap: 8 },
+    skeletons: { gap: 12 },
     muted: { color: theme.muted, fontSize: 13 },
     emptyTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
     resetButton: {

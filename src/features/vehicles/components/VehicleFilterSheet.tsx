@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { CatalogBrand, CatalogModel } from "@/features/vehicles/types";
@@ -133,6 +134,7 @@ export default function VehicleFilterSheet({
   onClose,
 }: VehicleFilterSheetProps) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -300,8 +302,10 @@ export default function VehicleFilterSheet({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng bộ lọc" />
-        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
+      <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng bộ lọc" />
+      <Animated.View
+        style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16), transform: [{ translateY }] }]}
+      >
           <View style={styles.handle} />
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Bộ lọc</Text>
