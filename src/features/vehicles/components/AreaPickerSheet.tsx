@@ -129,7 +129,14 @@ export default function AreaPickerSheet({
   const canApply = Boolean(draftProvince);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal
+      visible={visible}
+      transparent
+      statusBarTranslucent
+      navigationBarTranslucent
+      animationType="fade"
+      onRequestClose={handleClose}
+    >
       <View style={styles.overlay}>
       <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng chọn địa điểm" />
       <Animated.View

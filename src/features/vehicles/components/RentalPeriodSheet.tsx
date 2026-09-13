@@ -203,7 +203,14 @@ export default function RentalPeriodSheet({
   });
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal
+      visible={visible}
+      transparent
+      statusBarTranslucent
+      navigationBarTranslucent
+      animationType="fade"
+      onRequestClose={handleClose}
+    >
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng lịch" />
         <Animated.View

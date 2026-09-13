@@ -300,7 +300,14 @@ export default function VehicleFilterSheet({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal
+      visible={visible}
+      transparent
+      statusBarTranslucent
+      navigationBarTranslucent
+      animationType="fade"
+      onRequestClose={handleClose}
+    >
       <View style={styles.overlay}>
       <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng bộ lọc" />
       <Animated.View

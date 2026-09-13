@@ -477,7 +477,14 @@ export default function VehicleListScreen({
         onClose={() => setPeriodVisible(false)}
       />
 
-      <Modal visible={sortVisible} transparent animationType="fade" onRequestClose={() => setSortVisible(false)}>
+      <Modal
+        visible={sortVisible}
+        transparent
+        statusBarTranslucent
+        navigationBarTranslucent
+        animationType="fade"
+        onRequestClose={() => setSortVisible(false)}
+      >
         <View style={styles.sortOverlay}>
           <Pressable style={styles.sortBackdrop} onPress={() => setSortVisible(false)} />
           <View style={[styles.sortSheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>

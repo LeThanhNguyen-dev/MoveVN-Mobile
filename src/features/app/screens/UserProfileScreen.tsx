@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react-native";
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { toApiError, updateProfile, uploadAvatar } from "@/features/auth/services/authService";
 import type { AuthUser, UserRole } from "@/features/auth/types";
@@ -59,6 +60,7 @@ function maskAccountNumber(value?: string | null) {
 }
 
 export default function UserProfileScreen({ onBack, user }: { onBack: () => void; user: AuthUser }) {
+  const insets = useSafeAreaInsets();
   const updateUser = useAuthStore((state) => state.updateUser);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [fullName, setFullName] = useState(user.fullName);
@@ -343,7 +345,14 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
         </View>
       </ScrollView>
 
-      <Modal animationType="slide" onRequestClose={handleCloseSheet} transparent visible={sheetVisible}>
+      <Modal
+        animationType="slide"
+        onRequestClose={handleCloseSheet}
+        transparent
+        statusBarTranslucent
+        navigationBarTranslucent
+        visible={sheetVisible}
+      >
         <View style={styles.sheetOverlay}>
           <Pressable
             accessibilityLabel="Đóng"
@@ -367,7 +376,13 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <View style={styles.sheetHeaderSpacer} />
             </View>
 
-            <ScrollView contentContainerStyle={styles.sheetBody} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              contentContainerStyle={[
+                styles.sheetBody,
+                { paddingBottom: Math.max(insets.bottom, 28) },
+              ]}
+              showsVerticalScrollIndicator={false}
+            >
               <View style={styles.sheetAvatarWrap}>
                 <Pressable
                   accessibilityLabel="Đổi ảnh đại diện"
