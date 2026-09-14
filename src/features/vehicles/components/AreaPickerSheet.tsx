@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { CatalogArea } from "@/features/vehicles/types";
@@ -34,6 +35,7 @@ export default function AreaPickerSheet({
   onClose,
 }: AreaPickerSheetProps) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -127,10 +129,19 @@ export default function AreaPickerSheet({
   const canApply = Boolean(draftProvince);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal
+      visible={visible}
+      transparent
+      statusBarTranslucent
+      navigationBarTranslucent
+      animationType="fade"
+      onRequestClose={handleClose}
+    >
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng chọn địa điểm" />
-        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
+      <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng chọn địa điểm" />
+      <Animated.View
+        style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16), transform: [{ translateY }] }]}
+      >
           <View style={styles.handle} />
           <View style={styles.header}>
             <View style={styles.headerLeft}>

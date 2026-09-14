@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import {
@@ -111,6 +112,7 @@ export default function RentalPeriodSheet({
   onClose,
 }: RentalPeriodSheetProps) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -201,10 +203,19 @@ export default function RentalPeriodSheet({
   });
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal
+      visible={visible}
+      transparent
+      statusBarTranslucent
+      navigationBarTranslucent
+      animationType="fade"
+      onRequestClose={handleClose}
+    >
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng lịch" />
-        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
+        <Animated.View
+          style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16), transform: [{ translateY }] }]}
+        >
           <View style={styles.handle} />
           <View style={styles.header}>
             <View>
