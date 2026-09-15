@@ -14,6 +14,7 @@ type PricedVehicle = Pick<
 > & {
   currentPricePerDay?: number | null;
   pricingMode?: "Fixed" | "Auto" | null;
+  fixedPricePerDay?: number | null;
   autoMinPrice?: number | null;
 };
 
@@ -21,6 +22,9 @@ type PricedVehicle = Pick<
 export function getMinPrice(vehicle: PricedVehicle): number | null {
   if (vehicle.pricingMode === "Auto" && vehicle.autoMinPrice != null && vehicle.autoMinPrice > 0) {
     return vehicle.autoMinPrice;
+  }
+  if (vehicle.fixedPricePerDay != null && vehicle.fixedPricePerDay > 0) {
+    return vehicle.fixedPricePerDay;
   }
   const current = (vehicle as { currentPricePerDay?: number | null }).currentPricePerDay;
   if (current != null && current > 0) return current;
@@ -34,6 +38,14 @@ export function formatMinPrice(vehicle: PricedVehicle): string {
 }
 
 export type OwnerVehicleStatus = "Pending" | "Approved" | "Hidden" | "Rejected";
+
+export function formatOwnerVehiclePrice(vehicle: PricedVehicle): string {
+  const price = getMinPrice(vehicle);
+  if (price == null) return "Liên hệ";
+  return vehicle.pricingMode === "Auto"
+    ? `từ ${formatVnd(price)}/ngày`
+    : `${formatVnd(price)}/ngày`;
+}
 
 export const OWNER_STATUS_META: Record<string, { label: string }> = {
   Pending: { label: "Chờ duyệt" },

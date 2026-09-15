@@ -25,6 +25,7 @@ import type {
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import FormDropdownSheet from "@/features/vehicles/components/FormDropdownSheet";
+import PricingModeHelp from "@/features/vehicles/components/PricingModeHelp";
 import { getVehicleErrorMessage } from "@/features/vehicles/vehicleDisplay";
 import {
   createVehicle,
@@ -614,7 +615,10 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
               </View>
             ) : null}
 
-            <Text style={styles.fieldLabel}>Hình thức định giá</Text>
+            <View style={styles.fieldLabelRow}>
+              <Text style={[styles.fieldLabel, styles.fieldLabelInline]}>Hình thức định giá</Text>
+              <PricingModeHelp />
+            </View>
             <View style={styles.modeRow}>
               {(["Fixed", "Auto"] as const).map((m) => {
                 const active = pricingMode === m;
@@ -833,6 +837,8 @@ const createStyles = (theme: Theme) =>
     typeHint: { color: theme.muted, fontSize: 11, textAlign: "center" },
     fieldGroup: { gap: 10 },
     fieldLabel: { color: theme.muted, fontSize: 12, fontWeight: "700", marginTop: 4 },
+    fieldLabelInline: { marginTop: 0 },
+    fieldLabelRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
     input: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, borderRadius: 12, backgroundColor: theme.surface, paddingHorizontal: 12, height: 46, color: theme.text, fontSize: 14 },
     textArea: { height: 84, paddingVertical: 10, textAlignVertical: "top" },
     twoCol: { flexDirection: "row", gap: 10 },

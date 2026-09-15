@@ -12,6 +12,10 @@ export type VehicleListItemResponse = {
   securityDepositAmount: number;
   areaName: string | null;
   pricingMode: "Fixed" | "Auto" | null;
+  fixedPricePerDay: number | null;
+  autoMinPrice: number | null;
+  autoMaxPrice: number | null;
+  currentPricePerDay: number | null;
   status: string;
   featuredImage: string | null;
   averageRating: number;

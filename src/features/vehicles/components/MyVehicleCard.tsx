@@ -7,7 +7,7 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import {
   canToggleStatus,
-  formatMinPrice,
+  formatOwnerVehiclePrice,
   getOwnerStatusLabel,
   vehicleTypeLabel,
 } from "@/features/vehicles/ownerDisplay";
@@ -100,7 +100,7 @@ function MyVehicleCard({ vehicle, onOpen, toggling = false, onToggleStatus }: My
           </View>
         ) : null}
         <View style={styles.priceRow}>
-          <Text style={styles.price}>{formatMinPrice(vehicle)}</Text>
+          <Text style={styles.price}>{formatOwnerVehiclePrice(vehicle)}</Text>
           {vehicle.pricingMode === "Auto" ? (
             <View style={styles.autoTag}>
               <Text style={styles.autoTagText}>Giá tự động</Text>
