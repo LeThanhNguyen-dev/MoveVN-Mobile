@@ -36,16 +36,22 @@ const defaultByType: Record<
   Custom: { name: "Phí khác", calculationMethod: "Fixed", description: "" },
 };
 
-function minutesToHoursInput(minutes?: number | null) {
-  if (minutes == null) return "";
-  const hours = Number(minutes) / 60;
-  return Number.isInteger(hours) ? String(hours) : String(Number(hours.toFixed(2)));
+/** Ưu tiên giờ, fallback dữ liệu cũ (phút) quy đổi sang giờ. */
+function resolveHours(hours?: number | null, minutes?: number | null) {
+  if (hours != null && Number(hours) >= 0) return Number(hours);
+  if (minutes != null && Number(minutes) >= 0) return Number(minutes) / 60;
+  return null;
 }
 
-function hoursInputToMinutes(value: string) {
-  if (!value.trim()) return null;
-  const hours = Number(value);
-  return Number.isFinite(hours) && hours >= 0 ? Math.round(hours * 60) : null;
+function hoursInputValue(hours?: number | null) {
+  if (hours == null) return "";
+  return Number.isInteger(hours) ? String(hours) : String(Number(Number(hours).toFixed(2)));
+}
+
+function parseHoursInput(text: string) {
+  if (!text.trim()) return null;
+  const hours = Number(text);
+  return Number.isFinite(hours) && hours >= 0 ? hours : null;
 }
 
 export function isSurchargePoliciesValid(policies: VehicleSurchargePolicy[]) {
@@ -55,16 +61,27 @@ export function isSurchargePoliciesValid(policies: VehicleSurchargePolicy[]) {
 export function normalizeSurchargePolicies(policies: VehicleSurchargePolicy[]) {
   return policies
     .filter((policy) => policy.name.trim() && Number(policy.unitPrice) > 0)
-    .map((policy) => ({
-      ...policy,
-      unitPrice: Number(policy.unitPrice),
-      includedKm: policy.includedKm != null && Number(policy.includedKm) >= 0 ? Number(policy.includedKm) : null,
-      lateGraceMinutes: policy.lateGraceMinutes != null && Number(policy.lateGraceMinutes) >= 0 ? Number(policy.lateGraceMinutes) : null,
-      lateDayThresholdMinutes:
-        policy.lateDayThresholdMinutes != null && Number(policy.lateDayThresholdMinutes) >= 0 ? Number(policy.lateDayThresholdMinutes) : null,
-      lateDailyRate: policy.lateDailyRate != null && Number(policy.lateDailyRate) > 0 ? Number(policy.lateDailyRate) : null,
-      maxAmount: policy.maxAmount != null && Number(policy.maxAmount) > 0 ? Number(policy.maxAmount) : null,
-    }));
+    .map((policy) => {
+      const lateGraceHours =
+        policy.lateGraceHours != null && Number(policy.lateGraceHours) >= 0
+          ? Number(policy.lateGraceHours)
+          : resolveHours(policy.lateGraceHours, policy.lateGraceMinutes);
+      const lateDayThresholdHours =
+        policy.lateDayThresholdHours != null && Number(policy.lateDayThresholdHours) >= 0
+          ? Number(policy.lateDayThresholdHours)
+          : resolveHours(policy.lateDayThresholdHours, policy.lateDayThresholdMinutes);
+      return {
+        ...policy,
+        unitPrice: Number(policy.unitPrice),
+        includedKm: policy.includedKm != null && Number(policy.includedKm) >= 0 ? Number(policy.includedKm) : null,
+        lateGraceHours,
+        lateDayThresholdHours,
+        lateGraceMinutes: lateGraceHours != null ? Math.round(lateGraceHours * 60) : null,
+        lateDayThresholdMinutes: lateDayThresholdHours != null ? Math.round(lateDayThresholdHours * 60) : null,
+        lateDailyRate: policy.lateDailyRate != null && Number(policy.lateDailyRate) > 0 ? Number(policy.lateDailyRate) : null,
+        maxAmount: policy.maxAmount != null && Number(policy.maxAmount) > 0 ? Number(policy.maxAmount) : null,
+      };
+    });
 }
 
 function numberText(value?: number | null) {
@@ -95,6 +112,8 @@ export default function SurchargePolicyEditor({ value, onChange }: Props) {
         unitPrice: 0,
         includedKm: type === "ExcessMileage" ? 300 : null,
         allowanceScope: type === "ExcessMileage" ? "PerDay" : null,
+        lateGraceHours: type === "LateReturn" ? 1 : null,
+        lateDayThresholdHours: type === "LateReturn" ? 6 : null,
         lateGraceMinutes: type === "LateReturn" ? 60 : null,
         lateDayThresholdMinutes: type === "LateReturn" ? 360 : null,
         lateDailyRate: null,
@@ -118,7 +137,7 @@ export default function SurchargePolicyEditor({ value, onChange }: Props) {
       <View style={styles.header}>
         <View style={styles.headerText}>
           <Text style={styles.title}>Phụ phí có thể phát sinh</Text>
-          <Text style={styles.sub}>Chỉ cấu hình quy định cho xe, chưa tính vào booking ở bước này.</Text>
+          <Text style={styles.sub}>Chỉ cấu hình quy định cho xe, chưa tính vào booking ở bước này. Thời gian tính theo giờ.</Text>
         </View>
         <Pressable onPress={() => addPolicy()} style={styles.addBtn}>
           <Plus color={theme.onBrand} size={14} />
@@ -224,11 +243,31 @@ export default function SurchargePolicyEditor({ value, onChange }: Props) {
               <View style={styles.twoCol}>
                 <View style={styles.col}>
                   <Text style={styles.label}>Miễn trễ (giờ)</Text>
-                  <TextInput value={minutesToHoursInput(policy.lateGraceMinutes)} onChangeText={(text) => update(index, { lateGraceMinutes: hoursInputToMinutes(text) })} keyboardType="numeric" style={styles.input} />
+                  <TextInput
+                    value={hoursInputValue(resolveHours(policy.lateGraceHours, policy.lateGraceMinutes))}
+                    onChangeText={(text) => {
+                      const hours = parseHoursInput(text);
+                      update(index, { lateGraceHours: hours, lateGraceMinutes: hours != null ? Math.round(hours * 60) : null });
+                    }}
+                    keyboardType="numeric"
+                    placeholder="VD: 1"
+                    placeholderTextColor={theme.placeholder}
+                    style={styles.input}
+                  />
                 </View>
                 <View style={styles.col}>
                   <Text style={styles.label}>Ngưỡng 1 ngày (giờ)</Text>
-                  <TextInput value={minutesToHoursInput(policy.lateDayThresholdMinutes)} onChangeText={(text) => update(index, { lateDayThresholdMinutes: hoursInputToMinutes(text) })} keyboardType="numeric" style={styles.input} />
+                  <TextInput
+                    value={hoursInputValue(resolveHours(policy.lateDayThresholdHours, policy.lateDayThresholdMinutes))}
+                    onChangeText={(text) => {
+                      const hours = parseHoursInput(text);
+                      update(index, { lateDayThresholdHours: hours, lateDayThresholdMinutes: hours != null ? Math.round(hours * 60) : null });
+                    }}
+                    keyboardType="numeric"
+                    placeholder="VD: 6"
+                    placeholderTextColor={theme.placeholder}
+                    style={styles.input}
+                  />
                 </View>
               </View>
               <Text style={styles.label}>Giá/ngày trễ</Text>

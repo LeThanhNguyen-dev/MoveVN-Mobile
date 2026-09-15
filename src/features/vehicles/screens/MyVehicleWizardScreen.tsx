@@ -27,6 +27,7 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import FormDropdownSheet from "@/features/vehicles/components/FormDropdownSheet";
 import PricingModeHelp from "@/features/vehicles/components/PricingModeHelp";
+import AddressAutocomplete from "@/features/locations/components/AddressAutocomplete";
 import SurchargePolicyEditor, {
   isSurchargePoliciesValid,
   normalizeSurchargePolicies,
@@ -83,6 +84,8 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const [odometerKm, setOdometerKm] = useState("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
 
   const [areas, setAreas] = useState<CatalogArea[]>([]);
   const [province, setProvince] = useState("");
@@ -130,6 +133,8 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         setOdometerKm(v.odometerKm != null ? String(v.odometerKm) : "");
         setDescription(v.description ?? "");
         setAddress(v.address);
+        setLatitude(v.latitude ?? null);
+        setLongitude(v.longitude ?? null);
         setAreaId(v.areaId);
         const prov = areas.find((a) => a.id === v.areaId)?.province ?? "";
         if (prov) setProvince(prov);
@@ -313,6 +318,8 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
           description: description.trim() || null,
           address: address.trim(),
           areaId,
+          latitude,
+          longitude,
           pricePerDay,
           depositPercent: Number(depositPercent),
           securityRequiresDeposit: requiresDeposit,
@@ -340,6 +347,8 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         description: description.trim() || null,
         address: address.trim(),
         areaId,
+        latitude,
+        longitude,
         pricePerDay,
         depositPercent: Number(depositPercent),
         securityRequiresDeposit: requiresDeposit,
@@ -597,14 +606,23 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
               }}
               disabled={!province}
             />
-            <Text style={styles.fieldLabel}>Địa chỉ chi tiết *</Text>
-            <TextInput
+            <AddressAutocomplete
               value={address}
-              onChangeText={setAddress}
-              placeholder="Số nhà, đường..."
-              placeholderTextColor={theme.placeholder}
-              style={styles.input}
+              onChange={setAddress}
+              onSelect={(selected) => {
+                setLatitude(selected.latitude);
+                setLongitude(selected.longitude);
+              }}
+              onManualChange={() => {
+                setLatitude(null);
+                setLongitude(null);
+              }}
+              label="Địa chỉ chi tiết *"
+              placeholder="Số nhà, đường... (gõ để xem gợi ý)"
             />
+            {latitude != null && longitude != null ? (
+              <Text style={styles.coordsHint}>Đã ghim tọa độ xe ({latitude.toFixed(5)}, {longitude.toFixed(5)}).</Text>
+            ) : null}
 
             {suggestion?.hasSuggestion ? (
               <View style={styles.suggestBox}>
@@ -901,6 +919,7 @@ const createStyles = (theme: Theme) =>
     summaryLine: { color: theme.text, fontSize: 13, fontWeight: "600" },
     docPreview: { width: "100%", height: 180, borderRadius: 12, backgroundColor: theme.surfaceAlt },
     errorText: { color: theme.danger, fontSize: 12, fontWeight: "600" },
+    coordsHint: { color: theme.brand, fontSize: 12, fontWeight: "600" },
     muted: { color: theme.muted, fontSize: 13 },
     bottomBar: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", gap: 10, backgroundColor: theme.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border, paddingHorizontal: 16, paddingTop: 10 },
     backBtn: { flex: 1, height: 48, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4 },

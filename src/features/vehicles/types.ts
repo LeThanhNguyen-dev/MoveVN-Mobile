@@ -50,7 +50,11 @@ export type VehicleSurchargePolicy = {
   unitPrice: number;
   includedKm?: number | null;
   allowanceScope?: "PerBooking" | "PerDay" | null;
+  lateGraceHours?: number | null;
+  lateDayThresholdHours?: number | null;
+  /** @deprecated Chỉ giữ để đọc dữ liệu cũ (phút). Luôn dùng giờ khi ghi mới. */
   lateGraceMinutes?: number | null;
+  /** @deprecated Chỉ giữ để đọc dữ liệu cũ (phút). Luôn dùng giờ khi ghi mới. */
   lateDayThresholdMinutes?: number | null;
   lateDailyRate?: number | null;
   maxAmount?: number | null;

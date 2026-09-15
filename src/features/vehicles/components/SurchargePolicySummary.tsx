@@ -21,9 +21,21 @@ function calculationLabel(policy: VehicleSurchargePolicy) {
   return formatCurrency(policy.unitPrice);
 }
 
-function formatHours(minutes: number) {
-  const hours = minutes / 60;
-  return Number.isInteger(hours) ? String(hours) : hours.toFixed(1).replace(/\.0$/, "");
+/** Ưu tiên giờ, fallback dữ liệu cũ (phút) quy đổi sang giờ. */
+function resolveGraceHours(policy: VehicleSurchargePolicy): number | null {
+  if (policy.lateGraceHours != null && Number(policy.lateGraceHours) >= 0) return Number(policy.lateGraceHours);
+  if (policy.lateGraceMinutes != null && Number(policy.lateGraceMinutes) >= 0) return Number(policy.lateGraceMinutes) / 60;
+  return null;
+}
+
+function resolveDayThresholdHours(policy: VehicleSurchargePolicy): number | null {
+  if (policy.lateDayThresholdHours != null && Number(policy.lateDayThresholdHours) >= 0) return Number(policy.lateDayThresholdHours);
+  if (policy.lateDayThresholdMinutes != null && Number(policy.lateDayThresholdMinutes) >= 0) return Number(policy.lateDayThresholdMinutes) / 60;
+  return null;
+}
+
+function formatHours(hours: number) {
+  return Number.isInteger(hours) ? String(hours) : String(Number(hours.toFixed(2)));
 }
 
 function SurchargeDescription({ policy, styles }: { policy: VehicleSurchargePolicy; styles: ReturnType<typeof createStyles> }) {
@@ -42,17 +54,19 @@ function SurchargeDescription({ policy, styles }: { policy: VehicleSurchargePoli
   }
 
   if (policy.feeType === "LateReturn") {
+    const graceHours = resolveGraceHours(policy);
+    const dayThresholdHours = resolveDayThresholdHours(policy);
     return (
       <Text style={styles.desc}>
         Phụ phí phát sinh nếu hoàn trả xe trễ giờ
-        {policy.lateGraceMinutes != null && policy.lateGraceMinutes > 0 ? (
+        {graceHours != null && graceHours > 0 ? (
           <>
-            , miễn trễ <Text style={styles.bold}>{formatHours(policy.lateGraceMinutes)} giờ</Text> đầu
+            , miễn trễ <Text style={styles.bold}>{formatHours(graceHours)} giờ</Text> đầu
           </>
         ) : null}
-        {policy.lateDayThresholdMinutes != null && policy.lateDayThresholdMinutes > 0 ? (
+        {dayThresholdHours != null && dayThresholdHours > 0 ? (
           <>
-            . Trường hợp trễ quá <Text style={styles.bold}>{formatHours(policy.lateDayThresholdMinutes)} giờ</Text> phụ phí thêm{" "}
+            . Trường hợp trễ quá <Text style={styles.bold}>{formatHours(dayThresholdHours)} giờ</Text> phụ phí thêm{" "}
             <Text style={styles.bold}>1 ngày</Text>
           </>
         ) : null}
