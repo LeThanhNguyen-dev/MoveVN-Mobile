@@ -10,6 +10,7 @@ import { useTheme } from "@/theme/useTheme";
 import { getPublicVehicleById } from "@/features/vehicles/services/publicVehicleService";
 import type { VehicleResponse } from "@/features/vehicles/types";
 import { formatPeriodSummary } from "@/features/vehicles/utils/rentalPeriod";
+import SurchargePolicySummary from "@/features/vehicles/components/SurchargePolicySummary";
 
 type DetailRoute = RouteProp<ExploreStackParamList, "VehicleDetail">;
 type DetailNav = NativeStackNavigationProp<ExploreStackParamList, "VehicleDetail">;
@@ -70,6 +71,7 @@ export default function VehicleDetailScreen({
           {startDate || endDate ? (
             <Text style={styles.period}>{formatPeriodSummary(startDate ?? "", endDate ?? "")}</Text>
           ) : null}
+          <SurchargePolicySummary policies={vehicle.surchargePolicies} />
           <Text style={styles.muted}>Gallery, bản đồ, đánh giá và đặt xe sẽ làm ở bước tiếp theo.</Text>
         </View>
       )}

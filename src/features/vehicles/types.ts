@@ -12,6 +12,10 @@ export type VehicleListItemResponse = {
   securityDepositAmount: number;
   areaName: string | null;
   pricingMode: "Fixed" | "Auto" | null;
+  fixedPricePerDay: number | null;
+  autoMinPrice: number | null;
+  autoMaxPrice: number | null;
+  currentPricePerDay: number | null;
   status: string;
   featuredImage: string | null;
   averageRating: number;
@@ -34,6 +38,29 @@ export type VehicleImageResponse = {
 export type VehicleFeatureResponse = {
   id: number;
   name: string;
+};
+
+export type VehicleSurchargePolicy = {
+  id?: number | null;
+  vehicleId?: number;
+  feeType: "ExcessMileage" | "LateReturn" | "Cleaning" | "Deodorization" | "Custom";
+  name: string;
+  description?: string | null;
+  calculationMethod: "PerKm" | "PerHour" | "PerDay" | "Fixed";
+  unitPrice: number;
+  includedKm?: number | null;
+  allowanceScope?: "PerBooking" | "PerDay" | null;
+  lateGraceHours?: number | null;
+  lateDayThresholdHours?: number | null;
+  /** @deprecated Chỉ giữ để đọc dữ liệu cũ (phút). Luôn dùng giờ khi ghi mới. */
+  lateGraceMinutes?: number | null;
+  /** @deprecated Chỉ giữ để đọc dữ liệu cũ (phút). Luôn dùng giờ khi ghi mới. */
+  lateDayThresholdMinutes?: number | null;
+  lateDailyRate?: number | null;
+  maxAmount?: number | null;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type VehicleDocumentResponse = {
@@ -99,6 +126,7 @@ export type VehicleResponse = {
   featuredImage: string | null;
   images: VehicleImageResponse[];
   features: VehicleFeatureResponse[];
+  surchargePolicies: VehicleSurchargePolicy[];
   documents: VehicleDocumentResponse[];
   busyPeriods: BusyPeriod[];
   createdAt: string;
@@ -129,6 +157,7 @@ export type CreateVehicleRequest = {
   imageUrls: string[];
   featuredImageIndex: number;
   documentFileUrl?: string | null;
+  surchargePolicies?: VehicleSurchargePolicy[];
 };
 
 export type UpdateVehicleRequest = {
@@ -145,6 +174,7 @@ export type UpdateVehicleRequest = {
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   featureIds: number[];
+  surchargePolicies?: VehicleSurchargePolicy[];
 };
 
 export type CatalogBrand = {

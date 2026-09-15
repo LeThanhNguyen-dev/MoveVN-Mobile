@@ -1,4 +1,4 @@
-import { MapPin, Search, X } from "lucide-react-native";
+import { Search, X } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -15,15 +15,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { CatalogBrand, CatalogModel } from "@/features/vehicles/types";
-import type { GoongPlacePrediction } from "@/features/locations/types";
 import {
   getCatalogBrands,
   getCatalogModels,
 } from "@/features/vehicles/services/catalogService";
-import {
-  autocompleteGoongPlaces,
-  getGoongPlaceDetail,
-} from "@/features/locations/services/locationService";
+import AddressAutocomplete from "@/features/locations/components/AddressAutocomplete";
 import { DualRangeSlider, SingleSlider, SliderCaption } from "@/features/vehicles/components/FilterSlider";
 import { formatVehicleCurrency } from "@/features/vehicles/components/VehicleListCard";
 
@@ -143,15 +139,11 @@ export default function VehicleFilterSheet({
   const [models, setModels] = useState<CatalogModel[]>([]);
   const [loadingBrands, setLoadingBrands] = useState(false);
 
-  const [predictions, setPredictions] = useState<GoongPlacePrediction[]>([]);
-  const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [sliding, setSliding] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!visible) return;
     setDraft(initial);
-    setPredictions([]);
     let cancelled = false;
     async function load() {
       setLoadingBrands(true);
@@ -190,12 +182,6 @@ export default function VehicleFilterSheet({
     };
   }, [visible, draft.brandId]);
 
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
-
   function handleClose() {
     Animated.timing(slideAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() =>
       onClose(),
@@ -209,41 +195,13 @@ export default function VehicleFilterSheet({
   function handleClear() {
     setDraft(EMPTY_FILTERS);
     setModels([]);
-    setPredictions([]);
   }
 
-  function handleAddressChange(text: string) {
-    set("pickupAddress", text);
-    set("customerLat", "");
-    set("customerLng", "");
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (text.trim().length < 3) {
-      setPredictions([]);
-      setLoadingPlaces(false);
-      return;
-    }
-    setLoadingPlaces(true);
-    debounceRef.current = setTimeout(() => {
-      autocompleteGoongPlaces(text.trim(), 5)
-        .then((list) => setPredictions(list))
-        .catch(() => setPredictions([]))
-        .finally(() => setLoadingPlaces(false));
-    }, 350);
-  }
-
-  async function handleSelectPlace(item: GoongPlacePrediction) {
-    set("pickupAddress", item.description);
-    setPredictions([]);
-    try {
-      const detail = await getGoongPlaceDetail(item.placeId);
-      if (detail) {
-        set("customerLat", String(detail.latitude));
-        set("customerLng", String(detail.longitude));
-        if (!draft.radiusKm) set("radiusKm", "10");
-      }
-    } catch {
-      // giữ địa chỉ text, không có tọa độ thì không lọc khoảng cách
-    }
+  function handleSelectPickupAddress(address: string, latitude: number | null, longitude: number | null) {
+    set("pickupAddress", address);
+    set("customerLat", latitude != null ? String(latitude) : "");
+    set("customerLng", longitude != null ? String(longitude) : "");
+    if (latitude != null && longitude != null && !draft.radiusKm) set("radiusKm", "10");
   }
 
   const priceLow = draft.minPrice ? Number(draft.minPrice) : MIN_PRICE_LIMIT;
@@ -339,52 +297,17 @@ export default function VehicleFilterSheet({
               />
             </View>
 
-            <Text style={styles.label}>Địa chỉ nhận xe</Text>
-            <View style={styles.searchBox}>
-              <MapPin color={theme.placeholder} size={15} />
-              <TextInput
-                value={draft.pickupAddress}
-                onChangeText={handleAddressChange}
-                placeholder="Nhập địa chỉ để lọc theo khoảng cách"
-                placeholderTextColor={theme.placeholder}
-                style={styles.searchInput}
-              />
-              {loadingPlaces ? (
-                <ActivityIndicator color={theme.brand} size="small" />
-              ) : draft.pickupAddress ? (
-                <Pressable
-                  onPress={() => {
-                    set("pickupAddress", "");
-                    set("customerLat", "");
-                    set("customerLng", "");
-                    setPredictions([]);
-                  }}
-                >
-                  <X color={theme.muted} size={15} />
-                </Pressable>
-              ) : null}
-            </View>
-            {predictions.length > 0 ? (
-              <View style={styles.placeList}>
-                {predictions.map((p) => (
-                  <Pressable
-                    key={p.placeId}
-                    onPress={() => void handleSelectPlace(p)}
-                    style={styles.placeItem}
-                  >
-                    <MapPin color={theme.brand} size={15} />
-                    <View style={styles.placeText}>
-                      <Text numberOfLines={1} style={styles.placeMain}>
-                        {p.structuredFormatting?.mainText || p.description}
-                      </Text>
-                      <Text numberOfLines={1} style={styles.placeSub}>
-                        {p.structuredFormatting?.secondaryText || ""}
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
+            <AddressAutocomplete
+              value={draft.pickupAddress}
+              onChange={(text) => set("pickupAddress", text)}
+              onSelect={(selected) => handleSelectPickupAddress(selected.address, selected.latitude, selected.longitude)}
+              onManualChange={() => {
+                set("customerLat", "");
+                set("customerLng", "");
+              }}
+              label="Địa chỉ nhận xe"
+              placeholder="Nhập địa chỉ để lọc theo khoảng cách"
+            />
 
             <View style={styles.sectionHead}>
               <Text style={styles.sectionLabel}>Bán kính tìm kiếm</Text>
@@ -726,25 +649,6 @@ const createStyles = (theme: Theme) =>
     chipText: { color: theme.muted, fontSize: 13, fontWeight: "700" },
     chipTextActive: { color: theme.onBrand },
     loader: { marginVertical: 8 },
-    placeList: {
-      marginTop: 6,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      borderRadius: 12,
-      overflow: "hidden",
-    },
-    placeItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.divider,
-    },
-    placeText: { flex: 1 },
-    placeMain: { color: theme.text, fontSize: 13, fontWeight: "700" },
-    placeSub: { color: theme.muted, fontSize: 11, marginTop: 1 },
     hint: { color: theme.muted, fontSize: 12, marginTop: 6 },
     bottomPad: { height: 12 },
     footer: {
