@@ -40,6 +40,25 @@ export type VehicleFeatureResponse = {
   name: string;
 };
 
+export type VehicleSurchargePolicy = {
+  id?: number | null;
+  vehicleId?: number;
+  feeType: "ExcessMileage" | "LateReturn" | "Cleaning" | "Deodorization" | "Custom";
+  name: string;
+  description?: string | null;
+  calculationMethod: "PerKm" | "PerHour" | "PerDay" | "Fixed";
+  unitPrice: number;
+  includedKm?: number | null;
+  allowanceScope?: "PerBooking" | "PerDay" | null;
+  lateGraceMinutes?: number | null;
+  lateDayThresholdMinutes?: number | null;
+  lateDailyRate?: number | null;
+  maxAmount?: number | null;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type VehicleDocumentResponse = {
   id: number;
   docType: string;
@@ -103,6 +122,7 @@ export type VehicleResponse = {
   featuredImage: string | null;
   images: VehicleImageResponse[];
   features: VehicleFeatureResponse[];
+  surchargePolicies: VehicleSurchargePolicy[];
   documents: VehicleDocumentResponse[];
   busyPeriods: BusyPeriod[];
   createdAt: string;
@@ -133,6 +153,7 @@ export type CreateVehicleRequest = {
   imageUrls: string[];
   featuredImageIndex: number;
   documentFileUrl?: string | null;
+  surchargePolicies?: VehicleSurchargePolicy[];
 };
 
 export type UpdateVehicleRequest = {
@@ -149,6 +170,7 @@ export type UpdateVehicleRequest = {
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   featureIds: number[];
+  surchargePolicies?: VehicleSurchargePolicy[];
 };
 
 export type CatalogBrand = {

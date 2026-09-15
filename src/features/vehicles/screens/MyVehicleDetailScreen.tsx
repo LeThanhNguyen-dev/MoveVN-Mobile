@@ -40,6 +40,7 @@ import { useTheme } from "@/theme/useTheme";
 import BlockedDateSheet from "@/features/vehicles/components/BlockedDateSheet";
 import MyVehicleDetailSkeleton from "@/features/vehicles/components/MyVehicleDetailSkeleton";
 import OwnerVehicleMap from "@/features/vehicles/components/OwnerVehicleMap";
+import SurchargePolicySummary from "@/features/vehicles/components/SurchargePolicySummary";
 import {
   canDeleteVehicle,
   canToggleStatus,
@@ -406,6 +407,8 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
             </View>
           ) : null}
         </View>
+
+        <SurchargePolicySummary policies={vehicle.surchargePolicies} showInactive />
 
         <View style={styles.card}>
           <View style={styles.infoHead}>

@@ -20,12 +20,17 @@ import type {
   CatalogModel,
   CatalogVariant,
   PricingSuggestionResponse,
+  VehicleSurchargePolicy,
   VehiclePricingResponse,
 } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import FormDropdownSheet from "@/features/vehicles/components/FormDropdownSheet";
 import PricingModeHelp from "@/features/vehicles/components/PricingModeHelp";
+import SurchargePolicyEditor, {
+  isSurchargePoliciesValid,
+  normalizeSurchargePolicies,
+} from "@/features/vehicles/components/SurchargePolicyEditor";
 import { getVehicleErrorMessage } from "@/features/vehicles/vehicleDisplay";
 import {
   createVehicle,
@@ -90,6 +95,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const [depositPercent, setDepositPercent] = useState("20");
   const [requiresDeposit, setRequiresDeposit] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
+  const [surchargePolicies, setSurchargePolicies] = useState<VehicleSurchargePolicy[]>([]);
 
   const [features, setFeatures] = useState<CatalogFeature[]>([]);
   const [featureIds, setFeatureIds] = useState<number[]>([]);
@@ -138,6 +144,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         setFeatureIds(v.features.map((f) => f.id));
         setImageUrls(v.images.map((i) => i.imageUrl));
         setFeaturedIndex(Math.max(0, v.images.findIndex((i) => i.isPrimary)));
+        setSurchargePolicies(v.surchargePolicies ?? []);
         getCatalogFeatures(v.vehicleType).then(setFeatures).catch(() => undefined);
       })
       .finally(() => setLoadingEdit(false));
@@ -271,7 +278,12 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
       case 3: {
         const dep = Number(depositPercent);
         return (
-          address.trim() !== "" && isPricingValid() && dep >= 20 && dep <= 50 && (!requiresDeposit || Number(depositAmount) > 0)
+          address.trim() !== "" &&
+          isPricingValid() &&
+          dep >= 20 &&
+          dep <= 50 &&
+          (!requiresDeposit || Number(depositAmount) > 0) &&
+          isSurchargePoliciesValid(surchargePolicies)
         );
       }
       case 4:
@@ -287,7 +299,12 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     setSubmitting(true);
     setSubmitError("");
     try {
+      if (!isSurchargePoliciesValid(surchargePolicies)) {
+        setSubmitError("Vui lòng kiểm tra tên phí và đơn giá phụ phí.");
+        return;
+      }
       const pricePerDay = pricingMode === "Fixed" ? Number(fixedPrice) : Number(autoMin);
+      const normalizedSurcharges = normalizeSurchargePolicies(surchargePolicies);
       if (isEdit && vehicleId) {
         await updateVehicle(vehicleId, {
           year: Number(year) || 2025,
@@ -301,6 +318,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
           securityRequiresDeposit: requiresDeposit,
           securityDepositAmount: requiresDeposit ? Number(depositAmount) : 0,
           featureIds: featureIds,
+          surchargePolicies: normalizedSurcharges,
         });
         await updateVehiclePricing(vehicleId, {
           pricingMode,
@@ -334,6 +352,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         imageUrls,
         featuredImageIndex: featuredIndex,
         documentFileUrl: null,
+        surchargePolicies: normalizedSurcharges,
       });
       if (created?.id && docUri) {
         await uploadVehicleDocument(created.id, {
@@ -693,6 +712,10 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                 />
               </>
             ) : null}
+            <SurchargePolicyEditor value={surchargePolicies} onChange={setSurchargePolicies} />
+            {!isSurchargePoliciesValid(surchargePolicies) ? (
+              <Text style={styles.errorText}>Mỗi phụ phí cần có tên phí và đơn giá lớn hơn 0.</Text>
+            ) : null}
             <Text style={styles.fieldLabel}>Mô tả thêm</Text>
             <TextInput
               value={description}
@@ -762,6 +785,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
               <Text style={styles.summaryLine}>
                 {pricingMode === "Fixed" ? "Tự nhập giá" : "Giá tự động"} · Cọc {depositPercent}% · {imageUrls.length} ảnh · {featureIds.length} tiện ích
               </Text>
+              <Text style={styles.summaryLine}>Phụ phí: {surchargePolicies.filter((policy) => policy.isActive).length} khoản</Text>
               <Text style={styles.summaryLine}>Địa chỉ: {address || "-"}</Text>
             </View>
             {!isEdit ? (
