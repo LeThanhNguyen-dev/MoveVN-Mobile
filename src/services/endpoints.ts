@@ -104,6 +104,7 @@ export const endpoints = {
   },
   publicVehicles: {
     list: "/api/public/vehicles",
+    aiFilterSearch: "/api/public/vehicles/ai-filter-search",
     byId: (id: number) => `/api/public/vehicles/${id}`,
     availability: (id: number) => `/api/public/vehicles/${id}/availability`,
     images: (id: number) => `/api/public/vehicles/${id}/images`,

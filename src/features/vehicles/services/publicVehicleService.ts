@@ -2,11 +2,26 @@ import { bareApiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
 import type { ApiResponse } from "@/features/auth/types";
 import type { PagedResult } from "@/features/admin/types";
-import type { VehicleListItemResponse, VehicleResponse, VehicleAvailabilityResponse, VehicleImageResponse } from "@/features/vehicles/types";
+import type {
+  PublicVehicleAiSearchRequest,
+  PublicVehicleAiSearchResponse,
+  VehicleListItemResponse,
+  VehicleResponse,
+  VehicleAvailabilityResponse,
+  VehicleImageResponse,
+} from "@/features/vehicles/types";
 
 export async function getPublicVehicles(params: Record<string, string | number | boolean | undefined>) {
   const res = await bareApiClient.get<ApiResponse<PagedResult<VehicleListItemResponse>>>(endpoints.publicVehicles.list, { params });
   return res.data.data ?? { items: [], totalCount: 0, page: 1, pageSize: 12, totalPages: 0 };
+}
+
+export async function aiFilterSearchPublicVehicles(request: PublicVehicleAiSearchRequest) {
+  const res = await bareApiClient.post<ApiResponse<PublicVehicleAiSearchResponse>>(
+    endpoints.publicVehicles.aiFilterSearch,
+    request,
+  );
+  return res.data.data;
 }
 
 export async function getVehicleAvailability(id: number) {

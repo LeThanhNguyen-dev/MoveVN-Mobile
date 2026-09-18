@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
-import { ArrowLeft, CalendarDays, Check, ChevronDown, MapPin, SlidersHorizontal, X } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, CalendarDays, Check, ChevronDown, MapPin, Search, SlidersHorizontal, X } from "lucide-react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -8,6 +8,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import type { RouteProp } from "@react-navigation/native";
@@ -27,7 +28,7 @@ import VehicleFilterSheet, {
 import AreaPickerSheet from "@/features/vehicles/components/AreaPickerSheet";
 import RentalPeriodSheet from "@/features/vehicles/components/RentalPeriodSheet";
 import { saveSearchPrefs } from "@/features/vehicles/utils/searchPrefs";
-import { getPublicVehicles } from "@/features/vehicles/services/publicVehicleService";
+import { aiFilterSearchPublicVehicles, getPublicVehicles } from "@/features/vehicles/services/publicVehicleService";
 import {
   addFavoriteVehicle,
   getFavoriteVehicleIds,
@@ -89,6 +90,12 @@ export default function VehicleListScreen({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiSearching, setAiSearching] = useState(false);
+  const [aiActiveQuery, setAiActiveQuery] = useState("");
+  const [aiSemanticQuery, setAiSemanticQuery] = useState("");
+  const [aiMatched, setAiMatched] = useState<boolean | null>(null);
+  const skipNextFetchRef = useRef(false);
 
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
   const [favLoadingId, setFavLoadingId] = useState<number | null>(null);
@@ -160,6 +167,13 @@ export default function VehicleListScreen({
   const currentLoc = { areaId, province, district, startDate, endDate };
 
   useEffect(() => {
+    if (skipNextFetchRef.current) {
+      skipNextFetchRef.current = false;
+      return;
+    }
+    setAiActiveQuery("");
+    setAiSemanticQuery("");
+    setAiMatched(null);
     void fetchPage(1, true, filters, sortBy, currentLoc);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, sortBy, areaId, province, district, startDate, endDate]);
@@ -172,7 +186,96 @@ export default function VehicleListScreen({
 
   function handleLoadMore() {
     if (loading || loadingMore || page >= totalPages) return;
+    if (aiActiveQuery) {
+      void runAiSearch(page + 1, false, aiActiveQuery);
+      return;
+    }
     void fetchPage(page + 1, false, filters, sortBy, currentLoc);
+  }
+
+  async function runAiSearch(pageNum = 1, replace = true, queryOverride?: string) {
+    const query = (queryOverride ?? aiQuery).trim();
+    if (!query || aiSearching) return;
+    if (replace) {
+      setLoading(true);
+      setError("");
+    } else {
+      setLoadingMore(true);
+    }
+    setAiSearching(true);
+    try {
+      const response = await aiFilterSearchPublicVehicles({
+        query,
+        sortBy: sortBy || undefined,
+        page: pageNum,
+        pageSize: PAGE_SIZE,
+        currentFilters: {
+          type: filters.type || null,
+          brandId: filters.brandId ? Number(filters.brandId) : null,
+          modelId: filters.modelId ? Number(filters.modelId) : null,
+          fuelType: filters.fuelType || null,
+          seatCount: filters.seatCount || null,
+          transmission: filters.transmission || null,
+          bodyType: filters.bodyType || null,
+          bikeType: filters.bikeType || null,
+          priceFrom: filters.minPrice ? Number(filters.minPrice) : null,
+          priceTo: filters.maxPrice ? Number(filters.maxPrice) : null,
+          startDate,
+          endDate,
+          areaId,
+          province: province || null,
+          district: district || null,
+          customerLat: filters.customerLat ? Number(filters.customerLat) : null,
+          customerLng: filters.customerLng ? Number(filters.customerLng) : null,
+          radiusKm: filters.radiusKm ? Number(filters.radiusKm) : null,
+        },
+      });
+      if (!response) throw new Error("Missing AI search response.");
+
+      const applied = response.appliedFilters;
+      skipNextFetchRef.current = true;
+      setFilters((prev) => ({
+        ...prev,
+        type: (applied.type ?? prev.type ?? "") as VehicleListFilters["type"],
+        fuelType: applied.fuelType ?? prev.fuelType,
+        seatCount: applied.seatCount ?? prev.seatCount,
+        transmission: applied.transmission ?? prev.transmission,
+        bodyType: applied.bodyType ?? prev.bodyType,
+        bikeType: applied.bikeType ?? prev.bikeType,
+        minPrice: applied.priceFrom != null ? String(applied.priceFrom) : prev.minPrice,
+        maxPrice: applied.priceTo != null ? String(applied.priceTo) : prev.maxPrice,
+        customerLat: applied.customerLat != null ? String(applied.customerLat) : prev.customerLat,
+        customerLng: applied.customerLng != null ? String(applied.customerLng) : prev.customerLng,
+        radiusKm: applied.radiusKm != null ? String(applied.radiusKm) : prev.radiusKm,
+      }));
+      if (applied.province != null) setProvince(applied.province || "");
+      if (applied.district != null) setDistrict(applied.district || "");
+      if (applied.areaId !== undefined) setAreaId(applied.areaId ?? undefined);
+      if (applied.province != null || applied.district != null || applied.areaId !== undefined) {
+        void saveSearchPrefs({
+          province: applied.province ?? province,
+          district: applied.district ?? district,
+          areaId: applied.areaId ?? undefined,
+        });
+      }
+      if (applied.startDate) setStartDate(applied.startDate);
+      if (applied.endDate) setEndDate(applied.endDate);
+
+      const result = response.result;
+      setItems((prev) => (replace ? result.items : [...prev, ...result.items]));
+      setPage(result.page);
+      setTotalPages(result.totalPages);
+      setTotalCount(result.totalCount);
+      setAiActiveQuery(query);
+      setAiSemanticQuery(response.semanticQuery);
+      setAiMatched(response.aiMatched);
+    } catch {
+      if (replace) setError("Không xử lý được tìm kiếm thông minh. Thử lại hoặc dùng bộ lọc thường.");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      setAiSearching(false);
+    }
   }
 
   async function handleToggleFavorite(vehicleId: number) {
@@ -385,6 +488,54 @@ export default function VehicleListScreen({
         onEndReachedThreshold={0.4}
         ListHeaderComponent={
           <View style={styles.listHeader}>
+            <View style={styles.aiSearchBox}>
+              <Search color={theme.placeholder} size={17} />
+              <TextInput
+                value={aiQuery}
+                onChangeText={setAiQuery}
+                placeholder="Tìm bằng AI: xe 7 chỗ dưới 1tr5, rộng rãi..."
+                placeholderTextColor={theme.placeholder}
+                returnKeyType="search"
+                onSubmitEditing={() => runAiSearch()}
+                style={styles.aiSearchInput}
+              />
+              {aiQuery ? (
+                <Pressable
+                  onPress={() => {
+                    setAiQuery("");
+                    setAiActiveQuery("");
+                    setAiSemanticQuery("");
+                    setAiMatched(null);
+                    void fetchPage(1, true, filters, sortBy, currentLoc);
+                  }}
+                  style={styles.aiIconButton}
+                >
+                  <X color={theme.muted} size={16} />
+                </Pressable>
+              ) : null}
+              <Pressable
+                onPress={() => runAiSearch()}
+                disabled={!aiQuery.trim() || aiSearching}
+                style={[styles.aiSubmitButton, (!aiQuery.trim() || aiSearching) && styles.aiSubmitDisabled]}
+              >
+                {aiSearching ? (
+                  <ActivityIndicator size="small" color={theme.onBrand} />
+                ) : (
+                  <Search color={theme.onBrand} size={16} />
+                )}
+              </Pressable>
+            </View>
+            {aiSearching && loading ? (
+              <Text numberOfLines={2} style={styles.aiSummary}>
+                AI dang tim kiem...
+              </Text>
+            ) : aiActiveQuery ? (
+              <Text numberOfLines={2} style={[styles.aiSummary, aiMatched === false && styles.aiNoMatch]}>
+                {aiMatched === false
+                  ? "Khong co ket qua AI phu hop, dang hien thi danh sach theo bo loc hien tai."
+                  : `AI: ${aiSemanticQuery || aiActiveQuery}`}
+              </Text>
+            ) : null}
             {chips.length > 0 ? (
               <View style={styles.chips}>
                 {chips.map((chip) => (
@@ -563,6 +714,50 @@ const createStyles = (theme: Theme) =>
     badgeText: { color: theme.onBrand, fontSize: 10, fontWeight: "800" },
     list: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 32, gap: 12 },
     listHeader: { gap: 10, marginBottom: 2 },
+    aiSearchBox: {
+      minHeight: 46,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.brandBorder,
+      borderRadius: 8,
+      backgroundColor: theme.input,
+      paddingLeft: 12,
+      paddingRight: 6,
+    },
+    aiSearchInput: {
+      flex: 1,
+      minHeight: 44,
+      color: theme.text,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    aiIconButton: {
+      width: 32,
+      height: 32,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    aiSubmitButton: {
+      width: 34,
+      height: 34,
+      borderRadius: 8,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.brand,
+    },
+    aiSubmitDisabled: {
+      opacity: 0.45,
+    },
+    aiSummary: {
+      color: theme.muted,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    aiNoMatch: {
+      color: theme.error,
+    },
     chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     chip: {
       flexDirection: "row",
