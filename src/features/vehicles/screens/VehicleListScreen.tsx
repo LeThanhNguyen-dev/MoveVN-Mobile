@@ -95,6 +95,8 @@ export default function VehicleListScreen({
   const [aiActiveQuery, setAiActiveQuery] = useState("");
   const [aiSemanticQuery, setAiSemanticQuery] = useState("");
   const [aiMatched, setAiMatched] = useState<boolean | null>(null);
+  const [aiElapsed, setAiElapsed] = useState(0);
+  const aiTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const skipNextFetchRef = useRef(false);
 
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
@@ -193,12 +195,31 @@ export default function VehicleListScreen({
     void fetchPage(page + 1, false, filters, sortBy, currentLoc);
   }
 
+  function startAiTimer() {
+    if (aiTimerRef.current) clearInterval(aiTimerRef.current);
+    const startedAt = Date.now();
+    setAiElapsed(0);
+    aiTimerRef.current = setInterval(() => {
+      setAiElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 500);
+  }
+
+  function stopAiTimer() {
+    if (aiTimerRef.current) {
+      clearInterval(aiTimerRef.current);
+      aiTimerRef.current = null;
+    }
+  }
+
+  useEffect(() => () => stopAiTimer(), []);
+
   async function runAiSearch(pageNum = 1, replace = true, queryOverride?: string) {
     const query = (queryOverride ?? aiQuery).trim();
     if (!query || aiSearching) return;
     if (replace) {
       setLoading(true);
       setError("");
+      startAiTimer();
     } else {
       setLoadingMore(true);
     }
@@ -275,6 +296,7 @@ export default function VehicleListScreen({
       setLoading(false);
       setLoadingMore(false);
       setAiSearching(false);
+      stopAiTimer();
     }
   }
 
@@ -526,9 +548,12 @@ export default function VehicleListScreen({
               </Pressable>
             </View>
             {aiSearching && loading ? (
-              <Text numberOfLines={2} style={styles.aiSummary}>
-                AI dang tim kiem...
-              </Text>
+              <View style={styles.aiSearchingRow}>
+                <ActivityIndicator size="small" color={theme.brand} />
+                <Text numberOfLines={2} style={styles.aiSummary}>
+                  AI đang tìm kiếm... {aiElapsed}s
+                </Text>
+              </View>
             ) : aiActiveQuery ? (
               <Text numberOfLines={2} style={[styles.aiSummary, aiMatched === false && styles.aiNoMatch]}>
                 {aiMatched === false
@@ -754,6 +779,12 @@ const createStyles = (theme: Theme) =>
       color: theme.muted,
       fontSize: 12,
       fontWeight: "600",
+      flexShrink: 1,
+    },
+    aiSearchingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
     },
     aiNoMatch: {
       color: theme.error,
