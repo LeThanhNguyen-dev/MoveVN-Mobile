@@ -28,6 +28,57 @@ export type VehicleListItemResponse = {
   createdAt: string;
 };
 
+export type PublicVehicleAiSearchFilters = {
+  type?: "" | "Car" | "Motorbike" | null;
+  brandId?: number | null;
+  modelId?: number | null;
+  fuelType?: string | null;
+  seatCount?: string | null;
+  transmission?: string | null;
+  bodyType?: string | null;
+  bikeType?: string | null;
+  priceFrom?: number | null;
+  priceTo?: number | null;
+  featureIds?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  brandIds?: string | null;
+  transmissions?: string | null;
+  fuelTypes?: string | null;
+  bodyTypes?: string | null;
+  bikeTypes?: string | null;
+  areaId?: number | null;
+  province?: string | null;
+  district?: string | null;
+  customerLat?: number | null;
+  customerLng?: number | null;
+  radiusKm?: number | null;
+};
+
+export type PublicVehicleAiSearchRequest = {
+  query: string;
+  currentFilters: PublicVehicleAiSearchFilters;
+  sortBy?: string | null;
+  page?: number;
+  pageSize?: number;
+};
+
+export type PublicVehicleAiSearchResponse = {
+  appliedFilters: PublicVehicleAiSearchFilters;
+  semanticQuery: string;
+  parsedFilters: Record<string, unknown>;
+  aiMatched: boolean;
+  aiCandidateCount: number;
+  fallbackReason?: string | null;
+  result: {
+    items: VehicleListItemResponse[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
+};
+
 export type VehicleImageResponse = {
   id: number;
   imageUrl: string;
