@@ -23,6 +23,7 @@ import { getMyDriverLicense } from "@/features/driverLicenses/services/driverLic
 import type { DriverLicenseStatusResponse } from "@/features/driverLicenses/types";
 import { getMyApplication } from "@/features/owner/services/ownerService";
 import type { OwnerApplicationDto } from "@/features/owner/types";
+import MaskedDocumentValue from "@/features/pin/components/MaskedDocumentValue";
 import type { UploadFileInput } from "@/types/upload";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -261,7 +262,15 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
             <View style={styles.detailBox}>
               {ownerApp ? (
                 <>
-                  <DetailLine label="Số CCCD" value={ownerApp.nationalIdNumber || "-"} />
+                  <View style={styles.detailLine}>
+                    <Text style={styles.detailLabel}>Số CCCD</Text>
+                    <MaskedDocumentValue
+                      canReveal={cccdVerified}
+                      documentType="CCCD"
+                      maskedValue={ownerApp.nationalIdNumber ?? null}
+                      revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                    />
+                  </View>
                   <DetailLine label="Họ tên trên CCCD" value={ownerApp.fullName || "-"} />
                   <DetailLine
                     label="Trạng thái"
@@ -296,7 +305,15 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               {driverLicense ? (
                 <>
                   <DetailLine label="Hạng GPLX" value={driverLicense.licenseClass || "-"} />
-                  <DetailLine label="Số GPLX" value={driverLicense.driverLicenseNumber || "-"} />
+                  <View style={styles.detailLine}>
+                    <Text style={styles.detailLabel}>Số GPLX</Text>
+                    <MaskedDocumentValue
+                      canReveal={gplxVerified}
+                      documentType="GPLX"
+                      maskedValue={driverLicense.driverLicenseNumber ?? null}
+                      revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                    />
+                  </View>
                   <DetailLine label="Xác minh lúc" value={formatDate(driverLicense.verifiedAt)} />
                   <DetailLine
                     label="Loại xe"

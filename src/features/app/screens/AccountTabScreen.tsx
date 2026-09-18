@@ -9,6 +9,7 @@ import {
   Heart,
   IdCard,
   KeyRound,
+  Landmark,
   LogOut,
   Monitor,
   Moon,
@@ -24,8 +25,11 @@ import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { signOut } from "@/features/auth/services/authSession";
 import { getCurrentUser } from "@/features/auth/services/authService";
 import type { AuthUser, UserRole } from "@/features/auth/types";
+import { driverLicenseStatusLabel } from "@/features/driverLicenses/driverLicenseDisplay";
+import DriverLicenseScreen from "@/features/driverLicenses/screens/DriverLicenseScreen";
 import { getMyDriverLicense } from "@/features/driverLicenses/services/driverLicenseService";
 import type { DriverLicenseStatusResponse } from "@/features/driverLicenses/types";
+import OwnerVerificationScreen from "@/features/owner/screens/OwnerVerificationScreen";
 import { getMyApplication } from "@/features/owner/services/ownerService";
 import type { OwnerApplicationDto } from "@/features/owner/types";
 import type { Theme } from "@/theme/tokens";
@@ -62,6 +66,9 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
   const updateUser = useAuthStore((state) => state.updateUser);
   const [ownerApp, setOwnerApp] = useState<OwnerApplicationDto | null>(null);
   const [driverLicense, setDriverLicense] = useState<DriverLicenseStatusResponse | null>(null);
+  const [showLicense, setShowLicense] = useState(false);
+  const [showOwner, setShowOwner] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { mode, theme, toggleMode } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const isDark = mode === "dark";
@@ -90,7 +97,7 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
     return () => {
       ignore = true;
     };
-  }, [updateUser]);
+  }, [updateUser, refreshKey]);
 
   const verifiedCount = useMemo(() => {
     return [
@@ -106,6 +113,8 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
   function handleRoleAction() {
     if (roleAction.targetRole) {
       void setActiveRole(roleAction.targetRole);
+    } else if (user.roles.includes("Customer")) {
+      setShowOwner(true);
     }
   }
 
@@ -119,6 +128,30 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
           icon: ShieldCheck,
           accent: verifiedCount === verificationTotal ? theme.success : theme.brand,
           value: `${verifiedCount}/${verificationTotal}`,
+        },
+        {
+          key: "driver-license",
+          label: "Giấy phép lái xe",
+          icon: IdCard,
+          accent: theme.brand,
+          value: driverLicense?.verified
+            ? "Đã xác minh"
+            : driverLicense?.status && driverLicense.status !== "None"
+              ? driverLicenseStatusLabel[driverLicense.status] ?? driverLicense.status
+              : undefined,
+          onPress: () => setShowLicense(true),
+        },
+        {
+          key: "owner-application",
+          label: "Hồ sơ chủ xe (CCCD)",
+          icon: Landmark,
+          accent: theme.brand,
+          value: ownerApp?.isOwner
+            ? "Chủ xe"
+            : ownerApp?.nationalIdVerified
+              ? "Đã xác minh CCCD"
+              : undefined,
+          onPress: () => setShowOwner(true),
         },
       ],
     },
@@ -147,6 +180,28 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
       ],
     },
   ];
+
+  if (showOwner) {
+    return (
+      <OwnerVerificationScreen
+        onBack={() => {
+          setShowOwner(false);
+          setRefreshKey((key) => key + 1);
+        }}
+      />
+    );
+  }
+
+  if (showLicense) {
+    return (
+      <DriverLicenseScreen
+        onBack={() => {
+          setShowLicense(false);
+          setRefreshKey((key) => key + 1);
+        }}
+      />
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.scroll}>
