@@ -14,6 +14,11 @@ export type PinSetupRequest = {
   otp: string;
 };
 
+export type PinChangeRequest = {
+  currentPinCode: string;
+  newPinCode: string;
+};
+
 export type PinVerifyViewDocumentRequest = {
   pinCode: string;
   documentType: PinDocumentType;

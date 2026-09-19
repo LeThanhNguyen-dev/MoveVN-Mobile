@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react-native";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import PinDigitInputs from "@/features/pin/components/PinDigitInputs";
+import PinDigitInputs, { type PinDigitInputsHandle } from "@/features/pin/components/PinDigitInputs";
 import type { VerifyPinResult } from "@/features/pin/hooks/usePinReveal";
 import { getAuthUser } from "@/features/auth/hooks/useAuth";
 import { PIN_DIGIT_COUNT, getFriendlyPinMessage, getPinErrorCode, isOtpErrorCode } from "@/features/pin/services/pinErrorMessage";
 import { requestSetupPinOtp, setupPin } from "@/features/pin/services/pinService";
 import type { PinDocumentType } from "@/features/pin/types";
+import { maskEmail } from "@/features/pin/utils/maskEmail";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
@@ -20,12 +21,6 @@ type PinSetupModalProps = {
 type SetupStep = "pin" | "otp";
 
 const RESEND_COUNTDOWN_SECONDS = 60;
-
-function maskEmail(email: string) {
-  const [head, ...rest] = email.split("@");
-  if (rest.length === 0) return email;
-  return `${head?.slice(0, 1) ?? ""}***@${rest.join("@")}`;
-}
 
 export default function PinSetupModal({ documentType, visible, onClose, onSetupDone }: PinSetupModalProps) {
   const { theme } = useTheme();
@@ -41,6 +36,7 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [otpHasError, setOtpHasError] = useState(false);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const confirmGroupRef = useRef<PinDigitInputsHandle | null>(null);
 
   const email = getAuthUser()?.email ?? "";
   const documentLabel = documentType === "CCCD" ? "Căn cước công dân" : "Giấy phép lái xe";
@@ -171,10 +167,12 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
                 disabled={isSubmitting}
                 label="Mã PIN mới"
                 onChange={handlePinChange}
+                onComplete={() => confirmGroupRef.current?.focusFirst()}
                 showValue={showValue}
                 value={pinCode}
               />
               <PinDigitInputs
+                ref={confirmGroupRef}
                 disabled={isSubmitting}
                 hasError={hasMismatch}
                 label="Xác nhận mã PIN"

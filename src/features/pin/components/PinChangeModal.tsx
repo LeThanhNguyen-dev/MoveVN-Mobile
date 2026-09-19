@@ -1,23 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { KeyRound } from "lucide-react-native";
+import { ShieldCheck } from "lucide-react-native";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import PinDigitInputs, { type PinDigitInputsHandle } from "@/features/pin/components/PinDigitInputs";
 import { getAuthUser } from "@/features/auth/hooks/useAuth";
 import { PIN_DIGIT_COUNT, getFriendlyPinMessage, getPinErrorCode, isOtpErrorCode } from "@/features/pin/services/pinErrorMessage";
 import { requestPinForgotOtp, resetPinForgot } from "@/features/pin/services/pinService";
-import { maskEmail } from "@/features/pin/utils/maskEmail";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
-type PinForgotModalProps = {
+type PinChangeModalProps = {
   visible: boolean;
   onClose: () => void;
-  onResetDone: () => void;
+  onSuccess?: () => void;
 };
 
-type Step = "request-otp" | "enter-otp";
+type Step = "request-otp" | "enter-otp" | "new-pin";
 
-export default function PinForgotModal({ visible, onClose, onResetDone }: PinForgotModalProps) {
+const RESEND_COUNTDOWN_SECONDS = 60;
+
+/**
+ * Đổi mã PIN xác thực bằng OTP gửi qua email, chia 3 màn riêng:
+ * gửi OTP -> nhập OTP -> nhập PIN mới + xác nhận.
+ * Backend không có API check OTP riêng nên OTP đúng/sai chỉ biết ở bước
+ * cuối; sai thì tự quay về màn OTP kèm lỗi.
+ */
+export default function PinChangeModal({ visible, onClose, onSuccess }: PinChangeModalProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [step, setStep] = useState<Step>("request-otp");
@@ -26,13 +33,14 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
   const [confirmPin, setConfirmPin] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [otpHasError, setOtpHasError] = useState(false);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const doneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const newPinGroupRef = useRef<PinDigitInputsHandle | null>(null);
   const confirmPinGroupRef = useRef<PinDigitInputsHandle | null>(null);
+  const doneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const email = getAuthUser()?.email ?? "";
 
@@ -46,17 +54,24 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
     setOtpHasError(false);
     setInfoMessage(null);
     setSuccessMessage(null);
+    setResendSeconds(0);
   }, [visible]);
+
+  useEffect(() => {
+    if (step === "request-otp" || resendSeconds <= 0) return;
+    const timer = setTimeout(() => setResendSeconds((prev) => Math.max(0, prev - 1)), 1000);
+    return () => clearTimeout(timer);
+  }, [step, resendSeconds]);
 
   useEffect(() => () => {
     if (doneTimer.current !== null) clearTimeout(doneTimer.current);
   }, []);
 
-  const isResetFilled =
-    otp.length === PIN_DIGIT_COUNT &&
-    newPin.length === PIN_DIGIT_COUNT &&
-    confirmPin.length === PIN_DIGIT_COUNT;
-  const hasMismatch = newPin.length === PIN_DIGIT_COUNT && confirmPin.length > 0 && newPin !== confirmPin;
+  const isOtpFilled = otp.length === PIN_DIGIT_COUNT;
+  const isPinFilled = newPin.length === PIN_DIGIT_COUNT && confirmPin.length === PIN_DIGIT_COUNT;
+  const hasMismatch =
+    newPin.length === PIN_DIGIT_COUNT && confirmPin.length > 0 && newPin !== confirmPin;
+  const canSubmit = isOtpFilled && isPinFilled && newPin === confirmPin;
 
   async function handleRequestOtp() {
     if (isSubmitting) return;
@@ -65,6 +80,7 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
     try {
       await requestPinForgotOtp({ email });
       setStep("enter-otp");
+      setResendSeconds(RESEND_COUNTDOWN_SECONDS);
     } catch (error) {
       setErrorMessage(getFriendlyPinMessage(error));
     } finally {
@@ -72,13 +88,14 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
     }
   }
 
-  async function handleResendOtp() {
-    if (isResending) return;
+  async function handleResend() {
+    if (isResending || resendSeconds > 0) return;
     setIsResending(true);
     setErrorMessage(null);
     setInfoMessage(null);
     try {
       await requestPinForgotOtp({ email });
+      setResendSeconds(RESEND_COUNTDOWN_SECONDS);
       setInfoMessage("Đã gửi lại mã OTP. Mã có hiệu lực trong 10 phút.");
     } catch (error) {
       setErrorMessage(getFriendlyPinMessage(error));
@@ -87,19 +104,22 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
     }
   }
 
-  async function handleReset() {
-    if (!isResetFilled || isSubmitting) {
-      if (!isResetFilled) {
-        setErrorMessage(
-          otp.length !== PIN_DIGIT_COUNT
-            ? "Vui lòng nhập mã OTP 6 chữ số."
-            : "Vui lòng nhập và xác nhận mã PIN mới 6 chữ số.",
-        );
-      }
+  function handleOtpContinue() {
+    if (!isOtpFilled) {
+      setErrorMessage("Vui lòng nhập mã OTP 6 chữ số.");
       return;
     }
-    if (newPin !== confirmPin) {
-      setErrorMessage("Mã PIN xác nhận không khớp.");
+    setErrorMessage(null);
+    setStep("new-pin");
+  }
+
+  async function handleSubmit() {
+    if (!canSubmit || isSubmitting) {
+      if (!isPinFilled) {
+        setErrorMessage("Vui lòng nhập và xác nhận mã PIN mới 6 chữ số.");
+      } else if (newPin !== confirmPin) {
+        setErrorMessage("Mã PIN xác nhận không trùng khớp.");
+      }
       return;
     }
     setIsSubmitting(true);
@@ -107,11 +127,21 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
     setOtpHasError(false);
     try {
       await resetPinForgot({ email, otpCode: otp, newPinCode: newPin });
-      setSuccessMessage("Đặt lại mã PIN thành công!");
-      doneTimer.current = setTimeout(() => onResetDone(), 1200);
+      setSuccessMessage("Đổi mã PIN thành công!");
+      doneTimer.current = setTimeout(() => {
+        onSuccess?.();
+        onClose();
+      }, 1200);
     } catch (error) {
-      setErrorMessage(getFriendlyPinMessage(error));
-      if (isOtpErrorCode(getPinErrorCode(error))) setOtpHasError(true);
+      if (isOtpErrorCode(getPinErrorCode(error))) {
+        // OTP sai/hết hạn: quay về màn OTP để nhập lại.
+        setOtp("");
+        setOtpHasError(true);
+        setErrorMessage(getFriendlyPinMessage(error));
+        setStep("enter-otp");
+      } else {
+        setErrorMessage(getFriendlyPinMessage(error));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -122,19 +152,17 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
       <View style={styles.overlay}>
         <View style={styles.card}>
           <View style={styles.heading}>
-            <KeyRound color={theme.brand} size={22} strokeWidth={2.3} />
-            <Text style={styles.title}>Quên mã PIN</Text>
+            <ShieldCheck color={theme.brand} size={22} strokeWidth={2.3} />
+            <Text style={styles.title}>Đổi mã PIN</Text>
           </View>
-          <Text style={styles.description}>
-            {step === "request-otp"
-              ? "Mã OTP sẽ được gửi đến email của tài khoản của bạn."
-              : "Nhập mã OTP và mã PIN mới bên dưới."}
-          </Text>
 
           {step === "request-otp" ? (
             <View style={styles.stack}>
+              <Text style={styles.description}>
+                Mã OTP xác thực sẽ được gửi đến email của bạn.
+              </Text>
               <View style={styles.emailBox}>
-                <Text style={styles.emailText}>{maskEmail(email)}</Text>
+                <Text style={styles.emailText}>{email}</Text>
               </View>
               {errorMessage !== null ? (
                 <Text accessibilityRole="alert" style={styles.error}>
@@ -155,8 +183,13 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
                 </Pressable>
               </View>
             </View>
-          ) : (
+          ) : null}
+
+          {step === "enter-otp" ? (
             <View style={styles.stack}>
+              <Text style={styles.description}>
+                Nhập mã OTP đã gửi về email của bạn.
+              </Text>
               <PinDigitInputs
                 autoFocus={visible}
                 disabled={isSubmitting}
@@ -169,20 +202,50 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
                     setErrorMessage(null);
                   }
                 }}
-                onComplete={() => newPinGroupRef.current?.focusFirst()}
                 value={otp}
               />
               <Text style={styles.muted}>
                 Mã OTP có hiệu lực trong 10 phút.{" "}
                 <Text
-                  onPress={() => { void handleResendOtp(); }}
-                  style={[styles.link, (isResending || isSubmitting) && styles.disabledText]}
+                  onPress={() => { void handleResend(); }}
+                  style={[styles.link, (isResending || isSubmitting || resendSeconds > 0) && styles.disabledText]}
                 >
-                  {isResending ? "Đang gửi..." : "Gửi lại mã"}
+                  {isResending ? "Đang gửi..." : resendSeconds > 0 ? `Gửi lại mã (${resendSeconds}s)` : "Gửi lại mã"}
                 </Text>
+              </Text>
+              {infoMessage !== null ? <Text style={styles.muted}>{infoMessage}</Text> : null}
+              {errorMessage !== null ? (
+                <Text accessibilityRole="alert" style={styles.error}>
+                  {errorMessage}
+                </Text>
+              ) : null}
+              <Text style={styles.counter}>
+                {otp.length} / {PIN_DIGIT_COUNT}
+              </Text>
+              <View style={styles.actions}>
+                <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
+                  <Text style={styles.secondaryText}>Hủy</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={!isOtpFilled || isSubmitting}
+                  onPress={handleOtpContinue}
+                  style={[styles.primaryButton, (!isOtpFilled || isSubmitting) && styles.disabled]}
+                >
+                  <Text style={styles.primaryText}>Tiếp tục</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
+
+          {step === "new-pin" ? (
+            <View style={styles.stack}>
+              <Text style={styles.description}>
+                Nhập mã PIN mới gồm 6 chữ số.
               </Text>
               <PinDigitInputs
                 ref={newPinGroupRef}
+                autoFocus={visible}
                 disabled={isSubmitting}
                 label="Mã PIN mới"
                 onChange={setNewPin}
@@ -193,16 +256,15 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
                 ref={confirmPinGroupRef}
                 disabled={isSubmitting}
                 hasError={hasMismatch}
-                label="Xác nhận mã PIN"
+                label="Xác nhận mã PIN mới"
                 onChange={setConfirmPin}
                 value={confirmPin}
               />
               {hasMismatch ? (
                 <Text accessibilityRole="alert" style={styles.error}>
-                  Mã PIN xác nhận không khớp.
+                  Mã PIN xác nhận không trùng khớp.
                 </Text>
               ) : null}
-              {infoMessage !== null ? <Text style={styles.muted}>{infoMessage}</Text> : null}
               {errorMessage !== null ? (
                 <Text accessibilityRole="alert" style={styles.error}>
                   {errorMessage}
@@ -214,7 +276,7 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
                 </Text>
               ) : null}
               <Text style={styles.counter}>
-                {otp.length} / {PIN_DIGIT_COUNT} OTP · {newPin.length} / {PIN_DIGIT_COUNT} PIN mới ·{" "}
+                {newPin.length} / {PIN_DIGIT_COUNT} PIN mới ·{" "}
                 {confirmPin.length} / {PIN_DIGIT_COUNT} xác nhận
               </Text>
               <View style={styles.actions}>
@@ -223,15 +285,15 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
-                  disabled={!isResetFilled || isSubmitting}
-                  onPress={() => { void handleReset(); }}
-                  style={[styles.primaryButton, (!isResetFilled || isSubmitting) && styles.disabled]}
+                  disabled={!canSubmit || isSubmitting}
+                  onPress={() => { void handleSubmit(); }}
+                  style={[styles.primaryButton, (!canSubmit || isSubmitting) && styles.disabled]}
                 >
-                  <Text style={styles.primaryText}>{isSubmitting ? "Đang đặt lại..." : "Đặt lại mã PIN"}</Text>
+                  <Text style={styles.primaryText}>{isSubmitting ? "Đang đổi..." : "Xác nhận đổi PIN"}</Text>
                 </Pressable>
               </View>
             </View>
-          )}
+          ) : null}
         </View>
       </View>
     </Modal>
@@ -256,6 +318,7 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.surface,
       padding: 20,
       gap: 12,
+      maxHeight: "92%",
     },
     stack: { gap: 12 },
     heading: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
