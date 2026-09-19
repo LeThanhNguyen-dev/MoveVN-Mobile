@@ -19,15 +19,15 @@ export async function getMyApplication(): Promise<OwnerApplicationDto> {
   return unwrap(data);
 }
 
-export async function uploadNationalId(formData: FormData): Promise<NationalIdOcrResult & { status: string; message?: string }> {
+export async function uploadNationalId(formData: FormData): Promise<NationalIdOcrResult> {
   const { data } = await apiClient.post<ApiResponse<NationalIdOcrResult>>("/api/owner-applications/me/national-id", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-  const result = unwrap(data) as NationalIdOcrResult & { status?: string; message?: string };
+  const result = unwrap(data);
   if (!result.status) {
     throw new Error("Xác thực CCCD thất bại. Vui lòng thử lại.");
   }
-  return result as NationalIdOcrResult & { status: string; message?: string };
+  return result;
 }
 
 export async function updateBankInfo(body: BankInfoRequest): Promise<OwnerApplicationDto> {

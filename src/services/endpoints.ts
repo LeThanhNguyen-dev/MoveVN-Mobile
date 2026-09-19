@@ -180,5 +180,13 @@ export const endpoints = {
     navigation: "/api/cms-pages/navigation",
     bySlug: (slug: string) => `/api/cms-pages/${slug}`,
   },
+  userSecurity: {
+    pinStatus: "/api/v1/user/pin/status",
+    pinSetup: "/api/v1/user/pin/setup",
+    pinSetupOtp: "/api/v1/user/pin/setup/request-otp",
+    pinVerifyView: "/api/v1/user/pin/verify-view-document",
+    pinForgotOtp: "/api/v1/user/pin/forgot/request-otp",
+    pinForgotReset: "/api/v1/user/pin/forgot/reset",
+  },
   swaggerJson: "/swagger/v1/swagger.json",
 };
