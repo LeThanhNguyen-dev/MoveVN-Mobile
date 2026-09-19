@@ -109,8 +109,8 @@ export default function PinVerifyModal({
               <View style={styles.lockIcon}>
                 <Lock color={theme.danger} size={22} strokeWidth={2.3} />
               </View>
-              <Text style={styles.title}>PIN đã bị khóa</Text>
-              <Text style={styles.description}>Bạn đã nhập sai PIN quá nhiều lần.</Text>
+              <Text style={styles.title}>Mã PIN đã bị khóa</Text>
+              <Text style={styles.description}>Mã PIN đã bị khóa tạm thời do nhập sai nhiều lần.</Text>
               <Text style={styles.countdownLabel}>Thử lại sau</Text>
               <Text style={styles.countdown}>{formatCountdown(lockoutSeconds ?? 0)}</Text>
               <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>

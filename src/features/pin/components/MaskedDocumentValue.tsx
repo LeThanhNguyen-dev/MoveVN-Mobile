@@ -16,6 +16,7 @@ type MaskedDocumentValueProps = {
   /** Chỉ cho mở mắt khi giấy tờ đã Verified (backend cũng enforce lại). */
   canReveal: boolean;
   revealDisabledHint?: string;
+  align?: "left" | "right";
 };
 
 export default function MaskedDocumentValue({
@@ -24,9 +25,10 @@ export default function MaskedDocumentValue({
   vehicleType,
   canReveal,
   revealDisabledHint,
+  align = "right",
 }: MaskedDocumentValueProps) {
   const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const styles = useMemo(() => createStyles(theme, align), [theme, align]);
   const [showForgot, setShowForgot] = useState(false);
   const [hintVisible, setHintVisible] = useState(false);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -127,14 +129,14 @@ export default function MaskedDocumentValue({
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, align: "left" | "right") =>
   StyleSheet.create({
-    wrap: { flexShrink: 1, alignItems: "flex-end", gap: 2 },
+    wrap: { flexShrink: 1, alignItems: align === "left" ? "flex-start" : "flex-end", gap: 2 },
     row: { flexDirection: "row", alignItems: "center", gap: 6 },
-    masked: { color: theme.text, fontSize: 13, fontWeight: "700", textAlign: "right" },
-    plaintext: { color: theme.text, fontSize: 14, fontWeight: "800", textAlign: "right" },
+    masked: { color: theme.text, fontSize: 13, fontWeight: "700", textAlign: align },
+    plaintext: { color: theme.text, fontSize: 14, fontWeight: "800", textAlign: align },
     countdown: { color: theme.success, fontSize: 11, fontWeight: "700" },
     eyeButton: { width: 30, height: 30, alignItems: "center", justifyContent: "center", borderRadius: 15 },
     eyeDisabled: { opacity: 0.6 },
-    hint: { color: theme.muted, fontSize: 11, textAlign: "right", fontWeight: "600" },
+    hint: { color: theme.muted, fontSize: 11, textAlign: align, fontWeight: "600" },
   });

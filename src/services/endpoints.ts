@@ -184,6 +184,7 @@ export const endpoints = {
     pinStatus: "/api/v1/user/pin/status",
     pinSetup: "/api/v1/user/pin/setup",
     pinSetupOtp: "/api/v1/user/pin/setup/request-otp",
+    pinChange: "/api/v1/user/pin/change",
     pinVerifyView: "/api/v1/user/pin/verify-view-document",
     pinForgotOtp: "/api/v1/user/pin/forgot/request-otp",
     pinForgotReset: "/api/v1/user/pin/forgot/reset",
