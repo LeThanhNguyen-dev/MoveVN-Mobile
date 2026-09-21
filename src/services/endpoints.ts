@@ -58,6 +58,8 @@ export const endpoints = {
     my: "/api/vehicles/my",
     byId: (id: number) => `/api/vehicles/${id}`,
     uploadDocument: (id: number) => `/api/vehicles/${id}/documents`,
+    previewDocument: "/api/vehicles/documents/preview",
+    complete: "/api/vehicles/complete",
     uploadImage: "/api/vehicles/images",
     pricing: (id: number) => `/api/vehicles/${id}/pricing`,
     pricingSuggestion: "/api/vehicles/pricing/suggestion",

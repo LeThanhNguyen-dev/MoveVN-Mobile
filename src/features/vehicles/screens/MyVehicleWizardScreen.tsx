@@ -19,6 +19,7 @@ import type {
   CatalogFeature,
   CatalogModel,
   CatalogVariant,
+  CreateVehicleRequest,
   PricingSuggestionResponse,
   VehicleSurchargePolicy,
   VehiclePricingResponse,
@@ -32,9 +33,9 @@ import SurchargePolicyEditor, {
   isSurchargePoliciesValid,
   normalizeSurchargePolicies,
 } from "@/features/vehicles/components/SurchargePolicyEditor";
-import { getVehicleErrorMessage } from "@/features/vehicles/vehicleDisplay";
+import { getVehicleErrorMessage, isVehicleOcrFailure } from "@/features/vehicles/vehicleDisplay";
 import {
-  createVehicle,
+  completeVehicle,
   getCatalogAreas,
   getCatalogBrands,
   getCatalogFeatures,
@@ -43,9 +44,9 @@ import {
   getPricingSuggestion,
   getVehicleById,
   getVehiclePricing,
+  previewVehicleDocument,
   updateVehicle,
   updateVehiclePricing,
-  uploadVehicleDocument,
   uploadVehicleImage,
 } from "@/features/vehicles/services/vehicleService";
 
@@ -108,6 +109,36 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const [docUri, setDocUri] = useState<string | null>(null);
   const [docName, setDocName] = useState<string | null>(null);
   const [docMime, setDocMime] = useState<string | null>(null);
+  const [verifyingDoc, setVerifyingDoc] = useState(false);
+  const [verificationError, setVerificationError] = useState("");
+  const [verificationResult, setVerificationResult] = useState<{
+    docUri: string;
+    vehicleType: string;
+    brandId: number;
+    modelId: number;
+    licensePlate: string;
+    recommendation: "Pass" | "ManualReview";
+    verificationId: string;
+    expiresAt: string;
+  } | null>(null);
+
+  const verifiedForCurrentInputs = verificationResult != null
+    && verificationResult.docUri === docUri
+    && verificationResult.vehicleType === vehicleType
+    && verificationResult.brandId === brandId
+    && verificationResult.modelId === modelId
+    && verificationResult.licensePlate === licensePlate.trim()
+    && Date.parse(verificationResult.expiresAt) > Date.now();
+
+  useEffect(() => {
+    if (!verificationResult) return;
+    const remaining = Date.parse(verificationResult.expiresAt) - Date.now();
+    const timer = setTimeout(() => {
+      setVerificationResult(null);
+      setVerificationError("Phiên xác thực cà vẹt đã hết hạn. Vui lòng xác thực lại.");
+    }, Math.max(0, remaining));
+    return () => clearTimeout(timer);
+  }, [verificationResult]);
 
   useEffect(() => {
     getCatalogAreas().then(setAreas).catch(() => undefined);
@@ -262,9 +293,79 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   async function handlePickDoc() {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
     if (res.canceled || !res.assets[0]) return;
-    setDocUri(res.assets[0].uri);
-    setDocName(res.assets[0].fileName ?? "cavet.jpg");
-    setDocMime(res.assets[0].mimeType ?? "image/jpeg");
+    const asset = res.assets[0];
+    const mimeType = asset.mimeType ?? "image/jpeg";
+    const fileName = asset.fileName ?? "cavet.jpg";
+    const supported = ["image/jpeg", "image/png", "image/webp"].includes(mimeType)
+      || /\.(jpe?g|png|webp)$/i.test(fileName);
+    if (!supported) {
+      setDocUri(null);
+      setVerificationResult(null);
+      setVerificationError("Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.");
+      return;
+    }
+    if (asset.fileSize != null && asset.fileSize > 10 * 1024 * 1024) {
+      setDocUri(null);
+      setVerificationResult(null);
+      setVerificationError("Ảnh cà vẹt không được vượt quá 10 MB.");
+      return;
+    }
+    setDocUri(asset.uri);
+    setDocName(fileName);
+    setDocMime(mimeType);
+    setVerificationResult(null);
+    setVerificationError("");
+    setSubmitError("");
+  }
+
+  async function handleVerifyDocument() {
+    if (!docUri || !vehicleType || brandId == null || modelId == null || !licensePlate.trim()) {
+      setVerificationError("Vui lòng chọn ảnh cà vẹt và nhập đủ thông tin xe trước khi xác thực.");
+      return;
+    }
+
+    const expected = {
+      docUri,
+      vehicleType,
+      brandId,
+      modelId,
+      licensePlate: licensePlate.trim(),
+    };
+    setVerifyingDoc(true);
+    setVerificationResult(null);
+    setVerificationError("");
+    setSubmitError("");
+    try {
+      const result = await previewVehicleDocument(
+        { uri: expected.docUri, name: docName ?? "cavet.jpg", type: docMime ?? "image/jpeg" },
+        expected.vehicleType,
+        expected.brandId,
+        expected.modelId,
+        expected.licensePlate,
+      );
+      if ((result?.recommendation === "Pass" || result?.recommendation === "ManualReview")
+        && result.verificationId && result.expiresAt) {
+        setVerificationResult({
+          ...expected,
+          recommendation: result.recommendation,
+          verificationId: result.verificationId,
+          expiresAt: result.expiresAt,
+        });
+        return;
+      }
+
+      setVerificationError(result?.flags && isVehicleOcrFailure(result.flags)
+        ? "Hệ thống xác thực cà vẹt đang gián đoạn. Vui lòng thử lại sau."
+        : result?.recommendation === "NeedMoreInfo"
+          ? "Ảnh cà vẹt thiếu thông tin hoặc chưa đủ rõ. Vui lòng chụp lại và xác thực lại."
+          : result?.recommendation === "Reject"
+            ? "Thông tin cà vẹt không khớp với xe. Vui lòng kiểm tra và chọn lại ảnh."
+            : result?.message || "Cà vẹt chưa đạt yêu cầu. Vui lòng kiểm tra và thử lại.");
+    } catch (error) {
+      setVerificationError(getVehicleErrorMessage(error));
+    } finally {
+      setVerifyingDoc(false);
+    }
   }
 
   function goStep(next: number) {
@@ -295,8 +396,10 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         return true;
       case 5:
         return isEdit || imageUrls.length > 0;
+      case 6:
+        return isEdit || verifiedForCurrentInputs;
       default:
-        return true;
+        return false;
     }
   }
 
@@ -336,7 +439,11 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         onDone();
         return;
       }
-      const created = await createVehicle({
+      if (!verifiedForCurrentInputs || !docUri || !verificationResult) {
+        setSubmitError("Vui lòng xác thực cà vẹt trước khi hoàn tất.");
+        return;
+      }
+      const createRequest: CreateVehicleRequest = {
         brandId: brandId!,
         modelId: modelId!,
         variantId,
@@ -362,16 +469,15 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         featuredImageIndex: featuredIndex,
         documentFileUrl: null,
         surchargePolicies: normalizedSurcharges,
-      });
-      if (created?.id && docUri) {
-        await uploadVehicleDocument(created.id, {
-          uri: docUri,
-          name: docName ?? "cavet.jpg",
-          type: docMime ?? "image/jpeg",
-        });
-      }
+      };
+      await completeVehicle(createRequest, {
+        uri: docUri,
+        name: docName ?? "cavet.jpg",
+        type: docMime ?? "image/jpeg",
+      }, verificationResult.verificationId);
       onDone();
     } catch (e) {
+      if (!isEdit) setVerificationResult(null);
       setSubmitError(getVehicleErrorMessage(e));
     } finally {
       setSubmitting(false);
@@ -795,8 +901,8 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
 
         {step === 6 ? (
           <View style={styles.fieldGroup}>
-            <Text style={styles.groupTitle}>Xác nhận & cavet</Text>
-            <Text style={styles.groupSub}>Kiểm tra lại trước khi hoàn tất.</Text>
+            <Text style={styles.groupTitle}>Xác nhận & cà vẹt</Text>
+            <Text style={styles.groupSub}>Kiểm tra lại thông tin và xác thực cà vẹt trước khi hoàn tất.</Text>
             <View style={styles.summary}>
               <Text style={styles.summaryLine}>Biển số: {licensePlate || "-"}</Text>
               <Text style={styles.summaryLine}>Giá: {priceSummary}</Text>
@@ -808,12 +914,33 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
             </View>
             {!isEdit ? (
               <>
-                <Text style={styles.fieldLabel}>Ảnh cavet (khuyên có để duyệt nhanh)</Text>
-                <Pressable onPress={handlePickDoc} style={styles.pickBtn}>
+                <Text style={styles.fieldLabel}>Ảnh cà vẹt *</Text>
+                <Pressable onPress={handlePickDoc} disabled={verifyingDoc || submitting} style={[styles.pickBtn, (verifyingDoc || submitting) && styles.disabledBtn]}>
                   <Plus color={theme.brand} size={16} />
-                  <Text style={styles.pickText}>{docUri ? "Đã chọn cavet (chạm để đổi)" : "Chọn ảnh cavet"}</Text>
+                  <Text style={styles.pickText}>{docUri ? "Đã chọn cà vẹt (chạm để đổi)" : "Chọn ảnh cà vẹt"}</Text>
                 </Pressable>
                 {docUri ? <Image source={{ uri: docUri }} style={styles.docPreview} contentFit="contain" /> : null}
+                {docUri && !verifiedForCurrentInputs ? (
+                  <Pressable
+                    onPress={handleVerifyDocument}
+                    disabled={verifyingDoc || submitting}
+                    style={[styles.verifyBtn, (verifyingDoc || submitting) && styles.disabledBtn]}
+                  >
+                    {verifyingDoc ? <ActivityIndicator color={theme.onBrand} size="small" /> : <Check color={theme.onBrand} size={16} />}
+                    <Text style={styles.verifyText}>{verifyingDoc ? "Đang xác thực..." : "Xác thực"}</Text>
+                  </Pressable>
+                ) : null}
+                {verifiedForCurrentInputs && verificationResult ? (
+                  <View style={[styles.verificationStatus, verificationResult.recommendation === "Pass" ? styles.verificationPass : styles.verificationReview]}>
+                    <Check color={verificationResult.recommendation === "Pass" ? theme.success : theme.info} size={16} />
+                    <Text style={[styles.verificationText, { color: verificationResult.recommendation === "Pass" ? theme.success : theme.info }]}>
+                      {verificationResult.recommendation === "Pass"
+                        ? "Cà vẹt hợp lệ"
+                        : "Cà vẹt đã được tiếp nhận và sẽ chờ nhân viên kiểm tra"}
+                    </Text>
+                  </View>
+                ) : null}
+                {verificationError ? <Text style={styles.errorText}>{verificationError}</Text> : null}
               </>
             ) : null}
             {submitError ? <Text style={styles.errorText}>{submitError}</Text> : null}
@@ -836,7 +963,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
             <ChevronRight color={theme.onBrand} size={16} />
           </Pressable>
         ) : (
-          <Pressable onPress={handleSubmit} disabled={submitting || !canProceed()} style={[styles.nextBtn, (!canProceed() || submitting) && styles.disabledBtn]}>
+          <Pressable onPress={handleSubmit} disabled={submitting || verifyingDoc || !canProceed()} style={[styles.nextBtn, (!canProceed() || submitting || verifyingDoc) && styles.disabledBtn]}>
             {submitting ? <ActivityIndicator color={theme.onBrand} size="small" /> : <Check color={theme.onBrand} size={16} />}
             <Text style={styles.nextText}>{submitting ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Hoàn tất"}</Text>
           </Pressable>
@@ -909,6 +1036,12 @@ const createStyles = (theme: Theme) =>
     switchLabel: { color: theme.text, fontSize: 14, fontWeight: "700" },
     pickBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 12, borderWidth: 1, borderStyle: "dashed", borderColor: theme.brandBorder, paddingVertical: 14 },
     pickText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
+    verifyBtn: { minHeight: 46, borderRadius: 12, backgroundColor: theme.brand, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingHorizontal: 14 },
+    verifyText: { color: theme.onBrand, fontSize: 14, fontWeight: "800" },
+    verificationStatus: { minHeight: 46, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10 },
+    verificationPass: { backgroundColor: theme.successSoft, borderColor: theme.success },
+    verificationReview: { backgroundColor: theme.infoSoft, borderColor: theme.infoBorder },
+    verificationText: { flex: 1, fontSize: 12, fontWeight: "700" },
     imageGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
     imageCell: { width: "31%", gap: 4 },
     cellImage: { width: "100%", aspectRatio: 4 / 3, borderRadius: 10, borderWidth: 2, borderColor: "transparent" },

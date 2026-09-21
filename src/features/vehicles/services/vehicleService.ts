@@ -46,6 +46,46 @@ export async function uploadVehicleDocument(id: number, file: UploadFileInput) {
   return res.data.data;
 }
 
+export type VehicleDocumentPreviewResponse = {
+  recommendation: string;
+  message: string | null;
+  flags: string[];
+  verificationId: string | null;
+  expiresAt: string | null;
+};
+
+export async function previewVehicleDocument(
+  file: UploadFileInput,
+  vehicleType: string,
+  brandId: number,
+  modelId: number,
+  licensePlate: string,
+) {
+  const formData = new FormData();
+  appendUploadFile(formData, "file", file);
+  formData.append("vehicleType", vehicleType);
+  formData.append("brandId", String(brandId));
+  formData.append("modelId", String(modelId));
+  formData.append("licensePlate", licensePlate);
+  const res = await apiClient.post<ApiResponse<VehicleDocumentPreviewResponse>>(
+    endpoints.vehicles.previewDocument,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return res.data.data;
+}
+
+export async function completeVehicle(data: CreateVehicleRequest, file: UploadFileInput, verificationId: string) {
+  const formData = new FormData();
+  formData.append("vehicle", JSON.stringify(data));
+  formData.append("verificationId", verificationId);
+  appendUploadFile(formData, "file", file);
+  const res = await apiClient.post<ApiResponse<VehicleResponse>>(endpoints.vehicles.complete, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data.data;
+}
+
 export async function uploadVehicleImage(file: UploadFileInput) {
   const formData = new FormData();
   appendUploadFile(formData, "file", file);
