@@ -1,9 +1,11 @@
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { ArrowLeft, Bike, Car, Check, ChevronLeft, ChevronRight, Plus, X } from "lucide-react-native";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -64,6 +66,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const isEdit = mode === "edit";
+  const scrollRef = useRef<ScrollView>(null);
 
   const [step, setStep] = useState(isEdit ? 3 : 0);
   const [maxReached, setMaxReached] = useState(isEdit ? 3 : 0);
@@ -549,7 +552,19 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 120 }]} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={styles.keyboardArea}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={0}
+      >
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[styles.scroll, { paddingBottom: Math.max(insets.bottom + 120, 140) }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+      >
         {step === 0 ? (
           <View>
             <Text style={styles.groupTitle}>Chọn loại xe</Text>
@@ -653,9 +668,11 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
             <TextInput
               value={licensePlate}
               onChangeText={setLicensePlate}
+              editable={!isEdit}
+              selectTextOnFocus={!isEdit}
               placeholder="VD: 51A-12345"
               placeholderTextColor={theme.placeholder}
-              style={styles.input}
+              style={[styles.input, isEdit && styles.lockedInput]}
               autoCapitalize="characters"
             />
             <View style={styles.twoCol}>
@@ -844,6 +861,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
             <TextInput
               value={description}
               onChangeText={setDescription}
+              onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
               multiline
               numberOfLines={3}
               placeholder="Mô tả về xe..."
@@ -969,6 +987,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
           </Pressable>
         )}
       </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -976,6 +995,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.background },
+    keyboardArea: { flex: 1 },
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
     topBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingVertical: 10 },
     iconBtn: { width: 38, height: 38, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" },
@@ -1009,6 +1029,7 @@ const createStyles = (theme: Theme) =>
     fieldLabelInline: { marginTop: 0 },
     fieldLabelRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
     input: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, borderRadius: 12, backgroundColor: theme.surface, paddingHorizontal: 12, height: 46, color: theme.text, fontSize: 14 },
+    lockedInput: { backgroundColor: theme.surfaceAlt, color: theme.muted },
     textArea: { height: 84, paddingVertical: 10, textAlignVertical: "top" },
     twoCol: { flexDirection: "row", gap: 10 },
     col: { flex: 1, gap: 4 },
