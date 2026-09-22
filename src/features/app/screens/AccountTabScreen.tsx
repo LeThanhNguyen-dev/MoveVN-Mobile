@@ -27,6 +27,9 @@ import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { signOut } from "@/features/auth/services/authSession";
 import { getCurrentUser } from "@/features/auth/services/authService";
 import type { AuthUser, UserRole } from "@/features/auth/types";
+import ChangePasswordScreen from "@/features/auth/screens/ChangePasswordScreen";
+import LoginSessionsScreen from "@/features/auth/screens/LoginSessionsScreen";
+import PolicyListScreen from "@/features/cms/screens/PolicyListScreen";
 import DriverLicenseScreen from "@/features/driverLicenses/screens/DriverLicenseScreen";
 import { getMyDriverLicense } from "@/features/driverLicenses/services/driverLicenseService";
 import type { DriverLicenseStatusResponse } from "@/features/driverLicenses/types";
@@ -38,6 +41,7 @@ import PinSetupModal from "@/features/pin/components/PinSetupModal";
 import type { VerifyPinResult } from "@/features/pin/hooks/usePinReveal";
 import { getPinStatus } from "@/features/pin/services/pinService";
 import CccdInfoScreen from "@/features/app/screens/CccdInfoScreen";
+import SupportCenterScreen from "@/features/app/screens/SupportCenterScreen";
 import VerificationHubScreen from "@/features/app/screens/VerificationHubScreen";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -82,6 +86,10 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
   const [isPinSet, setIsPinSet] = useState<boolean | null>(null);
   const [showSetupPin, setShowSetupPin] = useState(false);
   const [ownerReturn, setOwnerReturn] = useState<"hub" | "cccd" | "account" | null>(null);
+  const [showPolicies, setShowPolicies] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showSessions, setShowSessions] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { mode, theme, toggleMode } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -196,8 +204,20 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
     {
       title: "Hỗ trợ",
       items: [
-        { key: "support", label: "Trung tâm hỗ trợ", icon: Headphones, accent: "#0F766E" },
-        { key: "policy", label: "Điều khoản & chính sách", icon: FileText, accent: "#64748B" },
+        {
+          key: "support",
+          label: "Trung tâm hỗ trợ",
+          icon: Headphones,
+          accent: "#0F766E",
+          onPress: () => setShowSupport(true),
+        },
+        {
+          key: "policy",
+          label: "Điều khoản & chính sách",
+          icon: FileText,
+          accent: "#64748B",
+          onPress: () => setShowPolicies(true),
+        },
       ],
     },
     {
@@ -211,8 +231,20 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
           value: isPinSet === false ? "Chưa thiết lập" : "Đổi mã PIN",
           onPress: handlePinAction,
         },
-        { key: "password", label: "Đổi mật khẩu", icon: KeyRound, accent: "#D97706" },
-        { key: "sessions", label: "Phiên đăng nhập", icon: Monitor, accent: "#2563EB" },
+        {
+          key: "password",
+          label: "Đổi mật khẩu",
+          icon: KeyRound,
+          accent: "#D97706",
+          onPress: () => setShowChangePassword(true),
+        },
+        {
+          key: "sessions",
+          label: "Phiên đăng nhập",
+          icon: Monitor,
+          accent: "#2563EB",
+          onPress: () => setShowSessions(true),
+        },
       ],
     },
   ];
@@ -269,6 +301,22 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
 
   if (showOwner) {
     return <OwnerVerificationScreen onBack={closeOwner} />;
+  }
+
+  if (showPolicies) {
+    return <PolicyListScreen onBack={() => setShowPolicies(false)} />;
+  }
+
+  if (showSupport) {
+    return <SupportCenterScreen onBack={() => setShowSupport(false)} />;
+  }
+
+  if (showChangePassword) {
+    return <ChangePasswordScreen onBack={() => setShowChangePassword(false)} />;
+  }
+
+  if (showSessions) {
+    return <LoginSessionsScreen onBack={() => setShowSessions(false)} />;
   }
 
   return (

@@ -6,6 +6,7 @@ import OwnerRegisterScreen from "@/features/auth/screens/OwnerRegisterScreen";
 import RegisterScreen from "@/features/auth/screens/RegisterScreen";
 import ResetPasswordScreen from "@/features/auth/screens/ResetPasswordScreen";
 import VerifyEmailScreen from "@/features/auth/screens/VerifyEmailScreen";
+import PolicyListScreen from "@/features/cms/screens/PolicyListScreen";
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -17,5 +18,15 @@ export default function AuthNavigator() {
     <Stack.Screen component={ForgotPasswordScreen} name="ForgotPassword" />
     <Stack.Screen component={ResetPasswordScreen} name="ResetPassword" />
     <Stack.Screen component={VerifyEmailScreen} name="VerifyEmail" />
+    <Stack.Screen name="Policies">
+      {({ navigation, route }) => (
+        <PolicyListScreen
+          initialSlug={route.params?.slug}
+          onBack={() => {
+            if (navigation.canGoBack()) navigation.goBack();
+          }}
+        />
+      )}
+    </Stack.Screen>
   </Stack.Navigator>;
 }
