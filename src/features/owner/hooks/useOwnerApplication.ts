@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { getMyApplication, createApplication, uploadNationalId, updateBankInfo, submitApplication } from "@/features/owner/services/ownerService";
-import { refreshSession } from "@/features/auth/services/authService";
-import { getRefreshToken } from "@/features/auth/hooks/useAuth";
+import { refreshAuthSession } from "@/services/apiClient";
 import { appendUploadFile, type UploadFileInput } from "@/types/upload";
 import type { OwnerApplicationDto, OwnerWizardStep, NationalIdOcrResult } from "@/features/owner/types";
 
@@ -136,13 +135,10 @@ export function useOwnerApplication(stepParam?: string | null) {
     try {
       const result = await submitApplication();
       if (result.requiresTokenRefresh) {
-        const rt = getRefreshToken();
-        if (rt) {
-          try {
-            await refreshSession(rt);
-          } catch {
+        try {
+          await refreshAuthSession();
+        } catch {
             // refresh silently fails — user can still see success, logout later
-          }
         }
       }
       setWizardStep("owner-success");
