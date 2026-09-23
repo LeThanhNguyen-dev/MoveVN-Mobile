@@ -1,28 +1,37 @@
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { PIN_DIGIT_COUNT } from "@/features/pin/services/pinErrorMessage";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
+export type PinDigitInputsHandle = {
+  focusFirst: () => void;
+};
+
 type PinDigitInputsProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  onComplete?: () => void;
   showValue?: boolean;
   hasError?: boolean;
   autoFocus?: boolean;
   disabled?: boolean;
 };
 
-export default function PinDigitInputs({
-  label,
-  value,
-  onChange,
-  showValue = false,
-  hasError = false,
-  autoFocus = false,
-  disabled = false,
-}: PinDigitInputsProps) {
+const PinDigitInputs = forwardRef<PinDigitInputsHandle, PinDigitInputsProps>(function PinDigitInputs(
+  {
+    label,
+    value,
+    onChange,
+    onComplete,
+    showValue = false,
+    hasError = false,
+    autoFocus = false,
+    disabled = false,
+  },
+  ref,
+) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const inputRefs = useRef<Array<TextInput | null>>([]);
@@ -33,18 +42,45 @@ export default function PinDigitInputs({
     return () => clearTimeout(timer);
   }, [autoFocus, disabled]);
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      focusFirst: () => inputRefs.current[0]?.focus(),
+    }),
+    [],
+  );
+
   function setChar(index: number, digit: string) {
     const chars = value.split("");
     chars[index] = digit;
-    onChange(chars.join("").slice(0, PIN_DIGIT_COUNT));
+    const next = chars.join("").slice(0, PIN_DIGIT_COUNT);
+    onChange(next);
+    if (next.length === PIN_DIGIT_COUNT) {
+      onComplete?.();
+    } else if (index + 1 < PIN_DIGIT_COUNT) {
+      inputRefs.current[index + 1]?.focus();
+    }
   }
 
   function handleChange(index: number, text: string) {
-    const digit = text.replace(/\D/g, "").slice(-1);
-    if (!digit) return;
-    setChar(index, digit);
-    if (index + 1 < PIN_DIGIT_COUNT) {
-      inputRefs.current[index + 1]?.focus();
+    // Không maxLength để paste/autofill SMS nhiều số tự chia đều ra các ô.
+    const digits = text.replace(/\D/g, "");
+    if (!digits) return;
+    if (digits.length === 1) {
+      setChar(index, digits);
+      return;
+    }
+    const chars = value.split("");
+    for (let offset = 0; offset < digits.length && index + offset < PIN_DIGIT_COUNT; offset += 1) {
+      const digit = digits[offset];
+      if (digit !== undefined) chars[index + offset] = digit;
+    }
+    const next = chars.join("").slice(0, PIN_DIGIT_COUNT);
+    onChange(next);
+    if (next.length === PIN_DIGIT_COUNT) {
+      onComplete?.();
+    } else {
+      inputRefs.current[next.length]?.focus();
     }
   }
 
@@ -71,7 +107,6 @@ export default function PinDigitInputs({
             autoComplete="one-time-code"
             editable={!disabled}
             keyboardType="number-pad"
-            maxLength={1}
             onChangeText={(text) => handleChange(index, text)}
             onKeyPress={({ nativeEvent }) => {
               if (nativeEvent.key === "Backspace") handleBackspace(index);
@@ -85,7 +120,9 @@ export default function PinDigitInputs({
       </View>
     </View>
   );
-}
+});
+
+export default PinDigitInputs;
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({

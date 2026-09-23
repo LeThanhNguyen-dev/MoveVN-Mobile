@@ -4,6 +4,7 @@ import { endpoints } from "@/services/endpoints";
 import { AppApiError, toApiError } from "@/features/auth/services/authService";
 import type { ApiResponse } from "@/features/auth/types";
 import type {
+  PinChangeRequest,
   PinForgotResetRequest,
   PinSetupRequest,
   PinStatusResponse,
@@ -67,6 +68,15 @@ export async function setupPin(payload: PinSetupRequest): Promise<void> {
 export async function requestSetupPinOtp(): Promise<void> {
   try {
     const { data } = await apiClient.post<ApiResponse<null>>(endpoints.userSecurity.pinSetupOtp);
+    unwrap(data);
+  } catch (error) {
+    throw toPinError(error);
+  }
+}
+
+export async function changePin(payload: PinChangeRequest): Promise<void> {
+  try {
+    const { data } = await apiClient.post<ApiResponse<null>>(endpoints.userSecurity.pinChange, payload);
     unwrap(data);
   } catch (error) {
     throw toPinError(error);
