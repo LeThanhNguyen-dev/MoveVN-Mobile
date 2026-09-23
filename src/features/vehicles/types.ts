@@ -225,7 +225,23 @@ export type UpdateVehicleRequest = {
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   featureIds: number[];
+  imageUrls?: string[] | null;
+  featuredImageIndex?: number | null;
   surchargePolicies?: VehicleSurchargePolicy[];
+};
+
+export type VehicleDescriptionSuggestionRequest = {
+  brandId: number;
+  modelId: number;
+  variantId?: number | null;
+  vehicleType: string;
+  year: number;
+  featureIds: number[];
+  existingDescription?: string | null;
+};
+
+export type VehicleDescriptionSuggestionResponse = {
+  description: string;
 };
 
 export type CatalogBrand = {

@@ -63,6 +63,7 @@ export const endpoints = {
     uploadImage: "/api/vehicles/images",
     pricing: (id: number) => `/api/vehicles/${id}/pricing`,
     pricingSuggestion: "/api/vehicles/pricing/suggestion",
+    descriptionSuggestion: "/api/vehicles/description-suggestion",
     toggleStatus: (id: number) => `/api/vehicles/${id}/toggle-status`,
     deleteVehicle: (id: number) => `/api/vehicles/${id}`,
     blockedDates: (id: number) => `/api/vehicles/${id}/blocked-dates`,

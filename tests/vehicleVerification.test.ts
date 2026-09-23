@@ -88,3 +88,37 @@ describe("Vehicle registration verification", () => {
     expect(result?.id).toBe(99);
   });
 });
+
+describe("Vehicle description suggestion", () => {
+  it("sends only the vehicle fields needed by the description API", async () => {
+    const app = await setup();
+    app.apiClient.defaults.adapter = async (config) => {
+      expect(config.url).toBe("/api/vehicles/description-suggestion");
+      expect(JSON.parse(String(config.data))).toEqual({
+        brandId: 1,
+        modelId: 2,
+        variantId: 3,
+        vehicleType: "Motorbike",
+        year: 2025,
+        featureIds: [4, 5],
+        existingDescription: "Mô tả cũ",
+      });
+      return response(config, {
+        status: true,
+        data: { description: "Mẫu xe thể thao với thiết kế hiện đại và linh hoạt." },
+      });
+    };
+
+    const result = await app.service.generateVehicleDescription({
+      brandId: 1,
+      modelId: 2,
+      variantId: 3,
+      vehicleType: "Motorbike",
+      year: 2025,
+      featureIds: [4, 5],
+      existingDescription: "Mô tả cũ",
+    });
+
+    expect(result?.description).toContain("thiết kế hiện đại");
+  });
+});

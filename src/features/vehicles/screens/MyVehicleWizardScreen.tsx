@@ -4,6 +4,7 @@ import { ArrowLeft, Bike, Car, Check, ChevronLeft, ChevronRight, Plus, X } from 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -25,11 +26,13 @@ import type {
   PricingSuggestionResponse,
   VehicleSurchargePolicy,
   VehiclePricingResponse,
+  VehicleDescriptionSuggestionRequest,
 } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import FormDropdownSheet from "@/features/vehicles/components/FormDropdownSheet";
 import PricingModeHelp from "@/features/vehicles/components/PricingModeHelp";
+import VehicleDescriptionField from "@/features/vehicles/components/VehicleDescriptionField";
 import AddressAutocomplete from "@/features/locations/components/AddressAutocomplete";
 import SurchargePolicyEditor, {
   isSurchargePoliciesValid,
@@ -67,12 +70,70 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const styles = useMemo(() => createStyles(theme), [theme]);
   const isEdit = mode === "edit";
   const scrollRef = useRef<ScrollView>(null);
+  const scrollOffsetRef = useRef(0);
+  const activeDescriptionInputRef = useRef<TextInput | null>(null);
+  const keyboardTopRef = useRef<number | null>(null);
 
   const [step, setStep] = useState(isEdit ? 3 : 0);
   const [maxReached, setMaxReached] = useState(isEdit ? 3 : 0);
   const [loadingEdit, setLoadingEdit] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  function revealDescriptionInput(
+    input: TextInput | null,
+    keyboardTop = keyboardTopRef.current ?? Keyboard.metrics()?.screenY,
+  ) {
+    if (!input || keyboardTop == null) return;
+
+    input.measureInWindow((_x, y, _width, height) => {
+      const overlap = y + height + 16 - keyboardTop;
+      if (overlap <= 0) return;
+
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, scrollOffsetRef.current + overlap),
+        animated: true,
+      });
+    });
+  }
+
+  function handleDescriptionFocus(input: TextInput) {
+    activeDescriptionInputRef.current = input;
+    setKeyboardVisible(true);
+    requestAnimationFrame(() => revealDescriptionInput(input));
+    setTimeout(() => {
+      if (activeDescriptionInputRef.current === input) revealDescriptionInput(input);
+    }, 300);
+  }
+
+  function handleDescriptionBlur(input: TextInput) {
+    if (activeDescriptionInputRef.current === input) {
+      activeDescriptionInputRef.current = null;
+    }
+  }
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSubscription = Keyboard.addListener(showEvent, (event) => {
+      keyboardTopRef.current = event.endCoordinates.screenY;
+      setKeyboardVisible(true);
+      setTimeout(
+        () => revealDescriptionInput(activeDescriptionInputRef.current, event.endCoordinates.screenY),
+        100,
+      );
+    });
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      keyboardTopRef.current = null;
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const [vehicleType, setVehicleType] = useState("");
   const [brands, setBrands] = useState<CatalogBrand[]>([]);
@@ -249,6 +310,20 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     () => areas.filter((a) => a.province === province).sort((a, b) => a.district.localeCompare(b.district)),
     [areas, province],
   );
+  const descriptionSuggestionRequest = useMemo<VehicleDescriptionSuggestionRequest | null>(() => {
+    const vehicleYear = Number(year);
+    if (!brandId || !modelId || !vehicleType || !Number.isInteger(vehicleYear) || vehicleYear < 1900) {
+      return null;
+    }
+    return {
+      brandId,
+      modelId,
+      variantId,
+      vehicleType,
+      year: vehicleYear,
+      featureIds,
+    };
+  }, [brandId, featureIds, modelId, variantId, vehicleType, year]);
 
   function isPriceInSuggestion(value: number) {
     if (!suggestion?.hasSuggestion || suggestion.suggestedMinPrice == null || suggestion.suggestedMaxPrice == null) return true;
@@ -431,6 +506,8 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
           securityRequiresDeposit: requiresDeposit,
           securityDepositAmount: requiresDeposit ? Number(depositAmount) : 0,
           featureIds: featureIds,
+          imageUrls,
+          featuredImageIndex: featuredIndex,
           surchargePolicies: normalizedSurcharges,
         });
         await updateVehiclePricing(vehicleId, {
@@ -559,10 +636,16 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
       >
       <ScrollView
         ref={scrollRef}
+        style={styles.scrollView}
         contentContainerStyle={[styles.scroll, { paddingBottom: Math.max(insets.bottom + 120, 140) }]}
         showsVerticalScrollIndicator={false}
+        onScroll={(event) => {
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
+        nestedScrollEnabled
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
         automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
       >
         {step === 0 ? (
@@ -853,21 +936,15 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                 />
               </>
             ) : null}
-            <SurchargePolicyEditor value={surchargePolicies} onChange={setSurchargePolicies} />
+            <SurchargePolicyEditor
+              value={surchargePolicies}
+              onChange={setSurchargePolicies}
+              onDescriptionFocus={handleDescriptionFocus}
+              onDescriptionBlur={handleDescriptionBlur}
+            />
             {!isSurchargePoliciesValid(surchargePolicies) ? (
               <Text style={styles.errorText}>Mỗi phụ phí cần có tên phí và đơn giá lớn hơn 0.</Text>
             ) : null}
-            <Text style={styles.fieldLabel}>Mô tả thêm</Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
-              multiline
-              numberOfLines={3}
-              placeholder="Mô tả về xe..."
-              placeholderTextColor={theme.placeholder}
-              style={[styles.input, styles.textArea]}
-            />
           </View>
         ) : null}
 
@@ -884,6 +961,13 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
               ))}
               {features.length === 0 ? <Text style={styles.muted}>Không có tính năng nào.</Text> : null}
             </View>
+            <VehicleDescriptionField
+              value={description}
+              onChange={setDescription}
+              request={descriptionSuggestionRequest}
+              onFocus={handleDescriptionFocus}
+              onBlur={handleDescriptionBlur}
+            />
           </View>
         ) : null}
 
@@ -966,7 +1050,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         ) : null}
       </ScrollView>
 
-      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      {!keyboardVisible ? <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         {step > (isEdit ? 2 : 0) ? (
           <Pressable onPress={() => goStep(Math.max(isEdit ? 2 : 0, step - 1))} style={styles.backBtn}>
             <ChevronLeft color={theme.text} size={18} />
@@ -986,7 +1070,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
             <Text style={styles.nextText}>{submitting ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Hoàn tất"}</Text>
           </Pressable>
         )}
-      </View>
+      </View> : null}
       </KeyboardAvoidingView>
     </View>
   );
@@ -996,6 +1080,7 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.background },
     keyboardArea: { flex: 1 },
+    scrollView: { flex: 1 },
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
     topBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingVertical: 10 },
     iconBtn: { width: 38, height: 38, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" },
@@ -1030,7 +1115,6 @@ const createStyles = (theme: Theme) =>
     fieldLabelRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
     input: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, borderRadius: 12, backgroundColor: theme.surface, paddingHorizontal: 12, height: 46, color: theme.text, fontSize: 14 },
     lockedInput: { backgroundColor: theme.surfaceAlt, color: theme.muted },
-    textArea: { height: 84, paddingVertical: 10, textAlignVertical: "top" },
     twoCol: { flexDirection: "row", gap: 10 },
     col: { flex: 1, gap: 4 },
     chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

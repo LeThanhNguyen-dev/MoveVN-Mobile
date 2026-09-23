@@ -20,6 +20,8 @@ import type {
   VehicleModerationListItem,
   VehicleModerationDetailResponse,
   VehicleModerationOverviewResponse,
+  VehicleDescriptionSuggestionRequest,
+  VehicleDescriptionSuggestionResponse,
 } from "@/features/vehicles/types";
 
 export async function getMyVehicles(params: Record<string, string | number | boolean | undefined>) {
@@ -117,6 +119,14 @@ export async function getPricingSuggestion(modelId: number, areaId: number, opti
       vacantRate: options?.vacantRate ?? 1,
     },
   });
+  return res.data.data;
+}
+
+export async function generateVehicleDescription(data: VehicleDescriptionSuggestionRequest) {
+  const res = await apiClient.post<ApiResponse<VehicleDescriptionSuggestionResponse>>(
+    endpoints.vehicles.descriptionSuggestion,
+    data,
+  );
   return res.data.data;
 }
 
