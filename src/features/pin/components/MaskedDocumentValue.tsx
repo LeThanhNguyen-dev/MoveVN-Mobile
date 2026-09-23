@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, EyeOff } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Eye, EyeOff, KeyRound } from "lucide-react-native";
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import PinForgotModal from "@/features/pin/components/PinForgotModal";
 import PinSetupModal from "@/features/pin/components/PinSetupModal";
 import PinVerifyModal from "@/features/pin/components/PinVerifyModal";
@@ -30,6 +30,8 @@ export default function MaskedDocumentValue({
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme, align), [theme, align]);
   const [showForgot, setShowForgot] = useState(false);
+  const [showSetupNotice, setShowSetupNotice] = useState(false);
+  const [checkingPin, setCheckingPin] = useState(false);
   const [hintVisible, setHintVisible] = useState(false);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
@@ -42,6 +44,7 @@ export default function MaskedDocumentValue({
     lockoutSeconds,
     remainingAttempts,
     openModal,
+    refreshStatus,
     closeModal,
     handleVerified,
     handleSetupDone,
@@ -61,12 +64,26 @@ export default function MaskedDocumentValue({
     ? (isPinSet ? "Hiển thị bằng mã PIN" : "Thiết lập mã PIN để hiển thị")
     : (revealDisabledHint ?? "Giấy tờ chưa được xác thực để hiển thị.");
 
-  function handleEyePress() {
+  async function handleEyePress() {
     if (!canReveal) {
       setHintVisible(true);
       if (hintTimer.current !== null) clearTimeout(hintTimer.current);
       hintTimer.current = setTimeout(() => setHintVisible(false), 3000);
       return;
+    }
+    if (checkingPin) return;
+    // Chưa có PIN thì báo trước bằng popup, bấm nữa mới sang màn thiết lập.
+    setCheckingPin(true);
+    try {
+      const status = await refreshStatus();
+      if (!status.isPinSet) {
+        setShowSetupNotice(true);
+        return;
+      }
+    } catch {
+      // Không check được thì đi luồng thường (nó tự xử lý lỗi).
+    } finally {
+      setCheckingPin(false);
     }
     void openModal();
   }
@@ -88,10 +105,14 @@ export default function MaskedDocumentValue({
             <Pressable
               accessibilityLabel="Hiển thị số giấy tờ"
               accessibilityRole="button"
-              onPress={handleEyePress}
+              onPress={() => { void handleEyePress(); }}
               style={[styles.eyeButton, !canReveal && styles.eyeDisabled]}
             >
-              <Eye color={canReveal ? theme.brand : theme.faint} size={17} strokeWidth={2.3} />
+              {checkingPin ? (
+                <ActivityIndicator color={theme.brand} size="small" />
+              ) : (
+                <Eye color={canReveal ? theme.brand : theme.faint} size={17} strokeWidth={2.3} />
+              )}
             </Pressable>
           </>
         )}
@@ -125,6 +146,44 @@ export default function MaskedDocumentValue({
           void openModal();
         }}
       />
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setShowSetupNotice(false)}
+        transparent
+        visible={showSetupNotice}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.noticeCard}>
+            <View style={styles.noticeIcon}>
+              <KeyRound color={theme.brand} size={22} strokeWidth={2.3} />
+            </View>
+            <Text style={styles.noticeTitle}>Cần thiết lập mã PIN</Text>
+            <Text style={styles.noticeDescription}>
+              Bạn cần thiết lập mã PIN để xem thông tin giấy tờ này.
+            </Text>
+            <View style={styles.noticeActions}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setShowSetupNotice(false)}
+                style={styles.secondaryButton}
+              >
+                <Text style={styles.secondaryText}>Để sau</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  setShowSetupNotice(false);
+                  void openModal();
+                }}
+                style={styles.primaryButton}
+              >
+                <Text style={styles.primaryText}>Thiết lập ngay</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -139,4 +198,52 @@ const createStyles = (theme: Theme, align: "left" | "right") =>
     eyeButton: { width: 30, height: 30, alignItems: "center", justifyContent: "center", borderRadius: 15 },
     eyeDisabled: { opacity: 0.6 },
     hint: { color: theme.muted, fontSize: 11, textAlign: align, fontWeight: "600" },
+    overlay: {
+      flex: 1,
+      backgroundColor: theme.overlay,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+    },
+    noticeCard: {
+      width: "100%",
+      maxWidth: 320,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      padding: 20,
+      gap: 10,
+      alignItems: "center",
+    },
+    noticeIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: theme.brandSoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    noticeTitle: { color: theme.text, fontSize: 16, fontWeight: "800", textAlign: "center" },
+    noticeDescription: { color: theme.muted, fontSize: 13, lineHeight: 19, textAlign: "center", fontWeight: "500" },
+    noticeActions: { flexDirection: "row", gap: 8, marginTop: 6 },
+    primaryButton: {
+      minHeight: 44,
+      borderRadius: 12,
+      backgroundColor: theme.brand,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 18,
+    },
+    primaryText: { color: theme.onBrand, fontSize: 14, fontWeight: "800" },
+    secondaryButton: {
+      minHeight: 44,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.border,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 18,
+    },
+    secondaryText: { color: theme.text, fontSize: 14, fontWeight: "700" },
   });

@@ -8,7 +8,7 @@ import {
   getFriendlyPinMessage,
 } from "@/features/pin/services/pinErrorMessage";
 import { getPinStatus, verifyPinViewDocument } from "@/features/pin/services/pinService";
-import type { PinDocumentType, PinVehicleType } from "@/features/pin/types";
+import type { PinDocumentType, PinStatusResponse, PinVehicleType } from "@/features/pin/types";
 
 export type PinRevealMode = "verify" | "setup";
 
@@ -30,6 +30,7 @@ export type UsePinRevealResult = {
   lockoutSeconds: number | null;
   remainingAttempts: number | null;
   openModal: () => Promise<void>;
+  refreshStatus: () => Promise<PinStatusResponse>;
   closeModal: () => void;
   handleVerified: (pinCode: string) => Promise<VerifyPinResult>;
   handleSetupDone: (pinCode: string) => Promise<VerifyPinResult>;
@@ -194,6 +195,7 @@ export function usePinReveal(documentType: PinDocumentType, vehicleType?: PinVeh
     lockoutSeconds,
     remainingAttempts,
     openModal,
+    refreshStatus,
     closeModal,
     handleVerified,
     handleSetupDone,

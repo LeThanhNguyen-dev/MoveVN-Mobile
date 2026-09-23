@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ShieldCheck } from "lucide-react-native";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import PinDigitInputs, { type PinDigitInputsHandle } from "@/features/pin/components/PinDigitInputs";
+import PinDigitInputs from "@/features/pin/components/PinDigitInputs";
 import { getAuthUser } from "@/features/auth/hooks/useAuth";
 import { PIN_DIGIT_COUNT, getFriendlyPinMessage, getPinErrorCode, isOtpErrorCode } from "@/features/pin/services/pinErrorMessage";
 import { requestPinForgotOtp, resetPinForgot } from "@/features/pin/services/pinService";
@@ -14,7 +14,7 @@ type PinChangeModalProps = {
   onSuccess?: () => void;
 };
 
-type Step = "request-otp" | "enter-otp" | "new-pin";
+type Step = "request-otp" | "enter-otp" | "new-pin" | "confirm-pin";
 
 const RESEND_COUNTDOWN_SECONDS = 60;
 
@@ -38,8 +38,6 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
   const [otpHasError, setOtpHasError] = useState(false);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const newPinGroupRef = useRef<PinDigitInputsHandle | null>(null);
-  const confirmPinGroupRef = useRef<PinDigitInputsHandle | null>(null);
   const doneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const email = getAuthUser()?.email ?? "";
@@ -62,6 +60,15 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
     const timer = setTimeout(() => setResendSeconds((prev) => Math.max(0, prev - 1)), 1000);
     return () => clearTimeout(timer);
   }, [step, resendSeconds]);
+
+  function handleNewPinContinue() {
+    if (newPin.length !== PIN_DIGIT_COUNT) {
+      setErrorMessage("Vui lòng nhập đủ mã PIN mới 6 chữ số.");
+      return;
+    }
+    setErrorMessage(null);
+    setStep("confirm-pin");
+  }
 
   useEffect(() => () => {
     if (doneTimer.current !== null) clearTimeout(doneTimer.current);
@@ -244,20 +251,53 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
                 Nhập mã PIN mới gồm 6 chữ số.
               </Text>
               <PinDigitInputs
-                ref={newPinGroupRef}
                 autoFocus={visible}
                 disabled={isSubmitting}
                 label="Mã PIN mới"
-                onChange={setNewPin}
-                onComplete={() => confirmPinGroupRef.current?.focusFirst()}
+                onChange={(next) => {
+                  setNewPin(next);
+                  if (errorMessage) setErrorMessage(null);
+                }}
                 value={newPin}
               />
+              {errorMessage !== null ? (
+                <Text accessibilityRole="alert" style={styles.error}>
+                  {errorMessage}
+                </Text>
+              ) : null}
+              <Text style={styles.counter}>
+                {newPin.length} / {PIN_DIGIT_COUNT}
+              </Text>
+              <View style={styles.actions}>
+                <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
+                  <Text style={styles.secondaryText}>Hủy</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={newPin.length !== PIN_DIGIT_COUNT || isSubmitting}
+                  onPress={handleNewPinContinue}
+                  style={[styles.primaryButton, (newPin.length !== PIN_DIGIT_COUNT || isSubmitting) && styles.disabled]}
+                >
+                  <Text style={styles.primaryText}>Tiếp tục</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
+
+          {step === "confirm-pin" ? (
+            <View style={styles.stack}>
+              <Text style={styles.description}>
+                Nhập lại mã PIN mới để xác nhận.
+              </Text>
               <PinDigitInputs
-                ref={confirmPinGroupRef}
+                autoFocus={visible}
                 disabled={isSubmitting}
                 hasError={hasMismatch}
                 label="Xác nhận mã PIN mới"
-                onChange={setConfirmPin}
+                onChange={(next) => {
+                  setConfirmPin(next);
+                  if (errorMessage) setErrorMessage(null);
+                }}
                 value={confirmPin}
               />
               {hasMismatch ? (
@@ -276,8 +316,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
                 </Text>
               ) : null}
               <Text style={styles.counter}>
-                {newPin.length} / {PIN_DIGIT_COUNT} PIN mới ·{" "}
-                {confirmPin.length} / {PIN_DIGIT_COUNT} xác nhận
+                {confirmPin.length} / {PIN_DIGIT_COUNT}
               </Text>
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
