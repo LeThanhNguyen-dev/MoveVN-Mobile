@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, EyeOff, KeyRound } from "lucide-react-native";
+import * as Clipboard from "expo-clipboard";
+import { Check, Copy, Eye, EyeOff, KeyRound } from "lucide-react-native";
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import PinForgotModal from "@/features/pin/components/PinForgotModal";
 import PinSetupModal from "@/features/pin/components/PinSetupModal";
@@ -31,6 +32,8 @@ export default function MaskedDocumentValue({
   const styles = useMemo(() => createStyles(theme, align), [theme, align]);
   const [showForgot, setShowForgot] = useState(false);
   const [showSetupNotice, setShowSetupNotice] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [checkingPin, setCheckingPin] = useState(false);
   const [hintVisible, setHintVisible] = useState(false);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -53,7 +56,12 @@ export default function MaskedDocumentValue({
 
   useEffect(() => () => {
     if (hintTimer.current !== null) clearTimeout(hintTimer.current);
+    if (copiedTimer.current !== null) clearTimeout(copiedTimer.current);
   }, []);
+
+  useEffect(() => {
+    setCopied(false);
+  }, [plaintext]);
 
   // Khi giấy tờ mất trạng thái Verified (ví dụ đổi tab) thì che số ngay.
   useEffect(() => {
@@ -90,33 +98,54 @@ export default function MaskedDocumentValue({
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.row}>
-        {isRevealed && plaintext !== null ? (
-          <>
-            <Text style={styles.plaintext}>{plaintext}</Text>
-            <Text style={styles.countdown}>Đang hiển thị · {secondsLeft}s</Text>
+      {isRevealed && plaintext !== null ? (
+        <View style={styles.revealedWrap}>
+          <Text style={styles.plaintext}>{plaintext}</Text>
+          <View style={styles.revealedRow}>
+            <Text numberOfLines={1} style={styles.countdown}>
+              Đang hiển thị · {secondsLeft}s
+            </Text>
+            <Pressable
+              accessibilityLabel="Sao chép số giấy tờ"
+              accessibilityRole="button"
+              onPress={() => {
+                if (!plaintext) return;
+                void Clipboard.setStringAsync(plaintext).then(() => {
+                  setCopied(true);
+                  if (copiedTimer.current !== null) clearTimeout(copiedTimer.current);
+                  copiedTimer.current = setTimeout(() => setCopied(false), 2000);
+                });
+              }}
+              style={styles.eyeButton}
+            >
+              {copied ? (
+                <Check color={theme.success} size={17} strokeWidth={2.5} />
+              ) : (
+                <Copy color={theme.brand} size={17} strokeWidth={2.3} />
+              )}
+            </Pressable>
             <Pressable accessibilityLabel="Ẩn" accessibilityRole="button" onPress={hide} style={styles.eyeButton}>
               <EyeOff color={theme.brand} size={17} strokeWidth={2.3} />
             </Pressable>
-          </>
-        ) : (
-          <>
-            <Text style={styles.masked}>{maskedValue ?? "••••••"}</Text>
-            <Pressable
-              accessibilityLabel="Hiển thị số giấy tờ"
-              accessibilityRole="button"
-              onPress={() => { void handleEyePress(); }}
-              style={[styles.eyeButton, !canReveal && styles.eyeDisabled]}
-            >
-              {checkingPin ? (
-                <ActivityIndicator color={theme.brand} size="small" />
-              ) : (
-                <Eye color={canReveal ? theme.brand : theme.faint} size={17} strokeWidth={2.3} />
-              )}
-            </Pressable>
-          </>
-        )}
-      </View>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.row}>
+          <Text style={styles.masked}>{maskedValue ?? "••••••"}</Text>
+          <Pressable
+            accessibilityLabel="Hiển thị số giấy tờ"
+            accessibilityRole="button"
+            onPress={() => { void handleEyePress(); }}
+            style={[styles.eyeButton, !canReveal && styles.eyeDisabled]}
+          >
+            {checkingPin ? (
+              <ActivityIndicator color={theme.brand} size="small" />
+            ) : (
+              <Eye color={canReveal ? theme.brand : theme.faint} size={17} strokeWidth={2.3} />
+            )}
+          </Pressable>
+        </View>
+      )}
       {hintVisible && !isRevealed ? <Text style={styles.hint}>{eyeTitle}</Text> : null}
 
       {mode === "setup" ? (
@@ -190,12 +219,21 @@ export default function MaskedDocumentValue({
 
 const createStyles = (theme: Theme, align: "left" | "right") =>
   StyleSheet.create({
-    wrap: { flexShrink: 1, alignItems: align === "left" ? "flex-start" : "flex-end", gap: 2 },
+    wrap: { flexShrink: 1, minWidth: 0, alignItems: align === "left" ? "flex-start" : "flex-end", gap: 2 },
     row: { flexDirection: "row", alignItems: "center", gap: 6 },
-    masked: { color: theme.text, fontSize: 13, fontWeight: "700", textAlign: align },
-    plaintext: { color: theme.text, fontSize: 14, fontWeight: "800", textAlign: align },
-    countdown: { color: theme.success, fontSize: 11, fontWeight: "700" },
-    eyeButton: { width: 30, height: 30, alignItems: "center", justifyContent: "center", borderRadius: 15 },
+    revealedWrap: { flexShrink: 1, minWidth: 0, alignItems: align === "left" ? "flex-start" : "flex-end", gap: 4 },
+    revealedRow: { flexDirection: "row", alignItems: "center", gap: 6, maxWidth: "100%" },
+    masked: { color: theme.text, fontSize: 13, fontWeight: "700", textAlign: align, flexShrink: 1 },
+    plaintext: { color: theme.text, fontSize: 14, fontWeight: "800", textAlign: align, flexShrink: 1 },
+    countdown: { color: theme.success, fontSize: 11, fontWeight: "700", flexShrink: 1 },
+    eyeButton: {
+      width: 30,
+      height: 30,
+      flexShrink: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 15,
+    },
     eyeDisabled: { opacity: 0.6 },
     hint: { color: theme.muted, fontSize: 11, textAlign: align, fontWeight: "600" },
     overlay: {
