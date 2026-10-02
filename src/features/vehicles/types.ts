@@ -25,6 +25,8 @@ export type VehicleListItemResponse = {
   averageRating: number;
   reviewCount: number;
   distanceKm: number | null;
+  latitude: number | null;
+  longitude: number | null;
   totalDynamicPrice: number | null;
   rentalDays: number | null;
   averageDailyPrice: number | null;

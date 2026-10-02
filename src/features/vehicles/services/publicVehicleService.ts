@@ -17,9 +17,22 @@ export async function getPublicVehicles(params: Record<string, string | number |
   return res.data.data ?? { items: [], totalCount: 0, page: 1, pageSize: 12, totalPages: 0 };
 }
 
+export async function getPublicMapVehicles(params: Record<string, string | number | boolean | undefined>) {
+  const res = await bareApiClient.get<ApiResponse<PagedResult<VehicleListItemResponse>>>(endpoints.publicVehicles.map, { params });
+  return res.data.data ?? { items: [], totalCount: 0, page: 1, pageSize: 300, totalPages: 0 };
+}
+
 export async function aiFilterSearchPublicVehicles(request: PublicVehicleAiSearchRequest) {
   const res = await bareApiClient.post<ApiResponse<PublicVehicleAiSearchResponse>>(
     endpoints.publicVehicles.aiFilterSearch,
+    request,
+  );
+  return res.data.data;
+}
+
+export async function aiFilterMapPublicVehicles(request: PublicVehicleAiSearchRequest) {
+  const res = await bareApiClient.post<ApiResponse<PublicVehicleAiSearchResponse>>(
+    endpoints.publicVehicles.aiFilterMap,
     request,
   );
   return res.data.data;

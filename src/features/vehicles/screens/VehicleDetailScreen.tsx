@@ -10,7 +10,7 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { createPricingQuote, getDeliveryConfig, getPublicVehicleById, getVehicleAvailability } from "@/features/vehicles/services/publicVehicleService";
 import type { BusyPeriod, PricingQuoteResponse, VehicleResponse } from "@/features/vehicles/types";
-import { calculateRentalDays, formatPeriodSummary } from "@/features/vehicles/utils/rentalPeriod";
+import { calculateRentalDays, firstBusyDateInRange, formatPeriodSummary, getBusyDateKeys } from "@/features/vehicles/utils/rentalPeriod";
 import { formatVnd } from "@/features/vehicles/ownerDisplay";
 import { getVehicleReviews, type ReviewResponse } from "@/features/review/reviewService";
 import { addFavoriteVehicle, getFavoriteVehicleIds, removeFavoriteVehicle } from "@/features/vehicles/services/favoriteVehicleService";
@@ -48,6 +48,8 @@ export default function VehicleDetailScreen({
   const [periodOpen, setPeriodOpen] = useState(false);
   const [busyPeriods, setBusyPeriods] = useState<BusyPeriod[]>([]);
   const [availabilityReady, setAvailabilityReady] = useState(false);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
+  const [availabilityError, setAvailabilityError] = useState(false);
   const [deliveryConfig, setDeliveryConfig] = useState({ freeKm: 5, perKm: 10000, maxKm: 50 });
   const [quote, setQuote] = useState<PricingQuoteResponse | null>(null);
   const [quoteState, setQuoteState] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -79,8 +81,12 @@ export default function VehicleDetailScreen({
     setReviews([]);
     setFavorite(false);
     setAvailabilityReady(false);
+    setAvailabilityLoading(true);
+    setAvailabilityError(false);
     setBusyPeriods([]);
-    getVehicleAvailability(vehicleId).then(data => { if (!cancelled && data) { setBusyPeriods(data.busyPeriods ?? []); setAvailabilityReady(true); } }).catch(() => undefined);
+    getVehicleAvailability(vehicleId).then(data => { if (!cancelled && data) { setBusyPeriods(data.busyPeriods ?? []); setAvailabilityReady(true); } else if (!cancelled) setAvailabilityError(true); })
+      .catch(() => { if (!cancelled) setAvailabilityError(true); })
+      .finally(() => { if (!cancelled) setAvailabilityLoading(false); });
     getVehicleReviews(vehicleId).then(data => { if (!cancelled) { setReviews(data); setReviewState("ready"); } }).catch(() => { if (!cancelled) setReviewState("error"); });
     getFavoriteVehicleIds().then(ids => { if (!cancelled) setFavorite(ids.includes(vehicleId)); }).catch(() => undefined);
     getPublicVehicleById(vehicleId)
@@ -100,8 +106,28 @@ export default function VehicleDetailScreen({
   const days = calculateRentalDays(start, end);
   const price = days > 0 ? quote?.averageDailyPrice ?? null : vehicle?.currentPricePerDay ?? vehicle?.pricePerDay ?? null;
   const average = reviews.length ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : null;
-  const overlapping = days > 0 && busyPeriods.some(period => new Date(start).getTime() < new Date(period.endDate).getTime() && new Date(end).getTime() > new Date(period.startDate).getTime());
+  const busyDates = useMemo(() => getBusyDateKeys(busyPeriods), [busyPeriods]);
+  const overlapping = days > 0 && firstBusyDateInRange(start, end, busyDates) !== null;
   const periodMessage = days > 0 ? overlapping ? "Xe đã bận trong thời gian này. Vui lòng chọn ngày khác." : availabilityReady ? "Không trùng lịch bận hiện tại của xe." : "Chưa tải được lịch bận. Cần kiểm tra lại trước khi đặt xe." : "";
+  async function refreshAvailability() {
+    setAvailabilityLoading(true);
+    setAvailabilityError(false);
+    setAvailabilityReady(false);
+    try {
+      const data = await getVehicleAvailability(vehicleId);
+      if (!data) throw new Error("Không tải được lịch xe.");
+      setBusyPeriods(data.busyPeriods ?? []);
+      setAvailabilityReady(true);
+    } catch {
+      setAvailabilityError(true);
+    } finally {
+      setAvailabilityLoading(false);
+    }
+  }
+  function openPeriod() {
+    setPeriodOpen(true);
+    void refreshAvailability();
+  }
   async function toggleFavorite() {
     if (savingFavorite) return;
     setSavingFavorite(true);
@@ -149,7 +175,7 @@ export default function VehicleDetailScreen({
             <View style={[styles.card, styles.row]}><View style={styles.avatar}><Text style={styles.avatarText}>{(vehicle.ownerName || "C").charAt(0).toUpperCase()}</Text></View><View style={styles.flex}><Text style={styles.small}>Chủ xe</Text><Text style={styles.sectionTitle}>{vehicle.ownerName || "Chưa cập nhật"}</Text></View></View>
             <View style={styles.card}><Text style={styles.sectionTitle}>Giới thiệu xe</Text><Text numberOfLines={expanded ? undefined : 4} style={styles.description}>{vehicle.description?.trim() || "Chủ xe chưa bổ sung mô tả cho xe này."}</Text>{Boolean(vehicle.description && vehicle.description.length > 180) && <Pressable onPress={() => setExpanded(value => !value)}><Text style={styles.link}>{expanded ? "Thu gọn" : "Xem thêm"}</Text></Pressable>}</View>
             <View style={styles.card}><Text style={styles.sectionTitle}>Tiện ích</Text>{vehicle.features?.length ? <View style={styles.features}>{vehicle.features.map(feature => <View key={feature.id} style={styles.feature}><Check size={15} color={theme.brand} /><Text style={styles.text}>{feature.name}</Text></View>)}</View> : <Text style={styles.muted}>Chưa cập nhật tiện ích.</Text>}</View>
-            <View style={styles.card}><Text style={styles.sectionTitle}>Thời gian thuê</Text><Pressable style={styles.periodBox} onPress={() => setPeriodOpen(true)}><CalendarDays size={21} color={theme.brand} /><View style={styles.flex}><Text style={styles.text}>{formatPeriodSummary(start, end)}</Text><Text style={styles.small}>{days ? `${days} ngày thuê · Chạm để thay đổi` : "Chọn ngày nhận và trả xe"}</Text></View><ChevronRight size={18} color={theme.muted} /></Pressable><RentalQuote quote={quote} state={quoteState} onRetry={() => setQuoteRetry(value => value + 1)} styles={styles} theme={theme} />{periodMessage ? <Text style={[styles.small, { color: overlapping ? theme.danger : theme.muted }]}>{periodMessage}</Text> : null}<Text style={styles.small}>Giá cuối cùng phụ thuộc thời gian thuê và các khoản phí áp dụng.</Text></View>
+            <View style={styles.card}><Text style={styles.sectionTitle}>Thời gian thuê</Text><Pressable style={styles.periodBox} onPress={openPeriod}><CalendarDays size={21} color={theme.brand} /><View style={styles.flex}><Text style={styles.text}>{formatPeriodSummary(start, end)}</Text><Text style={styles.small}>{days ? `${days} ngày thuê · Chạm để thay đổi` : "Chọn ngày nhận và trả xe"}</Text></View><ChevronRight size={18} color={theme.muted} /></Pressable><RentalQuote quote={quote} state={quoteState} onRetry={() => setQuoteRetry(value => value + 1)} styles={styles} theme={theme} />{periodMessage ? <Text style={[styles.small, { color: overlapping ? theme.danger : theme.muted }]}>{periodMessage}</Text> : null}<Text style={styles.small}>Giá cuối cùng phụ thuộc thời gian thuê và các khoản phí áp dụng.</Text></View>
             <View style={styles.card}><OwnerVehicleMap latitude={vehicle.latitude} longitude={vehicle.longitude} address={vehicle.address || vehicle.areaName || "Chưa cập nhật địa chỉ"} title={title} /></View>
             <View style={styles.card}><View style={styles.row}><Truck size={20} color={theme.brand} /><Text style={styles.sectionTitle}>Giao xe tận nơi</Text></View>{[["Miễn phí trong", (vehicle.deliveryFreeRadiusKm ?? deliveryConfig.freeKm) != null ? `${vehicle.deliveryFreeRadiusKm ?? deliveryConfig.freeKm} km` : "Theo cấu hình của sàn"], ["Phí mỗi km vượt", (vehicle.deliveryFeePerKm ?? deliveryConfig.perKm) != null ? `${(vehicle.deliveryFeePerKm ?? deliveryConfig.perKm).toLocaleString("vi-VN")}đ/km` : "Theo cấu hình của sàn"], ["Phạm vi giao xe", (vehicle.deliveryMaxRadiusKm ?? deliveryConfig.maxKm) != null ? `${vehicle.deliveryMaxRadiusKm ?? deliveryConfig.maxKm} km` : "Theo cấu hình của sàn"]].map(([label, value]) => <View key={label} style={styles.between}><Text style={styles.muted}>{label}</Text><Text style={styles.value}>{value}</Text></View>)}<Text style={styles.small}>Phí giao xe được xác định theo khoảng cách đến địa điểm nhận xe.</Text></View>
             <View style={styles.card}><View style={styles.row}><ShieldCheck size={20} color={theme.brand} /><Text style={styles.sectionTitle}>Cọc & thế chấp</Text></View><View style={styles.between}><Text style={styles.muted}>Cọc đặt xe</Text><Text style={styles.value}>{vehicle.depositPercent}% tiền thuê</Text></View><View style={styles.between}><Text style={styles.muted}>Tiền thế chấp</Text><Text style={styles.value}>{vehicle.securityRequiresDeposit ? formatVnd(vehicle.securityDepositAmount) : "Không yêu cầu"}</Text></View></View>
@@ -161,11 +187,11 @@ export default function VehicleDetailScreen({
               <Text style={styles.small}>{days > 0 ? "Giá trung bình theo ngày thuê" : "Giá thuê hiện tại"}</Text>
               <Text style={styles.price}>{days > 0 && quoteState !== "ready" ? (quoteState === "error" ? "Chưa có báo giá" : "Đang tính giá…") : formatVnd(price)}{(days <= 0 || quoteState === "ready") && <Text style={styles.small}> / ngày</Text>}</Text>
             </View>
-            <Pressable style={styles.primaryButton} onPress={() => setPeriodOpen(true)}><Text style={styles.primaryText}>{days ? "Đổi ngày thuê" : "Chọn ngày thuê"}</Text><ChevronRight color={theme.onBrand} size={18} /></Pressable>
+            <Pressable style={styles.primaryButton} onPress={openPeriod}><Text style={styles.primaryText}>{days ? "Đổi ngày thuê" : "Chọn ngày thuê"}</Text><ChevronRight color={theme.onBrand} size={18} /></Pressable>
           </View>
         </>
       )}
-      <RentalPeriodSheet visible={periodOpen} startDate={start} endDate={end} onStartDateChange={setStart} onEndDateChange={setEnd} onClose={() => setPeriodOpen(false)} />
+      <RentalPeriodSheet visible={periodOpen} startDate={start} endDate={end} onStartDateChange={setStart} onEndDateChange={setEnd} onClose={() => setPeriodOpen(false)} busyPeriods={busyPeriods} availabilityLoading={availabilityLoading} availabilityError={availabilityError} onRetryAvailability={() => { void refreshAvailability(); }} />
       <Modal visible={viewer} animationType="fade" onRequestClose={() => setViewer(false)}><View style={styles.viewer}><View style={[styles.viewerHeader, { paddingTop: insets.top + 12 }]}><Text numberOfLines={1} style={[styles.whiteText, styles.flex]}>{title}</Text><Pressable accessibilityLabel="Đóng ảnh" onPress={() => setViewer(false)} style={styles.backButton}><X color={theme.text} size={24} /></Pressable></View><FlatList key={`${width}-${imageIndex}`} data={photos} horizontal pagingEnabled initialScrollIndex={imageIndex} getItemLayout={(_, index) => ({ length: width, offset: width * index, index })} keyExtractor={item => item} showsHorizontalScrollIndicator={false} renderItem={({ item }) => <View style={{ width, flex: 1, justifyContent: "center" }}><Image source={{ uri: item }} style={{ width, height: "80%" }} contentFit="contain" /></View>} /></View></Modal>
     </View>
   );
