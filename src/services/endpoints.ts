@@ -106,8 +106,11 @@ export const endpoints = {
     goongDetail: "/api/locations/goong/detail",
   },
   publicVehicles: {
+    pricingQuote: (id: number) => `/api/public/vehicles/${id}/pricing-quote`,
     list: "/api/public/vehicles",
+    map: "/api/public/vehicles/map",
     aiFilterSearch: "/api/public/vehicles/ai-filter-search",
+    aiFilterMap: "/api/public/vehicles/ai-filter-map",
     byId: (id: number) => `/api/public/vehicles/${id}`,
     availability: (id: number) => `/api/public/vehicles/${id}/availability`,
     images: (id: number) => `/api/public/vehicles/${id}/images`,

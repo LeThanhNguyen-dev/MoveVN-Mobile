@@ -24,7 +24,6 @@ import { DualRangeSlider, SingleSlider, SliderCaption } from "@/features/vehicle
 import { formatVehicleCurrency } from "@/features/vehicles/components/VehicleListCard";
 
 export type VehicleListFilters = {
-  keyword: string;
   type: "" | "Car" | "Motorbike";
   brandId: string;
   brandName: string;
@@ -44,7 +43,6 @@ export type VehicleListFilters = {
 };
 
 export const EMPTY_FILTERS: VehicleListFilters = {
-  keyword: "",
   type: "",
   brandId: "",
   brandName: "",
@@ -117,14 +115,18 @@ export function getTransmissionLabel(value: string): string {
 type VehicleFilterSheetProps = {
   visible: boolean;
   initial: VehicleListFilters;
+  initialAiQuery: string;
+  searching: boolean;
   resultCount?: number;
-  onApply: (filters: VehicleListFilters) => void;
+  onApply: (filters: VehicleListFilters, aiQuery: string) => void;
   onClose: () => void;
 };
 
 export default function VehicleFilterSheet({
   visible,
   initial,
+  initialAiQuery,
+  searching,
   resultCount,
   onApply,
   onClose,
@@ -135,6 +137,7 @@ export default function VehicleFilterSheet({
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const [draft, setDraft] = useState<VehicleListFilters>(initial);
+  const [draftAiQuery, setDraftAiQuery] = useState(initialAiQuery);
   const [brands, setBrands] = useState<CatalogBrand[]>([]);
   const [models, setModels] = useState<CatalogModel[]>([]);
   const [loadingBrands, setLoadingBrands] = useState(false);
@@ -144,6 +147,7 @@ export default function VehicleFilterSheet({
   useEffect(() => {
     if (!visible) return;
     setDraft(initial);
+    setDraftAiQuery(initialAiQuery);
     let cancelled = false;
     async function load() {
       setLoadingBrands(true);
@@ -194,6 +198,7 @@ export default function VehicleFilterSheet({
 
   function handleClear() {
     setDraft(EMPTY_FILTERS);
+    setDraftAiQuery("");
     setModels([]);
   }
 
@@ -285,16 +290,21 @@ export default function VehicleFilterSheet({
             keyboardShouldPersistTaps="handled"
             scrollEnabled={!sliding}
           >
-            <Text style={styles.label}>Từ khóa</Text>
+            <Text style={styles.label}>Tìm kiếm thông minh</Text>
             <View style={styles.searchBox}>
               <Search color={theme.placeholder} size={15} />
               <TextInput
-                value={draft.keyword}
-                onChangeText={(v) => set("keyword", v)}
-                placeholder="Tìm theo tên xe, hãng xe..."
+                value={draftAiQuery}
+                onChangeText={setDraftAiQuery}
+                placeholder="Ví dụ: xe 7 chỗ dưới 1tr5, rộng rãi..."
                 placeholderTextColor={theme.placeholder}
                 style={styles.searchInput}
               />
+              {draftAiQuery ? (
+                <Pressable onPress={() => setDraftAiQuery("")} accessibilityLabel="Xóa tìm kiếm thông minh">
+                  <X color={theme.muted} size={16} />
+                </Pressable>
+              ) : null}
             </View>
 
             <AddressAutocomplete
@@ -536,15 +546,18 @@ export default function VehicleFilterSheet({
               <Text style={styles.clearText}>Reset</Text>
             </Pressable>
             <Pressable
+              disabled={searching}
               onPress={() => {
-                onApply(draft);
+                onApply(draft, draftAiQuery.trim());
                 handleClose();
               }}
-              style={styles.doneButton}
+              style={[styles.doneButton, searching && styles.doneButtonDisabled]}
             >
-              <Text style={styles.doneText}>
-                Áp dụng{resultCount !== undefined ? ` (${resultCount})` : ""}
-              </Text>
+              {searching ? <ActivityIndicator size="small" color={theme.onBrand} /> : (
+                <Text style={styles.doneText}>
+                  Áp dụng{resultCount !== undefined ? ` (${resultCount})` : ""}
+                </Text>
+              )}
             </Pressable>
           </View>
         </Animated.View>
@@ -669,5 +682,6 @@ const createStyles = (theme: Theme) =>
       alignItems: "center",
       justifyContent: "center",
     },
+    doneButtonDisabled: { opacity: 0.55 },
     doneText: { color: theme.onBrand, fontSize: 14, fontWeight: "800" },
   });
