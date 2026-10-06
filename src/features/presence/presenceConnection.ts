@@ -12,6 +12,7 @@ let connection: HubConnection | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let startPromise: Promise<void> | null = null;
 let connectionUserId: number | null = null;
+let connectingUserId: number | null = null;
 
 function getPresenceHubUrl() {
   return `${getApiBaseUrl()}/hubs/presence`;
@@ -28,7 +29,15 @@ function startHeartbeat() {
   stopHeartbeat();
   heartbeatTimer = setInterval(() => {
     if (connection?.state === HubConnectionState.Connected) {
-      void connection.invoke("Heartbeat");
+      const activeConnection = connection;
+      void activeConnection.invoke("Heartbeat")
+        .then(() => {
+          if (connection === activeConnection) usePresenceStore.getState().setSelfOnline(true);
+        })
+        .catch((error: unknown) => {
+          if (connection === activeConnection) usePresenceStore.getState().setSelfOnline(false);
+          console.warn("Presence heartbeat failed.", error);
+        });
     }
   }, 30_000);
 }
@@ -38,8 +47,14 @@ export async function startPresenceConnection() {
   const currentUser = getAuthUser();
   if (!token || !currentUser) return;
 
-  if (connection?.state === HubConnectionState.Connected || connection?.state === HubConnectionState.Connecting) {
+  if (connection?.state === HubConnectionState.Connected
+      || connection?.state === HubConnectionState.Connecting
+      || connection?.state === HubConnectionState.Reconnecting) {
     if (connectionUserId === currentUser.userId) {
+      return;
+    }
+    if (connection.state === HubConnectionState.Connecting && connectingUserId === currentUser.userId && startPromise) {
+      await startPromise;
       return;
     }
 
@@ -51,7 +66,7 @@ export async function startPresenceConnection() {
       .withUrl(getPresenceHubUrl(), {
         accessTokenFactory: () => getToken() ?? "",
       })
-      .withAutomaticReconnect()
+      .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => 5_000 })
       .configureLogging(LogLevel.Warning)
       .build();
 
@@ -63,9 +78,15 @@ export async function startPresenceConnection() {
     });
 
     connection.onreconnected(() => {
-      usePresenceStore.getState().setSelfOnline(true);
-      void connection?.invoke("Heartbeat");
+      const reconnected = connection;
+      if (!reconnected) return;
       startHeartbeat();
+      void reconnected.invoke("Heartbeat")
+        .then(() => {
+          if (connection !== reconnected) return;
+          usePresenceStore.getState().setSelfOnline(true);
+        })
+        .catch((error: unknown) => console.warn("Presence heartbeat failed after reconnect.", error));
     });
 
     connection.onreconnecting(() => {
@@ -80,8 +101,10 @@ export async function startPresenceConnection() {
   }
 
   const activeConnection = connection;
+  connectingUserId = currentUser.userId;
   startPromise = activeConnection.start().finally(() => {
     startPromise = null;
+    connectingUserId = null;
   });
 
   await startPromise;
@@ -90,11 +113,10 @@ export async function startPresenceConnection() {
     return;
   }
 
+  await activeConnection.invoke("Heartbeat");
   usePresenceStore.getState().setSelfOnline(true);
   connectionUserId = currentUser.userId;
   usePresenceStore.getState().setUserPresence(currentUser.userId, true, new Date().toISOString());
-
-  await activeConnection.invoke("Heartbeat");
   startHeartbeat();
 }
 

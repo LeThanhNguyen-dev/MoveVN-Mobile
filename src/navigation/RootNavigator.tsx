@@ -9,6 +9,7 @@ import OwnerNavigator from "./OwnerNavigator";
 import AdminHomeScreen from "@/features/admin/screens/AdminHomeScreen";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { restoreSession } from "@/features/auth/services/authSession";
+import { usePresenceConnection } from "@/features/presence/usePresenceConnection";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { initializeTheme } from "@/theme/useThemeStore";
@@ -23,6 +24,7 @@ function getActiveLandingRole(roles: UserRole[], activeRole: UserRole | null): U
 }
 
 export default function RootNavigator() {
+  usePresenceConnection();
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const activeRole = useAuthStore((state) => state.activeRole);
