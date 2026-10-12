@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AuthNavigator from "./AuthNavigator";
 import CustomerNavigator from "./CustomerNavigator";
 import OwnerNavigator from "./OwnerNavigator";
-import AdminHomeScreen from "@/features/admin/screens/AdminHomeScreen";
+import RoleNotSupportedScreen from "@/features/app/screens/RoleNotSupportedScreen";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { restoreSession } from "@/features/auth/services/authSession";
 import { usePresenceConnection } from "@/features/presence/usePresenceConnection";
@@ -61,7 +61,7 @@ export default function RootNavigator() {
     {!token || !user ? <AuthNavigator />
       : role === "Customer" ? <CustomerNavigator user={user} />
         : role === "Owner" ? <OwnerNavigator user={user} />
-          : <AdminHomeScreen role={role} user={user} />}
+          : <RoleNotSupportedScreen role={role ?? "Staff"} />}
   </NavigationContainer>;
 }
 

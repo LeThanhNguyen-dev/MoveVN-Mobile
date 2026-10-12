@@ -24,9 +24,11 @@ type DetailNav = NativeStackNavigationProp<ExploreStackParamList, "VehicleDetail
 export default function VehicleDetailScreen({
   route,
   navigation,
+  onBookPress,
 }: {
   route: DetailRoute;
   navigation: DetailNav;
+  onBookPress?: (params: { vehicleId: number; startDate: string; endDate: string }) => void;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -109,6 +111,7 @@ export default function VehicleDetailScreen({
   const busyDates = useMemo(() => getBusyDateKeys(busyPeriods), [busyPeriods]);
   const overlapping = days > 0 && firstBusyDateInRange(start, end, busyDates) !== null;
   const periodMessage = days > 0 ? overlapping ? "Xe đã bận trong thời gian này. Vui lòng chọn ngày khác." : availabilityReady ? "Không trùng lịch bận hiện tại của xe." : "Chưa tải được lịch bận. Cần kiểm tra lại trước khi đặt xe." : "";
+  const canBook = days > 0 && !overlapping && !!onBookPress;
   async function refreshAvailability() {
     setAvailabilityLoading(true);
     setAvailabilityError(false);
@@ -175,7 +178,7 @@ export default function VehicleDetailScreen({
             <View style={[styles.card, styles.row]}><View style={styles.avatar}><Text style={styles.avatarText}>{(vehicle.ownerName || "C").charAt(0).toUpperCase()}</Text></View><View style={styles.flex}><Text style={styles.small}>Chủ xe</Text><Text style={styles.sectionTitle}>{vehicle.ownerName || "Chưa cập nhật"}</Text></View></View>
             <View style={styles.card}><Text style={styles.sectionTitle}>Giới thiệu xe</Text><Text numberOfLines={expanded ? undefined : 4} style={styles.description}>{vehicle.description?.trim() || "Chủ xe chưa bổ sung mô tả cho xe này."}</Text>{Boolean(vehicle.description && vehicle.description.length > 180) && <Pressable onPress={() => setExpanded(value => !value)}><Text style={styles.link}>{expanded ? "Thu gọn" : "Xem thêm"}</Text></Pressable>}</View>
             <View style={styles.card}><Text style={styles.sectionTitle}>Tiện ích</Text>{vehicle.features?.length ? <View style={styles.features}>{vehicle.features.map(feature => <View key={feature.id} style={styles.feature}><Check size={15} color={theme.brand} /><Text style={styles.text}>{feature.name}</Text></View>)}</View> : <Text style={styles.muted}>Chưa cập nhật tiện ích.</Text>}</View>
-            <View style={styles.card}><Text style={styles.sectionTitle}>Thời gian thuê</Text><Pressable style={styles.periodBox} onPress={openPeriod}><CalendarDays size={21} color={theme.brand} /><View style={styles.flex}><Text style={styles.text}>{formatPeriodSummary(start, end)}</Text><Text style={styles.small}>{days ? `${days} ngày thuê · Chạm để thay đổi` : "Chọn ngày nhận và trả xe"}</Text></View><ChevronRight size={18} color={theme.muted} /></Pressable><RentalQuote quote={quote} state={quoteState} onRetry={() => setQuoteRetry(value => value + 1)} styles={styles} theme={theme} />{periodMessage ? <Text style={[styles.small, { color: overlapping ? theme.danger : theme.muted }]}>{periodMessage}</Text> : null}<Text style={styles.small}>Giá cuối cùng phụ thuộc thời gian thuê và các khoản phí áp dụng.</Text></View>
+            <View style={styles.card}><Text style={styles.sectionTitle}>Thời gian thuê</Text><Pressable style={styles.periodBox} onPress={openPeriod}><CalendarDays size={21} color={theme.brand} /><View style={styles.flex}><Text style={styles.text}>{formatPeriodSummary(start, end)}</Text><Text style={styles.small}>{days ? `${days} ngày thuê · Chạm để thay đổi` : "Chọn ngày nhận và trả xe"}</Text></View><ChevronRight size={18} color={theme.muted} /></Pressable><RentalQuote quote={quote} state={quoteState} onRetry={() => setQuoteRetry(value => value + 1)} styles={styles} theme={theme} />{periodMessage ? <Text style={[styles.small, { color: overlapping ? theme.danger : theme.muted }]}>{periodMessage}</Text> : null}<Text style={styles.small}>Giá cuối cùng phụ thuộc thời gian thuê và các khoản phí áp dụng.</Text>{onBookPress ? (canBook ? <Pressable accessibilityLabel="Đặt xe ngay" onPress={() => onBookPress({ vehicleId, startDate: start, endDate: end })} style={({ pressed }) => [styles.bookButton, pressed && styles.bookButtonPressed]}><Text style={styles.bookButtonText}>Đặt xe ngay</Text></Pressable> : !overlapping ? <Text style={styles.muted}>Chọn thời gian thuê để đặt xe.</Text> : null) : null}</View>
             <View style={styles.card}><OwnerVehicleMap latitude={vehicle.latitude} longitude={vehicle.longitude} address={vehicle.address || vehicle.areaName || "Chưa cập nhật địa chỉ"} title={title} /></View>
             <View style={styles.card}><View style={styles.row}><Truck size={20} color={theme.brand} /><Text style={styles.sectionTitle}>Giao xe tận nơi</Text></View>{[["Miễn phí trong", (vehicle.deliveryFreeRadiusKm ?? deliveryConfig.freeKm) != null ? `${vehicle.deliveryFreeRadiusKm ?? deliveryConfig.freeKm} km` : "Theo cấu hình của sàn"], ["Phí mỗi km vượt", (vehicle.deliveryFeePerKm ?? deliveryConfig.perKm) != null ? `${(vehicle.deliveryFeePerKm ?? deliveryConfig.perKm).toLocaleString("vi-VN")}đ/km` : "Theo cấu hình của sàn"], ["Phạm vi giao xe", (vehicle.deliveryMaxRadiusKm ?? deliveryConfig.maxKm) != null ? `${vehicle.deliveryMaxRadiusKm ?? deliveryConfig.maxKm} km` : "Theo cấu hình của sàn"]].map(([label, value]) => <View key={label} style={styles.between}><Text style={styles.muted}>{label}</Text><Text style={styles.value}>{value}</Text></View>)}<Text style={styles.small}>Phí giao xe được xác định theo khoảng cách đến địa điểm nhận xe.</Text></View>
             <View style={styles.card}><View style={styles.row}><ShieldCheck size={20} color={theme.brand} /><Text style={styles.sectionTitle}>Cọc & thế chấp</Text></View><View style={styles.between}><Text style={styles.muted}>Cọc đặt xe</Text><Text style={styles.value}>{vehicle.depositPercent}% tiền thuê</Text></View><View style={styles.between}><Text style={styles.muted}>Tiền thế chấp</Text><Text style={styles.value}>{vehicle.securityRequiresDeposit ? formatVnd(vehicle.securityDepositAmount) : "Không yêu cầu"}</Text></View></View>
@@ -187,7 +190,7 @@ export default function VehicleDetailScreen({
               <Text style={styles.small}>{days > 0 ? "Giá trung bình theo ngày thuê" : "Giá thuê hiện tại"}</Text>
               <Text style={styles.price}>{days > 0 && quoteState !== "ready" ? (quoteState === "error" ? "Chưa có báo giá" : "Đang tính giá…") : formatVnd(price)}{(days <= 0 || quoteState === "ready") && <Text style={styles.small}> / ngày</Text>}</Text>
             </View>
-            <Pressable style={styles.primaryButton} onPress={openPeriod}><Text style={styles.primaryText}>{days ? "Đổi ngày thuê" : "Chọn ngày thuê"}</Text><ChevronRight color={theme.onBrand} size={18} /></Pressable>
+            {canBook && onBookPress ? <Pressable accessibilityLabel="Đặt xe ngay" style={styles.primaryButton} onPress={() => onBookPress({ vehicleId, startDate: start, endDate: end })}><Text style={styles.primaryText}>Đặt xe ngay</Text></Pressable> : <Pressable style={styles.primaryButton} onPress={openPeriod}><Text style={styles.primaryText}>{days ? "Đổi ngày thuê" : "Chọn ngày thuê"}</Text><ChevronRight color={theme.onBrand} size={18} /></Pressable>}
           </View>
         </>
       )}
@@ -273,4 +276,13 @@ const createStyles = (theme: Theme) =>
     title: { color: theme.text, fontSize: 24, fontWeight: "800", lineHeight: 32 },
     period: { color: theme.brand, fontSize: 13, fontWeight: "700" },
     muted: { color: theme.muted, fontSize: 13 },
+    bookButton: {
+      marginTop: 12,
+      borderRadius: 12,
+      backgroundColor: theme.brand,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
+    bookButtonPressed: { opacity: 0.85 },
+    bookButtonText: { color: theme.onBrand, fontSize: 16, fontWeight: "800" },
   });

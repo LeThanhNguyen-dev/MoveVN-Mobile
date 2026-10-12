@@ -6,6 +6,7 @@ import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
 import OwnerOverviewScreen from "@/features/app/screens/OwnerOverviewScreen";
 import OwnerVehiclesScreen from "@/features/app/screens/OwnerVehiclesScreen";
 import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
+import OwnerBookingsNavigator from "./OwnerBookingsNavigator";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
@@ -36,11 +37,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
             {activeTab === "overview" ? (
               <OwnerOverviewScreen onAvatarPress={() => setShowProfile(true)} user={user} />
             ) : activeTab === "bookings" ? (
-              <TabPlaceholderScreen
-                description="Yêu cầu thuê, lịch bàn giao và trạng thái hoàn tất chuyến sẽ hiển thị ở đây."
-                icon={CalendarCheck}
-                title="Đơn thuê"
-              />
+              <OwnerBookingsNavigator />
             ) : activeTab === "vehicles" ? (
               <OwnerVehiclesScreen />
             ) : activeTab === "messages" ? (
