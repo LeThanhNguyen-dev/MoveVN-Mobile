@@ -69,7 +69,11 @@ export interface CreateBookingRequest {
   startDate: string;
   endDate: string;
   pickupAddress: string;
+  pickupLatitude?: number;
+  pickupLongitude?: number;
   returnAddress?: string;
+  returnLatitude?: number;
+  returnLongitude?: number;
   customerNote?: string;
   promotionCode?: string;
 }

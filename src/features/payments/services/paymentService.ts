@@ -31,7 +31,37 @@ export interface PaymentStatusResponse {
   message: string;
 }
 
+export interface BookingTopUpPendingResponse {
+  bookingId: number;
+  amount: number;
+  dueAt?: string | null;
+  payerId: number;
+  bookingStatus: string;
+}
+
+export async function createBookingTopUpLink(bookingId: number): Promise<CreatePaymentLinkResponse> {
+  const res = await apiClient.post<ApiResponse<CreatePaymentLinkResponse>>(`/api/payments/booking/${bookingId}/topup-link`);
+  return res.data.data!;
+}
+
+export async function getPendingTopUp(bookingId: number): Promise<BookingTopUpPendingResponse | null> {
+  const res = await apiClient.get<ApiResponse<BookingTopUpPendingResponse | null>>(`/api/payments/booking/${bookingId}/pending-topup`);
+  return res.data.data ?? null;
+}
+
 export async function checkPaymentStatus(orderCode: number): Promise<PaymentStatusResponse> {
-  const res = await apiClient.get<ApiResponse<PaymentStatusResponse>>(`/api/payments/check/${orderCode}`);
+  const res = await apiClient.get<ApiResponse<PaymentStatusResponse>>(endpoints.payments.check(orderCode));
+  return res.data.data!;
+}
+
+export interface WalletDepositPaymentResponse {
+  bookingId: number;
+  paymentId: number;
+  depositAmount: number;
+  status: string;
+}
+
+export async function payDepositWithWallet(bookingId: number): Promise<WalletDepositPaymentResponse> {
+  const res = await apiClient.post<ApiResponse<WalletDepositPaymentResponse>>(endpoints.payments.payDepositWithWallet(bookingId));
   return res.data.data!;
 }

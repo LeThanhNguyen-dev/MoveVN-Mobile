@@ -18,9 +18,11 @@ type DetailNav = NativeStackNavigationProp<ExploreStackParamList, "VehicleDetail
 export default function VehicleDetailScreen({
   route,
   navigation,
+  onBookPress,
 }: {
   route: DetailRoute;
   navigation: DetailNav;
+  onBookPress?: (params: { vehicleId: number; startDate: string; endDate: string }) => void;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -72,7 +74,20 @@ export default function VehicleDetailScreen({
             <Text style={styles.period}>{formatPeriodSummary(startDate ?? "", endDate ?? "")}</Text>
           ) : null}
           <SurchargePolicySummary policies={vehicle.surchargePolicies} />
-          <Text style={styles.muted}>Gallery, bản đồ, đánh giá và đặt xe sẽ làm ở bước tiếp theo.</Text>
+          {startDate && endDate && onBookPress ? (
+            <Pressable
+              onPress={() => onBookPress({ vehicleId, startDate, endDate })}
+              style={({ pressed }) => [
+                styles.bookButton,
+                pressed && styles.bookButtonPressed,
+              ]}
+            >
+              <Text style={styles.bookButtonText}>Đặt xe ngay</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.muted}>Chọn thời gian thuê để đặt xe.</Text>
+          )}
+          <Text style={styles.muted}>Gallery, bản đồ và đánh giá sẽ làm ở bước tiếp theo.</Text>
         </View>
       )}
     </View>
@@ -102,7 +117,16 @@ const createStyles = (theme: Theme) =>
     headerTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
     body: { padding: 20, gap: 6 },
     center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8, padding: 20 },
-    title: { color: theme.text, fontSize: 18, fontWeight: "800" },
-    period: { color: theme.brand, fontSize: 13, fontWeight: "700" },
-    muted: { color: theme.muted, fontSize: 13 },
+  title: { color: theme.text, fontSize: 18, fontWeight: "800" },
+  period: { color: theme.brand, fontSize: 13, fontWeight: "700" },
+  muted: { color: theme.muted, fontSize: 13 },
+  bookButton: {
+    marginTop: 12,
+    borderRadius: 12,
+    backgroundColor: theme.brand,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  bookButtonPressed: { opacity: 0.85 },
+  bookButtonText: { color: theme.onBrand, fontSize: 16, fontWeight: "800" },
   });

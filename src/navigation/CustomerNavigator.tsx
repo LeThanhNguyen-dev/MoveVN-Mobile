@@ -7,6 +7,7 @@ import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
 import ExploreNavigator from "./ExploreNavigator";
+import TripsNavigator from "./TripsNavigator";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
 import { useTheme } from "@/theme/useTheme";
 
@@ -24,10 +25,20 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
+  const [pendingTripId, setPendingTripId] = useState<number | null>(null);
   const { theme } = useTheme();
 
   const handleExploreRouteChange = useCallback((routeName: string) => {
     setExploreRoute(routeName);
+  }, []);
+
+  const goToTrip = useCallback((bookingId: number) => {
+    setPendingTripId(bookingId);
+    setActiveTab("trips");
+  }, []);
+
+  const consumePendingTrip = useCallback(() => {
+    setPendingTripId(null);
   }, []);
 
   // Ẩn bottom bar khi vào List / Detail, chỉ hiện ở màn Khám phá chính.
@@ -45,13 +56,10 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 user={user}
                 onAvatarPress={() => setShowProfile(true)}
                 onRouteChange={handleExploreRouteChange}
+                onBookingCreated={goToTrip}
               />
             ) : activeTab === "trips" ? (
-              <TabPlaceholderScreen
-                description="Các đơn thuê, lịch sử chuyến đi và trạng thái nhận/trả xe sẽ hiển thị ở đây."
-                icon={CalendarCheck}
-                title="Chuyến đi"
-              />
+              <TripsNavigator pendingBookingId={pendingTripId} onConsumedPending={consumePendingTrip} />
             ) : activeTab === "deals" ? (
               <TabPlaceholderScreen
                 description="Khuyến mãi, săn mã và ví voucher của bạn sẽ được đặt ở màn này."
