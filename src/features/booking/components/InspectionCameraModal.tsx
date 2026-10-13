@@ -6,6 +6,7 @@ import { Camera, X } from "lucide-react-native";
 import { captureRef } from "react-native-view-shot";
 import { inspectionLabel, inspectionWatermark, type InspectionType } from "../bookingDisplay";
 import { deleteInspectionPhoto, resizeCameraPhoto, stampedInspectionPhoto, type CapturedInspectionPhoto } from "../inspectionPhoto";
+import { getServerTimeISO } from "../utils/serverTime";
 
 type RawPhoto = { uri: string; width: number; height: number; capturedAt: string };
 
@@ -49,7 +50,8 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
     captureLock.current = true;
     setBusy(true); setError(""); setLoaded(false); setLaidOut(false);
     try {
-      const capturedAt = new Date().toISOString();
+      // Giờ hệ thống (server) để watermark không lệch theo giờ máy.
+      const capturedAt = await getServerTimeISO();
       const photo = await camera.current.takePictureAsync({ quality: 0.9, exif: false });
       if (!photo) throw new Error("No camera photo returned");
       if (!track(photo.uri)) return;

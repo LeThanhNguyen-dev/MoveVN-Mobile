@@ -12,7 +12,7 @@ vi.stubGlobal("requestAnimationFrame", (callback: () => void) => {
 vi.stubGlobal("cancelAnimationFrame", (id: number) => animationFrames.delete(id));
 const mocks = vi.hoisted(() => ({
   takePicture: vi.fn(), requestPermission: vi.fn(), captureRef: vi.fn(), resize: vi.fn(), stamped: vi.fn(), delete: vi.fn(),
-  captured: vi.fn(), close: vi.fn(), permission: { granted: true, canAskAgain: true },
+  captured: vi.fn(), close: vi.fn(), serverTime: vi.fn(), permission: { granted: true, canAskAgain: true },
 }));
 vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator", Image: "Image", Modal: "Modal", Pressable: "Pressable", Text: "Text", View: "View",
@@ -24,6 +24,7 @@ vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" 
 vi.mock("lucide-react-native", () => ({ Camera: "Camera", X: "X" }));
 vi.mock("react-native-view-shot", () => ({ captureRef: mocks.captureRef }));
 vi.mock("../src/features/booking/inspectionPhoto", () => ({ deleteInspectionPhoto: mocks.delete, resizeCameraPhoto: mocks.resize, stampedInspectionPhoto: mocks.stamped }));
+vi.mock("@/features/booking/utils/serverTime", () => ({ getServerTimeISO: mocks.serverTime }));
 vi.mock("expo-camera", async () => {
   const react = await import("react");
   return {
@@ -43,6 +44,7 @@ beforeEach(() => {
   mocks.takePicture.mockResolvedValue({ uri: "file:///raw.jpg", width: 3000, height: 4000 });
   mocks.resize.mockResolvedValue({ uri: "file:///resized.jpg", width: 1200, height: 1600 });
   mocks.captureRef.mockResolvedValue("file:///stamped.jpg"); mocks.stamped.mockReturnValue(stamped);
+  mocks.serverTime.mockResolvedValue("2026-10-04T02:00:00Z");
 });
 afterEach(async () => { if (tree) await act(async () => tree!.unmount()); tree = undefined; });
 async function mount() {
@@ -73,6 +75,7 @@ async function finishStamp() {
 
 it("waits for photo decode and layout, burns the watermark, and hands off only the stamped JPEG", async () => {
   await mount(); await takePhoto();
+  expect(mocks.serverTime).toHaveBeenCalled();
   expect(mocks.takePicture).toHaveBeenCalledWith({ quality: 0.9, exif: false });
   expect(mocks.resize).toHaveBeenCalledWith("file:///raw.jpg", 3000, 4000);
   expect(mocks.captureRef).not.toHaveBeenCalled();
