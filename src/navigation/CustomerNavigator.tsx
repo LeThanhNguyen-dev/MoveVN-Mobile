@@ -27,6 +27,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
+  const [tripsRoute, setTripsRoute] = useState("TripList");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
   const { theme } = useTheme();
 
@@ -36,6 +37,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
 
   const goToTrip = useCallback((bookingId: number) => {
     setPendingTripId(bookingId);
+    setTripsRoute("TripDetail");
     setActiveTab("trips");
   }, []);
 
@@ -43,8 +45,10 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
     setPendingTripId(null);
   }, []);
 
-  // Ẩn bottom bar khi vào List / Detail, chỉ hiện ở màn Khám phá chính.
-  const showBottomBar = (activeTab !== "explore" || exploreRoute === "ExploreMain") && !bookingDetailOpen;
+  // Ẩn bottom bar khi vào List / Detail, chỉ hiện ở màn Khám phá chính và danh sách chuyến đi.
+  const showBottomBar =
+    (activeTab !== "explore" || exploreRoute === "ExploreMain") &&
+    (activeTab !== "trips" || tripsRoute === "TripList");
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -61,7 +65,11 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onBookingCreated={goToTrip}
               />
             ) : activeTab === "trips" ? (
-              <TripsNavigator pendingBookingId={pendingTripId} onConsumedPending={consumePendingTrip} />
+              <TripsNavigator
+                pendingBookingId={pendingTripId}
+                onConsumedPending={consumePendingTrip}
+                onRouteChange={setTripsRoute}
+              />
             ) : activeTab === "deals" ? (
               <TabPlaceholderScreen
                 description="Khuyến mãi, săn mã và ví voucher của bạn sẽ được đặt ở màn này."

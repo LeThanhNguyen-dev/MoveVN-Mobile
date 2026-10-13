@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import CustomerExploreScreen from "@/features/app/screens/CustomerExploreScreen";
-import CreateBookingScreen from "@/features/booking/screens/CreateBookingScreen";
 import VehicleDetailScreen from "@/features/vehicles/screens/VehicleDetailScreen";
 import VehicleListScreen from "@/features/vehicles/screens/VehicleListScreen";
 import CreateBookingScreen from "@/features/booking/screens/CreateBookingScreen";

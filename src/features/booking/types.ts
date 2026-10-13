@@ -79,10 +79,6 @@ export interface CreateBookingRequest {
   returnLongitude?: number;
   customerNote?: string;
   promotionCode?: string;
-  pickupLatitude?: number;
-  pickupLongitude?: number;
-  returnLatitude?: number;
-  returnLongitude?: number;
 }
 
 export interface ApproveBookingRequest {

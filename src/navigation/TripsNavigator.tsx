@@ -10,9 +10,11 @@ const Stack = createNativeStackNavigator<TripsStackParamList>();
 export default function TripsNavigator({
   pendingBookingId,
   onConsumedPending,
+  onRouteChange,
 }: {
   pendingBookingId: number | null;
   onConsumedPending: () => void;
+  onRouteChange?: (routeName: string) => void;
 }) {
   const { theme } = useTheme();
   const consumedRef = useRef(false);
@@ -21,17 +23,27 @@ export default function TripsNavigator({
   // Mở thẳng chi tiết khi vừa tạo booking xong (dùng initialParams thay vì
   // navigate tay lúc mount để tránh race "not handled by any navigator").
   useEffect(() => {
+    onRouteChange?.(hasPending ? "TripDetail" : "TripList");
     if (hasPending && !consumedRef.current) {
       consumedRef.current = true;
       onConsumedPending();
     }
-  }, [hasPending, onConsumedPending]);
+  }, [hasPending, onConsumedPending, onRouteChange]);
 
   return (
     <Stack.Navigator
       initialRouteName={hasPending ? "TripDetail" : "TripList"}
       screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}
+      screenListeners={{
+        state: (e) => {
+          const state = e.data.state;
+          if (!state) return;
+          const route = state.routes[state.index];
+          if (route?.name) onRouteChange?.(route.name);
+        },
+      }}
     >
+
       <Stack.Screen name="TripList" component={TripListScreen} />
       <Stack.Screen
         name="TripDetail"
