@@ -1,75 +1,98 @@
 import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
-import { getAuthUser, getToken } from "@/features/auth/hooks/useAuth";
+import { getAuthUser, getSessionGeneration, getToken } from "@/features/auth/hooks/useAuth";
 import { useNotificationStore } from "@/features/notifications/useNotifications";
 import type { NotificationCreatedPayload, NotificationUnreadCountPayload } from "@/features/notifications/types";
 import { getApiBaseUrl } from "@/services/apiClient";
+import { loadNotificationPage, refreshNotificationCount } from "./notificationActions";
 
 let connection: HubConnection | null = null;
-let startPromise: Promise<void> | null = null;
 let connectionUserId: number | null = null;
+let connectionGeneration = -1;
+let operations: Promise<void> = Promise.resolve();
+
+function enqueue(operation: () => Promise<void>) {
+  const result = operations.then(operation);
+  operations = result.catch(() => undefined);
+  return result;
+}
 
 function getNotificationHubUrl() {
   return `${getApiBaseUrl()}/hubs/notifications`;
 }
 
 export async function startNotificationConnection() {
-  const token = getToken();
-  const currentUser = getAuthUser();
-  if (!token || !currentUser) return;
-
-  if (connection?.state === HubConnectionState.Connected || connection?.state === HubConnectionState.Connecting) {
-    if (connectionUserId === currentUser.userId) {
-      return;
+  const userId = getAuthUser()?.userId;
+  const generation = getSessionGeneration();
+  return enqueue(async () => {
+    if (!userId || !getToken() || getAuthUser()?.userId !== userId || generation !== getSessionGeneration()) return;
+    if (connection && (connectionUserId !== userId || connectionGeneration !== generation)) {
+      const previous = connection;
+      connection = null;
+      await previous.stop();
     }
+    if (!getToken() || getAuthUser()?.userId !== userId || generation !== getSessionGeneration()) return;
+    if (connection && connection.state !== HubConnectionState.Disconnected) return;
+    if (!connection) {
+      const created = new HubConnectionBuilder()
+        .withUrl(getNotificationHubUrl(), {
+          accessTokenFactory: () => getToken() ?? "",
+        })
+        .withAutomaticReconnect()
+        .configureLogging(LogLevel.Warning)
+        .build();
 
-    await stopNotificationConnection();
-  }
-
-  if (!connection) {
-    connection = new HubConnectionBuilder()
-      .withUrl(getNotificationHubUrl(), {
-        accessTokenFactory: () => getToken() ?? "",
-      })
-      .withAutomaticReconnect()
-      .configureLogging(LogLevel.Warning)
-      .build();
-
-    connection.on("notification.created", (payload: NotificationCreatedPayload) => {
-      useNotificationStore.getState().prependNotification(payload.notification, payload.unreadCount);
-    });
-
-    connection.on("notification.unreadCountChanged", (payload: NotificationUnreadCountPayload) => {
-      useNotificationStore.getState().setUnreadCount(payload.unreadCount);
-    });
-  }
-
-  const activeConnection = connection;
-  startPromise = activeConnection.start().finally(() => {
-    startPromise = null;
+      const current = () => connection === created && getAuthUser()?.userId === userId
+        && useNotificationStore.getState().userId === userId && generation === getSessionGeneration();
+      created.on("notification.created", (payload: NotificationCreatedPayload) => {
+        if (current()) useNotificationStore.getState().prependNotification(payload.notification, payload.unreadCount);
+      });
+      created.on("notification.unreadCountChanged", (payload: NotificationUnreadCountPayload) => {
+        if (!current()) return;
+        useNotificationStore.getState().setUnreadCount(payload.unreadCount);
+        // A read on another device only broadcasts the count, not the item.
+        if (useNotificationStore.getState().centerOpen) void loadNotificationPage();
+      });
+      created.onreconnecting(() => {
+        if (current()) useNotificationStore.setState({ connectionStatus: "connecting" });
+      });
+      created.onreconnected(() => {
+        if (!current()) return;
+        useNotificationStore.setState({ connectionStatus: "connected" });
+        void refreshNotificationCount();
+        if (useNotificationStore.getState().centerOpen) void loadNotificationPage();
+      });
+      created.onclose(() => {
+        if (current()) useNotificationStore.setState({ connectionStatus: "offline" });
+      });
+      connection = created;
+      connectionUserId = userId;
+      connectionGeneration = generation;
+    }
+    const active = connection;
+    useNotificationStore.setState({ connectionStatus: "connecting" });
+    try {
+      await active.start();
+      if (getAuthUser()?.userId !== userId || generation !== getSessionGeneration()) {
+        connection = null;
+        connectionUserId = null;
+        await active.stop();
+        return;
+      }
+      useNotificationStore.setState({ connectionStatus: "connected" });
+      void refreshNotificationCount();
+    } catch (error) {
+      if (getAuthUser()?.userId === userId && generation === getSessionGeneration()) useNotificationStore.setState({ connectionStatus: "offline" });
+      throw error;
+    }
   });
-
-  await startPromise;
-  if (connection !== activeConnection) {
-    await activeConnection.stop();
-    return;
-  }
-
-  connectionUserId = currentUser.userId;
 }
 
 export async function stopNotificationConnection() {
-  useNotificationStore.getState().reset();
-
-  if (!connection) return;
-
-  const activeConnection = connection;
-  if (startPromise) {
-    await startPromise.catch(() => undefined);
-  }
-
-  await activeConnection.stop();
-  if (connection === activeConnection) {
+  return enqueue(async () => {
+    const previous = connection;
     connection = null;
     connectionUserId = null;
-  }
+    connectionGeneration = -1;
+    if (previous) await previous.stop();
+  });
 }
