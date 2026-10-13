@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from "lucide-react-native";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import type { VehicleSurchargePolicy } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
@@ -8,6 +8,8 @@ import { useTheme } from "@/theme/useTheme";
 type Props = {
   value: VehicleSurchargePolicy[];
   onChange: (value: VehicleSurchargePolicy[]) => void;
+  onDescriptionFocus?: (input: TextInput) => void;
+  onDescriptionBlur?: (input: TextInput) => void;
 };
 
 const feeTypeOptions = [
@@ -92,9 +94,10 @@ function optionalNumber(text: string) {
   return text.trim() ? Number(text) : null;
 }
 
-export default function SurchargePolicyEditor({ value, onChange }: Props) {
+export default function SurchargePolicyEditor({ value, onChange, onDescriptionFocus, onDescriptionBlur }: Props) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const descriptionInputRefs = useRef<Record<number, TextInput | null>>({});
 
   function update(index: number, patch: Partial<VehicleSurchargePolicy>) {
     onChange(value.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)));
@@ -277,10 +280,22 @@ export default function SurchargePolicyEditor({ value, onChange }: Props) {
 
           <Text style={styles.label}>Mô tả</Text>
           <TextInput
+            ref={(input) => {
+              descriptionInputRefs.current[index] = input;
+            }}
             value={policy.description ?? ""}
             onChangeText={(text) => update(index, { description: text })}
+            onFocus={() => {
+              const input = descriptionInputRefs.current[index];
+              if (input) onDescriptionFocus?.(input);
+            }}
+            onBlur={() => {
+              const input = descriptionInputRefs.current[index];
+              if (input) onDescriptionBlur?.(input);
+            }}
             multiline
             numberOfLines={2}
+            scrollEnabled
             placeholderTextColor={theme.placeholder}
             style={[styles.input, styles.textArea]}
           />

@@ -1,9 +1,12 @@
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { ArrowLeft, Bike, Car, Check, ChevronLeft, ChevronRight, Plus, X } from "lucide-react-native";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,22 +22,25 @@ import type {
   CatalogFeature,
   CatalogModel,
   CatalogVariant,
+  CreateVehicleRequest,
   PricingSuggestionResponse,
   VehicleSurchargePolicy,
   VehiclePricingResponse,
+  VehicleDescriptionSuggestionRequest,
 } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import FormDropdownSheet from "@/features/vehicles/components/FormDropdownSheet";
 import PricingModeHelp from "@/features/vehicles/components/PricingModeHelp";
+import VehicleDescriptionField from "@/features/vehicles/components/VehicleDescriptionField";
 import AddressAutocomplete from "@/features/locations/components/AddressAutocomplete";
 import SurchargePolicyEditor, {
   isSurchargePoliciesValid,
   normalizeSurchargePolicies,
 } from "@/features/vehicles/components/SurchargePolicyEditor";
-import { getVehicleErrorMessage } from "@/features/vehicles/vehicleDisplay";
+import { getVehicleErrorMessage, isVehicleOcrFailure } from "@/features/vehicles/vehicleDisplay";
 import {
-  createVehicle,
+  completeVehicle,
   getCatalogAreas,
   getCatalogBrands,
   getCatalogFeatures,
@@ -43,9 +49,9 @@ import {
   getPricingSuggestion,
   getVehicleById,
   getVehiclePricing,
+  previewVehicleDocument,
   updateVehicle,
   updateVehiclePricing,
-  uploadVehicleDocument,
   uploadVehicleImage,
 } from "@/features/vehicles/services/vehicleService";
 
@@ -63,12 +69,71 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const isEdit = mode === "edit";
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollOffsetRef = useRef(0);
+  const activeDescriptionInputRef = useRef<TextInput | null>(null);
+  const keyboardTopRef = useRef<number | null>(null);
 
   const [step, setStep] = useState(isEdit ? 3 : 0);
   const [maxReached, setMaxReached] = useState(isEdit ? 3 : 0);
   const [loadingEdit, setLoadingEdit] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  function revealDescriptionInput(
+    input: TextInput | null,
+    keyboardTop = keyboardTopRef.current ?? Keyboard.metrics()?.screenY,
+  ) {
+    if (!input || keyboardTop == null) return;
+
+    input.measureInWindow((_x, y, _width, height) => {
+      const overlap = y + height + 16 - keyboardTop;
+      if (overlap <= 0) return;
+
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, scrollOffsetRef.current + overlap),
+        animated: true,
+      });
+    });
+  }
+
+  function handleDescriptionFocus(input: TextInput) {
+    activeDescriptionInputRef.current = input;
+    setKeyboardVisible(true);
+    requestAnimationFrame(() => revealDescriptionInput(input));
+    setTimeout(() => {
+      if (activeDescriptionInputRef.current === input) revealDescriptionInput(input);
+    }, 300);
+  }
+
+  function handleDescriptionBlur(input: TextInput) {
+    if (activeDescriptionInputRef.current === input) {
+      activeDescriptionInputRef.current = null;
+    }
+  }
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSubscription = Keyboard.addListener(showEvent, (event) => {
+      keyboardTopRef.current = event.endCoordinates.screenY;
+      setKeyboardVisible(true);
+      setTimeout(
+        () => revealDescriptionInput(activeDescriptionInputRef.current, event.endCoordinates.screenY),
+        100,
+      );
+    });
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      keyboardTopRef.current = null;
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const [vehicleType, setVehicleType] = useState("");
   const [brands, setBrands] = useState<CatalogBrand[]>([]);
@@ -95,6 +160,9 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const [fixedPrice, setFixedPrice] = useState("");
   const [autoMin, setAutoMin] = useState("");
   const [autoMax, setAutoMax] = useState("");
+  const [deliveryFreeKm, setDeliveryFreeKm] = useState("");
+  const [deliveryFeePerKm, setDeliveryFeePerKm] = useState("");
+  const [deliveryMaxKm, setDeliveryMaxKm] = useState("");
   const [depositPercent, setDepositPercent] = useState("20");
   const [requiresDeposit, setRequiresDeposit] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
@@ -108,6 +176,36 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const [docUri, setDocUri] = useState<string | null>(null);
   const [docName, setDocName] = useState<string | null>(null);
   const [docMime, setDocMime] = useState<string | null>(null);
+  const [verifyingDoc, setVerifyingDoc] = useState(false);
+  const [verificationError, setVerificationError] = useState("");
+  const [verificationResult, setVerificationResult] = useState<{
+    docUri: string;
+    vehicleType: string;
+    brandId: number;
+    modelId: number;
+    licensePlate: string;
+    recommendation: "Pass" | "ManualReview";
+    verificationId: string;
+    expiresAt: string;
+  } | null>(null);
+
+  const verifiedForCurrentInputs = verificationResult != null
+    && verificationResult.docUri === docUri
+    && verificationResult.vehicleType === vehicleType
+    && verificationResult.brandId === brandId
+    && verificationResult.modelId === modelId
+    && verificationResult.licensePlate === licensePlate.trim()
+    && Date.parse(verificationResult.expiresAt) > Date.now();
+
+  useEffect(() => {
+    if (!verificationResult) return;
+    const remaining = Date.parse(verificationResult.expiresAt) - Date.now();
+    const timer = setTimeout(() => {
+      setVerificationResult(null);
+      setVerificationError("Phiên xác thực cà vẹt đã hết hạn. Vui lòng xác thực lại.");
+    }, Math.max(0, remaining));
+    return () => clearTimeout(timer);
+  }, [verificationResult]);
 
   useEffect(() => {
     getCatalogAreas().then(setAreas).catch(() => undefined);
@@ -144,6 +242,10 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         setAutoMin(String(pricing?.autoMinPrice ?? v.autoMinPrice ?? ""));
         setAutoMax(String(pricing?.autoMaxPrice ?? v.autoMaxPrice ?? ""));
         setDepositPercent(String(v.depositPercent || 20));
+        setDeliveryFreeKm(v.deliveryFreeRadiusKm != null ? String(v.deliveryFreeRadiusKm) : "");
+        setDeliveryFeePerKm(v.deliveryFeePerKm != null ? String(v.deliveryFeePerKm) : "");
+        setDeliveryMaxKm(v.deliveryMaxRadiusKm != null ? String(v.deliveryMaxRadiusKm) : "");
+
         setRequiresDeposit(v.securityRequiresDeposit);
         setDepositAmount(v.securityDepositAmount ? String(v.securityDepositAmount) : "");
         setFeatureIds(v.features.map((f) => f.id));
@@ -215,6 +317,20 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     () => areas.filter((a) => a.province === province).sort((a, b) => a.district.localeCompare(b.district)),
     [areas, province],
   );
+  const descriptionSuggestionRequest = useMemo<VehicleDescriptionSuggestionRequest | null>(() => {
+    const vehicleYear = Number(year);
+    if (!brandId || !modelId || !vehicleType || !Number.isInteger(vehicleYear) || vehicleYear < 1900) {
+      return null;
+    }
+    return {
+      brandId,
+      modelId,
+      variantId,
+      vehicleType,
+      year: vehicleYear,
+      featureIds,
+    };
+  }, [brandId, featureIds, modelId, variantId, vehicleType, year]);
 
   function isPriceInSuggestion(value: number) {
     if (!suggestion?.hasSuggestion || suggestion.suggestedMinPrice == null || suggestion.suggestedMaxPrice == null) return true;
@@ -262,14 +378,101 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   async function handlePickDoc() {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
     if (res.canceled || !res.assets[0]) return;
-    setDocUri(res.assets[0].uri);
-    setDocName(res.assets[0].fileName ?? "cavet.jpg");
-    setDocMime(res.assets[0].mimeType ?? "image/jpeg");
+    const asset = res.assets[0];
+    const mimeType = asset.mimeType ?? "image/jpeg";
+    const fileName = asset.fileName ?? "cavet.jpg";
+    const supported = ["image/jpeg", "image/png", "image/webp"].includes(mimeType)
+      || /\.(jpe?g|png|webp)$/i.test(fileName);
+    if (!supported) {
+      setDocUri(null);
+      setVerificationResult(null);
+      setVerificationError("Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.");
+      return;
+    }
+    if (asset.fileSize != null && asset.fileSize > 10 * 1024 * 1024) {
+      setDocUri(null);
+      setVerificationResult(null);
+      setVerificationError("Ảnh cà vẹt không được vượt quá 10 MB.");
+      return;
+    }
+    setDocUri(asset.uri);
+    setDocName(fileName);
+    setDocMime(mimeType);
+    setVerificationResult(null);
+    setVerificationError("");
+    setSubmitError("");
+  }
+
+  async function handleVerifyDocument() {
+    if (!docUri || !vehicleType || brandId == null || modelId == null || !licensePlate.trim()) {
+      setVerificationError("Vui lòng chọn ảnh cà vẹt và nhập đủ thông tin xe trước khi xác thực.");
+      return;
+    }
+
+    const expected = {
+      docUri,
+      vehicleType,
+      brandId,
+      modelId,
+      licensePlate: licensePlate.trim(),
+    };
+    setVerifyingDoc(true);
+    setVerificationResult(null);
+    setVerificationError("");
+    setSubmitError("");
+    try {
+      const result = await previewVehicleDocument(
+        { uri: expected.docUri, name: docName ?? "cavet.jpg", type: docMime ?? "image/jpeg" },
+        expected.vehicleType,
+        expected.brandId,
+        expected.modelId,
+        expected.licensePlate,
+      );
+      if ((result?.recommendation === "Pass" || result?.recommendation === "ManualReview")
+        && result.verificationId && result.expiresAt) {
+        setVerificationResult({
+          ...expected,
+          recommendation: result.recommendation,
+          verificationId: result.verificationId,
+          expiresAt: result.expiresAt,
+        });
+        return;
+      }
+
+      setVerificationError(result?.flags && isVehicleOcrFailure(result.flags)
+        ? "Hệ thống xác thực cà vẹt đang gián đoạn. Vui lòng thử lại sau."
+        : result?.recommendation === "NeedMoreInfo"
+          ? "Ảnh cà vẹt thiếu thông tin hoặc chưa đủ rõ. Vui lòng chụp lại và xác thực lại."
+          : result?.recommendation === "Reject"
+            ? "Thông tin cà vẹt không khớp với xe. Vui lòng kiểm tra và chọn lại ảnh."
+            : result?.message || "Cà vẹt chưa đạt yêu cầu. Vui lòng kiểm tra và thử lại.");
+    } catch (error) {
+      setVerificationError(getVehicleErrorMessage(error));
+    } finally {
+      setVerifyingDoc(false);
+    }
   }
 
   function goStep(next: number) {
     setStep(next);
     setMaxReached((m) => Math.max(m, next));
+  }
+
+  function deliveryNumberOrNull(value: string): number | null {
+    if (value.trim() === "") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function isDeliveryValid() {
+    const free = deliveryFreeKm.trim() === "" ? null : Number(deliveryFreeKm);
+    const perKm = deliveryFeePerKm.trim() === "" ? null : Number(deliveryFeePerKm);
+    const max = deliveryMaxKm.trim() === "" ? null : Number(deliveryMaxKm);
+    if (free !== null && (!Number.isFinite(free) || free < 0 || free > 1000)) return false;
+    if (perKm !== null && (!Number.isFinite(perKm) || perKm < 0 || perKm > 1000000)) return false;
+    if (max !== null && (!Number.isFinite(max) || max < 1 || max > 10000)) return false;
+    if (free !== null && max !== null && max < free) return false;
+    return true;
   }
 
   function canProceed(): boolean {
@@ -288,15 +491,17 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
           dep >= 20 &&
           dep <= 50 &&
           (!requiresDeposit || Number(depositAmount) > 0) &&
-          isSurchargePoliciesValid(surchargePolicies)
+          isDeliveryValid() && isSurchargePoliciesValid(surchargePolicies)
         );
       }
       case 4:
         return true;
       case 5:
         return isEdit || imageUrls.length > 0;
+      case 6:
+        return isEdit || verifiedForCurrentInputs;
       default:
-        return true;
+        return false;
     }
   }
 
@@ -304,6 +509,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     setSubmitting(true);
     setSubmitError("");
     try {
+      if (!isDeliveryValid()) { setSubmitError("Bán kính miễn phí 0–1000 km, phí/km 0–1.000.000đ, tối đa 1–10000 km và phải ≥ bán kính miễn phí."); return; }
       if (!isSurchargePoliciesValid(surchargePolicies)) {
         setSubmitError("Vui lòng kiểm tra tên phí và đơn giá phụ phí.");
         return;
@@ -322,9 +528,15 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
           longitude,
           pricePerDay,
           depositPercent: Number(depositPercent),
+          deliveryFreeRadiusKm: deliveryNumberOrNull(deliveryFreeKm),
+          deliveryFeePerKm: deliveryNumberOrNull(deliveryFeePerKm),
+          deliveryMaxRadiusKm: deliveryNumberOrNull(deliveryMaxKm),
+
           securityRequiresDeposit: requiresDeposit,
           securityDepositAmount: requiresDeposit ? Number(depositAmount) : 0,
           featureIds: featureIds,
+          imageUrls,
+          featuredImageIndex: featuredIndex,
           surchargePolicies: normalizedSurcharges,
         });
         await updateVehiclePricing(vehicleId, {
@@ -336,7 +548,11 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         onDone();
         return;
       }
-      const created = await createVehicle({
+      if (!verifiedForCurrentInputs || !docUri || !verificationResult) {
+        setSubmitError("Vui lòng xác thực cà vẹt trước khi hoàn tất.");
+        return;
+      }
+      const createRequest: CreateVehicleRequest = {
         brandId: brandId!,
         modelId: modelId!,
         variantId,
@@ -351,6 +567,10 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         longitude,
         pricePerDay,
         depositPercent: Number(depositPercent),
+        deliveryFreeRadiusKm: deliveryNumberOrNull(deliveryFreeKm),
+        deliveryFeePerKm: deliveryNumberOrNull(deliveryFeePerKm),
+        deliveryMaxRadiusKm: deliveryNumberOrNull(deliveryMaxKm),
+
         securityRequiresDeposit: requiresDeposit,
         securityDepositAmount: requiresDeposit ? Number(depositAmount) : 0,
         pricingMode,
@@ -362,16 +582,15 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         featuredImageIndex: featuredIndex,
         documentFileUrl: null,
         surchargePolicies: normalizedSurcharges,
-      });
-      if (created?.id && docUri) {
-        await uploadVehicleDocument(created.id, {
-          uri: docUri,
-          name: docName ?? "cavet.jpg",
-          type: docMime ?? "image/jpeg",
-        });
-      }
+      };
+      await completeVehicle(createRequest, {
+        uri: docUri,
+        name: docName ?? "cavet.jpg",
+        type: docMime ?? "image/jpeg",
+      }, verificationResult.verificationId);
       onDone();
     } catch (e) {
+      if (!isEdit) setVerificationResult(null);
       setSubmitError(getVehicleErrorMessage(e));
     } finally {
       setSubmitting(false);
@@ -443,7 +662,25 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 120 }]} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={styles.keyboardArea}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={0}
+      >
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scroll, { paddingBottom: Math.max(insets.bottom + 120, 140) }]}
+        showsVerticalScrollIndicator={false}
+        onScroll={(event) => {
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
+        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+      >
         {step === 0 ? (
           <View>
             <Text style={styles.groupTitle}>Chọn loại xe</Text>
@@ -547,9 +784,11 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
             <TextInput
               value={licensePlate}
               onChangeText={setLicensePlate}
+              editable={!isEdit}
+              selectTextOnFocus={!isEdit}
               placeholder="VD: 51A-12345"
               placeholderTextColor={theme.placeholder}
-              style={styles.input}
+              style={[styles.input, isEdit && styles.lockedInput]}
               autoCapitalize="characters"
             />
             <View style={styles.twoCol}>
@@ -730,20 +969,24 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                 />
               </>
             ) : null}
-            <SurchargePolicyEditor value={surchargePolicies} onChange={setSurchargePolicies} />
+            <Text style={styles.groupTitle}>Giao xe tận nơi</Text>
+            <Text style={styles.groupSub}>Tự đặt bán kính và phí giao xe cho xe này. Để trống một ô để dùng cấu hình chung của sàn.</Text>
+            <Text style={styles.fieldLabel}>Miễn phí trong (km)</Text>
+            <TextInput value={deliveryFreeKm} onChangeText={setDeliveryFreeKm} keyboardType="decimal-pad" placeholder="VD: 5" placeholderTextColor={theme.placeholder} style={styles.input} />
+            <Text style={styles.fieldLabel}>Phí mỗi km vượt (VNĐ)</Text>
+            <TextInput value={deliveryFeePerKm} onChangeText={setDeliveryFeePerKm} keyboardType="decimal-pad" placeholder="VD: 10000" placeholderTextColor={theme.placeholder} style={styles.input} />
+            <Text style={styles.fieldLabel}>Tối đa (km)</Text>
+            <TextInput value={deliveryMaxKm} onChangeText={setDeliveryMaxKm} keyboardType="decimal-pad" placeholder="VD: 50" placeholderTextColor={theme.placeholder} style={styles.input} />
+            {!isDeliveryValid() ? <Text style={styles.errorText}>Bán kính miễn phí 0–1000 km, phí/km 0–1.000.000đ, tối đa 1–10000 km và phải ≥ bán kính miễn phí.</Text> : null}
+            <SurchargePolicyEditor
+              value={surchargePolicies}
+              onChange={setSurchargePolicies}
+              onDescriptionFocus={handleDescriptionFocus}
+              onDescriptionBlur={handleDescriptionBlur}
+            />
             {!isSurchargePoliciesValid(surchargePolicies) ? (
               <Text style={styles.errorText}>Mỗi phụ phí cần có tên phí và đơn giá lớn hơn 0.</Text>
             ) : null}
-            <Text style={styles.fieldLabel}>Mô tả thêm</Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-              placeholder="Mô tả về xe..."
-              placeholderTextColor={theme.placeholder}
-              style={[styles.input, styles.textArea]}
-            />
           </View>
         ) : null}
 
@@ -760,6 +1003,13 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
               ))}
               {features.length === 0 ? <Text style={styles.muted}>Không có tính năng nào.</Text> : null}
             </View>
+            <VehicleDescriptionField
+              value={description}
+              onChange={setDescription}
+              request={descriptionSuggestionRequest}
+              onFocus={handleDescriptionFocus}
+              onBlur={handleDescriptionBlur}
+            />
           </View>
         ) : null}
 
@@ -795,8 +1045,8 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
 
         {step === 6 ? (
           <View style={styles.fieldGroup}>
-            <Text style={styles.groupTitle}>Xác nhận & cavet</Text>
-            <Text style={styles.groupSub}>Kiểm tra lại trước khi hoàn tất.</Text>
+            <Text style={styles.groupTitle}>Xác nhận & cà vẹt</Text>
+            <Text style={styles.groupSub}>Kiểm tra lại thông tin và xác thực cà vẹt trước khi hoàn tất.</Text>
             <View style={styles.summary}>
               <Text style={styles.summaryLine}>Biển số: {licensePlate || "-"}</Text>
               <Text style={styles.summaryLine}>Giá: {priceSummary}</Text>
@@ -808,12 +1058,33 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
             </View>
             {!isEdit ? (
               <>
-                <Text style={styles.fieldLabel}>Ảnh cavet (khuyên có để duyệt nhanh)</Text>
-                <Pressable onPress={handlePickDoc} style={styles.pickBtn}>
+                <Text style={styles.fieldLabel}>Ảnh cà vẹt *</Text>
+                <Pressable onPress={handlePickDoc} disabled={verifyingDoc || submitting} style={[styles.pickBtn, (verifyingDoc || submitting) && styles.disabledBtn]}>
                   <Plus color={theme.brand} size={16} />
-                  <Text style={styles.pickText}>{docUri ? "Đã chọn cavet (chạm để đổi)" : "Chọn ảnh cavet"}</Text>
+                  <Text style={styles.pickText}>{docUri ? "Đã chọn cà vẹt (chạm để đổi)" : "Chọn ảnh cà vẹt"}</Text>
                 </Pressable>
                 {docUri ? <Image source={{ uri: docUri }} style={styles.docPreview} contentFit="contain" /> : null}
+                {docUri && !verifiedForCurrentInputs ? (
+                  <Pressable
+                    onPress={handleVerifyDocument}
+                    disabled={verifyingDoc || submitting}
+                    style={[styles.verifyBtn, (verifyingDoc || submitting) && styles.disabledBtn]}
+                  >
+                    {verifyingDoc ? <ActivityIndicator color={theme.onBrand} size="small" /> : <Check color={theme.onBrand} size={16} />}
+                    <Text style={styles.verifyText}>{verifyingDoc ? "Đang xác thực..." : "Xác thực"}</Text>
+                  </Pressable>
+                ) : null}
+                {verifiedForCurrentInputs && verificationResult ? (
+                  <View style={[styles.verificationStatus, verificationResult.recommendation === "Pass" ? styles.verificationPass : styles.verificationReview]}>
+                    <Check color={verificationResult.recommendation === "Pass" ? theme.success : theme.info} size={16} />
+                    <Text style={[styles.verificationText, { color: verificationResult.recommendation === "Pass" ? theme.success : theme.info }]}>
+                      {verificationResult.recommendation === "Pass"
+                        ? "Cà vẹt hợp lệ"
+                        : "Cà vẹt đã được tiếp nhận và sẽ chờ nhân viên kiểm tra"}
+                    </Text>
+                  </View>
+                ) : null}
+                {verificationError ? <Text style={styles.errorText}>{verificationError}</Text> : null}
               </>
             ) : null}
             {submitError ? <Text style={styles.errorText}>{submitError}</Text> : null}
@@ -821,7 +1092,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         ) : null}
       </ScrollView>
 
-      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      {!keyboardVisible ? <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         {step > (isEdit ? 2 : 0) ? (
           <Pressable onPress={() => goStep(Math.max(isEdit ? 2 : 0, step - 1))} style={styles.backBtn}>
             <ChevronLeft color={theme.text} size={18} />
@@ -836,12 +1107,13 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
             <ChevronRight color={theme.onBrand} size={16} />
           </Pressable>
         ) : (
-          <Pressable onPress={handleSubmit} disabled={submitting || !canProceed()} style={[styles.nextBtn, (!canProceed() || submitting) && styles.disabledBtn]}>
+          <Pressable onPress={handleSubmit} disabled={submitting || verifyingDoc || !canProceed()} style={[styles.nextBtn, (!canProceed() || submitting || verifyingDoc) && styles.disabledBtn]}>
             {submitting ? <ActivityIndicator color={theme.onBrand} size="small" /> : <Check color={theme.onBrand} size={16} />}
             <Text style={styles.nextText}>{submitting ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Hoàn tất"}</Text>
           </Pressable>
         )}
-      </View>
+      </View> : null}
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -849,6 +1121,8 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.background },
+    keyboardArea: { flex: 1 },
+    scrollView: { flex: 1 },
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
     topBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingVertical: 10 },
     iconBtn: { width: 38, height: 38, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" },
@@ -882,7 +1156,7 @@ const createStyles = (theme: Theme) =>
     fieldLabelInline: { marginTop: 0 },
     fieldLabelRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
     input: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, borderRadius: 12, backgroundColor: theme.surface, paddingHorizontal: 12, height: 46, color: theme.text, fontSize: 14 },
-    textArea: { height: 84, paddingVertical: 10, textAlignVertical: "top" },
+    lockedInput: { backgroundColor: theme.surfaceAlt, color: theme.muted },
     twoCol: { flexDirection: "row", gap: 10 },
     col: { flex: 1, gap: 4 },
     chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -909,6 +1183,12 @@ const createStyles = (theme: Theme) =>
     switchLabel: { color: theme.text, fontSize: 14, fontWeight: "700" },
     pickBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 12, borderWidth: 1, borderStyle: "dashed", borderColor: theme.brandBorder, paddingVertical: 14 },
     pickText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
+    verifyBtn: { minHeight: 46, borderRadius: 12, backgroundColor: theme.brand, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingHorizontal: 14 },
+    verifyText: { color: theme.onBrand, fontSize: 14, fontWeight: "800" },
+    verificationStatus: { minHeight: 46, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10 },
+    verificationPass: { backgroundColor: theme.successSoft, borderColor: theme.success },
+    verificationReview: { backgroundColor: theme.infoSoft, borderColor: theme.infoBorder },
+    verificationText: { flex: 1, fontSize: 12, fontWeight: "700" },
     imageGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
     imageCell: { width: "31%", gap: 4 },
     cellImage: { width: "100%", aspectRatio: 4 / 3, borderRadius: 10, borderWidth: 2, borderColor: "transparent" },

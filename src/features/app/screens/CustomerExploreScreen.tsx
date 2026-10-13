@@ -91,7 +91,7 @@ export default function CustomerExploreScreen({
 
   return (
     <View style={styles.content}>
-      <AppDashboardHeader onAvatarPress={onAvatarPress} onBellPress={onBellPress} user={user} />
+      <AppDashboardHeader onAvatarPress={onAvatarPress} user={user} />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.searchCard}>

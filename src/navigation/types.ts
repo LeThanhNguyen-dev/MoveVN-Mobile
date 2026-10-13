@@ -5,6 +5,7 @@ export type AuthStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { email: string };
   VerifyEmail: { email: string; purpose: "Register" | "VerifyEmail" };
+  Policies: { slug?: string } | undefined;
 };
 
 export type ExploreStackParamList = {
@@ -27,7 +28,6 @@ export type ExploreStackParamList = {
     startDate: string;
     endDate: string;
   };
-  Notifications: undefined;
 };
 
 export type TripsStackParamList = {

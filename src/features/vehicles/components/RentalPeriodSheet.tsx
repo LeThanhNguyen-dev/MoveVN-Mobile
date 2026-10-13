@@ -21,6 +21,8 @@ import {
   formatDateValue,
   formatPeriodPart,
   getFirstAvailableHour,
+  firstBusyDateInRange,
+  getBusyDateKeys,
   getHour,
   getRangeError,
   isPastHour,
@@ -35,6 +37,10 @@ type RentalPeriodSheetProps = {
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
   onClose: () => void;
+  busyPeriods?: readonly { startDate: string; endDate: string }[];
+  availabilityLoading?: boolean;
+  availabilityError?: boolean;
+  onRetryAvailability?: () => void;
 };
 
 function HourPicker({
@@ -110,6 +116,10 @@ export default function RentalPeriodSheet({
   onStartDateChange,
   onEndDateChange,
   onClose,
+  busyPeriods = [],
+  availabilityLoading = false,
+  availabilityError = false,
+  onRetryAvailability,
 }: RentalPeriodSheetProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -131,9 +141,13 @@ export default function RentalPeriodSheet({
   const visibleMonthValue = year * 12 + month;
   const rangeError = getRangeError(startDate, endDate);
   const rentalDays = useMemo(() => calculateRentalDays(startDate, endDate), [startDate, endDate]);
+  const busyDates = useMemo(() => getBusyDateKeys(busyPeriods), [busyPeriods]);
+  const busyDateInSelection = startDate && endDate ? firstBusyDateInRange(startDate, endDate, busyDates) : null;
+  const [selectionError, setSelectionError] = useState("");
 
   useEffect(() => {
     if (visible) {
+      setSelectionError("");
       const selectedDate = parseDateValue(startDate) ?? new Date();
       setMonth(selectedDate.getMonth());
       setYear(selectedDate.getFullYear());
@@ -157,6 +171,8 @@ export default function RentalPeriodSheet({
 
   function selectDate(date: Date) {
     const selectedValue = formatDateValue(date);
+    if (availabilityLoading || availabilityError || busyDates.has(selectedValue)) return;
+    setSelectionError("");
 
     if (!start || end) {
       const availableHour = getFirstAvailableHour(date, getHour(startDate));
@@ -180,6 +196,11 @@ export default function RentalPeriodSheet({
       return;
     }
 
+    const busyDate = firstBusyDateInRange(startValue, selectedValue, busyDates);
+    if (busyDate) {
+      setSelectionError(`Ngày ${busyDate.slice(8, 10)}/${busyDate.slice(5, 7)} đã có người đặt hoặc bị khóa.`);
+      return;
+    }
     onEndDateChange(withDateAndHour(date, getHour(endDate) || DEFAULT_HOUR));
   }
 
@@ -251,6 +272,8 @@ export default function RentalPeriodSheet({
                   </Text>
                 ))}
               </View>
+              {availabilityLoading && <Text style={styles.availabilityInfo}>Đang tải lịch trống của xe…</Text>}
+              {availabilityError && <View style={styles.availabilityRow}><Text style={styles.error}>Không tải được lịch trống của xe.</Text><Pressable onPress={onRetryAvailability}><Text style={styles.retryText}>Thử lại</Text></Pressable></View>}
               <View style={styles.daysGrid}>
                 {cells.map((cell) => {
                   if (!cell || cell.empty || !cell.date) return <View key={cell?.key} style={styles.dayCell} />;
@@ -259,26 +282,29 @@ export default function RentalPeriodSheet({
                   const isPast =
                     dateValue < todayValue ||
                     (dateValue === todayValue && isPastHour(dateValue, "23:00"));
-                  const isStart = dateValue === startValue;
-                  const isEnd = dateValue === endValue;
+                  const isBusy = busyDates.has(dateValue);
+                  const isStart = dateValue === startValue && !isBusy;
+                  const isEnd = dateValue === endValue && !isBusy;
                   const isInRange = Boolean(
-                    startValue && endValue && dateValue > startValue && dateValue < endValue,
+                    startValue && endValue && !isBusy && dateValue > startValue && dateValue < endValue,
                   );
                   return (
                     <View key={cell.key} style={styles.dayCell}>
                       <Pressable
-                        disabled={isPast}
+                        disabled={isPast || isBusy || availabilityLoading || availabilityError}
                         onPress={() => selectDate(date)}
                         style={[
                           styles.dayButton,
                           (isStart || isEnd) && styles.daySelected,
                           isInRange && styles.dayInRange,
+                          isBusy && styles.dayBusy,
                         ]}
                       >
                         <Text
                           style={[
                             styles.dayText,
                             isPast && styles.dayPast,
+                            isBusy && styles.dayBusyText,
                             (isStart || isEnd) && styles.daySelectedText,
                             isInRange && styles.dayInRangeText,
                           ]}
@@ -291,7 +317,7 @@ export default function RentalPeriodSheet({
                 })}
               </View>
               <View style={styles.legendRow}>
-                <Text style={styles.legend}>● Ngày đã chọn  ░ Trong khoảng</Text>
+                <Text style={styles.legend}>● Ngày đã chọn  ░ Trong khoảng  × Đã đặt / khóa</Text>
               </View>
             </View>
 
@@ -316,6 +342,8 @@ export default function RentalPeriodSheet({
               />
             </View>
             {rangeError ? <Text style={styles.error}>{rangeError}</Text> : null}
+            {selectionError ? <Text style={styles.error}>{selectionError}</Text> : null}
+            {busyDateInSelection ? <Text style={styles.error}>Khoảng thuê có ngày đã đặt hoặc bị khóa.</Text> : null}
 
             <View style={styles.summaryCard}>
               <Text style={styles.summaryTitle}>Thời gian đã chọn</Text>
@@ -348,11 +376,11 @@ export default function RentalPeriodSheet({
               <Text style={styles.clearText}>Xóa thời gian</Text>
             </Pressable>
             <Pressable
-              disabled={!startDate || !endDate || Boolean(rangeError)}
+              disabled={!startDate || !endDate || Boolean(rangeError) || Boolean(busyDateInSelection) || availabilityLoading || availabilityError}
               onPress={handleClose}
               style={[
                 styles.doneButton,
-                (!startDate || !endDate || Boolean(rangeError)) && styles.doneDisabled,
+                (!startDate || !endDate || Boolean(rangeError) || Boolean(busyDateInSelection) || availabilityLoading || availabilityError) && styles.doneDisabled,
               ]}
             >
               <Text style={styles.doneText}>Hoàn tất</Text>
@@ -415,12 +443,17 @@ const createStyles = (theme: Theme) =>
     dayButton: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
     dayText: { color: theme.text, fontSize: 13, fontWeight: "500" },
     dayPast: { color: theme.faint },
+    dayBusy: { backgroundColor: theme.dangerSoft },
+    dayBusyText: { color: theme.danger, textDecorationLine: "line-through" },
     daySelected: { backgroundColor: theme.brand },
     daySelectedText: { color: theme.onBrand, fontWeight: "800" },
     dayInRange: { backgroundColor: theme.brandSoft, borderRadius: 8 },
     dayInRangeText: { color: theme.brand, fontWeight: "700" },
     legendRow: { marginTop: 8 },
     legend: { color: theme.muted, fontSize: 11 },
+    availabilityInfo: { color: theme.muted, fontSize: 12, marginTop: 8 },
+    availabilityRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
+    retryText: { color: theme.brand, fontSize: 12, fontWeight: "700" },
     hoursRow: { flexDirection: "row", gap: 12, marginTop: 12 },
     hourBlock: { flex: 1 },
     hourLabel: { color: theme.text, fontSize: 12, fontWeight: "700", marginBottom: 6 },

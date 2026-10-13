@@ -1,5 +1,34 @@
 export const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
+/** Availability is date-based on the public vehicle calendar, including both endpoints. */
+export function getBusyDateKeys(periods: readonly { startDate: string; endDate: string }[]): Set<string> {
+  const busy = new Set<string>();
+  for (const period of periods) {
+    const start = period.startDate.slice(0, 10);
+    const end = period.endDate.slice(0, 10);
+    const cursor = new Date(`${start}T00:00:00Z`);
+    const last = new Date(`${end}T00:00:00Z`);
+    if (!Number.isFinite(cursor.getTime()) || !Number.isFinite(last.getTime())) continue;
+    for (let days = 0; cursor <= last && days < 3660; days += 1) {
+      busy.add(cursor.toISOString().slice(0, 10));
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+  }
+  return busy;
+}
+
+export function firstBusyDateInRange(startDate: string, endDate: string, busyDates: ReadonlySet<string>): string | null {
+  const cursor = new Date(`${startDate.slice(0, 10)}T00:00:00Z`);
+  const last = new Date(`${endDate.slice(0, 10)}T00:00:00Z`);
+  if (!Number.isFinite(cursor.getTime()) || !Number.isFinite(last.getTime())) return null;
+  for (let days = 0; cursor <= last && days < 3660; days += 1) {
+    const key = cursor.toISOString().slice(0, 10);
+    if (busyDates.has(key)) return key;
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return null;
+}
+
 export const MONTHS_VI = [
   "Thg 1",
   "Thg 2",

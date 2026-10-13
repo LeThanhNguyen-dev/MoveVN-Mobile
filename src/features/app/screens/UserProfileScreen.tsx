@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import {
   ArrowLeft,
@@ -13,7 +13,7 @@ import {
   UserRound,
   X,
 } from "lucide-react-native";
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { toApiError, updateProfile, uploadAvatar } from "@/features/auth/services/authService";
@@ -23,6 +23,7 @@ import { getMyDriverLicense } from "@/features/driverLicenses/services/driverLic
 import type { DriverLicenseStatusResponse } from "@/features/driverLicenses/types";
 import { getMyApplication } from "@/features/owner/services/ownerService";
 import type { OwnerApplicationDto } from "@/features/owner/types";
+import MaskedDocumentValue from "@/features/pin/components/MaskedDocumentValue";
 import type { UploadFileInput } from "@/types/upload";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -72,6 +73,8 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
   const [expandedKey, setExpandedKey] = useState<ExpandedKey>(null);
   const [driverLicense, setDriverLicense] = useState<DriverLicenseStatusResponse | null>(null);
   const [ownerApp, setOwnerApp] = useState<OwnerApplicationDto | null>(null);
+  const sheetScrollRef = useRef<ScrollView>(null);
+  const phoneInputRef = useRef<TextInput>(null);
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -261,7 +264,15 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
             <View style={styles.detailBox}>
               {ownerApp ? (
                 <>
-                  <DetailLine label="Số CCCD" value={ownerApp.nationalIdNumber || "-"} />
+                  <View style={styles.detailLine}>
+                    <Text style={styles.detailLabel}>Số CCCD</Text>
+                    <MaskedDocumentValue
+                      canReveal={cccdVerified}
+                      documentType="CCCD"
+                      maskedValue={ownerApp.nationalIdNumber ?? null}
+                      revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                    />
+                  </View>
                   <DetailLine label="Họ tên trên CCCD" value={ownerApp.fullName || "-"} />
                   <DetailLine
                     label="Trạng thái"
@@ -296,7 +307,15 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               {driverLicense ? (
                 <>
                   <DetailLine label="Hạng GPLX" value={driverLicense.licenseClass || "-"} />
-                  <DetailLine label="Số GPLX" value={driverLicense.driverLicenseNumber || "-"} />
+                  <View style={styles.detailLine}>
+                    <Text style={styles.detailLabel}>Số GPLX</Text>
+                    <MaskedDocumentValue
+                      canReveal={gplxVerified}
+                      documentType="GPLX"
+                      maskedValue={driverLicense.driverLicenseNumber ?? null}
+                      revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                    />
+                  </View>
                   <DetailLine label="Xác minh lúc" value={formatDate(driverLicense.verifiedAt)} />
                   <DetailLine
                     label="Loại xe"
@@ -353,36 +372,46 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
         navigationBarTranslucent
         visible={sheetVisible}
       >
-        <View style={styles.sheetOverlay}>
-          <Pressable
-            accessibilityLabel="Đóng"
-            accessibilityRole="button"
-            disabled={isSaving}
-            onPress={handleCloseSheet}
-            style={styles.sheetBackdrop}
-          />
-          <View style={styles.sheet}>
-            <View style={styles.sheetHeader}>
-              <Pressable
-                accessibilityLabel="Đóng chỉnh sửa"
-                accessibilityRole="button"
-                disabled={isSaving}
-                onPress={handleCloseSheet}
-                style={styles.sheetCloseButton}
-              >
-                <X color={theme.text} size={22} strokeWidth={2.3} />
-              </Pressable>
-              <Text style={styles.sheetTitle}>Chỉnh sửa thông tin</Text>
-              <View style={styles.sheetHeaderSpacer} />
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+          style={styles.sheetAvoid}
+        >
+          <View style={styles.sheetOverlay}>
+            <Pressable
+              accessibilityLabel="Đóng"
+              accessibilityRole="button"
+              disabled={isSaving}
+              onPress={handleCloseSheet}
+              style={styles.sheetBackdrop}
+            />
+            <View style={styles.sheet}>
+              <View style={styles.sheetHeader}>
+                <Pressable
+                  accessibilityLabel="Đóng chỉnh sửa"
+                  accessibilityRole="button"
+                  disabled={isSaving}
+                  onPress={handleCloseSheet}
+                  style={styles.sheetCloseButton}
+                >
+                  <X color={theme.text} size={22} strokeWidth={2.3} />
+                </Pressable>
+                <Text style={styles.sheetTitle}>Chỉnh sửa thông tin</Text>
+                <View style={styles.sheetHeaderSpacer} />
+              </View>
 
-            <ScrollView
-              contentContainerStyle={[
-                styles.sheetBody,
-                { paddingBottom: Math.max(insets.bottom, 28) },
-              ]}
-              showsVerticalScrollIndicator={false}
-            >
+              <ScrollView
+                ref={sheetScrollRef}
+                contentContainerStyle={[
+                  styles.sheetBody,
+                  { paddingBottom: Math.max(insets.bottom, 20) },
+                ]}
+                keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
+                keyboardShouldPersistTaps="handled"
+                automaticallyAdjustKeyboardInsets
+                showsVerticalScrollIndicator={false}
+                scrollEnabled
+              >
               <View style={styles.sheetAvatarWrap}>
                 <Pressable
                   accessibilityLabel="Đổi ảnh đại diện"
@@ -414,12 +443,16 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   style={styles.fieldInput}
                   value={fullName}
                   onChangeText={setFullName}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => phoneInputRef.current?.focus()}
                 />
               </View>
 
               <View style={styles.field}>
                 <Text style={styles.fieldLabel}>Số điện thoại</Text>
                 <TextInput
+                  ref={phoneInputRef}
                   editable={!isSaving}
                   keyboardType="phone-pad"
                   placeholder="Nhập số điện thoại"
@@ -427,6 +460,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   style={styles.fieldInput}
                   value={phone}
                   onChangeText={setPhone}
+                  returnKeyType="done"
                 />
               </View>
 
@@ -448,8 +482,9 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                 <Text style={styles.saveText}>{isSaving ? "Đang lưu..." : "Lưu thay đổi"}</Text>
               </Pressable>
             </ScrollView>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -717,6 +752,9 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   sheetOverlay: {
     flex: 1,
     justifyContent: "flex-end",
+  },
+  sheetAvoid: {
+    flex: 1,
   },
   sheetBackdrop: {
     ...StyleSheet.absoluteFill,

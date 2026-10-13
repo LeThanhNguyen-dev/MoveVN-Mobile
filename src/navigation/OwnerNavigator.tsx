@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { CalendarCheck, CarFront, LayoutDashboard, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,7 +10,6 @@ import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import OwnerBookingsNavigator from "./OwnerBookingsNavigator";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
-import NotificationsScreen from "@/features/notifications/screens/NotificationsScreen";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
 import { useTheme } from "@/theme/useTheme";
 
@@ -28,19 +27,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<OwnerTabKey>("overview");
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [pendingOwnerTripId, setPendingOwnerTripId] = useState<number | null>(null);
   const { theme } = useTheme();
-
-  const goToOwnerTrip = useCallback((bookingId: number) => {
-    setPendingOwnerTripId(bookingId);
-    setShowNotifications(false);
-    setActiveTab("bookings");
-  }, []);
-
-  const consumePendingOwnerTrip = useCallback(() => {
-    setPendingOwnerTripId(null);
-  }, []);
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -50,17 +37,13 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
         <View style={[styles.screen, styles.overlayPad]}>
           <WalletScreen onBack={() => setShowWallet(false)} />
         </View>
-      ) : showNotifications ? (
-        <View style={[styles.screen, styles.overlayPad]}>
-          <NotificationsScreen onBack={() => setShowNotifications(false)} onOpenBooking={goToOwnerTrip} />
-        </View>
       ) : (
         <>
           <View style={styles.screen}>
             {activeTab === "overview" ? (
-              <OwnerOverviewScreen onAvatarPress={() => setShowProfile(true)} onBellPress={() => setShowNotifications(true)} user={user} />
+              <OwnerOverviewScreen onAvatarPress={() => setShowProfile(true)} user={user} />
             ) : activeTab === "bookings" ? (
-              <OwnerBookingsNavigator pendingBookingId={pendingOwnerTripId} onConsumedPending={consumePendingOwnerTrip} />
+              <OwnerBookingsNavigator />
             ) : activeTab === "vehicles" ? (
               <OwnerVehiclesScreen />
             ) : activeTab === "messages" ? (

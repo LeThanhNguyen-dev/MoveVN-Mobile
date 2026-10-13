@@ -11,7 +11,7 @@ export default function OwnerOverviewScreen({ onAvatarPress, onBellPress, user }
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.content}>
-      <AppDashboardHeader onAvatarPress={onAvatarPress} onBellPress={onBellPress} user={user} />
+      <AppDashboardHeader onAvatarPress={onAvatarPress} user={user} />
 
       <View style={styles.placeholder}>
         <View style={styles.iconWrap}>

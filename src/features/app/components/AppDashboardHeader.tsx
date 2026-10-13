@@ -1,8 +1,8 @@
-import { ArrowLeftRight, Bell, Heart, UserRound } from "lucide-react-native";
+import { ArrowLeftRight, Heart, UserRound } from "lucide-react-native";
+import NotificationBell from "@/features/notifications/components/NotificationBell";
 import { useMemo } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
-import { useNotificationStore } from "@/features/notifications/useNotifications";
 import type { AuthUser, UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -14,10 +14,9 @@ const roleLabels: Record<UserRole, string> = {
   Customer: "khách thuê",
 };
 
-export default function AppDashboardHeader({ onAvatarPress, onBellPress, user }: { onAvatarPress?: () => void; onBellPress?: () => void; user: AuthUser }) {
+export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPress?: () => void; user: AuthUser }) {
   const activeRole = useAuthStore((state) => state.activeRole);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const switchableRole = activeRole === "Customer" && user.roles.includes("Owner")
@@ -72,16 +71,7 @@ export default function AppDashboardHeader({ onAvatarPress, onBellPress, user }:
           <Heart color={theme.text} size={21} strokeWidth={2.3} />
         </Pressable>
         <View style={styles.divider} />
-        <Pressable accessibilityLabel="Thông báo" accessibilityRole="button" style={styles.iconButton} onPress={onBellPress}>
-          <Bell color={theme.text} size={21} strokeWidth={2.3} />
-          {unreadCount > 0 ? (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{unreadCount > 99 ? "99+" : String(unreadCount)}</Text>
-            </View>
-          ) : (
-            <View style={styles.notificationDot} />
-          )}
-        </Pressable>
+        <NotificationBell />
       </View>
     </View>
   );
@@ -132,7 +122,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     marginTop: 2,
   },
   actions: {
-    height: 40,
+    height: 44,
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
@@ -148,28 +138,4 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     height: 20,
     backgroundColor: theme.border,
   },
-  notificationDot: {
-    position: "absolute",
-    right: 8,
-    top: 8,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: theme.danger,
-    borderColor: theme.onBrand,
-    borderWidth: 1,
-  },
-  badge: {
-    position: "absolute",
-    right: 2,
-    top: 2,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: theme.danger,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 3,
-  },
-  badgeText: { color: "#fff", fontSize: 10, fontWeight: "800" },
 });

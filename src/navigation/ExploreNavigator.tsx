@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import CustomerExploreScreen from "@/features/app/screens/CustomerExploreScreen";
 import CreateBookingScreen from "@/features/booking/screens/CreateBookingScreen";
-import NotificationsScreen from "@/features/notifications/screens/NotificationsScreen";
 import VehicleDetailScreen from "@/features/vehicles/screens/VehicleDetailScreen";
 import VehicleListScreen from "@/features/vehicles/screens/VehicleListScreen";
 import type { AuthUser } from "@/features/auth/types";
@@ -17,13 +16,11 @@ export default function ExploreNavigator({
   onAvatarPress,
   onRouteChange,
   onBookingCreated,
-  onOpenBooking,
 }: {
   user: AuthUser;
   onAvatarPress: () => void;
   onRouteChange?: (routeName: string) => void;
   onBookingCreated?: (bookingId: number) => void;
-  onOpenBooking?: (bookingId: number) => void;
 }) {
   const { theme } = useTheme();
   useEffect(() => {
@@ -47,7 +44,6 @@ export default function ExploreNavigator({
           <CustomerExploreScreen
             user={user}
             onAvatarPress={onAvatarPress}
-            onBellPress={() => navigation.navigate("Notifications")}
             onSearch={(params) => navigation.navigate("VehicleList", params)}
           />
         )}
@@ -58,14 +54,6 @@ export default function ExploreNavigator({
       </Stack.Screen>
       <Stack.Screen name="CreateBooking">
         {(props) => <CreateBookingScreen {...props} onCreated={(bookingId) => onBookingCreated?.(bookingId)} />}
-      </Stack.Screen>
-      <Stack.Screen name="Notifications">
-        {(props) => (
-          <NotificationsScreen
-            onBack={() => props.navigation.goBack()}
-            onOpenBooking={(bookingId) => onOpenBooking?.(bookingId)}
-          />
-        )}
       </Stack.Screen>
     </Stack.Navigator>
   );
