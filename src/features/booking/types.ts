@@ -68,6 +68,7 @@ export interface BookingCancellationQuote {
 }
 
 export interface CreateBookingRequest {
+  quoteId?: string;
   vehicleId: number;
   startDate: string;
   endDate: string;
