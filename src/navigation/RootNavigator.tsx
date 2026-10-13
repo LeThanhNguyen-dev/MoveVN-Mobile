@@ -10,6 +10,8 @@ import RoleNotSupportedScreen from "@/features/app/screens/RoleNotSupportedScree
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { restoreSession } from "@/features/auth/services/authSession";
 import { usePresenceConnection } from "@/features/presence/usePresenceConnection";
+import { useNotificationConnection } from "@/features/notifications/useNotificationConnection";
+import NotificationCenter from "@/features/notifications/components/NotificationCenter";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { initializeTheme } from "@/theme/useThemeStore";
@@ -25,6 +27,7 @@ function getActiveLandingRole(roles: UserRole[], activeRole: UserRole | null): U
 
 export default function RootNavigator() {
   usePresenceConnection();
+  useNotificationConnection();
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const activeRole = useAuthStore((state) => state.activeRole);
@@ -62,6 +65,7 @@ export default function RootNavigator() {
       : role === "Customer" ? <CustomerNavigator user={user} />
         : role === "Owner" ? <OwnerNavigator user={user} />
           : <RoleNotSupportedScreen role={role ?? "Staff"} />}
+    {token && user ? <NotificationCenter key={user.userId} userId={user.userId} /> : null}
   </NavigationContainer>;
 }
 

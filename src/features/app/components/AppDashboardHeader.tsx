@@ -1,4 +1,5 @@
-import { ArrowLeftRight, Bell, Heart, UserRound } from "lucide-react-native";
+import { ArrowLeftRight, Heart, UserRound } from "lucide-react-native";
+import NotificationBell from "@/features/notifications/components/NotificationBell";
 import { useMemo } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
@@ -70,10 +71,7 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
           <Heart color={theme.text} size={21} strokeWidth={2.3} />
         </Pressable>
         <View style={styles.divider} />
-        <Pressable accessibilityLabel="Thông báo" accessibilityRole="button" style={styles.iconButton}>
-          <Bell color={theme.text} size={21} strokeWidth={2.3} />
-          <View style={styles.notificationDot} />
-        </Pressable>
+        <NotificationBell />
       </View>
     </View>
   );
@@ -124,7 +122,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     marginTop: 2,
   },
   actions: {
-    height: 40,
+    height: 44,
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
@@ -139,16 +137,5 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     width: 1,
     height: 20,
     backgroundColor: theme.border,
-  },
-  notificationDot: {
-    position: "absolute",
-    right: 8,
-    top: 8,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: theme.danger,
-    borderColor: theme.onBrand,
-    borderWidth: 1,
   },
 });
