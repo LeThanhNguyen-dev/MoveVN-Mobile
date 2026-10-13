@@ -1,5 +1,6 @@
 import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import { getAuthUser, getToken } from "@/features/auth/hooks/useAuth";
+import { getHubAccessToken, startHubWithAuthRecovery } from "@/services/hubStart";
 import { useNotificationStore } from "@/features/notifications/useNotifications";
 import type { NotificationCreatedPayload, NotificationUnreadCountPayload } from "@/features/notifications/types";
 import { getApiBaseUrl } from "@/services/apiClient";
@@ -28,7 +29,7 @@ export async function startNotificationConnection() {
   if (!connection) {
     connection = new HubConnectionBuilder()
       .withUrl(getNotificationHubUrl(), {
-        accessTokenFactory: () => getToken() ?? "",
+        accessTokenFactory: () => getHubAccessToken(),
       })
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Warning)
@@ -44,11 +45,13 @@ export async function startNotificationConnection() {
   }
 
   const activeConnection = connection;
-  startPromise = activeConnection.start().finally(() => {
-    startPromise = null;
+  const started = await startHubWithAuthRecovery("notifications", currentUser.userId, () => {
+    startPromise = activeConnection.start().finally(() => {
+      startPromise = null;
+    });
+    return startPromise;
   });
-
-  await startPromise;
+  if (!started) return;
   if (connection !== activeConnection) {
     await activeConnection.stop();
     return;

@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { CalendarCheck, CarFront, LayoutDashboard, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
+import WalletScreen from "@/features/wallets/screens/WalletScreen";
 import OwnerOverviewScreen from "@/features/app/screens/OwnerOverviewScreen";
 import OwnerVehiclesScreen from "@/features/app/screens/OwnerVehiclesScreen";
 import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import OwnerBookingsNavigator from "./OwnerBookingsNavigator";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
+import NotificationsScreen from "@/features/notifications/screens/NotificationsScreen";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
 import { useTheme } from "@/theme/useTheme";
 
@@ -25,19 +27,40 @@ const ownerTabs: MobileTabItem<OwnerTabKey>[] = [
 export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<OwnerTabKey>("overview");
   const [showProfile, setShowProfile] = useState(false);
+  const [showWallet, setShowWallet] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [pendingOwnerTripId, setPendingOwnerTripId] = useState<number | null>(null);
   const { theme } = useTheme();
+
+  const goToOwnerTrip = useCallback((bookingId: number) => {
+    setPendingOwnerTripId(bookingId);
+    setShowNotifications(false);
+    setActiveTab("bookings");
+  }, []);
+
+  const consumePendingOwnerTrip = useCallback(() => {
+    setPendingOwnerTripId(null);
+  }, []);
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
       {showProfile ? (
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />
+      ) : showWallet ? (
+        <View style={[styles.screen, styles.overlayPad]}>
+          <WalletScreen onBack={() => setShowWallet(false)} />
+        </View>
+      ) : showNotifications ? (
+        <View style={[styles.screen, styles.overlayPad]}>
+          <NotificationsScreen onBack={() => setShowNotifications(false)} onOpenBooking={goToOwnerTrip} />
+        </View>
       ) : (
         <>
           <View style={styles.screen}>
             {activeTab === "overview" ? (
-              <OwnerOverviewScreen onAvatarPress={() => setShowProfile(true)} user={user} />
+              <OwnerOverviewScreen onAvatarPress={() => setShowProfile(true)} onBellPress={() => setShowNotifications(true)} user={user} />
             ) : activeTab === "bookings" ? (
-              <OwnerBookingsNavigator />
+              <OwnerBookingsNavigator pendingBookingId={pendingOwnerTripId} onConsumedPending={consumePendingOwnerTrip} />
             ) : activeTab === "vehicles" ? (
               <OwnerVehiclesScreen />
             ) : activeTab === "messages" ? (
@@ -47,7 +70,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
                 title="Tin nhắn"
               />
             ) : (
-              <AccountTabScreen onProfilePress={() => setShowProfile(true)} user={user} />
+              <AccountTabScreen onProfilePress={() => setShowProfile(true)} onWalletPress={() => setShowWallet(true)} user={user} />
             )}
           </View>
           <MobileBottomBar activeKey={activeTab} items={ownerTabs} onChange={setActiveTab} />
@@ -60,4 +83,5 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   screen: { flex: 1 },
+  overlayPad: { paddingTop: 8 },
 });

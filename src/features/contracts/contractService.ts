@@ -21,6 +21,11 @@ export async function verifyViewOtp(contractId: number, otp: string): Promise<Co
   return res.data.data!;
 }
 
+export async function verifyViewPin(contractId: number, pinCode: string): Promise<ContractContent> {
+  const res = await apiClient.post<ApiResponse<ContractContent>>(endpoints.contracts.verifyViewPin(contractId), { pinCode });
+  return res.data.data!;
+}
+
 export async function tryViewWithGrant(contractId: number): Promise<ContractContent> {
   const res = await apiClient.post<ApiResponse<ContractContent>>(endpoints.contracts.viewByGrant(contractId));
   return res.data.data!;

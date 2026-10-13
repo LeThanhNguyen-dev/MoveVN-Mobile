@@ -39,6 +39,8 @@ export interface BookingResponse {
   promotionId?: number;
   promotionCode?: string;
   promotionDiscount: number;
+  deliveryDistanceKm?: number | null;
+  deliveryFee: number;
   createdAt: string;
   updatedAt: string;
   statusHistory: BookingStatusHistoryDto[];

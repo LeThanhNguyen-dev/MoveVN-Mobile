@@ -4,7 +4,6 @@ import {
   Alert,
   AppState,
   Image,
-  Linking,
   Modal,
   Pressable,
   ScrollView,
@@ -30,7 +29,7 @@ import {
   reportReturn,
 } from "@/features/booking/bookingService";
 import type { BookingResponse, InspectionReportResponse } from "@/features/booking/types";
-import { bookingStatusLabel, formatDateTime, formatMoney } from "@/features/booking/utils/format";
+import { bookingStatusLabel, formatDateTime, formatMoney, rentalProgress } from "@/features/booking/utils/format";
 import {
   checkPaymentStatus,
   createBookingTopUpLink,
@@ -41,6 +40,8 @@ import {
 } from "@/features/payments/services/paymentService";
 import { getMyWallet } from "@/features/wallets/services/walletService";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
+import BookingTimeline from "@/features/booking/components/BookingTimeline";
+import PaymentWebViewModal, { payOsReturnUrl } from "@/features/payments/components/PaymentWebViewModal";
 import { createCustomerReview, hasReviewed } from "@/features/review/reviewService";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
@@ -74,6 +75,7 @@ export default function TripDetailScreen({
   const [comment, setComment] = useState("");
   const userId = useAuthStore((s) => s.user?.userId ?? 0);
   const [pendingOrderCode, setPendingOrderCode] = useState<number | null>(null);
+  const [paySheet, setPaySheet] = useState<{ checkoutUrl: string; orderCode: number } | null>(null);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
@@ -150,15 +152,17 @@ export default function TripDetailScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingOrderCode]);
 
-  async function runAction(key: string, fn: () => Promise<void>, successMessage?: string) {
-    if (actionBusy) return;
+  async function runAction(key: string, fn: () => Promise<void>, successMessage?: string): Promise<boolean> {
+    if (actionBusy) return false;
     setActionBusy(key);
     try {
       await fn();
       await load();
       if (successMessage) Alert.alert("Thành công", successMessage);
+      return true;
     } catch (err) {
       Alert.alert("Thất bại", getApiErrorMessage(err, "Vui lòng thử lại sau."));
+      return false;
     } finally {
       setActionBusy(null);
     }
@@ -172,30 +176,17 @@ export default function TripDetailScreen({
 
   async function openPayOsCheckout(
     actionKey: string,
-    title: string,
-    makeLink: () => Promise<{ checkoutUrl: string; orderCode: number }>,
+    makeLink: (returnUrl: string) => Promise<{ checkoutUrl: string; orderCode: number }>,
   ) {
     if (actionBusy) return;
     setActionBusy(actionKey);
     try {
-      const link = await makeLink();
+      // Mở thanh toán ngay trong app (WebView); PayOS redirect về scheme movevn://
+      // thì sheet tự đóng, poll phía dưới lo xác nhận. Không nhảy trình duyệt ngoài.
+      const link = await makeLink(payOsReturnUrl());
+      setPaySheet({ checkoutUrl: link.checkoutUrl, orderCode: link.orderCode });
       setPendingOrderCode(link.orderCode);
-      Alert.alert(
-        title,
-        "Trình duyệt sẽ mở link PayOS. Thanh toán xong hãy quay lại app để tự xác nhận.",
-        [
-          { text: "Để sau", style: "cancel" },
-          {
-            text: "Mở ngay",
-            onPress: () => {
-              Linking.openURL(link.checkoutUrl).catch(() =>
-                Alert.alert("Lỗi", "Không mở được link thanh toán."),
-              );
-              pollPayment(link.orderCode);
-            },
-          },
-        ],
-      );
+      pollPayment(link.orderCode);
     } catch (err) {
       Alert.alert("Thất bại", getApiErrorMessage(err, "Không tạo được link thanh toán."));
     } finally {
@@ -204,11 +195,11 @@ export default function TripDetailScreen({
   }
 
   async function handlePayWithPayOs() {
-    await openPayOsCheckout("payos", "Mở thanh toán", () => createPaymentLink(bookingId));
+    await openPayOsCheckout("payos", (returnUrl) => createPaymentLink(bookingId, returnUrl));
   }
 
   async function handlePayTopUp() {
-    await openPayOsCheckout("topup", "Thanh toán cọc bổ sung", () => createBookingTopUpLink(bookingId));
+    await openPayOsCheckout("topup", (returnUrl) => createBookingTopUpLink(bookingId, returnUrl));
   }
 
   async function handleCancel() {
@@ -227,7 +218,13 @@ export default function TripDetailScreen({
           text: "Xác nhận hủy",
           style: "destructive",
           onPress: () => {
-            void runAction("cancel", () => cancelBooking(bookingId).then(() => undefined), "Đã hủy chuyến đi.");
+            void runAction("cancel", () => cancelBooking(bookingId).then(() => undefined)).then((ok) => {
+              if (ok) {
+                Alert.alert("Thành công", "Đã hủy chuyến đi.", [
+                  { text: "Về danh sách", onPress: () => navigation.goBack() },
+                ]);
+              }
+            });
           },
         },
       ]);
@@ -246,7 +243,13 @@ export default function TripDetailScreen({
           text: "Xác nhận",
           style: "destructive",
           onPress: () => {
-            void runAction("noshow", () => reportNoShow(bookingId).then(() => undefined), "Đã ghi nhận. Tiền cọc hoàn vào ví.");
+            void runAction("noshow", () => reportNoShow(bookingId).then(() => undefined)).then((ok) => {
+              if (ok) {
+                Alert.alert("Thành công", "Đã ghi nhận. Tiền cọc hoàn vào ví.", [
+                  { text: "Về danh sách", onPress: () => navigation.goBack() },
+                ]);
+              }
+            });
           },
         },
       ],
@@ -284,6 +287,9 @@ export default function TripDetailScreen({
 
   const status = booking.status;
   const canCancel = ["Pending", "Approved", "DepositPaid"].includes(status);
+  const progress = status === "InProgress" || status === "Returning"
+    ? rentalProgress(booking.startDate, booking.endDate)
+    : null;
 
   return (
     <View style={styles.screen}>
@@ -299,23 +305,58 @@ export default function TripDetailScreen({
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.statusRow}>
           <Text style={styles.status}>{bookingStatusLabel(status)}</Text>
-          {booking.escrowStatus === "Held" && <Text style={styles.escrow}>Đang giữ cọc {formatMoney(booking.escrowAmount)}</Text>}
+          {booking.escrowStatus === "Held" && <Text style={styles.escrow}>Giữ cọc {formatMoney(booking.escrowAmount)}</Text>}
         </View>
+        {progress && (
+          <View style={[styles.progressStrip, progress.overdue && styles.progressOverdue]}>
+            <Text style={styles.progressText}>{progress.summary}</Text>
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Lịch trình & địa điểm</Text>
           <Row label="Nhận xe" value={formatDateTime(booking.startDate)} />
           <Text style={styles.address}>{booking.pickupAddress}</Text>
+          {booking.deliveryDistanceKm != null ? (
+            <Text style={styles.muted}>
+              Cách vị trí xe {booking.deliveryDistanceKm} km
+              {booking.deliveryFee > 0 ? ` · Phí giao xe ${formatMoney(booking.deliveryFee)}` : " · Miễn phí giao xe"}
+            </Text>
+          ) : null}
           <Row label="Trả xe" value={formatDateTime(booking.endDate)} />
           <Text style={styles.address}>{booking.returnAddress || booking.pickupAddress}</Text>
           {booking.customerNote ? <Text style={styles.note}>Ghi chú: {booking.customerNote}</Text> : null}
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Thanh toán</Text>
-          <Row label="Tiền cọc" value={formatMoney(booking.depositAmount)} />
-          <Row label="Tổng tiền" value={formatMoney(booking.totalAmount)} />
-          {booking.promotionCode ? <Row label="Khuyến mãi" value={`${booking.promotionCode} (-${formatMoney(booking.promotionDiscount)})`} /> : null}
+          <Text style={styles.cardTitle}>Chi tiết chi phí</Text>
+          <Row label={`Giá thuê (${booking.totalDays} ngày)`} value={formatMoney(booking.basePrice)} />
+          {booking.discountPercent > 0 ? (
+            <Row label={`Giảm giá (${booking.discountPercent}%)`} value={`-${formatMoney(booking.discountAmount)}`} tone="success" />
+          ) : null}
+          {booking.promotionDiscount > 0 ? (
+            <Row
+              label={`Mã ${booking.promotionCode ?? ""}`}
+              value={`-${formatMoney(booking.promotionDiscount)}`}
+              tone="success"
+            />
+          ) : null}
+          {booking.deliveryFee > 0 ? (
+            <Row
+              label={`Phí giao xe tận nơi${booking.deliveryDistanceKm != null ? ` (${booking.deliveryDistanceKm} km)` : ""}`}
+              value={`+${formatMoney(booking.deliveryFee)}`}
+            />
+          ) : null}
+          <Row label="Phí nền tảng (đã gồm trong tổng)" value={formatMoney(booking.platformFee)} />
+          <Row label="Tổng cộng" value={formatMoney(booking.totalAmount)} strong />
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Lịch thanh toán</Text>
+          <Row label="Đặt cọc ngay" value={formatMoney(booking.depositAmount)} />
+          {booking.totalAmount > booking.depositAmount ? (
+            <Row label="Trả khi nhận xe" value={formatMoney(booking.totalAmount - booking.depositAmount)} />
+          ) : null}
         </View>
 
         {pendingTopUp != null && pendingTopUp.amount > 0 && (
@@ -435,6 +476,15 @@ export default function TripDetailScreen({
 
         <ContractBlock bookingId={booking.id} userId={userId} canManage={false} onChanged={() => load()} />
 
+        {(status === "Cancelled" || status === "Rejected") && booking.cancelReason ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Lý do {status === "Rejected" ? "từ chối" : "hủy"}</Text>
+            <Text style={styles.muted}>{booking.cancelReason}</Text>
+          </View>
+        ) : null}
+
+        <BookingTimeline history={booking.statusHistory} />
+
         {status === "Completed" && !alreadyReviewed && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Đánh giá chuyến đi</Text>
@@ -471,15 +521,35 @@ export default function TripDetailScreen({
           <Text style={styles.fullHint}>Chạm để đóng</Text>
         </Pressable>
       </Modal>
+
+      <PaymentWebViewModal
+        checkoutUrl={paySheet?.checkoutUrl ?? null}
+        onClose={() => {
+          setPaySheet(null);
+          void load();
+        }}
+      />
     </View>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({
+  label,
+  value,
+  tone,
+  strong,
+}: {
+  label: string;
+  value: string;
+  tone?: "success";
+  strong?: boolean;
+}) {
   return (
     <View style={rowStyles.row}>
-      <Text style={rowStyles.label}>{label}</Text>
-      <Text style={rowStyles.value}>{value}</Text>
+      <Text style={[rowStyles.label, strong && rowStyles.strongLabel]}>{label}</Text>
+      <Text style={[rowStyles.value, tone === "success" && rowStyles.success, strong && rowStyles.strong]}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -488,6 +558,9 @@ const rowStyles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", gap: 12, paddingVertical: 3 },
   label: { color: "#6b7280", fontSize: 13, flexShrink: 0 },
   value: { color: "#111827", fontSize: 13, fontWeight: "600", textAlign: "right", flex: 1 },
+  success: { color: "#059669" },
+  strongLabel: { color: "#111827", fontWeight: "800" },
+  strong: { color: "#6B19FF", fontSize: 15, fontWeight: "800" },
 });
 
 function ActionButton({
@@ -559,6 +632,14 @@ const createStyles = (theme: Theme) =>
     statusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     status: { color: theme.brand, fontSize: 18, fontWeight: "800" },
     escrow: { color: theme.muted, fontSize: 12, fontWeight: "700" },
+    progressStrip: {
+      borderRadius: 10,
+      backgroundColor: theme.brandSoft,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    },
+    progressOverdue: { backgroundColor: theme.dangerSoft },
+    progressText: { color: theme.text, fontSize: 13, fontWeight: "700" },
     card: {
       backgroundColor: theme.surface,
       borderWidth: StyleSheet.hairlineWidth,

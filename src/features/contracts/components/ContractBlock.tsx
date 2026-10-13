@@ -15,12 +15,13 @@ import { useTheme } from "@/theme/useTheme";
 import {
   getContractsByBooking,
   requestSignOtp,
-  requestViewOtp,
   sendForSigning,
   tryViewWithGrant,
   verifySignOtp,
-  verifyViewOtp,
 } from "@/features/contracts/contractService";
+import ContractPinFlow from "@/features/contracts/components/ContractPinFlow";
+import ContractDocument from "@/features/contracts/components/ContractDocument";
+import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import {
   CONTRACT_STATUS_LABELS,
   type ContractContent,
@@ -57,10 +58,12 @@ export default function ContractBlock({
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [signingId, setSigningId] = useState<number | null>(null);
-  const [otpModal, setOtpModal] = useState<null | { mode: "view" | "sign"; contract: ContractSummary }>(null);
+  const [otpModal, setOtpModal] = useState<null | { contract: ContractSummary }>(null);
   const [otp, setOtp] = useState("");
   const [otpBusy, setOtpBusy] = useState(false);
   const [content, setContent] = useState<ContractContent | null>(null);
+  const [pinContract, setPinContract] = useState<ContractSummary | null>(null);
+  const userEmail = useAuthStore((s) => s.user?.email ?? "");
 
   const load = useCallback(async () => {
     try {
@@ -93,18 +96,12 @@ export default function ContractBlock({
   }
 
   async function handleView(contract: ContractSummary) {
+    // Xem bằng mã PIN của app (đúng như bản web), chỉ ký mới dùng OTP mail.
     try {
       setContent(await tryViewWithGrant(contract.id));
       void load();
     } catch {
-      setOtp("");
-      setOtpModal({ mode: "view", contract });
-      try {
-        await requestViewOtp(contract.id);
-      } catch (err) {
-        setOtpModal(null);
-        Alert.alert("Thất bại", getApiErrorMessage(err, "Không gửi được mã OTP."));
-      }
+      setPinContract(contract);
     }
   }
 
@@ -118,7 +115,7 @@ export default function ContractBlock({
       }
       await requestSignOtp(contract.id);
       setOtp("");
-      setOtpModal({ mode: "sign", contract });
+      setOtpModal({ contract });
     } catch (err) {
       Alert.alert("Thất bại", getApiErrorMessage(err, "Không thể gửi mã OTP lúc này."));
       await load();
@@ -134,16 +131,10 @@ export default function ContractBlock({
     }
     setOtpBusy(true);
     try {
-      if (otpModal.mode === "view") {
-        setContent(await verifyViewOtp(otpModal.contract.id, otp.trim()));
-        void load();
-      } else {
-        await verifySignOtp(otpModal.contract.id, otp.trim());
-        Alert.alert("Thành công", "Bạn đã ký hợp đồng.");
-      }
+      await verifySignOtp(otpModal.contract.id, otp.trim());
+      Alert.alert("Thành công", "Bạn đã ký hợp đồng.");
       setOtpModal(null);
-      setContent(otpModal.mode === "view" ? null : content);
-      if (otpModal.mode === "sign") setContent(null);
+      setContent(null);
       await load();
       onChanged?.();
     } catch (err) {
@@ -223,8 +214,8 @@ export default function ContractBlock({
       <Modal visible={otpModal !== null} transparent animationType="fade" onRequestClose={() => setOtpModal(null)}>
         <View style={styles.backdrop}>
           <View style={styles.modal}>
-            <Text style={styles.cardTitle}>{otpModal?.mode === "sign" ? "Ký hợp đồng" : "Xem hợp đồng"}</Text>
-            <Text style={styles.muted}>Mã OTP đã gửi đến email của bạn, hiệu lực 10 phút.</Text>
+            <Text style={styles.cardTitle}>Ký hợp đồng</Text>
+            <Text style={styles.muted}>Mã OTP ký đã gửi đến email của bạn, hiệu lực 10 phút.</Text>
             <TextInput
               value={otp}
               onChangeText={setOtp}
@@ -250,6 +241,19 @@ export default function ContractBlock({
         </View>
       </Modal>
 
+      {pinContract && (
+        <ContractPinFlow
+          contract={pinContract}
+          userEmail={userEmail}
+          onClose={() => setPinContract(null)}
+          onVerified={(detail) => {
+            setContent(detail);
+            setPinContract(null);
+            void load();
+          }}
+        />
+      )}
+
       <Modal visible={content !== null} transparent animationType="fade" onRequestClose={() => setContent(null)}>
         <View style={styles.backdrop}>
           <View style={[styles.modal, styles.contentModal]}>
@@ -257,18 +261,7 @@ export default function ContractBlock({
               Hợp đồng {content?.contractNumber} · v{content?.version}
             </Text>
             <ScrollView style={styles.contentScroll}>
-              <Row label="Trạng thái" value={content ? (CONTRACT_STATUS_LABELS[content.status] ?? content.status) : "-"} />
-              <Row label="Bên cho thuê" value={content?.data?.owner?.fullName ?? "-"} />
-              <Row label="Bên thuê" value={content?.data?.customer?.fullName ?? "-"} />
-              <Row
-                label="Xe"
-                value={[content?.data?.vehicle?.brand, content?.data?.vehicle?.model, content?.data?.vehicle?.licensePlate].filter(Boolean).join(" · ") || "-"}
-              />
-              <Row label="Nhận xe" value={formatDateTime(content?.data?.schedule?.startDate)} />
-              <Row label="Trả xe" value={formatDateTime(content?.data?.schedule?.endDate)} />
-              <Row label="Tổng tiền" value={formatMoney(content?.data?.money?.totalAmount)} />
-              <Row label="Tiền cọc" value={formatMoney(content?.data?.money?.depositAmount)} />
-              {content?.verificationCode ? <Row label="Mã xác thực" value={content.verificationCode} /> : null}
+              {content ? <ContractDocument content={content} /> : null}
             </ScrollView>
             <View style={styles.modalActions}>
               {contentContract && canSignContract(contentContract, userId) ? (

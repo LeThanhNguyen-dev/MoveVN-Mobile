@@ -21,6 +21,7 @@ type Props = {
   onChange: (value: string) => void;
   onSelect: (address: SelectedAddress) => void;
   onManualChange?: () => void;
+  onFocusInput?: () => void;
   label?: string;
   placeholder?: string;
   showLabel?: boolean;
@@ -31,6 +32,7 @@ export default function AddressAutocomplete({
   onChange,
   onSelect,
   onManualChange,
+  onFocusInput,
   label = "Địa chỉ chi tiết",
   placeholder = "Số nhà, đường...",
   showLabel = true,
@@ -109,6 +111,7 @@ export default function AddressAutocomplete({
         <TextInput
           value={value}
           onChangeText={handleChange}
+          onFocus={onFocusInput}
           placeholder={placeholder}
           placeholderTextColor={theme.placeholder}
           style={styles.searchInput}

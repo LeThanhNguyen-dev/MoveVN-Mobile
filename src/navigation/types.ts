@@ -27,6 +27,7 @@ export type ExploreStackParamList = {
     startDate: string;
     endDate: string;
   };
+  Notifications: undefined;
 };
 
 export type TripsStackParamList = {

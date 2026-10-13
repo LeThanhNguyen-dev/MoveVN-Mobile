@@ -6,6 +6,7 @@ import {
 } from "@microsoft/signalr";
 import { getApiBaseUrl } from "@/services/apiClient";
 import { getAuthUser, getToken } from "@/features/auth/hooks/useAuth";
+import { getHubAccessToken, startHubWithAuthRecovery } from "@/services/hubStart";
 import { usePresenceStore } from "@/features/presence/usePresence";
 
 let connection: HubConnection | null = null;
@@ -49,7 +50,7 @@ export async function startPresenceConnection() {
   if (!connection) {
     connection = new HubConnectionBuilder()
       .withUrl(getPresenceHubUrl(), {
-        accessTokenFactory: () => getToken() ?? "",
+        accessTokenFactory: () => getHubAccessToken(),
       })
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Warning)
@@ -80,11 +81,13 @@ export async function startPresenceConnection() {
   }
 
   const activeConnection = connection;
-  startPromise = activeConnection.start().finally(() => {
-    startPromise = null;
+  const started = await startHubWithAuthRecovery("presence", currentUser.userId, () => {
+    startPromise = activeConnection.start().finally(() => {
+      startPromise = null;
+    });
+    return startPromise;
   });
-
-  await startPromise;
+  if (!started) return;
   if (connection !== activeConnection) {
     await activeConnection.stop();
     return;

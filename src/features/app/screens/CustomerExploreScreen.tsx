@@ -20,10 +20,12 @@ type VehicleTab = "Car" | "Motorbike";
 
 export default function CustomerExploreScreen({
   onAvatarPress,
+  onBellPress,
   onSearch,
   user,
 }: {
   onAvatarPress?: () => void;
+  onBellPress?: () => void;
   onSearch?: (params: ExploreStackParamList["VehicleList"]) => void;
   user: AuthUser;
 }) {
@@ -89,7 +91,7 @@ export default function CustomerExploreScreen({
 
   return (
     <View style={styles.content}>
-      <AppDashboardHeader onAvatarPress={onAvatarPress} user={user} />
+      <AppDashboardHeader onAvatarPress={onAvatarPress} onBellPress={onBellPress} user={user} />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.searchCard}>

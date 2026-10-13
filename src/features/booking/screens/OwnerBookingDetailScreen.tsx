@@ -34,8 +34,9 @@ import {
   getInspectionReports,
 } from "@/features/booking/bookingService";
 import type { BookingResponse, InspectionReportResponse } from "@/features/booking/types";
-import { bookingStatusLabel, formatDateTime, formatMoney } from "@/features/booking/utils/format";
+import { bookingStatusLabel, formatDateTime, formatMoney, rentalProgress } from "@/features/booking/utils/format";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
+import BookingTimeline from "@/features/booking/components/BookingTimeline";
 import { createOwnerReview, hasReviewed } from "@/features/review/reviewService";
 import type { UploadFile } from "@/types/upload";
 import { getApiErrorMessage } from "@/services/apiClient";
@@ -100,18 +101,24 @@ export default function OwnerBookingDetailScreen({
     void load();
   }, [load]);
 
-  async function runAction(key: string, fn: () => Promise<void>, success?: string) {
-    if (busy) return;
+  async function runAction(key: string, fn: () => Promise<void>, success?: string): Promise<boolean> {
+    if (busy) return false;
     setBusy(key);
     try {
       await fn();
       await load();
       if (success) Alert.alert("Thành công", success);
+      return true;
     } catch (err) {
       Alert.alert("Thất bại", getApiErrorMessage(err, "Vui lòng thử lại sau."));
+      return false;
     } finally {
       setBusy(null);
     }
+  }
+
+  function backToList(message: string) {
+    Alert.alert("Thành công", message, [{ text: "Về danh sách", onPress: () => navigation.goBack() }]);
   }
 
   async function submitReason() {
@@ -122,9 +129,11 @@ export default function OwnerBookingDetailScreen({
     const mode = reasonModal.mode;
     setReasonModal(null);
     if (mode === "reject") {
-      await runAction("reject", () => rejectBooking(bookingId, reason.trim()).then(() => undefined), "Đã từ chối đơn thuê.");
+      const ok = await runAction("reject", () => rejectBooking(bookingId, reason.trim()).then(() => undefined));
+      if (ok) backToList("Đã từ chối đơn thuê.");
     } else {
-      await runAction("cancel", () => cancelBookingByOwner(bookingId, reason.trim()).then(() => undefined), "Đã hủy. Toàn bộ cọc hoàn vào ví khách.");
+      const ok = await runAction("cancel", () => cancelBookingByOwner(bookingId, reason.trim()).then(() => undefined));
+      if (ok) backToList("Đã hủy. Toàn bộ cọc hoàn vào ví khách.");
     }
     setReason("");
   }
@@ -219,6 +228,9 @@ export default function OwnerBookingDetailScreen({
   const status = booking.status;
   const checkInReport = reports.find((r) => r.type === "CheckIn");
   const checkOutReport = reports.find((r) => r.type === "CheckOut");
+  const progress = status === "InProgress" || status === "Returning"
+    ? rentalProgress(booking.startDate, booking.endDate)
+    : null;
 
   return (
     <View style={styles.screen}>
@@ -236,6 +248,25 @@ export default function OwnerBookingDetailScreen({
           <Text style={styles.status}>{bookingStatusLabel(status)}</Text>
           {booking.escrowStatus === "Held" && <Text style={styles.escrow}>Giữ cọc {formatMoney(booking.escrowAmount)}</Text>}
         </View>
+        {progress && (
+          <View style={[styles.progressStrip, progress.overdue && styles.progressOverdue]}>
+            <Text style={styles.progressText}>{progress.summary}</Text>
+          </View>
+        )}
+
+        {status === "Pending" && booking.riskScore != null && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Đánh giá rủi ro khách thuê</Text>
+            <Text style={styles.riskScore}>
+              {Math.round(booking.riskScore)}/100{booking.riskLevel ? ` · ${booking.riskLevel}` : ""}
+            </Text>
+            {(booking.riskFactors ?? []).map((f) => (
+              <Text key={f} style={styles.muted}>
+                • {f}
+              </Text>
+            ))}
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Lịch trình & địa điểm</Text>
@@ -248,10 +279,27 @@ export default function OwnerBookingDetailScreen({
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Tiền cọc & quyết toán</Text>
-          <Row label="Tiền cọc" value={formatMoney(booking.depositAmount)} />
-          <Row label="Tổng tiền" value={formatMoney(booking.totalAmount)} />
+          <Text style={styles.cardTitle}>Chi tiết chi phí</Text>
+          <Row label={`Giá thuê (${booking.totalDays} ngày)`} value={formatMoney(booking.basePrice)} />
+          {booking.discountPercent > 0 ? (
+            <Row label={`Giảm giá (${booking.discountPercent}%)`} value={`-${formatMoney(booking.discountAmount)}`} tone="success" />
+          ) : null}
+          {booking.promotionDiscount > 0 ? (
+            <Row
+              label={`Mã ${booking.promotionCode ?? ""}`}
+              value={`-${formatMoney(booking.promotionDiscount)}`}
+              tone="success"
+            />
+          ) : null}
+          {booking.deliveryFee > 0 ? (
+            <Row
+              label={`Phí giao xe tận nơi${booking.deliveryDistanceKm != null ? ` (${booking.deliveryDistanceKm} km)` : ""}`}
+              value={`+${formatMoney(booking.deliveryFee)}`}
+            />
+          ) : null}
           <Row label="Phí nền tảng" value={formatMoney(booking.platformFee)} />
+          <Row label="Tổng cộng" value={formatMoney(booking.totalAmount)} strong />
+          <Row label="Tiền cọc giữ" value={formatMoney(booking.depositAmount)} />
         </View>
 
         {status === "Pending" && (
@@ -324,6 +372,15 @@ export default function OwnerBookingDetailScreen({
         )}
 
         <ContractBlock bookingId={booking.id} userId={userId} canManage onChanged={() => load()} />
+
+        {(status === "Cancelled" || status === "Rejected") && booking.cancelReason ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Lý do {status === "Rejected" ? "từ chối" : "hủy"}</Text>
+            <Text style={styles.muted}>{booking.cancelReason}</Text>
+          </View>
+        ) : null}
+
+        <BookingTimeline history={booking.statusHistory} />
 
         {status === "Completed" && !alreadyReviewed && (
           <View style={styles.card}>
@@ -504,11 +561,23 @@ export default function OwnerBookingDetailScreen({
   }
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({
+  label,
+  value,
+  tone,
+  strong,
+}: {
+  label: string;
+  value: string;
+  tone?: "success";
+  strong?: boolean;
+}) {
   return (
     <View style={rowStyles.row}>
-      <Text style={rowStyles.label}>{label}</Text>
-      <Text style={rowStyles.value}>{value}</Text>
+      <Text style={[rowStyles.label, strong && rowStyles.strongLabel]}>{label}</Text>
+      <Text style={[rowStyles.value, tone === "success" && rowStyles.success, strong && rowStyles.strong]}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -517,6 +586,9 @@ const rowStyles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", gap: 12, paddingVertical: 3 },
   label: { color: "#6b7280", fontSize: 13, flexShrink: 0 },
   value: { color: "#111827", fontSize: 13, fontWeight: "600", textAlign: "right", flex: 1 },
+  success: { color: "#059669" },
+  strongLabel: { color: "#111827", fontWeight: "800" },
+  strong: { color: "#6B19FF", fontSize: 15, fontWeight: "800" },
 });
 
 function ActionButton({
@@ -578,6 +650,15 @@ const createStyles = (theme: Theme) =>
     statusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     status: { color: theme.brand, fontSize: 18, fontWeight: "800" },
     escrow: { color: theme.muted, fontSize: 12, fontWeight: "700" },
+    progressStrip: {
+      borderRadius: 10,
+      backgroundColor: theme.brandSoft,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    },
+    progressOverdue: { backgroundColor: theme.dangerSoft },
+    progressText: { color: theme.text, fontSize: 13, fontWeight: "700" },
+    riskScore: { color: theme.text, fontSize: 16, fontWeight: "800", marginBottom: 4 },
     card: {
       backgroundColor: theme.surface,
       borderWidth: StyleSheet.hairlineWidth,

@@ -3,6 +3,7 @@ import { CalendarCheck, Gift, LayoutGrid, MessageSquare, UserRound } from "lucid
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
+import WalletScreen from "@/features/wallets/screens/WalletScreen";
 import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
@@ -24,6 +25,7 @@ const customerTabs: MobileTabItem<CustomerTabKey>[] = [
 export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
+  const [showWallet, setShowWallet] = useState(false);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
   const { theme } = useTheme();
@@ -48,6 +50,10 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
       {showProfile ? (
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />
+      ) : showWallet ? (
+        <View style={[styles.screen, styles.overlayPad]}>
+          <WalletScreen onBack={() => setShowWallet(false)} />
+        </View>
       ) : (
         <>
           <View style={styles.screen}>
@@ -57,6 +63,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onAvatarPress={() => setShowProfile(true)}
                 onRouteChange={handleExploreRouteChange}
                 onBookingCreated={goToTrip}
+                onOpenBooking={goToTrip}
               />
             ) : activeTab === "trips" ? (
               <TripsNavigator pendingBookingId={pendingTripId} onConsumedPending={consumePendingTrip} />
@@ -73,7 +80,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 title="Tin nhắn"
               />
             ) : (
-              <AccountTabScreen onProfilePress={() => setShowProfile(true)} user={user} />
+              <AccountTabScreen onProfilePress={() => setShowProfile(true)} onWalletPress={() => setShowWallet(true)} user={user} />
             )}
           </View>
           {showBottomBar ? (
@@ -88,4 +95,5 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   screen: { flex: 1 },
+  overlayPad: { paddingTop: 8 },
 });

@@ -6,12 +6,12 @@ import type { AuthUser } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
-export default function OwnerOverviewScreen({ onAvatarPress, user }: { onAvatarPress?: () => void; user: AuthUser }) {
+export default function OwnerOverviewScreen({ onAvatarPress, onBellPress, user }: { onAvatarPress?: () => void; onBellPress?: () => void; user: AuthUser }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.content}>
-      <AppDashboardHeader onAvatarPress={onAvatarPress} user={user} />
+      <AppDashboardHeader onAvatarPress={onAvatarPress} onBellPress={onBellPress} user={user} />
 
       <View style={styles.placeholder}>
         <View style={styles.iconWrap}>

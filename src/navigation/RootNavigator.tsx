@@ -9,6 +9,8 @@ import OwnerNavigator from "./OwnerNavigator";
 import RoleNotSupportedScreen from "@/features/app/screens/RoleNotSupportedScreen";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { restoreSession } from "@/features/auth/services/authSession";
+import { useNotificationConnection } from "@/features/notifications/useNotificationConnection";
+import { usePresenceConnection } from "@/features/presence/usePresenceConnection";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { initializeTheme } from "@/theme/useThemeStore";
@@ -49,6 +51,10 @@ export default function RootNavigator() {
     void initializeTheme();
     void restoreSession().catch(() => setStartupError("Chưa thể kiểm tra phiên đăng nhập."));
   }, []);
+
+  // Realtime thông báo + hiện diện cho mọi role đã đăng nhập.
+  useNotificationConnection();
+  usePresenceConnection();
 
   if (!hydrated) return <Startup label="Đang mở MoveVN..." />;
   if (startupError && token) return <Startup label={startupError} />;
