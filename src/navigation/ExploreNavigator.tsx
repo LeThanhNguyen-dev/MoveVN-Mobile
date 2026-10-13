@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import CustomerExploreScreen from "@/features/app/screens/CustomerExploreScreen";
+import CreateBookingScreen from "@/features/booking/screens/CreateBookingScreen";
 import VehicleDetailScreen from "@/features/vehicles/screens/VehicleDetailScreen";
 import VehicleListScreen from "@/features/vehicles/screens/VehicleListScreen";
 import CreateBookingScreen from "@/features/booking/screens/CreateBookingScreen";
@@ -16,10 +17,12 @@ export default function ExploreNavigator({
   user,
   onAvatarPress,
   onRouteChange,
+  onBookingCreated,
 }: {
   user: AuthUser;
   onAvatarPress: () => void;
   onRouteChange?: (routeName: string) => void;
+  onBookingCreated?: (bookingId: number) => void;
 }) {
   const { theme } = useTheme();
   useEffect(() => {
@@ -48,10 +51,11 @@ export default function ExploreNavigator({
         )}
       </Stack.Screen>
       <Stack.Screen name="VehicleList" component={VehicleListScreen} />
-      <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} />
-      <Stack.Screen name="CreateBooking" component={CreateBookingScreen} />
-      <Stack.Screen name="BookingDetail" options={{ gestureEnabled: false }}>
-        {({ route, navigation }) => <BookingDetailScreen bookingId={route.params.bookingId} role="Customer" onBack={() => navigation.goBack()} />}
+      <Stack.Screen name="VehicleDetail">
+        {(props) => <VehicleDetailScreen {...props} onBookPress={(p) => props.navigation.navigate("CreateBooking", p)} />}
+      </Stack.Screen>
+      <Stack.Screen name="CreateBooking">
+        {(props) => <CreateBookingScreen {...props} onCreated={(bookingId) => onBookingCreated?.(bookingId)} />}
       </Stack.Screen>
     </Stack.Navigator>
   );

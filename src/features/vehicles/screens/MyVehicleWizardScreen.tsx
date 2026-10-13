@@ -160,6 +160,9 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const [fixedPrice, setFixedPrice] = useState("");
   const [autoMin, setAutoMin] = useState("");
   const [autoMax, setAutoMax] = useState("");
+  const [deliveryFreeKm, setDeliveryFreeKm] = useState("");
+  const [deliveryFeePerKm, setDeliveryFeePerKm] = useState("");
+  const [deliveryMaxKm, setDeliveryMaxKm] = useState("");
   const [depositPercent, setDepositPercent] = useState("20");
   const [requiresDeposit, setRequiresDeposit] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
@@ -239,6 +242,10 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         setAutoMin(String(pricing?.autoMinPrice ?? v.autoMinPrice ?? ""));
         setAutoMax(String(pricing?.autoMaxPrice ?? v.autoMaxPrice ?? ""));
         setDepositPercent(String(v.depositPercent || 20));
+        setDeliveryFreeKm(v.deliveryFreeRadiusKm != null ? String(v.deliveryFreeRadiusKm) : "");
+        setDeliveryFeePerKm(v.deliveryFeePerKm != null ? String(v.deliveryFeePerKm) : "");
+        setDeliveryMaxKm(v.deliveryMaxRadiusKm != null ? String(v.deliveryMaxRadiusKm) : "");
+
         setRequiresDeposit(v.securityRequiresDeposit);
         setDepositAmount(v.securityDepositAmount ? String(v.securityDepositAmount) : "");
         setFeatureIds(v.features.map((f) => f.id));
@@ -451,6 +458,23 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     setMaxReached((m) => Math.max(m, next));
   }
 
+  function deliveryNumberOrNull(value: string): number | null {
+    if (value.trim() === "") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function isDeliveryValid() {
+    const free = deliveryFreeKm.trim() === "" ? null : Number(deliveryFreeKm);
+    const perKm = deliveryFeePerKm.trim() === "" ? null : Number(deliveryFeePerKm);
+    const max = deliveryMaxKm.trim() === "" ? null : Number(deliveryMaxKm);
+    if (free !== null && (!Number.isFinite(free) || free < 0 || free > 1000)) return false;
+    if (perKm !== null && (!Number.isFinite(perKm) || perKm < 0 || perKm > 1000000)) return false;
+    if (max !== null && (!Number.isFinite(max) || max < 1 || max > 10000)) return false;
+    if (free !== null && max !== null && max < free) return false;
+    return true;
+  }
+
   function canProceed(): boolean {
     switch (step) {
       case 0:
@@ -467,7 +491,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
           dep >= 20 &&
           dep <= 50 &&
           (!requiresDeposit || Number(depositAmount) > 0) &&
-          isSurchargePoliciesValid(surchargePolicies)
+          isDeliveryValid() && isSurchargePoliciesValid(surchargePolicies)
         );
       }
       case 4:
@@ -485,6 +509,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     setSubmitting(true);
     setSubmitError("");
     try {
+      if (!isDeliveryValid()) { setSubmitError("Bán kính miễn phí 0–1000 km, phí/km 0–1.000.000đ, tối đa 1–10000 km và phải ≥ bán kính miễn phí."); return; }
       if (!isSurchargePoliciesValid(surchargePolicies)) {
         setSubmitError("Vui lòng kiểm tra tên phí và đơn giá phụ phí.");
         return;
@@ -503,6 +528,10 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
           longitude,
           pricePerDay,
           depositPercent: Number(depositPercent),
+          deliveryFreeRadiusKm: deliveryNumberOrNull(deliveryFreeKm),
+          deliveryFeePerKm: deliveryNumberOrNull(deliveryFeePerKm),
+          deliveryMaxRadiusKm: deliveryNumberOrNull(deliveryMaxKm),
+
           securityRequiresDeposit: requiresDeposit,
           securityDepositAmount: requiresDeposit ? Number(depositAmount) : 0,
           featureIds: featureIds,
@@ -538,6 +567,10 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         longitude,
         pricePerDay,
         depositPercent: Number(depositPercent),
+        deliveryFreeRadiusKm: deliveryNumberOrNull(deliveryFreeKm),
+        deliveryFeePerKm: deliveryNumberOrNull(deliveryFeePerKm),
+        deliveryMaxRadiusKm: deliveryNumberOrNull(deliveryMaxKm),
+
         securityRequiresDeposit: requiresDeposit,
         securityDepositAmount: requiresDeposit ? Number(depositAmount) : 0,
         pricingMode,
@@ -936,6 +969,15 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                 />
               </>
             ) : null}
+            <Text style={styles.groupTitle}>Giao xe tận nơi</Text>
+            <Text style={styles.groupSub}>Tự đặt bán kính và phí giao xe cho xe này. Để trống một ô để dùng cấu hình chung của sàn.</Text>
+            <Text style={styles.fieldLabel}>Miễn phí trong (km)</Text>
+            <TextInput value={deliveryFreeKm} onChangeText={setDeliveryFreeKm} keyboardType="decimal-pad" placeholder="VD: 5" placeholderTextColor={theme.placeholder} style={styles.input} />
+            <Text style={styles.fieldLabel}>Phí mỗi km vượt (VNĐ)</Text>
+            <TextInput value={deliveryFeePerKm} onChangeText={setDeliveryFeePerKm} keyboardType="decimal-pad" placeholder="VD: 10000" placeholderTextColor={theme.placeholder} style={styles.input} />
+            <Text style={styles.fieldLabel}>Tối đa (km)</Text>
+            <TextInput value={deliveryMaxKm} onChangeText={setDeliveryMaxKm} keyboardType="decimal-pad" placeholder="VD: 50" placeholderTextColor={theme.placeholder} style={styles.input} />
+            {!isDeliveryValid() ? <Text style={styles.errorText}>Bán kính miễn phí 0–1000 km, phí/km 0–1.000.000đ, tối đa 1–10000 km và phải ≥ bán kính miễn phí.</Text> : null}
             <SurchargePolicyEditor
               value={surchargePolicies}
               onChange={setSurchargePolicies}

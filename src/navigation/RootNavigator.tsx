@@ -6,9 +6,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AuthNavigator from "./AuthNavigator";
 import CustomerNavigator from "./CustomerNavigator";
 import OwnerNavigator from "./OwnerNavigator";
-import AdminHomeScreen from "@/features/admin/screens/AdminHomeScreen";
+import RoleNotSupportedScreen from "@/features/app/screens/RoleNotSupportedScreen";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { restoreSession } from "@/features/auth/services/authSession";
+import { usePresenceConnection } from "@/features/presence/usePresenceConnection";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { initializeTheme } from "@/theme/useThemeStore";
@@ -23,6 +24,7 @@ function getActiveLandingRole(roles: UserRole[], activeRole: UserRole | null): U
 }
 
 export default function RootNavigator() {
+  usePresenceConnection();
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const activeRole = useAuthStore((state) => state.activeRole);
@@ -64,7 +66,7 @@ export default function RootNavigator() {
     {!token || !user ? <AuthNavigator />
       : role === "Customer" ? <CustomerNavigator user={user} />
         : role === "Owner" ? <OwnerNavigator user={user} />
-          : <AdminHomeScreen role={role} user={user} />}
+          : <RoleNotSupportedScreen role={role ?? "Staff"} />}
   </NavigationContainer>;
 }
 

@@ -1,107 +1,300 @@
-import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, BackHandler, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { ArrowLeft } from "lucide-react-native";
 import type { RouteProp } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { ExploreStackParamList } from "@/navigation/types";
+import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
-import { getApiErrorMessage } from "@/services/apiClient";
 import { getPublicVehicleById } from "@/features/vehicles/services/publicVehicleService";
 import type { VehicleResponse } from "@/features/vehicles/types";
-import RentalPeriodSheet from "@/features/vehicles/components/RentalPeriodSheet";
-import SurchargePolicySummary from "@/features/vehicles/components/SurchargePolicySummary";
-import { calculateRentalDays, formatPeriodSummary, getDefaultRentalPeriod } from "@/features/vehicles/utils/rentalPeriod";
-import { BookingButton, BookingCard, BookingField, BookingHeader } from "../components/BookingControls";
-import { createBooking } from "../bookingService";
-import { formatMoney } from "../bookingDisplay";
+import { getMinPrice } from "@/features/vehicles/ownerDisplay";
+import { calculateRentalDays, formatPeriodSummary } from "@/features/vehicles/utils/rentalPeriod";
+import AddressAutocomplete, {
+  type SelectedAddress,
+} from "@/features/locations/components/AddressAutocomplete";
+import { createBooking } from "@/features/booking/bookingService";
+import { formatDateTime, formatMoney } from "@/features/booking/utils/format";
+import { getApiErrorMessage } from "@/services/apiClient";
 
-export default function CreateBookingScreen({ route, navigation }: {
-  route: RouteProp<ExploreStackParamList, "CreateBooking">;
-  navigation: NativeStackNavigationProp<ExploreStackParamList, "CreateBooking">;
+type CreateRoute = RouteProp<ExploreStackParamList, "CreateBooking">;
+type CreateNav = NativeStackNavigationProp<ExploreStackParamList, "CreateBooking">;
+
+export default function CreateBookingScreen({
+  route,
+  navigation,
+  onCreated,
+}: {
+  route: CreateRoute;
+  navigation: CreateNav;
+  onCreated?: (bookingId: number) => void;
 }) {
   const { theme } = useTheme();
-  const [vehicle, setVehicle] = useState<VehicleResponse | null>(null);
-  const defaultPeriod = useRef(getDefaultRentalPeriod()).current;
-  const [startDate, setStartDate] = useState(route.params.startDate || defaultPeriod.startDate);
-  const [endDate, setEndDate] = useState(route.params.endDate || defaultPeriod.endDate);
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { vehicleId, startDate, endDate } = route.params;
+
+  const [vehicle, setVehicle] = useState<VehicleResponse | null | undefined>(undefined);
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [pickupLat, setPickupLat] = useState<number | null>(null);
+  const [pickupLng, setPickupLng] = useState<number | null>(null);
+  const [sameReturn, setSameReturn] = useState(true);
+  const [returnAddress, setReturnAddress] = useState("");
+  const [returnLat, setReturnLat] = useState<number | null>(null);
+  const [returnLng, setReturnLng] = useState<number | null>(null);
   const [note, setNote] = useState("");
-  const [promotion, setPromotion] = useState("");
-  const [agreed, setAgreed] = useState(false);
-  const [periodOpen, setPeriodOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [retry, setRetry] = useState(0);
-  const lock = useRef(false);
-  const mounted = useRef(true);
+  const [promoCode, setPromoCode] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPublicVehicleById(vehicleId)
+      .then((data) => {
+        if (cancelled) return;
+        setVehicle(data ?? null);
+        if (data) {
+          setPickupAddress(data.address);
+          setPickupLat(data.latitude);
+          setPickupLng(data.longitude);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setVehicle(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [vehicleId]);
+
   const days = calculateRentalDays(startDate, endDate);
+  const pricePerDay = vehicle ? getMinPrice(vehicle) : null;
+  const estimate = pricePerDay != null && days > 0 ? pricePerDay * days : null;
 
-  useEffect(() => {
-    let cancelled = false; mounted.current = true; setLoading(true); setError("");
-    getPublicVehicleById(route.params.vehicleId).then((data) => {
-      if (!cancelled) { if (!data) throw new Error("Vehicle unavailable"); setVehicle(data); }
-    }).catch((err) => { if (!cancelled) setError(getApiErrorMessage(err, "Không tải được thông tin xe.")); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; mounted.current = false; };
-  }, [route.params.vehicleId, retry]);
-  useEffect(() => {
-    navigation.setOptions({ gestureEnabled: !busy });
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => lock.current);
-    return () => subscription.remove();
-  }, [navigation, busy]);
-
-  async function submit() {
-    if (lock.current || !vehicle) return;
-    const start = new Date(startDate); const end = new Date(endDate);
-    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || start.getTime() <= Date.now() || end <= start) {
-      setError("Chọn giờ nhận xe trong tương lai và giờ trả xe sau giờ nhận."); return;
-    }
-    if (!vehicle.address.trim()) { setError("Xe chưa có địa chỉ nhận. Vui lòng liên hệ chủ xe."); return; }
-    if (vehicle.latitude == null || vehicle.longitude == null) {
-      setError("Xe chưa có tọa độ điểm nhận. Vui lòng liên hệ chủ xe cập nhật địa chỉ."); return;
-    }
-    if (!agreed) { setError("Vui lòng đồng ý điều kiện thuê xe trước khi gửi yêu cầu."); return; }
-    lock.current = true; setBusy(true); setError("");
-    try {
-      const booking = await createBooking({ vehicleId: vehicle.id, startDate: start.toISOString(), endDate: end.toISOString(),
-        pickupAddress: vehicle.address, returnAddress: vehicle.address,
-        pickupLatitude: vehicle.latitude, pickupLongitude: vehicle.longitude,
-        returnLatitude: vehicle.latitude, returnLongitude: vehicle.longitude,
-        customerNote: note.trim() || undefined, promotionCode: promotion.trim() || undefined });
-      if (mounted.current) navigation.replace("BookingDetail", { bookingId: booking.id });
-    } catch (err) {
-      if (mounted.current) setError(getApiErrorMessage(err, "Không thể tạo đơn thuê. Vui lòng kiểm tra lịch xe và thử lại."));
-    } finally { lock.current = false; if (mounted.current) setBusy(false); }
+  function handleSelectPickup(selected: SelectedAddress) {
+    setPickupAddress(selected.address);
+    setPickupLat(selected.latitude);
+    setPickupLng(selected.longitude);
   }
 
-  return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.background }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-    <BookingHeader title="Yêu cầu thuê xe" onBack={() => { if (!lock.current) navigation.goBack(); }} />
-    {loading ? <View style={styles.center}><ActivityIndicator color={theme.brand} /></View> : <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-      {error ? <Text accessibilityRole="alert" style={{ color: theme.danger }}>{error}</Text> : null}
-      {!vehicle ? <BookingButton title="Tải lại xe" onPress={() => setRetry((value) => value + 1)} /> : <>
-        <BookingCard>
-          {vehicle.featuredImage ? <Image source={{ uri: vehicle.featuredImage }} style={styles.image} /> : null}
-          <Text style={{ color: theme.text, fontSize: 20, fontWeight: "800" }}>{[vehicle.brandName, vehicle.modelName, vehicle.year].filter(Boolean).join(" ")}</Text>
-          <Text style={{ color: theme.text }}>Nhận và trả tại địa chỉ chủ xe: {vehicle.address}</Text>
-          <BookingButton title={formatPeriodSummary(startDate, endDate)} secondary disabled={busy} onPress={() => setPeriodOpen(true)} />
-          <Text style={{ color: theme.muted }}>Thời gian chọn theo múi giờ của thiết bị.</Text>
-        </BookingCard>
-        <BookingCard>
-          <Text style={{ color: theme.text, fontSize: 17, fontWeight: "700" }}>Giá tham khảo</Text>
-          <Text style={{ color: theme.text }}>{days} ngày × {formatMoney(vehicle.currentPricePerDay ?? vehicle.pricePerDay)}/ngày</Text>
-          <Text style={{ color: theme.text, fontWeight: "700" }}>Tiền thuê ước tính: {formatMoney(days * (vehicle.currentPricePerDay ?? vehicle.pricePerDay))}</Text>
-          <Text style={{ color: theme.muted, lineHeight: 21 }}>Phí nền tảng, giảm giá và giá theo ngày được hệ thống tính khi tạo đơn. Kiểm tra tổng tiền trong chi tiết đơn trước khi đặt cọc.</Text>
-          {vehicle.securityRequiresDeposit ? <Text style={{ color: theme.text }}>Cọc đảm bảo xe: {formatMoney(vehicle.securityDepositAmount)}</Text> : null}
-          <BookingField label="Mã khuyến mãi (nếu có)" value={promotion} onChangeText={setPromotion} editable={!busy} />
-          <BookingField label="Ghi chú cho chủ xe" value={note} onChangeText={setNote} editable={!busy} multiline />
-        </BookingCard>
-        <SurchargePolicySummary policies={vehicle.surchargePolicies} />
-        <View style={styles.agreement}><Switch accessibilityLabel="Đồng ý điều kiện thuê xe" value={agreed} onValueChange={setAgreed} disabled={busy} trackColor={{ true: theme.brand }} />
-          <Text style={{ color: theme.text, flex: 1, lineHeight: 22 }}>Tôi đã xem điều kiện thuê và phụ phí của xe, đồng ý gửi yêu cầu để chủ xe duyệt.</Text></View>
-        <BookingButton title="Gửi yêu cầu thuê xe" busy={busy} disabled={!agreed || days < 1} onPress={() => void submit()} />
-      </>}
-    </ScrollView>}
-    <RentalPeriodSheet visible={periodOpen} startDate={startDate} endDate={endDate} onStartDateChange={setStartDate} onEndDateChange={setEndDate} onClose={() => setPeriodOpen(false)} />
-  </KeyboardAvoidingView>;
+  function handleSelectReturn(selected: SelectedAddress) {
+    setReturnAddress(selected.address);
+    setReturnLat(selected.latitude);
+    setReturnLng(selected.longitude);
+  }
+
+  async function handleSubmit() {
+    if (!pickupAddress.trim()) {
+      Alert.alert("Thiếu địa điểm", "Vui lòng chọn địa chỉ nhận xe từ danh sách gợi ý.");
+      return;
+    }
+    if (pickupLat == null || pickupLng == null) {
+      Alert.alert("Thiếu tọa độ", "Địa chỉ nhận xe chưa ghim được tọa độ. Hãy chọn lại từ danh sách gợi ý.");
+      return;
+    }
+    if (!sameReturn) {
+      if (!returnAddress.trim()) {
+        Alert.alert("Thiếu địa điểm", "Vui lòng chọn địa chỉ trả xe từ danh sách gợi ý.");
+        return;
+      }
+      if (returnLat == null || returnLng == null) {
+        Alert.alert("Thiếu tọa độ", "Địa chỉ trả xe chưa ghim được tọa độ. Hãy chọn lại từ danh sách gợi ý.");
+        return;
+      }
+    }
+    setSubmitting(true);
+    try {
+      const created = await createBooking({
+        vehicleId,
+        startDate,
+        endDate,
+        pickupAddress: pickupAddress.trim(),
+        pickupLatitude: pickupLat,
+        pickupLongitude: pickupLng,
+        returnAddress: sameReturn ? undefined : returnAddress.trim(),
+        returnLatitude: sameReturn ? undefined : returnLat ?? undefined,
+        returnLongitude: sameReturn ? undefined : returnLng ?? undefined,
+        customerNote: note.trim() || undefined,
+        promotionCode: promoCode.trim() || undefined,
+      });
+      Alert.alert(
+        "Đặt xe thành công",
+        `Mã đơn ${created.bookingCode}. Chủ xe duyệt xong bạn sẽ thanh toán cọc.`,
+        [{ text: "Xem chuyến đi", onPress: () => onCreated?.(created.id) }],
+      );
+    } catch (err) {
+      Alert.alert("Không tạo được đơn", getApiErrorMessage(err, "Vui lòng thử lại sau."));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <View style={styles.screen}>
+      <View style={styles.header}>
+        <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+          <ArrowLeft color={theme.text} size={20} />
+        </Pressable>
+        <Text numberOfLines={1} style={styles.headerTitle}>
+          Xác nhận đặt xe
+        </Text>
+        <View style={styles.backButton} />
+      </View>
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        {vehicle === undefined ? (
+          <ActivityIndicator color={theme.brand} />
+        ) : vehicle === null ? (
+          <Text style={styles.muted}>Không tải được thông tin xe.</Text>
+        ) : (
+          <>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>
+                {[vehicle.brandName, vehicle.modelName, vehicle.year].filter(Boolean).join(" ")}
+              </Text>
+              <Text style={styles.muted}>{formatPeriodSummary(startDate, endDate)}</Text>
+              <Text style={styles.muted}>
+                {days > 0 ? `${days} ngày` : "Thời gian chưa hợp lệ"}
+                {estimate != null ? ` · tạm tính ${formatMoney(estimate)}` : ""}
+              </Text>
+              <Text style={styles.hint}>Giá chính xác (cọc, phí, khuyến mãi) hiển thị sau khi tạo đơn.</Text>
+            </View>
+
+            <Text style={styles.label}>Nhận xe lúc: {formatDateTime(startDate)}</Text>
+            <AddressAutocomplete
+              label="Địa điểm nhận xe"
+              value={pickupAddress}
+              onChange={setPickupAddress}
+              onSelect={handleSelectPickup}
+              onManualChange={() => {
+                setPickupLat(null);
+                setPickupLng(null);
+              }}
+            />
+
+            <View style={styles.switchRow}>
+              <Text style={styles.label}>Trả xe tại điểm nhận</Text>
+              <Switch value={sameReturn} onValueChange={setSameReturn} />
+            </View>
+            {!sameReturn && (
+              <>
+                <Text style={styles.label}>Trả xe lúc: {formatDateTime(endDate)}</Text>
+                <AddressAutocomplete
+                  label="Địa điểm trả xe"
+                  value={returnAddress}
+                  onChange={setReturnAddress}
+                  onSelect={handleSelectReturn}
+                  onManualChange={() => {
+                    setReturnLat(null);
+                    setReturnLng(null);
+                  }}
+                />
+              </>
+            )}
+
+            <Text style={styles.label}>Ghi chú cho chủ xe</Text>
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              placeholder="Giờ giấc, nhu cầu đặc biệt..."
+              placeholderTextColor={theme.placeholder}
+              multiline
+              style={[styles.input, styles.multiline]}
+            />
+
+            <Text style={styles.label}>Mã khuyến mãi (nếu có)</Text>
+            <TextInput
+              value={promoCode}
+              onChangeText={setPromoCode}
+              placeholder="Nhập mã"
+              placeholderTextColor={theme.placeholder}
+              autoCapitalize="characters"
+              style={styles.input}
+            />
+
+            <Pressable
+              onPress={handleSubmit}
+              disabled={submitting}
+              style={({ pressed }) => [styles.submit, (submitting || pressed) && styles.submitDisabled]}
+            >
+              {submitting ? (
+                <ActivityIndicator color={theme.onBrand} />
+              ) : (
+                <Text style={styles.submitText}>Gửi yêu cầu thuê xe</Text>
+              )}
+            </Pressable>
+          </>
+        )}
+      </ScrollView>
+    </View>
+  );
 }
 
-const styles = StyleSheet.create({ content: { padding: 16, paddingBottom: 32, gap: 16 }, center: { flex: 1, alignItems: "center", justifyContent: "center" }, image: { width: "100%", height: 160, borderRadius: 10 }, agreement: { flexDirection: "row", gap: 12, alignItems: "center" } });
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: theme.background },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+    },
+    backButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.surfaceAlt,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
+    body: { padding: 16, gap: 10, paddingBottom: 32 },
+    card: {
+      backgroundColor: theme.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      borderRadius: 12,
+      padding: 14,
+      gap: 4,
+    },
+    cardTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
+    muted: { color: theme.muted, fontSize: 13 },
+    hint: { color: theme.placeholder, fontSize: 12, fontStyle: "italic" },
+    label: { color: theme.text, fontSize: 13, fontWeight: "700", marginTop: 6 },
+    input: {
+      backgroundColor: theme.input,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: theme.text,
+      fontSize: 14,
+    },
+    multiline: { minHeight: 70, textAlignVertical: "top" },
+    switchRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginTop: 6,
+    },
+    submit: {
+      marginTop: 14,
+      borderRadius: 12,
+      backgroundColor: theme.brand,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
+    submitDisabled: { opacity: 0.6 },
+    submitText: { color: theme.onBrand, fontSize: 16, fontWeight: "800" },
+  });

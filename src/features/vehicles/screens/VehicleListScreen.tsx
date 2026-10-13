@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { ArrowLeft, CalendarDays, Check, ChevronDown, MapPin, Search, SlidersHorizontal, X } from "lucide-react-native";
+import { ArrowLeft, CalendarDays, Check, ChevronDown, List, Map as MapIcon, MapPin, SlidersHorizontal, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -8,7 +8,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import type { RouteProp } from "@react-navigation/native";
@@ -19,6 +18,7 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import VehicleListCard, { formatVehicleCurrency } from "@/features/vehicles/components/VehicleListCard";
 import VehicleCardSkeleton from "@/features/vehicles/components/VehicleCardSkeleton";
+import VehicleSearchMap from "@/features/vehicles/components/VehicleSearchMap";
 import VehicleFilterSheet, {
   EMPTY_FILTERS,
   getFuelLabel,
@@ -71,6 +71,7 @@ export default function VehicleListScreen({
     type: base.type,
   }));
   const [sortBy, setSortBy] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [filterVisible, setFilterVisible] = useState(false);
   const [sortVisible, setSortVisible] = useState(false);
   const [areaVisible, setAreaVisible] = useState(false);
@@ -95,6 +96,10 @@ export default function VehicleListScreen({
   const [aiActiveQuery, setAiActiveQuery] = useState("");
   const [aiSemanticQuery, setAiSemanticQuery] = useState("");
   const [aiMatched, setAiMatched] = useState<boolean | null>(null);
+  const [aiSearchVersion, setAiSearchVersion] = useState(() => Date.now());
+  const [aiResultSignature, setAiResultSignature] = useState("");
+  const aiSearchingWasRef = useRef(false);
+  const aiSearchHasResultRef = useRef(false);
   const [aiElapsed, setAiElapsed] = useState(0);
   const aiTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const skipNextFetchRef = useRef(false);
@@ -128,7 +133,6 @@ export default function VehicleListScreen({
           brandId: active.brandId || undefined,
           modelId: active.modelId || undefined,
           seatCount: active.seatCount || undefined,
-          keyword: active.keyword || undefined,
           minPrice: active.minPrice || undefined,
           maxPrice: active.maxPrice || undefined,
           fuelType: active.fuelType || undefined,
@@ -174,8 +178,10 @@ export default function VehicleListScreen({
       return;
     }
     setAiActiveQuery("");
+    setAiQuery("");
     setAiSemanticQuery("");
     setAiMatched(null);
+    setAiResultSignature("");
     void fetchPage(1, true, filters, sortBy, currentLoc);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, sortBy, areaId, province, district, startDate, endDate]);
@@ -213,9 +219,12 @@ export default function VehicleListScreen({
 
   useEffect(() => () => stopAiTimer(), []);
 
-  async function runAiSearch(pageNum = 1, replace = true, queryOverride?: string) {
+  async function runAiSearch(pageNum = 1, replace = true, queryOverride?: string, filtersOverride?: VehicleListFilters) {
     const query = (queryOverride ?? aiQuery).trim();
     if (!query || aiSearching) return;
+    const activeFilters = filtersOverride ?? filters;
+    aiSearchHasResultRef.current = false;
+    setAiResultSignature("");
     if (replace) {
       setLoading(true);
       setError("");
@@ -231,24 +240,24 @@ export default function VehicleListScreen({
         page: pageNum,
         pageSize: PAGE_SIZE,
         currentFilters: {
-          type: filters.type || null,
-          brandId: filters.brandId ? Number(filters.brandId) : null,
-          modelId: filters.modelId ? Number(filters.modelId) : null,
-          fuelType: filters.fuelType || null,
-          seatCount: filters.seatCount || null,
-          transmission: filters.transmission || null,
-          bodyType: filters.bodyType || null,
-          bikeType: filters.bikeType || null,
-          priceFrom: filters.minPrice ? Number(filters.minPrice) : null,
-          priceTo: filters.maxPrice ? Number(filters.maxPrice) : null,
+          type: activeFilters.type || null,
+          brandId: activeFilters.brandId ? Number(activeFilters.brandId) : null,
+          modelId: activeFilters.modelId ? Number(activeFilters.modelId) : null,
+          fuelType: activeFilters.fuelType || null,
+          seatCount: activeFilters.seatCount || null,
+          transmission: activeFilters.transmission || null,
+          bodyType: activeFilters.bodyType || null,
+          bikeType: activeFilters.bikeType || null,
+          priceFrom: activeFilters.minPrice ? Number(activeFilters.minPrice) : null,
+          priceTo: activeFilters.maxPrice ? Number(activeFilters.maxPrice) : null,
           startDate,
           endDate,
           areaId,
           province: province || null,
           district: district || null,
-          customerLat: filters.customerLat ? Number(filters.customerLat) : null,
-          customerLng: filters.customerLng ? Number(filters.customerLng) : null,
-          radiusKm: filters.radiusKm ? Number(filters.radiusKm) : null,
+          customerLat: activeFilters.customerLat ? Number(activeFilters.customerLat) : null,
+          customerLng: activeFilters.customerLng ? Number(activeFilters.customerLng) : null,
+          radiusKm: activeFilters.radiusKm ? Number(activeFilters.radiusKm) : null,
         },
       });
       if (!response) throw new Error("Missing AI search response.");
@@ -290,7 +299,10 @@ export default function VehicleListScreen({
       setAiActiveQuery(query);
       setAiSemanticQuery(response.semanticQuery);
       setAiMatched(response.aiMatched);
+      if (replace) setAiSearchVersion((version) => version + 1);
+      aiSearchHasResultRef.current = true;
     } catch {
+      setAiResultSignature("failed");
       if (replace) setError("Không xử lý được tìm kiếm thông minh. Thử lại hoặc dùng bộ lọc thường.");
     } finally {
       setLoading(false);
@@ -401,13 +413,6 @@ export default function VehicleListScreen({
         clear: () => setFilters((p) => ({ ...p, minPrice: "", maxPrice: "" })),
       });
     }
-    if (filters.keyword) {
-      list.push({
-        key: "keyword",
-        label: `“${filters.keyword}”`,
-        clear: () => setFilters((p) => ({ ...p, keyword: "" })),
-      });
-    }
     if (filters.fuelType) {
       list.push({
         key: "fuel",
@@ -458,7 +463,7 @@ export default function VehicleListScreen({
     (filters.modelId ? 1 : 0) +
     (filters.seatCount ? 1 : 0) +
     (filters.minPrice || filters.maxPrice ? 1 : 0) +
-    (filters.keyword ? 1 : 0) +
+    (aiQuery ? 1 : 0) +
     (filters.fuelType ? 1 : 0) +
     (filters.transmission ? 1 : 0) +
     (filters.bodyType ? 1 : 0) +
@@ -466,6 +471,89 @@ export default function VehicleListScreen({
     (filters.customerLat && filters.customerLng ? 1 : 0);
 
   const sortLabel = SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Mới nhất";
+  const mapParams = useMemo(() => ({
+    page: 1,
+    pageSize: 300,
+    sortBy: sortBy || undefined,
+    type: filters.type || undefined,
+    brandId: filters.brandId || undefined,
+    modelId: filters.modelId || undefined,
+    seatCount: filters.seatCount || undefined,
+    minPrice: filters.minPrice || undefined,
+    maxPrice: filters.maxPrice || undefined,
+    fuelType: filters.fuelType || undefined,
+    transmission: filters.transmission || undefined,
+    bodyType: filters.bodyType || undefined,
+    bikeType: filters.bikeType || undefined,
+    customerLat: filters.customerLat && filters.customerLng ? filters.customerLat : undefined,
+    customerLng: filters.customerLat && filters.customerLng ? filters.customerLng : undefined,
+    radiusKm: filters.customerLat && filters.customerLng ? filters.radiusKm : undefined,
+    areaId,
+    province: province || undefined,
+    district: district || undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  }), [filters, sortBy, areaId, province, district, startDate, endDate]);
+  const mapAiFilters = useMemo(() => ({
+    type: filters.type || null,
+    brandId: filters.brandId ? Number(filters.brandId) : null,
+    modelId: filters.modelId ? Number(filters.modelId) : null,
+    fuelType: filters.fuelType || null,
+    seatCount: filters.seatCount || null,
+    transmission: filters.transmission || null,
+    bodyType: filters.bodyType || null,
+    bikeType: filters.bikeType || null,
+    priceFrom: filters.minPrice ? Number(filters.minPrice) : null,
+    priceTo: filters.maxPrice ? Number(filters.maxPrice) : null,
+    startDate,
+    endDate,
+    areaId,
+    province: province || null,
+    district: district || null,
+    customerLat: filters.customerLat ? Number(filters.customerLat) : null,
+    customerLng: filters.customerLng ? Number(filters.customerLng) : null,
+    radiusKm: filters.radiusKm ? Number(filters.radiusKm) : null,
+  }), [filters, startDate, endDate, areaId, province, district]);
+  const aiMapSignature = useMemo(() => JSON.stringify(["ai", aiActiveQuery, mapAiFilters, sortBy, aiSearchVersion]),
+    [aiActiveQuery, mapAiFilters, sortBy, aiSearchVersion]);
+  const aiMapPreview = useMemo(() => aiActiveQuery && aiResultSignature === aiMapSignature
+    ? { items, totalCount } : null, [aiActiveQuery, aiResultSignature, aiMapSignature, items, totalCount]);
+  const activeMapAiQuery = aiActiveQuery && aiResultSignature === aiMapSignature ? aiActiveQuery : "";
+  const pickupCenter = useMemo(() => {
+    if (!filters.customerLat || !filters.customerLng) return null;
+    const latitude = Number(filters.customerLat);
+    const longitude = Number(filters.customerLng);
+    return Number.isFinite(latitude) && Number.isFinite(longitude) ? { latitude, longitude } : null;
+  }, [filters.customerLat, filters.customerLng]);
+
+  useEffect(() => {
+    if (aiSearching) {
+      aiSearchingWasRef.current = true;
+      return;
+    }
+    if (aiSearchingWasRef.current && aiSearchHasResultRef.current && aiActiveQuery) {
+      setAiResultSignature(aiMapSignature);
+    }
+    aiSearchingWasRef.current = false;
+  }, [aiSearching, aiActiveQuery, aiMapSignature]);
+
+  function applyFiltersFromSheet(next: VehicleListFilters, query: string) {
+    const sameFilters = JSON.stringify(next) === JSON.stringify(filters);
+    if (sameFilters && ((!query && !aiActiveQuery)
+      || (query === aiActiveQuery && aiResultSignature && aiResultSignature !== "failed"))) return;
+    setAiQuery(query);
+    if (query) {
+      skipNextFetchRef.current = true;
+      setFilters({ ...next });
+      void runAiSearch(1, true, query, next);
+    } else {
+      setAiActiveQuery("");
+      setAiSemanticQuery("");
+      setAiMatched(null);
+      setAiResultSignature("");
+      setFilters({ ...next });
+    }
+  }
 
   return (
     <View style={styles.screen}>
@@ -497,7 +585,24 @@ export default function VehicleListScreen({
         </Pressable>
       </View>
 
-      <FlatList
+      <View style={styles.viewSwitchWrap}>
+        <View style={styles.viewSwitch}>
+          <Pressable onPress={() => setViewMode("list")}
+            accessibilityRole="button" accessibilityState={{ selected: viewMode === "list" }}
+            style={[styles.viewSwitchButton, viewMode === "list" && styles.viewSwitchActive]}>
+            <List size={16} color={viewMode === "list" ? theme.onBrand : theme.muted} />
+            <Text style={[styles.viewSwitchText, viewMode === "list" && styles.viewSwitchTextActive]}>Danh sách</Text>
+          </Pressable>
+          <Pressable onPress={() => setViewMode("map")}
+            accessibilityRole="button" accessibilityState={{ selected: viewMode === "map" }}
+            style={[styles.viewSwitchButton, viewMode === "map" && styles.viewSwitchActive]}>
+            <MapIcon size={16} color={viewMode === "map" ? theme.onBrand : theme.muted} />
+            <Text style={[styles.viewSwitchText, viewMode === "map" && styles.viewSwitchTextActive]}>Bản đồ</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {viewMode === "list" ? <FlatList
         data={items}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderCard}
@@ -510,43 +615,6 @@ export default function VehicleListScreen({
         onEndReachedThreshold={0.4}
         ListHeaderComponent={
           <View style={styles.listHeader}>
-            <View style={styles.aiSearchBox}>
-              <Search color={theme.placeholder} size={17} />
-              <TextInput
-                value={aiQuery}
-                onChangeText={setAiQuery}
-                placeholder="Tìm bằng AI: xe 7 chỗ dưới 1tr5, rộng rãi..."
-                placeholderTextColor={theme.placeholder}
-                returnKeyType="search"
-                onSubmitEditing={() => runAiSearch()}
-                style={styles.aiSearchInput}
-              />
-              {aiQuery ? (
-                <Pressable
-                  onPress={() => {
-                    setAiQuery("");
-                    setAiActiveQuery("");
-                    setAiSemanticQuery("");
-                    setAiMatched(null);
-                    void fetchPage(1, true, filters, sortBy, currentLoc);
-                  }}
-                  style={styles.aiIconButton}
-                >
-                  <X color={theme.muted} size={16} />
-                </Pressable>
-              ) : null}
-              <Pressable
-                onPress={() => runAiSearch()}
-                disabled={!aiQuery.trim() || aiSearching}
-                style={[styles.aiSubmitButton, (!aiQuery.trim() || aiSearching) && styles.aiSubmitDisabled]}
-              >
-                {aiSearching ? (
-                  <ActivityIndicator size="small" color={theme.onBrand} />
-                ) : (
-                  <Search color={theme.onBrand} size={16} />
-                )}
-              </Pressable>
-            </View>
             {aiSearching && loading ? (
               <View style={styles.aiSearchingRow}>
                 <ActivityIndicator size="small" color={theme.brand} />
@@ -621,13 +689,42 @@ export default function VehicleListScreen({
             <ActivityIndicator color={theme.brand} style={styles.moreLoader} />
           ) : null
         }
-      />
+      /> : (
+        <View style={styles.mapScreen}>
+          <View style={styles.mapControls}>
+            {aiSearching ? (
+              <Text style={styles.mapStatus}>AI đang tìm kiếm... {aiElapsed}s</Text>
+            ) : aiActiveQuery ? (
+              <Text numberOfLines={1} style={styles.mapStatus}>AI: {aiSemanticQuery || aiActiveQuery}</Text>
+            ) : null}
+            <View style={styles.mapSortRow}>
+              <Pressable onPress={() => setSortVisible(true)} style={styles.sortButton}>
+                <Text numberOfLines={1} style={styles.sortText}>{sortLabel}</Text>
+                <ChevronDown color={theme.muted} size={15} />
+              </Pressable>
+            </View>
+          </View>
+          <VehicleSearchMap
+            params={mapParams}
+            aiQuery={activeMapAiQuery}
+            aiFilters={mapAiFilters}
+            aiSearching={aiSearching || Boolean(aiActiveQuery && !aiResultSignature)}
+            aiSearchVersion={aiSearchVersion}
+            aiPreview={aiMapPreview}
+            center={pickupCenter}
+            radiusKm={Number(filters.radiusKm) || 10}
+            onOpenVehicle={handleOpenCard}
+          />
+        </View>
+      )}
 
       <VehicleFilterSheet
         visible={filterVisible}
         initial={filters}
+        initialAiQuery={aiQuery}
+        searching={aiSearching}
         resultCount={totalCount}
-        onApply={setFilters}
+        onApply={applyFiltersFromSheet}
         onClose={() => setFilterVisible(false)}
       />
 
@@ -737,44 +834,18 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 4,
     },
     badgeText: { color: theme.onBrand, fontSize: 10, fontWeight: "800" },
+    viewSwitchWrap: { paddingHorizontal: 16, paddingVertical: 7, backgroundColor: theme.background },
+    viewSwitch: { flexDirection: "row", padding: 3, borderRadius: 11, backgroundColor: theme.brandSoft },
+    viewSwitchButton: { flex: 1, height: 33, borderRadius: 8, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
+    viewSwitchActive: { backgroundColor: theme.brand },
+    viewSwitchText: { color: theme.muted, fontSize: 12, fontWeight: "800" },
+    viewSwitchTextActive: { color: theme.onBrand },
+    mapScreen: { flex: 1, minHeight: 0 },
+    mapControls: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 7, gap: 6, backgroundColor: theme.background },
+    mapStatus: { color: theme.muted, fontSize: 11, fontWeight: "600" },
+    mapSortRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 8 },
     list: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 32, gap: 12 },
     listHeader: { gap: 10, marginBottom: 2 },
-    aiSearchBox: {
-      minHeight: 46,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.brandBorder,
-      borderRadius: 8,
-      backgroundColor: theme.input,
-      paddingLeft: 12,
-      paddingRight: 6,
-    },
-    aiSearchInput: {
-      flex: 1,
-      minHeight: 44,
-      color: theme.text,
-      fontSize: 14,
-      fontWeight: "600",
-    },
-    aiIconButton: {
-      width: 32,
-      height: 32,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    aiSubmitButton: {
-      width: 34,
-      height: 34,
-      borderRadius: 8,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: theme.brand,
-    },
-    aiSubmitDisabled: {
-      opacity: 0.45,
-    },
     aiSummary: {
       color: theme.muted,
       fontSize: 12,

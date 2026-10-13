@@ -8,6 +8,10 @@ export type VehicleListItemResponse = {
   licensePlate: string;
   pricePerDay: number;
   depositPercent: number;
+  deliveryFreeRadiusKm?: number | null;
+  deliveryFeePerKm?: number | null;
+  deliveryMaxRadiusKm?: number | null;
+
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   areaName: string | null;
@@ -21,6 +25,8 @@ export type VehicleListItemResponse = {
   averageRating: number;
   reviewCount: number;
   distanceKm: number | null;
+  latitude: number | null;
+  longitude: number | null;
   totalDynamicPrice: number | null;
   rentalDays: number | null;
   averageDailyPrice: number | null;
@@ -134,6 +140,18 @@ export type VehicleDocumentResponse = {
   createdAt: string | null;
 };
 
+export type PricingQuoteResponse = {
+  quoteId: string;
+  vehicleId: number;
+  startDateTime: string;
+  endDateTime: string;
+  dailyPrices: { rentalDate: string; finalDailyPrice: number }[];
+  totalDynamicPrice: number;
+  rentalDays: number;
+  averageDailyPrice: number;
+  expiresAt: string;
+};
+
 export type VehicleResponse = {
   id: number;
   ownerId: number;
@@ -158,6 +176,10 @@ export type VehicleResponse = {
   pricingRegionCode: string | null;
   pricePerDay: number;
   depositPercent: number;
+  deliveryFreeRadiusKm?: number | null;
+  deliveryFeePerKm?: number | null;
+  deliveryMaxRadiusKm?: number | null;
+
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   pricingMode: "Fixed" | "Auto" | null;
@@ -198,6 +220,10 @@ export type CreateVehicleRequest = {
   longitude?: number | null;
   pricePerDay: number;
   depositPercent: number;
+  deliveryFreeRadiusKm?: number | null;
+  deliveryFeePerKm?: number | null;
+  deliveryMaxRadiusKm?: number | null;
+
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   pricingMode?: "Fixed" | "Auto" | null;
@@ -222,6 +248,10 @@ export type UpdateVehicleRequest = {
   longitude?: number | null;
   pricePerDay: number;
   depositPercent: number;
+  deliveryFreeRadiusKm?: number | null;
+  deliveryFeePerKm?: number | null;
+  deliveryMaxRadiusKm?: number | null;
+
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   featureIds: number[];

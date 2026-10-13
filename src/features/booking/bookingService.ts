@@ -83,3 +83,31 @@ export async function cancelBooking(id: number, reason?: string): Promise<Bookin
   const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.cancel(id), { reason });
   return res.data.data!;
 }
+
+export async function cancelBookingByOwner(id: number, reason?: string): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.ownerCancel(id), { reason });
+  return res.data.data!;
+}
+
+export async function confirmReceipt(
+  id: number,
+  body?: { hasDamages?: boolean; damageNote?: string },
+): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.confirmReceipt(id), body ?? {});
+  return res.data.data!;
+}
+
+export async function requestSettlement(id: number): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.settlement(id));
+  return res.data.data!;
+}
+
+export async function reportReturn(id: number): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.reportReturn(id));
+  return res.data.data!;
+}
+
+export async function reportNoShow(id: number): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.reportNoShow(id));
+  return res.data.data!;
+}
