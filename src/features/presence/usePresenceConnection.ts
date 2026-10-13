@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
-import { startPresenceConnection, stopPresenceConnection } from "@/features/presence/presenceConnection";
+import { isPresenceAuthError, startPresenceConnection, stopPresenceConnection } from "@/features/presence/presenceConnection";
 
 export function usePresenceConnection() {
   const token = useAuthStore((state) => state.token?.accessToken);
@@ -20,6 +20,12 @@ export function usePresenceConnection() {
       void startPresenceConnection()
         .catch((error: unknown) => {
           if (disposed) return;
+          if (isPresenceAuthError(error)) {
+            // Hết phiên: không retry vô hạn (mỗi lần retry chỉ spam thêm lỗi 401).
+            // Effect sẽ tự chạy lại khi token đổi (refresh thành công) hoặc session bị clear.
+            console.warn("Presence connection failed: session expired.", error);
+            return;
+          }
           console.warn("Presence connection failed; retrying.", error);
           retryTimer = setTimeout(connect, 5_000);
         })
