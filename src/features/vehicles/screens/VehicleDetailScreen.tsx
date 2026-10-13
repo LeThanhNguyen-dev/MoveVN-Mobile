@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react-native";
 import type { RouteProp } from "@react-navigation/native";
@@ -11,6 +11,7 @@ import { getPublicVehicleById } from "@/features/vehicles/services/publicVehicle
 import type { VehicleResponse } from "@/features/vehicles/types";
 import { formatPeriodSummary } from "@/features/vehicles/utils/rentalPeriod";
 import SurchargePolicySummary from "@/features/vehicles/components/SurchargePolicySummary";
+import { BookingButton } from "@/features/booking/components/BookingControls";
 
 type DetailRoute = RouteProp<ExploreStackParamList, "VehicleDetail">;
 type DetailNav = NativeStackNavigationProp<ExploreStackParamList, "VehicleDetail">;
@@ -63,7 +64,7 @@ export default function VehicleDetailScreen({
           <Text style={styles.muted}>Kéo về danh sách và thử lại.</Text>
         </View>
       ) : (
-        <View style={styles.body}>
+        <ScrollView contentContainerStyle={styles.body}>
           <Text style={styles.title}>
             {[vehicle.brandName, vehicle.modelName, vehicle.year].filter(Boolean).join(" ")}
           </Text>
@@ -72,8 +73,8 @@ export default function VehicleDetailScreen({
             <Text style={styles.period}>{formatPeriodSummary(startDate ?? "", endDate ?? "")}</Text>
           ) : null}
           <SurchargePolicySummary policies={vehicle.surchargePolicies} />
-          <Text style={styles.muted}>Gallery, bản đồ, đánh giá và đặt xe sẽ làm ở bước tiếp theo.</Text>
-        </View>
+          <BookingButton title="Yêu cầu thuê xe" onPress={() => navigation.navigate("CreateBooking", { vehicleId, startDate, endDate })} />
+        </ScrollView>
       )}
     </View>
   );

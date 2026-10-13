@@ -46,6 +46,7 @@ export async function ownerCompleteBooking(id: number): Promise<BookingResponse>
 export async function createCheckInReport(id: number, data: FormData): Promise<InspectionReportResponse> {
   const res = await apiClient.post<ApiResponse<InspectionReportResponse>>(endpoints.bookings.checkIn(id), data, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: 120000,
   });
   return res.data.data!;
 }
@@ -53,6 +54,7 @@ export async function createCheckInReport(id: number, data: FormData): Promise<I
 export async function createCheckOutReport(id: number, data: FormData): Promise<InspectionReportResponse> {
   const res = await apiClient.post<ApiResponse<InspectionReportResponse>>(endpoints.bookings.checkOut(id), data, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: 120000,
   });
   return res.data.data!;
 }

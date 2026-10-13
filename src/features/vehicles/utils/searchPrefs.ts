@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "@/services/deviceStorage";
 
 const PREFS_KEY = "movevn.search.prefs";
 

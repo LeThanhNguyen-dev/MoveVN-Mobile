@@ -26,6 +26,9 @@ export interface BookingResponse {
   returnAddress?: string;
   customerNote?: string;
   status: string;
+  canCheckInNow?: boolean;
+  checkInOpensAt?: string;
+  checkInUnavailableReason?: string;
   riskScore?: number;
   riskLevel?: string;
   riskFactors?: string[];
@@ -72,6 +75,10 @@ export interface CreateBookingRequest {
   returnAddress?: string;
   customerNote?: string;
   promotionCode?: string;
+  pickupLatitude?: number;
+  pickupLongitude?: number;
+  returnLatitude?: number;
+  returnLongitude?: number;
 }
 
 export interface ApproveBookingRequest {

@@ -3,8 +3,10 @@ import { CalendarCheck, CarFront, LayoutDashboard, MessageSquare, UserRound } fr
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
+import BookingsTabScreen from "@/features/booking/screens/BookingsTabScreen";
 import OwnerOverviewScreen from "@/features/app/screens/OwnerOverviewScreen";
 import OwnerVehiclesScreen from "@/features/app/screens/OwnerVehiclesScreen";
+import AssistantFab from "@/features/assistant/components/AssistantFab";
 import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
@@ -24,6 +26,7 @@ const ownerTabs: MobileTabItem<OwnerTabKey>[] = [
 export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<OwnerTabKey>("overview");
   const [showProfile, setShowProfile] = useState(false);
+  const [bookingDetailOpen, setBookingDetailOpen] = useState(false);
   const { theme } = useTheme();
 
   return (
@@ -36,11 +39,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
             {activeTab === "overview" ? (
               <OwnerOverviewScreen onAvatarPress={() => setShowProfile(true)} user={user} />
             ) : activeTab === "bookings" ? (
-              <TabPlaceholderScreen
-                description="Yêu cầu thuê, lịch bàn giao và trạng thái hoàn tất chuyến sẽ hiển thị ở đây."
-                icon={CalendarCheck}
-                title="Đơn thuê"
-              />
+              <BookingsTabScreen role="Owner" onDetailChange={setBookingDetailOpen} />
             ) : activeTab === "vehicles" ? (
               <OwnerVehiclesScreen />
             ) : activeTab === "messages" ? (
@@ -53,7 +52,9 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
               <AccountTabScreen onProfilePress={() => setShowProfile(true)} user={user} />
             )}
           </View>
-          <MobileBottomBar activeKey={activeTab} items={ownerTabs} onChange={setActiveTab} />
+          {!bookingDetailOpen ? <MobileBottomBar activeKey={activeTab} items={ownerTabs} onChange={setActiveTab} /> : null}
+          {/* ChatbotAI (không booking) cho chủ xe */}
+          <AssistantFab />
         </>
       )}
     </SafeAreaView>

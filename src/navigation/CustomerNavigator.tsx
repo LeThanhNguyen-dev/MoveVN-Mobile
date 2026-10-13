@@ -3,8 +3,10 @@ import { CalendarCheck, Gift, LayoutGrid, MessageSquare, UserRound } from "lucid
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
+import BookingsTabScreen from "@/features/booking/screens/BookingsTabScreen";
 import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
+import AssistantFab from "@/features/assistant/components/AssistantFab";
 import type { AuthUser } from "@/features/auth/types";
 import ExploreNavigator from "./ExploreNavigator";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
@@ -24,6 +26,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
+  const [bookingDetailOpen, setBookingDetailOpen] = useState(false);
   const { theme } = useTheme();
 
   const handleExploreRouteChange = useCallback((routeName: string) => {
@@ -31,7 +34,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   }, []);
 
   // Ẩn bottom bar khi vào List / Detail, chỉ hiện ở màn Khám phá chính.
-  const showBottomBar = activeTab !== "explore" || exploreRoute === "ExploreMain";
+  const showBottomBar = (activeTab !== "explore" || exploreRoute === "ExploreMain") && !bookingDetailOpen;
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -47,11 +50,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onRouteChange={handleExploreRouteChange}
               />
             ) : activeTab === "trips" ? (
-              <TabPlaceholderScreen
-                description="Các đơn thuê, lịch sử chuyến đi và trạng thái nhận/trả xe sẽ hiển thị ở đây."
-                icon={CalendarCheck}
-                title="Chuyến đi"
-              />
+              <BookingsTabScreen role="Customer" onDetailChange={setBookingDetailOpen} />
             ) : activeTab === "deals" ? (
               <TabPlaceholderScreen
                 description="Khuyến mãi, săn mã và ví voucher của bạn sẽ được đặt ở màn này."
@@ -71,6 +70,8 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
           {showBottomBar ? (
             <MobileBottomBar activeKey={activeTab} items={customerTabs} onChange={setActiveTab} />
           ) : null}
+          {/* ChatbotAI (không booking): nút nổi mở AssistantScreen */}
+          <AssistantFab />
         </>
       )}
     </SafeAreaView>

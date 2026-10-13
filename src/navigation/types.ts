@@ -23,4 +23,6 @@ export type ExploreStackParamList = {
     startDate?: string;
     endDate?: string;
   };
+  CreateBooking: { vehicleId: number; startDate?: string; endDate?: string };
+  BookingDetail: { bookingId: number };
 };

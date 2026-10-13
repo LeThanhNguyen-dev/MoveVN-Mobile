@@ -3,6 +3,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import CustomerExploreScreen from "@/features/app/screens/CustomerExploreScreen";
 import VehicleDetailScreen from "@/features/vehicles/screens/VehicleDetailScreen";
 import VehicleListScreen from "@/features/vehicles/screens/VehicleListScreen";
+import CreateBookingScreen from "@/features/booking/screens/CreateBookingScreen";
+import BookingDetailScreen from "@/features/booking/screens/BookingDetailScreen";
 import type { AuthUser } from "@/features/auth/types";
 import type { ExploreStackParamList } from "./types";
 
@@ -47,6 +49,10 @@ export default function ExploreNavigator({
       </Stack.Screen>
       <Stack.Screen name="VehicleList" component={VehicleListScreen} />
       <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} />
+      <Stack.Screen name="CreateBooking" component={CreateBookingScreen} />
+      <Stack.Screen name="BookingDetail" options={{ gestureEnabled: false }}>
+        {({ route, navigation }) => <BookingDetailScreen bookingId={route.params.bookingId} role="Customer" onBack={() => navigation.goBack()} />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 }

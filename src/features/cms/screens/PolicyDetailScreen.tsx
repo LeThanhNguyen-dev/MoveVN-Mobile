@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, ChevronDown } from "lucide-react-native";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { getCmsPageBySlug } from "@/features/cms/services/cmsService";
 import type { CmsPageResponse } from "@/features/cms/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
+export type PolicyAccordionItem = {
+  id: string;
+  title: string;
+  content: string;
+};
+
 export type PolicySection = {
   id: string;
   title: string;
   content: string[];
+  items?: PolicyAccordionItem[];
 };
 
 function generateSectionId(title: string, fallback: number) {
@@ -23,24 +30,64 @@ function generateSectionId(title: string, fallback: number) {
   return base || `section-${fallback}`;
 }
 
+function splitParagraphs(text: string): string[] {
+  return String(text ?? "")
+    .split(/\n\s*\n/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function normalizeSection(raw: unknown, ids: Set<string>, fallback: number): PolicySection | null {
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  const title = String(record.title ?? record.Title ?? "");
+  let id = String(record.id ?? record.Id ?? "");
+  if (!id || ids.has(id)) id = generateSectionId(title, fallback);
+  ids.add(id);
+  const type = String(record.type ?? "").toLowerCase();
+  const items = record.items ?? record.Items;
+  if ((type === "accordion" || (record.content == null && record.Content == null && Array.isArray(items))) && Array.isArray(items)) {
+    const used = new Set<string>();
+    const parsed = (items as unknown[])
+      .filter((it): it is Record<string, unknown> => !!it && typeof it === "object")
+      .map((it, index) => {
+        let itemId = String(it.id ?? it.Id ?? "");
+        if (!itemId || used.has(itemId)) itemId = `${id}-item-${index + 1}`;
+        used.add(itemId);
+        return { id: itemId, title: String(it.title ?? it.Title ?? `Mục ${index + 1}`), content: String(it.content ?? it.Content ?? "") };
+      });
+    return { id, title, content: [], items: parsed };
+  }
+  const rawContent = record.content ?? record.Content ?? [];
+  const content = Array.isArray(rawContent)
+    ? rawContent.map((line) => String(line ?? ""))
+    : splitParagraphs(String(rawContent ?? ""));
+  return { id, title, content };
+}
+
 export function parsePolicySections(content: string): PolicySection[] | null {
   try {
     const parsed: unknown = JSON.parse(content);
-    if (!Array.isArray(parsed) || parsed.length === 0) return null;
     const ids = new Set<string>();
-    const sections: PolicySection[] = [];
-    parsed.forEach((item: unknown, index: number) => {
-      if (!item || typeof item !== "object") return;
-      const record = item as Record<string, unknown>;
-      const title = String(record.title ?? record.Title ?? "");
-      let id = String(record.id ?? record.Id ?? "");
-      if (!id || ids.has(id)) id = generateSectionId(title, index + 1);
-      ids.add(id);
-      const raw = record.content ?? record.Content ?? [];
-      const list = Array.isArray(raw) ? raw.map((line) => String(line ?? "")) : [String(raw ?? "")];
-      sections.push({ id, title, content: list });
-    });
-    return sections.length > 0 ? sections : null;
+    // Format mảng cũ: [{id,title,content:[]}].
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const sections = parsed
+        .map((item, index) => normalizeSection(item, ids, index + 1))
+        .filter((s): s is PolicySection => s !== null);
+      return sections.length > 0 ? sections : null;
+    }
+    // Format mới: {version,sections:[{id,type,title,content,items}]}.
+    if (parsed && typeof parsed === "object") {
+      const record = parsed as Record<string, unknown>;
+      const nested = record.sections ?? record.Sections;
+      if (Array.isArray(nested) && nested.length > 0) {
+        const sections = nested
+          .map((item, index) => normalizeSection(item, ids, index + 1))
+          .filter((s): s is PolicySection => s !== null);
+        return sections.length > 0 ? sections : null;
+      }
+    }
+    return null;
   } catch {
     return null;
   }
@@ -96,9 +143,19 @@ export default function PolicyDetailScreen({ onBack, slug }: { onBack: () => voi
     () => (page?.content ? parsePolicySections(page.content) : null),
     [page],
   );
+  // JSON có cấu trúc nhưng không render được thì không in raw ra màn hình.
+  const isStructuredJson = useMemo(() => {
+    if (!page?.content || sections) return false;
+    try {
+      const parsed: unknown = JSON.parse(page.content);
+      return parsed !== null && typeof parsed === "object";
+    } catch {
+      return false;
+    }
+  }, [page, sections]);
   const plainText = useMemo(
-    () => (page?.content && !sections ? htmlToText(page.content) : ""),
-    [page, sections],
+    () => (page?.content && !sections && !isStructuredJson ? htmlToText(page.content) : ""),
+    [page, sections, isStructuredJson],
   );
 
   return (
@@ -147,9 +204,14 @@ export default function PolicyDetailScreen({ onBack, slug }: { onBack: () => voi
                       <PolicyParagraph key={index} text={line} />
                     ))}
                   </View>
+                  {section.items && section.items.length > 0 ? <PolicyAccordion items={section.items} /> : null}
                 </View>
               ))
-              : (
+              : isStructuredJson ? (
+                <View style={styles.card}>
+                  <Text style={styles.muted}>Nội dung đang được cập nhật.</Text>
+                </View>
+              ) : (
                 <View style={styles.card}>
                   <Text style={styles.paragraph}>{plainText}</Text>
                 </View>
@@ -157,6 +219,42 @@ export default function PolicyDetailScreen({ onBack, slug }: { onBack: () => voi
           </>
         )}
       </ScrollView>
+    </View>
+  );
+}
+
+function PolicyAccordion({ items }: { items: PolicyAccordionItem[] }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const [openId, setOpenId] = useState<string | null>(items[0]?.id ?? null);
+  return (
+    <View style={styles.accordion}>
+      {items.map((item) => {
+        const open = openId === item.id;
+        return (
+          <View key={item.id} style={styles.accordionItem}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: open }}
+              onPress={() => setOpenId(open ? null : item.id)}
+              style={[styles.accordionHeader, open && styles.accordionHeaderOpen]}
+            >
+              <Text style={[styles.accordionTitle, open && styles.accordionTitleOpen]}>{item.title}</Text>
+              <View style={{ transform: [{ rotate: open ? "180deg" : "0deg" }] }}>
+                <ChevronDown color={open ? theme.brand : theme.muted} size={18} strokeWidth={2.4} />
+              </View>
+            </Pressable>
+            {open ? (
+              <View style={styles.accordionBody}>
+                {splitParagraphs(item.content).map((line, index) => (
+                  // eslint-disable-next-line react/no-array-index-key
+                  <PolicyParagraph key={index} text={line} />
+                ))}
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -213,6 +311,25 @@ const createStyles = (theme: Theme) =>
     retryText: { color: theme.brand, fontSize: 14, fontWeight: "700" },
     sectionTitle: { color: theme.text, fontSize: 14, fontWeight: "800", letterSpacing: 0.3 },
     sectionBody: { gap: 8 },
+    accordion: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.border,
+      overflow: "hidden",
+    },
+    accordionItem: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.divider },
+    accordionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+    },
+    accordionHeaderOpen: { backgroundColor: theme.brandSoft },
+    accordionTitle: { flex: 1, color: theme.text, fontSize: 13, fontWeight: "700" },
+    accordionTitleOpen: { color: theme.brand },
+    accordionBody: { gap: 8, paddingHorizontal: 12, paddingBottom: 12 },
     paragraph: { color: theme.text, fontSize: 14, lineHeight: 22, fontWeight: "500" },
     bullet: { color: theme.text, fontSize: 14, lineHeight: 22, fontWeight: "500", paddingLeft: 4 },
     paragraphGap: { height: 4 },
