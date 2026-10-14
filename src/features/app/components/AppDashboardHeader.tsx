@@ -117,7 +117,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   },
   name: {
     color: theme.text,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "800",
     marginTop: 2,
   },

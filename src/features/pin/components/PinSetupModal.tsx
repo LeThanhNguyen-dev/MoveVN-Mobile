@@ -15,6 +15,8 @@ type PinSetupModalProps = {
   visible: boolean;
   onClose: () => void;
   onSetupDone: (pinCode: string) => Promise<VerifyPinResult>;
+  /** Mô tả mục đích tạo PIN; mặc định là xem giấy tờ. */
+  purposeDescription?: string;
 };
 
 type SetupStep = "email" | "otp" | "pin";
@@ -27,7 +29,7 @@ const RESEND_COUNTDOWN_SECONDS = 60;
  * Backend không có API check OTP riêng nên OTP đúng/sai chỉ biết ở bước
  * cuối; sai thì tự quay về màn OTP.
  */
-export default function PinSetupModal({ documentType, visible, onClose, onSetupDone }: PinSetupModalProps) {
+export default function PinSetupModal({ documentType, visible, onClose, onSetupDone, purposeDescription }: PinSetupModalProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [step, setStep] = useState<SetupStep>("email");
@@ -255,7 +257,7 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
           {step === "pin" ? (
             <View style={styles.stack}>
               <Text style={styles.description}>
-                Tạo mã PIN 6 chữ số để hiển thị chi tiết giấy tờ {documentLabel}.
+                {purposeDescription ?? `Tạo mã PIN 6 chữ số để hiển thị chi tiết giấy tờ ${documentLabel}.`}
               </Text>
               <PinDigitInputs
                 autoFocus={visible}

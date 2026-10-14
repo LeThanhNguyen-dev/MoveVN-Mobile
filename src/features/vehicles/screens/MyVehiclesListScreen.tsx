@@ -1,13 +1,13 @@
-import { Plus, Search, X } from "lucide-react-native";
+import { Bike, Car, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,10 +23,10 @@ const PAGE_SIZE = 10;
 type TypeFilter = "" | "Car" | "Motorbike";
 type StatusFilter = "" | "Pending" | "Approved" | "Hidden" | "Rejected";
 
-const TYPE_TABS: { value: TypeFilter; label: string }[] = [
+const TYPE_TABS: { value: TypeFilter; label: string; icon?: typeof Car }[] = [
   { value: "", label: "Tất cả" },
-  { value: "Car", label: "Ô tô" },
-  { value: "Motorbike", label: "Xe máy" },
+  { value: "Car", label: "Ô tô", icon: Car },
+  { value: "Motorbike", label: "Xe máy", icon: Bike },
 ];
 
 const STATUS_TABS: { value: StatusFilter; label: string }[] = [
@@ -50,8 +50,6 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
-  const [keyword, setKeyword] = useState("");
-  const [submittedKeyword, setSubmittedKeyword] = useState("");
 
   const [items, setItems] = useState<VehicleListItemResponse[]>([]);
   const [page, setPage] = useState(1);
@@ -64,7 +62,7 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
   const fetchPage = useCallback(
-    async (pageNum: number, replace: boolean, type: TypeFilter, status: StatusFilter, kw: string) => {
+    async (pageNum: number, replace: boolean, type: TypeFilter, status: StatusFilter) => {
       if (replace) {
         setLoading(true);
         setError("");
@@ -77,7 +75,6 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
           pageSize: PAGE_SIZE,
           type: type || undefined,
           status: status || undefined,
-          keyword: kw || undefined,
         });
         setItems((prev) => (replace ? result.items : [...prev, ...result.items]));
         setPage(result.page);
@@ -95,17 +92,17 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
   );
 
   useEffect(() => {
-    void fetchPage(1, true, typeFilter, statusFilter, submittedKeyword);
-  }, [fetchPage, typeFilter, statusFilter, submittedKeyword, refreshToken]);
+    void fetchPage(1, true, typeFilter, statusFilter);
+  }, [fetchPage, typeFilter, statusFilter, refreshToken]);
 
   function handleRefresh() {
     setRefreshing(true);
-    void fetchPage(1, true, typeFilter, statusFilter, submittedKeyword);
+    void fetchPage(1, true, typeFilter, statusFilter);
   }
 
   function handleLoadMore() {
     if (loading || loadingMore || page >= totalPages) return;
-    void fetchPage(page + 1, false, typeFilter, statusFilter, submittedKeyword);
+    void fetchPage(page + 1, false, typeFilter, statusFilter);
   }
 
   async function handleToggleStatus(vehicle: VehicleListItemResponse) {
@@ -157,46 +154,31 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
           </Pressable>
         </View>
 
-        <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
-            <Search color={theme.placeholder} size={16} />
-            <TextInput
-              value={keyword}
-              onChangeText={setKeyword}
-              onSubmitEditing={() => setSubmittedKeyword(keyword.trim())}
-              returnKeyType="search"
-              placeholder="Tìm biển số, mô tả..."
-              placeholderTextColor={theme.placeholder}
-              style={styles.searchInput}
-            />
-            {keyword ? (
-              <Pressable
-                onPress={() => {
-                  setKeyword("");
-                  setSubmittedKeyword("");
-                }}
-              >
-                <X color={theme.muted} size={16} />
-              </Pressable>
-            ) : null}
-          </View>
-        </View>
-
         <View style={styles.tabRow}>
           {TYPE_TABS.map((t) => {
             const active = typeFilter === t.value;
+            const Icon = t.icon;
             return (
               <Pressable
                 key={t.label}
+                accessibilityLabel={t.label}
                 onPress={() => setTypeFilter(t.value)}
                 style={[styles.tab, active && styles.tabActive]}
               >
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
+                {Icon ? (
+                  <Icon color={active ? theme.onBrand : theme.brand} size={18} />
+                ) : (
+                  <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
+                )}
               </Pressable>
             );
           })}
         </View>
-        <View style={styles.tabRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.statusRow}
+        >
           {STATUS_TABS.map((t) => {
             const active = statusFilter === t.value;
             return (
@@ -209,7 +191,7 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
               </Pressable>
             );
           })}
-        </View>
+        </ScrollView>
       </View>
 
       <FlatList
@@ -253,8 +235,13 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
   );
 }
 
-const createStyles = (theme: Theme) =>
-  StyleSheet.create({
+const createStyles = (theme: Theme) => {
+  const purpleSoft =
+    theme.mode === "dark" ? "rgba(139, 92, 255, 0.16)" : "rgba(107, 25, 255, 0.10)";
+  const purpleBorder =
+    theme.mode === "dark" ? "rgba(139, 92, 255, 0.35)" : "rgba(107, 25, 255, 0.22)";
+
+  return StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.background },
     header: {
       paddingHorizontal: 16,
@@ -278,45 +265,31 @@ const createStyles = (theme: Theme) =>
       height: 40,
     },
     addText: { color: theme.onBrand, fontSize: 13, fontWeight: "800" },
-    searchRow: { flexDirection: "row", gap: 8 },
-    searchBox: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      backgroundColor: theme.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      height: 42,
-    },
-    searchInput: { flex: 1, color: theme.text, fontSize: 14, fontWeight: "500" },
     tabRow: { flexDirection: "row", gap: 8 },
+    statusRow: { flexDirection: "row", gap: 8, paddingRight: 4 },
     tab: {
       flex: 1,
       height: 38,
       borderRadius: 12,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      backgroundColor: theme.surface,
+      borderColor: purpleBorder,
+      backgroundColor: purpleSoft,
       alignItems: "center",
       justifyContent: "center",
     },
     tabSmall: {
-      flex: 1,
       height: 34,
       borderRadius: 999,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      backgroundColor: theme.surface,
+      borderColor: purpleBorder,
+      backgroundColor: purpleSoft,
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: 4,
+      paddingHorizontal: 16,
     },
     tabActive: { backgroundColor: theme.brand, borderColor: theme.brand },
-    tabText: { color: theme.muted, fontSize: 13, fontWeight: "800" },
-    tabTextSmall: { color: theme.muted, fontSize: 11, fontWeight: "800" },
+    tabText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
+    tabTextSmall: { color: theme.brand, fontSize: 11, fontWeight: "800" },
     tabTextActive: { color: theme.onBrand },
     list: { paddingHorizontal: 16, paddingTop: 12, gap: 12 },
     skeletons: { gap: 12 },
@@ -336,3 +309,4 @@ const createStyles = (theme: Theme) =>
     retryText: { color: theme.onBrand, fontSize: 13, fontWeight: "800" },
     more: { marginVertical: 12 },
   });
+};

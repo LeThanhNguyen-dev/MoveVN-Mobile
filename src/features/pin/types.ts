@@ -19,6 +19,10 @@ export type PinChangeRequest = {
   newPinCode: string;
 };
 
+export type PinVerifyRequest = {
+  pinCode: string;
+};
+
 export type PinVerifyViewDocumentRequest = {
   pinCode: string;
   documentType: PinDocumentType;
