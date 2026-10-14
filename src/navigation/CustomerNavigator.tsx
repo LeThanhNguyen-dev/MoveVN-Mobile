@@ -9,6 +9,8 @@ import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
 import ExploreNavigator from "./ExploreNavigator";
 import TripsNavigator from "./TripsNavigator";
+import ChatNavigator from "./ChatNavigator";
+import { useChatStore } from "@/features/chat/useChat";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
 import { useTheme } from "@/theme/useTheme";
 
@@ -28,6 +30,9 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [showWallet, setShowWallet] = useState(false);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
+  const [chatRoute, setChatRoute] = useState("ChatList");
+  const [tripRoute, setTripRoute] = useState("TripList");
+  const unread = useChatStore((state) => state.rooms.reduce((sum, room) => sum + room.unreadCount, 0));
   const { theme } = useTheme();
 
   const handleExploreRouteChange = useCallback((routeName: string) => {
@@ -44,7 +49,9 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   }, []);
 
   // Ẩn bottom bar khi vào List / Detail, chỉ hiện ở màn Khám phá chính.
-  const showBottomBar = activeTab !== "explore" || exploreRoute === "ExploreMain";
+  const showBottomBar = (activeTab !== "explore" || exploreRoute === "ExploreMain")
+    && (activeTab !== "messages" || chatRoute === "ChatList")
+    && (activeTab !== "trips" || tripRoute !== "BookingChat");
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -65,7 +72,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onBookingCreated={goToTrip}
               />
             ) : activeTab === "trips" ? (
-              <TripsNavigator pendingBookingId={pendingTripId} onConsumedPending={consumePendingTrip} />
+              <TripsNavigator pendingBookingId={pendingTripId} onConsumedPending={consumePendingTrip} onRouteChange={setTripRoute} />
             ) : activeTab === "deals" ? (
               <TabPlaceholderScreen
                 description="Khuyến mãi, săn mã và ví voucher của bạn sẽ được đặt ở màn này."
@@ -73,17 +80,13 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 title="Ưu đãi"
               />
             ) : activeTab === "messages" ? (
-              <TabPlaceholderScreen
-                description="Tin nhắn giữa bạn, chủ xe và đội hỗ trợ sẽ hiển thị ở đây."
-                icon={MessageSquare}
-                title="Tin nhắn"
-              />
+              <ChatNavigator onRouteChange={setChatRoute} />
             ) : (
               <AccountTabScreen onProfilePress={() => setShowProfile(true)} onWalletPress={() => setShowWallet(true)} user={user} />
             )}
           </View>
           {showBottomBar ? (
-            <MobileBottomBar activeKey={activeTab} items={customerTabs} onChange={setActiveTab} />
+            <MobileBottomBar activeKey={activeTab} items={customerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} />
           ) : null}
         </>
       )}

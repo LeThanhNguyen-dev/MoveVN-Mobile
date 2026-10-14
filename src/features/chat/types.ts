@@ -48,6 +48,9 @@ export interface ChatMessage {
   senderRole: string;
   messageType: string;
   content: string;
+  attachments?: ChatAttachment[];
+  replyToId?: string | null;
+  replyTo?: ChatReply | null;
   isRead: boolean;
   sentAt: string;
 }
@@ -55,8 +58,44 @@ export interface ChatMessage {
 export interface ChatMessageCreatedPayload {
   message: ChatMessage;
   room: ChatRoom;
+  recipientUnreadCounts?: Record<string, number>;
 }
 
 export interface SendChatMessageRequest {
   content: string;
+  replyToId?: string;
+  clientMessageId?: string;
+}
+
+export interface ChatAttachment {
+  url: string;
+  name: string;
+  contentType: string;
+  size: number;
+  width: number;
+  height: number;
+}
+
+export interface ChatReply {
+  id: string;
+  senderName: string;
+  content: string;
+  messageType: string;
+  attachments?: ChatAttachment[];
+}
+
+export interface ChatPickedImage {
+  id: string;
+  uri: string;
+  name: string;
+  type: string;
+  size: number;
+  file?: Blob;
+}
+
+export interface ChatDraft {
+  content: string;
+  images: ChatPickedImage[];
+  reply?: ChatReply;
+  clientMessageId?: string;
 }

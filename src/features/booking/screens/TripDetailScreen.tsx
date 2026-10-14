@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, MessageSquare } from "lucide-react-native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TripsStackParamList } from "@/navigation/types";
@@ -300,7 +300,7 @@ export default function TripDetailScreen({
         <Text numberOfLines={1} style={styles.headerTitle}>
           {booking.bookingCode}
         </Text>
-        <View style={styles.backButton} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với chủ xe" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.backButton}><MessageSquare color={theme.brand} size={22} /></Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.statusRow}>
