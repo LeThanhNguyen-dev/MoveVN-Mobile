@@ -4,6 +4,7 @@ import { useTheme } from "@/theme/useTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { createCheckInReport, createCheckOutReport } from "../bookingService";
 import { createInspectionForm } from "../inspectionForm";
+import { pickAndStampPhotosWeb } from "../utils/stampWebPhoto";
 import { formatVietnamDateTime, inspectionLabel, MAX_INSPECTION_PHOTOS, validateInspectionFields, type InspectionType } from "../bookingDisplay";
 import { deleteInspectionPhoto, type CapturedInspectionPhoto } from "../inspectionPhoto";
 import type { BookingResponse, InspectionReportResponse } from "../types";
@@ -22,6 +23,7 @@ export default function InspectionFormScreen({ booking, type, onBack, onSaved }:
   const photoFiles = useRef<CapturedInspectionPhoto[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [picking, setPicking] = useState(false);
   const saveLock = useRef(false);
   const alive = useRef(true);
   const [error, setError] = useState("");
@@ -50,9 +52,51 @@ export default function InspectionFormScreen({ booking, type, onBack, onSaved }:
     photoFiles.current = [...photoFiles.current, photo]; setPhotos(photoFiles.current); setError("");
   }
   function removePhoto(photo: CapturedInspectionPhoto) {
-    deleteInspectionPhoto(photo.uri); photoFiles.current = photoFiles.current.filter((item) => item.id !== photo.id); setPhotos(photoFiles.current);
+    deleteInspectionPhoto(photo.uri);
+    if (photo.uri.startsWith("blob:")) {
+      try {
+        URL.revokeObjectURL(photo.uri);
+      } catch {
+        // URL xem trước có thể đã được thu hồi.
+      }
+    }
+    photoFiles.current = photoFiles.current.filter((item) => item.id !== photo.id); setPhotos(photoFiles.current);
   }
 
+  async function addWebPhotos() {
+    if (photos.length >= MAX_INSPECTION_PHOTOS) {
+      setError(`Tối đa ${MAX_INSPECTION_PHOTOS} ảnh. Xóa bớt rồi thêm tiếp.`);
+      return;
+    }
+    setPicking(true);
+    try {
+      const { photos: picked, skipped, canceled } = await pickAndStampPhotosWeb({
+        bookingCode: booking.bookingCode,
+        type,
+        maxCount: MAX_INSPECTION_PHOTOS,
+      });
+      if (canceled) return;
+      if (picked.length === 0) {
+        setError("Không đóng dấu được ảnh. Vui lòng thử lại.");
+        return;
+      }
+      const stamped: CapturedInspectionPhoto[] = picked.map((item, index) => ({
+        id: `${item.capturedAt.replace(/[^\d]/g, "")}-${Date.now()}-${index}`,
+        uri: item.previewUrl,
+        capturedAt: item.capturedAt,
+        file: { uri: item.previewUrl, name: item.name, type: "image/jpeg" },
+        uploadBlob: item.file,
+      }));
+      const next = [...photoFiles.current, ...stamped].slice(0, MAX_INSPECTION_PHOTOS);
+      photoFiles.current = next;
+      setPhotos(next);
+      setError(skipped > 0 ? `${skipped} ảnh lỗi đã được bỏ qua.` : "");
+    } catch {
+      setError("Không chọn được ảnh. Vui lòng thử lại.");
+    } finally {
+      setPicking(false);
+    }
+  }
   async function submit() {
     if (saveLock.current) return;
     if (validation) { setError(validation); return; }
@@ -84,14 +128,26 @@ export default function InspectionFormScreen({ booking, type, onBack, onSaved }:
       </BookingCard>
       <BookingCard>
         <Text style={{ color: theme.text, fontSize: 17, fontWeight: "700" }}>Ảnh xe ({photos.length}/{MAX_INSPECTION_PHOTOS})</Text>
-        <Text style={{ color: theme.muted, lineHeight: 21 }}>Chỉ chụp bằng camera. Ngày giờ Việt Nam được ghi trực tiếp lên từng ảnh.</Text>
+        <Text style={{ color: theme.muted, lineHeight: 21 }}>
+          {Platform.OS === "web"
+            ? "Chọn ảnh từ thư viện, app tự gắn ngày giờ hệ thống lên từng ảnh."
+            : "Chỉ chụp bằng camera. Ngày giờ Việt Nam được ghi trực tiếp lên từng ảnh."}
+        </Text>
         <View style={styles.photos}>{photos.map((photo, index) => <View key={photo.id} style={styles.photo}>
           <Image accessibilityLabel={`Ảnh chụp xe ${index + 1} đã có watermark`} source={{ uri: photo.uri }} style={styles.image} resizeMode="cover" />
           <Text style={{ color: theme.muted, fontSize: 11 }}>{formatVietnamDateTime(photo.capturedAt)}</Text>
           <Pressable accessibilityRole="button" accessibilityLabel={`Xóa ảnh ${index + 1}`} disabled={busy} onPress={() => removePhoto(photo)} style={styles.remove}><Text style={{ color: theme.danger, fontWeight: "600" }}>Xóa / chụp lại</Text></Pressable>
         </View>)}</View>
-        <BookingButton secondary title="Chụp ảnh xe" disabled={busy || photos.length >= MAX_INSPECTION_PHOTOS || Platform.OS === "web"} onPress={() => setCameraOpen(true)} />
-        {Platform.OS === "web" ? <Text style={{ color: theme.muted }}>Tính năng chụp biên bản cần app Android/iOS.</Text> : null}
+        <BookingButton
+          secondary
+          title={picking ? "Đang gắn ngày giờ…" : "Chụp ảnh xe"}
+          busy={picking}
+          disabled={busy || picking || photos.length >= MAX_INSPECTION_PHOTOS}
+          onPress={() => {
+            if (Platform.OS === "web") void addWebPhotos();
+            else setCameraOpen(true);
+          }}
+        />
       </BookingCard>
       {error ? <Text accessibilityRole="alert" style={{ color: theme.danger }}>{error}</Text> : null}
       <BookingButton title="Gửi biên bản cho khách xác nhận" busy={busy} disabled={photos.length === 0} onPress={() => void submit()} />

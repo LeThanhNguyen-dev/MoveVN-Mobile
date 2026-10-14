@@ -8,6 +8,8 @@ export type CapturedInspectionPhoto = {
   uri: string;
   capturedAt: string;
   file: UploadFile;
+  /** Blob đã đóng dấu trên web (RN FormData web cần Blob thật để upload). */
+  uploadBlob?: Blob;
 };
 
 export function deleteInspectionPhoto(uri: string) {

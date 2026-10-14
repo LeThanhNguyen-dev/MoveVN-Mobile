@@ -41,7 +41,7 @@ import ContractBlock from "@/features/contracts/components/ContractBlock";
 import { createOwnerReview, hasReviewed } from "@/features/review/reviewService";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
-import { stampWebPhoto } from "@/features/booking/utils/stampWebPhoto";
+import { pickAndStampPhotosWeb } from "@/features/booking/utils/stampWebPhoto";
 import { captureRef } from "react-native-view-shot";
 import { inspectionWatermark } from "@/features/booking/bookingDisplay";
 import { deleteInspectionPhoto, stampedInspectionPhoto } from "@/features/booking/inspectionPhoto";
@@ -300,54 +300,34 @@ export default function OwnerBookingDetailScreen({
     setModalError("");
   }
 
-  /** Web không có camera native: đóng dấu giờ hệ thống ngay lúc chọn để xem trước. */
+  /** Web không có camera native: chọn gallery rồi đóng dấu ngay để xem trước. */
   async function pickPhotosWeb() {
     if (photos.length >= MAX_PHOTOS) {
       setModalError(`Đã đủ ${MAX_PHOTOS} ảnh. Xóa bớt ảnh rồi thêm tiếp.`);
       return;
     }
+    setPicking(true);
+    setModalError("");
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsMultipleSelection: true,
-        quality: 1,
-        selectionLimit: MAX_PHOTOS,
+      const { photos: picked, skipped, canceled } = await pickAndStampPhotosWeb({
+        bookingCode: booking?.bookingCode ?? "",
+        type: reportModal?.type ?? "CheckIn",
+        maxCount: MAX_PHOTOS,
       });
-      if (result.canceled) return;
-      setPicking(true);
-      setModalError("");
-      const code = booking?.bookingCode ?? "";
-      const kind = reportModal?.type === "CheckIn" ? "CHECK-IN" : "CHECK-OUT";
-      const stamped: ReportPhoto[] = [];
-      let skipped = 0;
-      const assets = result.assets.slice(0, MAX_PHOTOS);
-      for (const [index, asset] of assets.entries()) {
-        try {
-          const source: Blob | null =
-            asset.file ?? (await fetch(asset.uri).then((res) => res.blob()).catch(() => null));
-          if (!source) {
-            skipped += 1;
-            continue;
-          }
-          const stampedPhoto = await stampWebPhoto(source, [`MoveVN | ${code} | ${kind}`]);
-          const name = `${(asset.fileName ?? "photo.jpg").replace(/\.[^.]+$/, "")}-stamped.jpg`;
-          stamped.push({
-            id: `${Date.now()}-${index}`,
-            name,
-            mime: "image/jpeg",
-            uri: asset.uri ?? stampedPhoto.previewUrl,
-            previewUri: stampedPhoto.previewUrl,
-            capturedAt: stampedPhoto.capturedAt,
-            uploadBlob: new File([stampedPhoto.blob], name, { type: "image/jpeg" }),
-          });
-        } catch {
-          skipped += 1;
-        }
-      }
-      if (stamped.length === 0) {
+      if (canceled) return;
+      if (picked.length === 0) {
         setModalError("Không đóng dấu được ảnh. Vui lòng thử lại.");
         return;
       }
+      const stamped: ReportPhoto[] = picked.map((item, index) => ({
+        id: `${Date.now()}-${index}`,
+        name: item.name,
+        mime: "image/jpeg",
+        uri: item.previewUrl,
+        previewUri: item.previewUrl,
+        capturedAt: item.capturedAt,
+        uploadBlob: item.file,
+      }));
       // Cộng dồn (picker web thường chỉ trả 1 ảnh mỗi lần mở).
       const next = [...photos, ...stamped].slice(0, MAX_PHOTOS);
       stamped

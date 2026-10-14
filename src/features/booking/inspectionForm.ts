@@ -13,7 +13,7 @@ export function createInspectionForm(fields: {
   if (fields.fuelLevel) data.append("fuelLevel", fields.fuelLevel);
   data.append("damageNoted", String(fields.damageNoted));
   if (fields.damageNoted) data.append("damageDescription", fields.damageDescription.trim());
-  fields.photos.forEach((photo) => appendUploadFile(data, "images", photo.file));
+  fields.photos.forEach((photo) => appendUploadFile(data, "images", photo.uploadBlob ?? photo.file));
   fields.photos.forEach((photo) => data.append("capturedAts", photo.capturedAt));
   return data;
 }
