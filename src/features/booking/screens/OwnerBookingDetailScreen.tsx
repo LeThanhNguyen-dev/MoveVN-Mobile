@@ -37,6 +37,8 @@ import {
 } from "@/features/booking/bookingService";
 import type { BookingResponse, InspectionReportResponse } from "@/features/booking/types";
 import { bookingStatusLabel, formatDateTime, formatMoney } from "@/features/booking/utils/format";
+import RiskScoreBadge from "@/features/booking/components/RiskScoreBadge";
+import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
 import { createOwnerReview, hasReviewed } from "@/features/review/reviewService";
 import { getApiErrorMessage } from "@/services/apiClient";
@@ -73,9 +75,11 @@ type PendingStamp = { uri: string; width: number; height: number };
 export default function OwnerBookingDetailScreen({
   route,
   navigation,
+  onOpenDisputes,
 }: {
   route: DetailRoute;
   navigation: DetailNav;
+  onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -439,6 +443,14 @@ export default function OwnerBookingDetailScreen({
         <View style={styles.statusRow}>
           <Text style={styles.status}>{bookingStatusLabel(status)}</Text>
           {booking.escrowStatus === "Held" && <Text style={styles.escrow}>Giữ cọc {formatMoney(booking.escrowAmount)}</Text>}
+        </View>
+        <View style={styles.statusRow}>
+          <RiskScoreBadge score={booking.riskScore} />
+          {onOpenDisputes ? (
+            <Pressable onPress={() => onOpenDisputes({ bookingId: booking.id })}>
+              <Text style={styles.disputeLink}>Tranh chấp / khiếu nại</Text>
+            </Pressable>
+          ) : null}
         </View>
 
         <View style={styles.card}>
@@ -839,6 +851,7 @@ const createStyles = (theme: Theme) =>
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
     body: { padding: 16, gap: 12, paddingBottom: 32 },
     statusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    disputeLink: { color: "#DC2626", fontSize: 13, fontWeight: "700" },
     status: { color: theme.brand, fontSize: 18, fontWeight: "800" },
     escrow: { color: theme.muted, fontSize: 12, fontWeight: "700" },
     card: {

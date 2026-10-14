@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { CalendarCheck, CarFront, LayoutDashboard, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,6 +7,7 @@ import BookingsTabScreen from "@/features/booking/screens/BookingsTabScreen";
 import OwnerOverviewScreen from "@/features/app/screens/OwnerOverviewScreen";
 import OwnerVehiclesScreen from "@/features/app/screens/OwnerVehiclesScreen";
 import AssistantFab from "@/features/assistant/components/AssistantFab";
+import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import OwnerBookingsNavigator from "./OwnerBookingsNavigator";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
@@ -28,7 +29,17 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<OwnerTabKey>("overview");
   const [showProfile, setShowProfile] = useState(false);
   const [bookingDetailOpen, setBookingDetailOpen] = useState(false);
+  const [pendingDispute, setPendingDispute] = useState<DisputeCreatePrefill | null>(null);
   const { theme } = useTheme();
+
+  const openDisputes = useCallback((prefill?: DisputeCreatePrefill) => {
+    setPendingDispute(prefill ?? null);
+    setActiveTab("account");
+  }, []);
+
+  const consumeDisputes = useCallback(() => {
+    setPendingDispute(null);
+  }, []);
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -40,7 +51,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
             {activeTab === "overview" ? (
               <OwnerOverviewScreen onAvatarPress={() => setShowProfile(true)} user={user} />
             ) : activeTab === "bookings" ? (
-              <OwnerBookingsNavigator />
+              <OwnerBookingsNavigator onOpenDisputes={openDisputes} />
             ) : activeTab === "vehicles" ? (
               <OwnerVehiclesScreen />
             ) : activeTab === "messages" ? (
@@ -50,7 +61,12 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
                 title="Tin nhắn"
               />
             ) : (
-              <AccountTabScreen onProfilePress={() => setShowProfile(true)} user={user} />
+              <AccountTabScreen
+                onProfilePress={() => setShowProfile(true)}
+                user={user}
+                initialDisputes={pendingDispute}
+                onConsumedDisputes={consumeDisputes}
+              />
             )}
           </View>
           {!bookingDetailOpen ? <MobileBottomBar activeKey={activeTab} items={ownerTabs} onChange={setActiveTab} /> : null}

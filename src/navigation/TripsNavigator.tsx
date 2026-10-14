@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import TripDetailScreen from "@/features/booking/screens/TripDetailScreen";
 import TripListScreen from "@/features/booking/screens/TripListScreen";
+import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import type { TripsStackParamList } from "./types";
 import { useTheme } from "@/theme/useTheme";
 
@@ -11,10 +12,12 @@ export default function TripsNavigator({
   pendingBookingId,
   onConsumedPending,
   onRouteChange,
+  onOpenDisputes,
 }: {
   pendingBookingId: number | null;
   onConsumedPending: () => void;
   onRouteChange?: (routeName: string) => void;
+  onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
 }) {
   const { theme } = useTheme();
   const consumedRef = useRef(false);
@@ -45,11 +48,9 @@ export default function TripsNavigator({
     >
 
       <Stack.Screen name="TripList" component={TripListScreen} />
-      <Stack.Screen
-        name="TripDetail"
-        component={TripDetailScreen}
-        initialParams={hasPending ? { bookingId: pendingBookingId! } : undefined}
-      />
+      <Stack.Screen name="TripDetail" initialParams={hasPending ? { bookingId: pendingBookingId! } : undefined}>
+        {(props) => <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 }

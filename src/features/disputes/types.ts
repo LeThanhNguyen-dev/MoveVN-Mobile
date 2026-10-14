@@ -5,6 +5,8 @@ export type DisputeSettlementMethod = "ExternalOnly" | "DepositThenExternal";
 export type EvidenceRequestedFrom = "Customer" | "Owner" | "Both";
 
 export type DisputeListRequest = {
+  reportType?: string;
+  trafficFineStatus?: string;
   status?: string;
   keyword?: string;
   page?: number;
@@ -12,6 +14,9 @@ export type DisputeListRequest = {
 };
 
 export type CreateDisputeRequest = {
+  trafficFine?: CreateTrafficFineRequest;
+  evidenceUploadTokens?: string[];
+  paymentScope?: string | null;
   bookingId: number;
   reportType: string;
   description: string;
@@ -19,6 +24,8 @@ export type CreateDisputeRequest = {
 };
 
 export type ResolveDisputeRequest = {
+  checkoutAdjustment?: { expectedVersion: number; finalLateReturnFee: number; actualReturnAt?: string };
+  paymentAdjustmentNote?: string | null;
   resolution: string;
   compensationDirection: CompensationDirection;
   settlementMethod: DisputeSettlementMethod;
@@ -33,6 +40,7 @@ export type RequestMoreEvidenceRequest = {
 };
 
 export type AddDisputeEvidenceRequest = {
+  evidenceUploadTokens?: string[];
   evidenceUrls?: string | null;
   message: string;
   updatedAt?: string | null;
@@ -49,6 +57,16 @@ export type DisputeEvidenceSubmissionItem = {
 };
 
 export type DisputeListItem = {
+  trafficFineStatus?: string | null;
+  trafficFineAmount?: number | null;
+  trafficFineDueAt?: string | null;
+  paymentScope?: string | null;
+  paymentAdjustmentNote?: string | null;
+  adminManaged: boolean;
+  customerAccepted: boolean;
+  ownerAccepted: boolean;
+  customerAcceptedAt?: string | null;
+  ownerAcceptedAt?: string | null;
   id: number;
   bookingId: number;
   bookingCode: string;
@@ -103,7 +121,56 @@ export type DisputeAuditLogItem = {
 };
 
 export type DisputeDetailResponse = DisputeListItem & {
+  trafficFine?: TrafficFineResponse | null;
+  checkoutAdjustmentJson?: string | null;
+  checkoutAdjustmentAppliedAt?: string | null;
   auditLogs: DisputeAuditLogItem[];
   inspectionReports: InspectionReportResponse[];
   evidenceSubmissions: DisputeEvidenceSubmissionItem[];
+};
+
+export type CreateTrafficFineRequest = {
+  noticeNumber: string;
+  issuingAuthority: string;
+  licensePlate: string;
+  violationAt: string;
+  dueAt: string;
+  amount: number;
+  paymentMode: "CustomerPaysAuthority" | "ReimburseOwner";
+  ownerPaidAt?: string;
+  ownerPaymentEvidenceUrls?: string;
+  ownerPaymentEvidenceTokens?: string[];
+};
+
+export type TrafficFinePaymentProof = {
+  id: number;
+  amount: number;
+  paidAt: string;
+  transactionReference: string;
+  evidenceUrls: string;
+  note?: string;
+  status: "Pending" | "Approved" | "Rejected";
+  ownerReceiptConfirmedAt?: string | null;
+  reviewedAt?: string | null;
+  reviewNote?: string | null;
+};
+
+export type TrafficFineResponse = Omit<CreateTrafficFineRequest, "ownerPaidAt" | "ownerPaymentEvidenceUrls"> & {
+  ownerPaidAt?: string | null;
+  ownerPaymentEvidenceUrls?: string | null;
+  id: number;
+  version: number;
+  status: string;
+  isOverdue: boolean;
+  rentalStartAt: string;
+  rentalEndAt: string;
+  hasConfirmedRentalTimes: boolean;
+  matchesRentalPeriod: boolean;
+  verifiedAt?: string | null;
+  verificationNote?: string | null;
+  customerResponse?: string | null;
+  customerRespondedAt?: string | null;
+  rejectionReason?: string | null;
+  resolvedAt?: string | null;
+  paymentProofs: TrafficFinePaymentProof[];
 };

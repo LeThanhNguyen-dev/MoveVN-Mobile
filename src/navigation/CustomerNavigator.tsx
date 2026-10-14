@@ -8,6 +8,7 @@ import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import AssistantFab from "@/features/assistant/components/AssistantFab";
 import type { QuickBookParams } from "@/features/assistant/screens/AssistantScreen";
+import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import type { AuthUser } from "@/features/auth/types";
 import ExploreNavigator from "./ExploreNavigator";
 import TripsNavigator from "./TripsNavigator";
@@ -31,6 +32,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [tripsRoute, setTripsRoute] = useState("TripList");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
   const [quickBook, setQuickBook] = useState<QuickBookParams | null>(null);
+  const [pendingDispute, setPendingDispute] = useState<DisputeCreatePrefill | null>(null);
   const { theme } = useTheme();
 
   const handleExploreRouteChange = useCallback((routeName: string) => {
@@ -54,6 +56,15 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
 
   const consumeQuickBook = useCallback(() => {
     setQuickBook(null);
+  }, []);
+
+  const openDisputes = useCallback((prefill?: DisputeCreatePrefill) => {
+    setPendingDispute(prefill ?? null);
+    setActiveTab("account");
+  }, []);
+
+  const consumeDisputes = useCallback(() => {
+    setPendingDispute(null);
   }, []);
 
   // Ẩn bottom bar khi vào List / Detail, chỉ hiện ở màn Khám phá chính và danh sách chuyến đi.
@@ -82,6 +93,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 pendingBookingId={pendingTripId}
                 onConsumedPending={consumePendingTrip}
                 onRouteChange={setTripsRoute}
+                onOpenDisputes={openDisputes}
               />
             ) : activeTab === "deals" ? (
               <TabPlaceholderScreen
@@ -96,7 +108,12 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 title="Tin nhắn"
               />
             ) : (
-              <AccountTabScreen onProfilePress={() => setShowProfile(true)} user={user} />
+              <AccountTabScreen
+                onProfilePress={() => setShowProfile(true)}
+                user={user}
+                initialDisputes={pendingDispute}
+                onConsumedDisputes={consumeDisputes}
+              />
             )}
           </View>
           {showBottomBar ? (

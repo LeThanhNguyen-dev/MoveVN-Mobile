@@ -30,6 +30,7 @@ import type { AuthUser, UserRole } from "@/features/auth/types";
 import ChangePasswordScreen from "@/features/auth/screens/ChangePasswordScreen";
 import LoginSessionsScreen from "@/features/auth/screens/LoginSessionsScreen";
 import PolicyListScreen from "@/features/cms/screens/PolicyListScreen";
+import DisputesScreen, { type DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import DriverLicenseScreen from "@/features/driverLicenses/screens/DriverLicenseScreen";
 import { getMyDriverLicense } from "@/features/driverLicenses/services/driverLicenseService";
 import type { DriverLicenseStatusResponse } from "@/features/driverLicenses/types";
@@ -71,7 +72,17 @@ const roleLabels: Record<UserRole, string> = {
 
 const verificationTotal = 4;
 
-export default function AccountTabScreen({ onProfilePress, user }: { onProfilePress: () => void; user: AuthUser }) {
+export default function AccountTabScreen({
+  onProfilePress,
+  user,
+  initialDisputes,
+  onConsumedDisputes,
+}: {
+  onProfilePress: () => void;
+  user: AuthUser;
+  initialDisputes?: DisputeCreatePrefill | null;
+  onConsumedDisputes?: () => void;
+}) {
   const activeRole = useAuthStore((state) => state.activeRole);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
   const updateUser = useAuthStore((state) => state.updateUser);
@@ -88,6 +99,7 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
   const [ownerReturn, setOwnerReturn] = useState<"hub" | "cccd" | "account" | null>(null);
   const [showPolicies, setShowPolicies] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
+  const [showDisputes, setShowDisputes] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -197,7 +209,7 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
         { key: "wallet", label: "Ví của tôi", icon: Wallet, accent: "#059669" },
         { key: "favorites", label: "Yêu thích", icon: Heart, accent: "#E11D48" },
         { key: "deals", label: "Ưu đãi", icon: BadgePercent, accent: "#D97706" },
-        { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626" },
+        { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626", onPress: () => setShowDisputes(true) },
         { key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB" },
       ],
     },
@@ -305,6 +317,21 @@ export default function AccountTabScreen({ onProfilePress, user }: { onProfilePr
 
   if (showPolicies) {
     return <PolicyListScreen onBack={() => setShowPolicies(false)} />;
+  }
+
+  if (showDisputes || initialDisputes) {
+    return (
+      <DisputesScreen
+        role={activeRole === "Owner" ? "Owner" : "Customer"}
+        initialCreate={showDisputes ? null : initialDisputes}
+        onConsumedInitial={onConsumedDisputes}
+        onBack={() => {
+          setShowDisputes(false);
+          onConsumedDisputes?.();
+        }}
+        key={showDisputes ? "menu" : "deep-link"}
+      />
+    );
   }
 
   if (showSupport) {
