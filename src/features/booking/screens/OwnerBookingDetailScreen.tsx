@@ -194,8 +194,25 @@ export default function OwnerBookingDetailScreen({
     setModalError("");
   }
 
+  function removeReportPhoto(id: string) {
+    const target = photos.find((p) => p.id === id);
+    if (target?.previewUri.startsWith("blob:")) {
+      try {
+        URL.revokeObjectURL(target.previewUri);
+      } catch {
+        // URL xem trước có thể đã được thu hồi.
+      }
+    }
+    setPhotos(photos.filter((p) => p.id !== id));
+    setModalError("");
+  }
+
   /** Web không có camera native: đóng dấu giờ hệ thống ngay lúc chọn để xem trước. */
   async function pickPhotosWeb() {
+    if (photos.length >= MAX_PHOTOS) {
+      setModalError(`Đã đủ ${MAX_PHOTOS} ảnh. Xóa bớt ảnh rồi thêm tiếp.`);
+      return;
+    }
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -238,8 +255,18 @@ export default function OwnerBookingDetailScreen({
         setModalError("Không đóng dấu được ảnh. Vui lòng thử lại.");
         return;
       }
-      revokePreviews(photos);
-      setPhotos(stamped);
+      // Cộng dồn (picker web thường chỉ trả 1 ảnh mỗi lần mở).
+      const next = [...photos, ...stamped].slice(0, MAX_PHOTOS);
+      stamped
+        .filter((photo) => !next.includes(photo))
+        .forEach((photo) => {
+          try {
+            URL.revokeObjectURL(photo.previewUri);
+          } catch {
+            // URL xem trước có thể đã được thu hồi.
+          }
+        });
+      setPhotos(next);
       if (skipped > 0) setModalError(`${skipped} ảnh lỗi đã được bỏ qua.`);
     } catch {
       setModalError("Không chọn được ảnh. Vui lòng thử lại.");
@@ -532,7 +559,7 @@ export default function OwnerBookingDetailScreen({
                     ? "Đang gắn ngày giờ lên ảnh…"
                     : photos.length === 0
                       ? "Chọn ảnh (ít nhất 1, tối đa 12)"
-                      : `Đã chọn ${photos.length} ảnh — bấm để chọn lại`}
+                      : `Đã chọn ${photos.length} ảnh — bấm để thêm`}
                 </Text>
               </Pressable>
               {modalError ? <Text style={styles.formError}>{modalError}</Text> : null}
@@ -540,7 +567,17 @@ export default function OwnerBookingDetailScreen({
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbs}>
                   {photos.map((p) => (
                     <View key={p.id} style={styles.thumbWrap}>
-                      <Image source={{ uri: p.previewUri }} style={styles.thumb} />
+                      <View>
+                        <Image source={{ uri: p.previewUri }} style={styles.thumb} />
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Xóa ảnh này"
+                          onPress={() => removeReportPhoto(p.id)}
+                          style={styles.thumbRemove}
+                        >
+                          <Text style={styles.thumbRemoveText}>✕</Text>
+                        </Pressable>
+                      </View>
                       <Text style={styles.thumbTime}>
                         {p.capturedAt ? formatDateTime(p.capturedAt) : "Chưa có giờ chụp"}
                       </Text>
@@ -742,7 +779,19 @@ const createStyles = (theme: Theme) =>
     photoButtonText: { color: theme.brand, fontSize: 13, fontWeight: "700" },
     formError: { color: theme.danger, fontSize: 13, fontWeight: "600" },
     thumbs: { flexDirection: "row", marginTop: 8 },
-    thumb: { width: 72, height: 72, borderRadius: 8, marginRight: 8, backgroundColor: theme.surfaceAlt },
+    thumb: { width: 72, height: 72, borderRadius: 8, backgroundColor: theme.surfaceAlt },
+    thumbRemove: {
+      position: "absolute",
+      right: 2,
+      top: 2,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    thumbRemoveText: { color: "#fff", fontSize: 12, fontWeight: "800" },
     thumbWrap: { marginRight: 8, gap: 2, maxWidth: 80 },
     thumbTime: { color: theme.muted, fontSize: 10 },
     reportBlock: {
