@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, MessageSquare } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -229,7 +229,7 @@ export default function OwnerBookingDetailScreen({
         <Text numberOfLines={1} style={styles.headerTitle}>
           {booking.bookingCode}
         </Text>
-        <View style={styles.backButton} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với khách thuê" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.backButton}><MessageSquare color={theme.brand} size={22} /></Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.statusRow}>

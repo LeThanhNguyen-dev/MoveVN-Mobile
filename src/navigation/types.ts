@@ -35,4 +35,5 @@ export type TripsStackParamList = {
   TripDetail: {
     bookingId: number;
   };
+  BookingChat: { bookingId: number };
 };

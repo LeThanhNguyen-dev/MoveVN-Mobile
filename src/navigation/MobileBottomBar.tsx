@@ -12,6 +12,7 @@ export type MobileTabItem<T extends string> = {
   label: string;
   icon: TabIcon;
   prominent?: boolean;
+  badge?: number;
 };
 
 export default function MobileBottomBar<T extends string>({
@@ -40,12 +41,14 @@ export default function MobileBottomBar<T extends string>({
             <Pressable
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
+              accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} chưa đọc` : ""}`}
               key={item.key}
               onPress={() => onChange(item.key)}
               style={[styles.item, item.prominent && styles.prominentItem]}
             >
               <View style={[styles.iconWrap, item.prominent && styles.prominentIconWrap]}>
                 <Icon color={color} size={item.prominent ? 25 : 22} strokeWidth={item.prominent ? 2.6 : 2.3} />
+                {item.badge && item.badge > 0 ? <View style={{ position: "absolute", top: -4, right: -8, minWidth: 18, paddingHorizontal: 4, borderRadius: 10, backgroundColor: theme.brand }}><Text style={{ color: theme.onBrand, fontSize: 10, fontWeight: "700", textAlign: "center" }}>{item.badge > 99 ? "99+" : item.badge}</Text></View> : null}
               </View>
               <Text numberOfLines={1} style={[styles.label, active && styles.activeLabel, item.prominent && styles.prominentLabel]}>
                 {item.label}
