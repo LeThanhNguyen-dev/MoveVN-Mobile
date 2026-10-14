@@ -20,10 +20,12 @@ type VehicleTab = "Car" | "Motorbike";
 
 export default function CustomerExploreScreen({
   onAvatarPress,
+  onBellPress,
   onSearch,
   user,
 }: {
   onAvatarPress?: () => void;
+  onBellPress?: () => void;
   onSearch?: (params: ExploreStackParamList["VehicleList"]) => void;
   user: AuthUser;
 }) {

@@ -39,8 +39,11 @@ export interface BookingTopUpPendingResponse {
   bookingStatus: string;
 }
 
-export async function createBookingTopUpLink(bookingId: number): Promise<CreatePaymentLinkResponse> {
-  const res = await apiClient.post<ApiResponse<CreatePaymentLinkResponse>>(`/api/payments/booking/${bookingId}/topup-link`);
+export async function createBookingTopUpLink(bookingId: number, returnUrl?: string): Promise<CreatePaymentLinkResponse> {
+  const url = returnUrl
+    ? `/api/payments/booking/${bookingId}/topup-link?returnUrl=${encodeURIComponent(returnUrl)}`
+    : `/api/payments/booking/${bookingId}/topup-link`;
+  const res = await apiClient.post<ApiResponse<CreatePaymentLinkResponse>>(url);
   return res.data.data!;
 }
 

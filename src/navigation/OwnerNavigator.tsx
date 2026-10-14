@@ -3,6 +3,7 @@ import { CalendarCheck, CarFront, LayoutDashboard, MessageSquare, UserRound } fr
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
+import WalletScreen from "@/features/wallets/screens/WalletScreen";
 import OwnerOverviewScreen from "@/features/app/screens/OwnerOverviewScreen";
 import OwnerVehiclesScreen from "@/features/app/screens/OwnerVehiclesScreen";
 import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
@@ -25,12 +26,17 @@ const ownerTabs: MobileTabItem<OwnerTabKey>[] = [
 export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<OwnerTabKey>("overview");
   const [showProfile, setShowProfile] = useState(false);
+  const [showWallet, setShowWallet] = useState(false);
   const { theme } = useTheme();
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
       {showProfile ? (
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />
+      ) : showWallet ? (
+        <View style={[styles.screen, styles.overlayPad]}>
+          <WalletScreen onBack={() => setShowWallet(false)} />
+        </View>
       ) : (
         <>
           <View style={styles.screen}>
@@ -47,7 +53,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
                 title="Tin nhắn"
               />
             ) : (
-              <AccountTabScreen onProfilePress={() => setShowProfile(true)} user={user} />
+              <AccountTabScreen onProfilePress={() => setShowProfile(true)} onWalletPress={() => setShowWallet(true)} user={user} />
             )}
           </View>
           <MobileBottomBar activeKey={activeTab} items={ownerTabs} onChange={setActiveTab} />
@@ -60,4 +66,5 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   screen: { flex: 1 },
+  overlayPad: { paddingTop: 8 },
 });

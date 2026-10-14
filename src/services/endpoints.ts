@@ -105,6 +105,7 @@ export const endpoints = {
     goongAutocomplete: "/api/locations/goong/autocomplete",
     goongDetail: "/api/locations/goong/detail",
   },
+  configPublic: "/api/config/public",
   publicVehicles: {
     pricingQuote: (id: number) => `/api/public/vehicles/${id}/pricing-quote`,
     list: "/api/public/vehicles",
@@ -143,6 +144,7 @@ export const endpoints = {
     sendForSigning: (id: number) => `/api/contracts/${id}/send-for-signing`,
     requestViewOtp: (id: number) => `/api/contracts/${id}/request-view-otp`,
     verifyViewOtp: (id: number) => `/api/contracts/${id}/verify-view-otp`,
+    verifyViewPin: (id: number) => `/api/contracts/${id}/verify-view-pin`,
     viewByGrant: (id: number) => `/api/contracts/${id}/view`,
     requestSignOtp: (id: number) => `/api/contracts/${id}/request-sign-otp`,
     verifySignOtp: (id: number) => `/api/contracts/${id}/verify-sign-otp`,

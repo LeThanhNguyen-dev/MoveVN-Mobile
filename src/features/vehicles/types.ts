@@ -171,14 +171,14 @@ export type VehicleResponse = {
   areaId: number | null;
   latitude: number | null;
   longitude: number | null;
+  deliveryFreeRadiusKm?: number | null;
+  deliveryFeePerKm?: number | null;
+  deliveryMaxRadiusKm?: number | null;
   areaName: string | null;
   pricingRegionId: number | null;
   pricingRegionCode: string | null;
   pricePerDay: number;
   depositPercent: number;
-  deliveryFreeRadiusKm?: number | null;
-  deliveryFeePerKm?: number | null;
-  deliveryMaxRadiusKm?: number | null;
 
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
