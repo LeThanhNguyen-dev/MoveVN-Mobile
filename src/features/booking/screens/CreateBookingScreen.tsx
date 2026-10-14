@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -65,16 +65,15 @@ export default function CreateBookingScreen({
   const [quote, setQuote] = useState<PricingQuoteResponse | null>(null);
   const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig>({ freeKm: 5, perKm: 10000, maxKm: 50 });
 
-  const [pickupAddress, setPickupAddress] = useState("");
+  const [pickupAddress, setPickupAddress] = useState(route.params.pickupAddress ?? "");
   const [pickupLat, setPickupLat] = useState<number | null>(null);
   const [pickupLng, setPickupLng] = useState<number | null>(null);
   const [sameReturn, setSameReturn] = useState(true);
-  const [returnAddress, setReturnAddress] = useState("");
+  const [returnAddress, setReturnAddress] = useState(route.params.returnAddress ?? "");
   const [returnLat, setReturnLat] = useState<number | null>(null);
   const [returnLng, setReturnLng] = useState<number | null>(null);
-  const [note, setNote] = useState("");
-
-  const [promoCode, setPromoCode] = useState("");
+  const [note, setNote] = useState(route.params.customerNote ?? "");
+  const [promoCode, setPromoCode] = useState(route.params.promoCode ?? "");
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoResult, setPromoResult] = useState<{ discountAmount: number; code: string } | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
@@ -91,7 +90,8 @@ export default function CreateBookingScreen({
       .then((data) => {
         if (cancelled) return;
         setVehicle(data ?? null);
-        if (data) {
+        // Giữ địa chỉ chatbot điền sẵn; chỉ mặc định theo xe khi không có.
+        if (data && !route.params.pickupAddress) {
           setPickupAddress(data.address);
           setPickupLat(data.latitude);
           setPickupLng(data.longitude);
@@ -207,6 +207,16 @@ export default function CreateBookingScreen({
     }
   }
 
+  // Mã do chatbot điền sẵn thì tự validate một lần khi đủ ngày thuê.
+  const autoValidatedPromo = useRef(false);
+  useEffect(() => {
+    if (!autoValidatedPromo.current && route.params.promoCode && days > 0 && !availabilityLoading) {
+      autoValidatedPromo.current = true;
+      void validateCode(route.params.promoCode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days, availabilityLoading]);
+
   function handleToggleWallet() {
     if (walletOpen) {
       setWalletOpen(false);
@@ -242,7 +252,11 @@ export default function CreateBookingScreen({
   }
 
   async function handleSubmit() {
-    if (availabilityLoading || availabilityError || overlapped || days <= 0) {
+    if (days <= 0) {
+      setSubmitError("Vui lòng chọn ngày nhận và trả xe hợp lệ trước khi gửi.");
+      return;
+    }
+    if (availabilityLoading || availabilityError || overlapped) {
       setSubmitError(
         overlapped
           ? "Khoảng thời gian này trùng lịch bận của xe (đã đệm 60 phút vệ sinh). Vui lòng chọn ngày khác."

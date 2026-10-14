@@ -11,29 +11,31 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Bot, Headphones, History, Plus, RotateCcw, Send, ThumbsDown, ThumbsUp, X } from "lucide-react-native";
+import { Bot, CalendarCheck, Headphones, History, Plus, RotateCcw, Send, ThumbsDown, ThumbsUp, X } from "lucide-react-native";
 
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { subscribeAssistant } from "@/features/assistant/assistantConnection";
+import { AgentBlocks } from "@/features/assistant/components/AssistantBooking";
 import {
   assistantError,
   createConversation,
+  getConversationState,
+  getDraft,
   getHistory,
   getMessage,
   handoff,
   listConversations,
+  patchDraft,
   sendFeedback,
   sendQuestion,
 } from "@/features/assistant/assistantService";
-import type { AssistantAnswer, Conversation, ResourceCard, TimelineItem } from "@/features/assistant/assistantService";
+import type { AssistantAnswer, Conversation, DraftSlots, ResourceCard, TimelineItem } from "@/features/assistant/assistantService";
 
-// Port từ FrontEnd AssistantWidget.tsx — ĐÃ BỎ booking:
-// - Không có nút "Đặt xe nhanh" (BookingFunnel)
-// - Không có patchDraft/prepareDraft/confirmAction/payment-link (AssistantBookingCards)
-// - Không điều hướng đặt xe, chỉ chat + xem xe/khuyến mãi/booking (read-only) + chính sách + gặp nhân viên.
+// Port từ FrontEnd AssistantWidget.tsx, gồm cả booking (đặt xe nhanh,
+// xác nhận trong chat, thanh toán) như bản web.
 
 const statusText: Record<string, string> = {
   BotActive: "Tư vấn cùng AI",
@@ -76,14 +78,29 @@ function renderRichText(text: string, keyPrefix: string) {
 // Style chữ đậm dùng chung cho renderRichText (không phụ thuộc theme).
 const stylesRef = StyleSheet.create({ bold: { fontWeight: "800" } });
 
+// Tham số điền sẵn sang màn CreateBooking (giống web navigate kèm AssistantBookingState).
+export type QuickBookParams = {
+  vehicleId?: number;
+  startAt?: string | null;
+  endAt?: string | null;
+  promoCode?: string | null;
+  pickupAddress?: string | null;
+  returnAddress?: string | null;
+  customerNote?: string | null;
+};
+
 export default function AssistantScreen({
   onBack,
   onViewVehicle,
   onViewBooking,
+  onQuickBook,
+  onBookingConfirmed,
 }: {
   onBack: () => void;
   onViewVehicle?: (vehicleId: number) => void;
   onViewBooking?: (bookingId: number) => void;
+  onQuickBook?: (params: QuickBookParams) => void;
+  onBookingConfirmed?: (bookingId: number) => void;
 }) {
   const user = useAuthStore((state) => state.user);
   const { theme } = useTheme();
@@ -337,6 +354,63 @@ export default function AssistantScreen({
     }
   }
 
+  async function openQuickBook(patch?: Partial<DraftSlots>) {
+    if (!user || sendLock.current) return;
+    sendLock.current = true;
+    setBusy(true);
+    setError(null);
+    try {
+      const current = conversation ?? (await createConversation());
+      setConversation(current);
+      hydrated.current = true;
+      if (patch && Object.keys(patch).length > 0) {
+        const existing = await getDraft(current.id).catch(() => null);
+        await patchDraft(current.id, existing?.version ?? 0, patch).catch(() => null);
+      }
+      const [draft, state] = await Promise.all([
+        getDraft(current.id).catch(() => null),
+        getConversationState(current.id).catch(() => null),
+      ]);
+      const slots = draft?.slots ?? {};
+      const activeFilters = state?.activeFilters as Record<string, unknown> | undefined;
+      const vehicleId = slots.vehicleId ?? state?.focusVehicleId ?? undefined;
+      if (!vehicleId) {
+        setError("Bạn chọn xe trong đoạn chat trước nhé — mình sẽ điền sẵn vào form đặt xe.");
+        return;
+      }
+      onQuickBook?.({
+        vehicleId,
+        startAt: slots.startAt ?? (activeFilters?.startAt as string | undefined) ?? null,
+        endAt: slots.endAt ?? (activeFilters?.endAt as string | undefined) ?? null,
+        promoCode: slots.promoCode ?? null,
+        pickupAddress: slots.pickupAddress ?? null,
+        returnAddress: slots.returnAddress ?? null,
+        customerNote: slots.customerNote ?? null,
+      });
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Chưa mở được đặt xe nhanh. Bạn thử lại nhé."));
+    } finally {
+      sendLock.current = false;
+      setBusy(false);
+    }
+  }
+
+  function bookVehicle(vehicleId: number, startAt?: string | null, endAt?: string | null) {
+    void openQuickBook({
+      vehicleId,
+      ...(startAt ? { startAt } : {}),
+      ...(endAt ? { endAt } : {}),
+    });
+  }
+
+  function applyPromoCode(code: string) {
+    void openQuickBook({ promoCode: code.toUpperCase() });
+  }
+
+  function handleDraftChanged() {
+    if (conversation) void refresh(conversation).catch(() => undefined);
+  }
+
   const staff = conversation?.status === "WaitingForStaff" || conversation?.status === "StaffActive";
   const closed = conversation?.status === "Closed";
   const isCustomer = user?.roles.includes("Customer") ?? false;
@@ -366,6 +440,18 @@ export default function AssistantScreen({
           <X color={theme.muted} size={20} />
         </Pressable>
       </View>
+
+      {isCustomer && !!onQuickBook && !historyOpen && (
+        <Pressable
+          accessibilityLabel="Đặt xe nhanh"
+          disabled={busy || loading}
+          onPress={() => void openQuickBook()}
+          style={[styles.bookingBanner, (busy || loading) && styles.disabled]}
+        >
+          <CalendarCheck color="#fff" size={18} />
+          <Text style={styles.bookingBannerText}>Đặt xe nhanh</Text>
+        </Pressable>
+      )}
 
       {!user ? (
         <View style={styles.center}>
@@ -438,7 +524,17 @@ export default function AssistantScreen({
                       : renderRichText(item.content, item.id)}
                   </Text>
                   {item.answer && (
-                    <AnswerDetails answer={item.answer} onViewVehicle={onViewVehicle} onViewBooking={onViewBooking} />
+                    <AnswerDetails
+                      answer={item.answer}
+                      conversationId={conversation?.id}
+                      onViewVehicle={onViewVehicle}
+                      onViewBooking={onViewBooking}
+                      onBookVehicle={isCustomer && onQuickBook ? bookVehicle : undefined}
+                      onUsePromo={isCustomer && onQuickBook ? applyPromoCode : undefined}
+                      onDraftChanged={handleDraftChanged}
+                      onBooked={onBookingConfirmed}
+                      disabled={busy || pending}
+                    />
                   )}
                   {item.role === "assistant" && item.status === "Completed" && item.requestId && (
                     <View style={styles.voteRow}>
@@ -580,25 +676,37 @@ function QuickReplies({ disabled, onPick, lastAnswer }: { disabled: boolean; onP
 
 function AnswerDetails({
   answer,
+  conversationId,
   onViewVehicle,
   onViewBooking,
+  onBookVehicle,
+  onUsePromo,
+  onDraftChanged,
+  onBooked,
+  disabled,
 }: {
   answer: AssistantAnswer;
+  conversationId?: string;
   onViewVehicle?: (vehicleId: number) => void;
   onViewBooking?: (bookingId: number) => void;
+  onBookVehicle?: (vehicleId: number, startAt?: string | null, endAt?: string | null) => void;
+  onUsePromo?: (code: string) => void;
+  onDraftChanged?: () => void;
+  onBooked?: (bookingId: number) => void;
+  disabled?: boolean;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const hasBookingBlock = (answer.blocks ?? []).some((block) =>
-    ["confirmCard", "quoteCard", "draftCard"].includes(block.type),
-  );
   return (
     <View style={styles.cards}>
-      {/* Điểm nối booking sau này: khi mobile làm booking, render blocks ở đây
-          giống web AgentBlocks thay vì dòng hint bên dưới. */}
-      {hasBookingBlock && (
-        <Text style={styles.muted}>Đặt xe trong chat sẽ có ở bản sau — bạn xem xe/giá trước nhé.</Text>
-      )}
+      {answer.blocks && answer.blocks.length > 0 && conversationId ? (
+        <AgentBlocks
+          blocks={answer.blocks}
+          conversationId={conversationId}
+          onChanged={() => onDraftChanged?.()}
+          onBooked={onBooked}
+        />
+      ) : null}
       {answer.cards.map((group, index) => (
         <View key={`${group.name}-${index}`} style={styles.cardGroup}>
           {group.data.lookupStatus === "unavailable" && <Text style={styles.warn}>Tra cứu đang gián đoạn. Bạn thử lại nhé.</Text>}
@@ -634,6 +742,26 @@ function AnswerDetails({
                   ) : null}
                   {card.comment ? <Text style={styles.muted}>{card.comment}</Text> : null}
                   {canOpen ? <Text style={styles.link}>{isBooking ? "Xem booking" : "Xem chi tiết"}</Text> : null}
+                  {isVehicle && onBookVehicle ? (
+                    <Pressable
+                      disabled={disabled}
+                      onPress={() => onBookVehicle(card.id, group.data.startDate, group.data.endDate)}
+                      style={[styles.bookButton, disabled && styles.disabled]}
+                    >
+                      <Text style={styles.bookButtonText}>
+                        Đặt xe này{group.data.availabilityChecked && group.data.startDate && group.data.endDate ? " · giữ ngày đã chọn" : ""}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                  {group.name === "promotions.list" && card.code && onUsePromo ? (
+                    <Pressable
+                      disabled={disabled}
+                      onPress={() => onUsePromo(card.code!)}
+                      style={[styles.bookButton, disabled && styles.disabled]}
+                    >
+                      <Text style={styles.bookButtonText}>Dùng mã này</Text>
+                    </Pressable>
+                  ) : null}
                 </>
               );
               return canOpen ? (
@@ -781,6 +909,29 @@ const createStyles = (theme: Theme) =>
     },
     sendButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.brand, alignItems: "center", justifyContent: "center" },
     sendDisabled: { opacity: 0.4 },
+    disabled: { opacity: 0.4 },
+    bookingBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      marginHorizontal: 14,
+      marginTop: 10,
+      borderRadius: 12,
+      backgroundColor: theme.brand,
+      paddingVertical: 12,
+    },
+    bookingBannerText: { color: "#fff", fontSize: 14, fontWeight: "800" },
+    bookButton: {
+      marginTop: 6,
+      borderRadius: 10,
+      backgroundColor: theme.brandSoft,
+      borderWidth: 1,
+      borderColor: theme.brandBorder,
+      paddingVertical: 9,
+      alignItems: "center",
+    },
+    bookButtonText: { color: theme.brand, fontSize: 12, fontWeight: "800" },
     composerFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
     history: { flex: 1, padding: 14, gap: 10 },
     sectionTitle: { color: theme.text, fontSize: 14, fontWeight: "800" },

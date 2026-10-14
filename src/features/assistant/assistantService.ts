@@ -1,8 +1,7 @@
 import { apiClient } from "@/services/apiClient";
 
-// Port từ FrontEnd (features/assistant/assistantService.ts)
-// ĐÃ BỎ phần booking-write (draft/prepare/confirm/payment-link, BookingFunnel)
-// vì mobile chưa làm booking. Chỉ giữ chat + tra cứu read-only.
+// Port từ FrontEnd (features/assistant/assistantService.ts), gồm cả booking
+// (draft/prepare/confirm/payment-link) để chatbot đặt xe nhanh trên mobile.
 export type Conversation = {
   id: string;
   status: "BotActive" | "WaitingForStaff" | "StaffActive" | "Closed";
@@ -127,6 +126,109 @@ export async function handoff(id: string, message: string) {
 
 export async function sendFeedback(id: string, messageId: string, helpful: boolean) {
   await apiClient.post(`${base}/${id}/feedback`, { messageId, helpful });
+}
+
+export type DraftSlots = {
+  vehicleId?: number | null;
+  startAt?: string | null;
+  endAt?: string | null;
+  pickupMode?: "self_pickup" | "delivery" | null;
+  pickupAddress?: string | null;
+  returnAddress?: string | null;
+  promoCode?: string | null;
+  customerNote?: string | null;
+};
+
+export type AssistantCoords = { lat: number; lng: number };
+
+export type AssistantQuote = {
+  quoteId: string;
+  vehicleId: number;
+  startAt: string;
+  endAt: string;
+  rental: number;
+  rentalDiscount: number;
+  promotionDiscount: number;
+  total: number;
+  deposit: number;
+  securityDeposit: number;
+  deliveryFee: number | null;
+  expiresAt: string;
+};
+
+export type BookingDraft = {
+  draftId: string;
+  version: number;
+  status: string;
+  slots: DraftSlots;
+  missing: string[];
+  quote: AssistantQuote | null;
+  previousTotal: number | null;
+  confirmToken: string | null;
+  bookingId: number | null;
+  expiresAt: string;
+};
+
+export type CancellationProposal = {
+  kind: "cancel";
+  bookingId: number;
+  quote: { refundAmount: number; forfeitedAmount: number; policyMessage: string };
+  confirmToken: string;
+  expiresAt: string;
+};
+
+export type PaymentLink = { checkoutUrl: string; qrCode: string; orderCode: number; paymentLinkId: string };
+
+export type ConfirmResult = {
+  status: string;
+  bookingId?: number;
+  bookingCode?: string;
+  payment?: PaymentLink;
+  draft?: BookingDraft;
+  message?: string;
+};
+
+export type ConversationState = {
+  activeFilters: Record<string, unknown>;
+  shownVehicles: { idx: number; id: number; pricePerDay: number }[];
+  focusVehicleId: number | null;
+};
+
+export async function getDraft(id: string, signal?: AbortSignal) {
+  return (await apiClient.get<{ data: BookingDraft | null }>(`${base}/${id}/draft`, { signal })).data.data;
+}
+
+export async function getConversationState(id: string, signal?: AbortSignal) {
+  return (await apiClient.get<{ data: ConversationState }>(`${base}/${id}/state`, { signal })).data.data;
+}
+
+export async function patchDraft(id: string, version: number, patch: Partial<DraftSlots>) {
+  return (await apiClient.patch<{ data: BookingDraft }>(`${base}/${id}/draft`, { version, patch })).data.data;
+}
+
+export async function prepareDraft(id: string, version: number) {
+  return (await apiClient.post<{ data: BookingDraft }>(`${base}/${id}/draft/prepare`, { version })).data.data;
+}
+
+export async function confirmAction(token: string, acceptPriceChange = false) {
+  return (
+    await apiClient.post<{ data: ConfirmResult }>(
+      `/api/assistant/actions/${encodeURIComponent(token)}/confirm`,
+      { acceptPriceChange },
+    )
+  ).data.data;
+}
+
+export async function getDraftPaymentLink(id: string) {
+  return (await apiClient.post<{ data: PaymentLink }>(`${base}/${id}/draft/payment-link`)).data.data;
+}
+
+export async function getAssistantPaymentStatus(bookingId: number) {
+  return (
+    await apiClient.get<{ data: { status: string | { isConfirmed: boolean; message: string } } }>(
+      `/api/assistant/payments/${bookingId}/status`,
+    )
+  ).data.data;
 }
 
 export function assistantError(code?: string | null) {

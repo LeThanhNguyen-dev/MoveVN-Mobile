@@ -7,6 +7,7 @@ import BookingsTabScreen from "@/features/booking/screens/BookingsTabScreen";
 import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import AssistantFab from "@/features/assistant/components/AssistantFab";
+import type { QuickBookParams } from "@/features/assistant/screens/AssistantScreen";
 import type { AuthUser } from "@/features/auth/types";
 import ExploreNavigator from "./ExploreNavigator";
 import TripsNavigator from "./TripsNavigator";
@@ -29,6 +30,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
   const [tripsRoute, setTripsRoute] = useState("TripList");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
+  const [quickBook, setQuickBook] = useState<QuickBookParams | null>(null);
   const { theme } = useTheme();
 
   const handleExploreRouteChange = useCallback((routeName: string) => {
@@ -43,6 +45,15 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
 
   const consumePendingTrip = useCallback(() => {
     setPendingTripId(null);
+  }, []);
+
+  const handleQuickBook = useCallback((params: QuickBookParams) => {
+    setQuickBook(params);
+    setActiveTab("explore");
+  }, []);
+
+  const consumeQuickBook = useCallback(() => {
+    setQuickBook(null);
   }, []);
 
   // Ẩn bottom bar khi vào List / Detail, chỉ hiện ở màn Khám phá chính và danh sách chuyến đi.
@@ -63,6 +74,8 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onAvatarPress={() => setShowProfile(true)}
                 onRouteChange={handleExploreRouteChange}
                 onBookingCreated={goToTrip}
+                quickBook={quickBook}
+                onConsumedQuickBook={consumeQuickBook}
               />
             ) : activeTab === "trips" ? (
               <TripsNavigator
@@ -89,8 +102,8 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
           {showBottomBar ? (
             <MobileBottomBar activeKey={activeTab} items={customerTabs} onChange={setActiveTab} />
           ) : null}
-          {/* ChatbotAI (không booking): nút nổi mở AssistantScreen */}
-          <AssistantFab />
+          {/* ChatbotAI đặt xe nhanh: mở form đặt xe điền sẵn, xác nhận xong qua chuyến đi */}
+          <AssistantFab onQuickBook={handleQuickBook} onBookingConfirmed={goToTrip} />
         </>
       )}
     </SafeAreaView>

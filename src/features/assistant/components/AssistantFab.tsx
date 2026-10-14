@@ -5,16 +5,20 @@ import { Bot, X } from "lucide-react-native";
 
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
-import AssistantScreen from "@/features/assistant/screens/AssistantScreen";
+import AssistantScreen, { type QuickBookParams } from "@/features/assistant/screens/AssistantScreen";
 
 // Nút tròn nổi giống web (AssistantWidget) nhưng mở full-screen modal RN.
-// Không chứa booking — mọi điều hướng xe/booking do parent truyền vào.
+// Mọi điều hướng xe/booking do parent truyền vào.
 export default function AssistantFab({
   onViewVehicle,
   onViewBooking,
+  onQuickBook,
+  onBookingConfirmed,
 }: {
   onViewVehicle?: (vehicleId: number) => void;
   onViewBooking?: (bookingId: number) => void;
+  onQuickBook?: (params: QuickBookParams) => void;
+  onBookingConfirmed?: (bookingId: number) => void;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -32,7 +36,19 @@ export default function AssistantFab({
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
         {/* SafeAreaView để header không chui lên vùng giờ/pin, ô chat không cấn thanh home. */}
         <SafeAreaView edges={["top", "bottom"]} style={styles.modal}>
-          <AssistantScreen onBack={() => setOpen(false)} onViewVehicle={onViewVehicle} onViewBooking={onViewBooking} />
+          <AssistantScreen
+            onBack={() => setOpen(false)}
+            onViewVehicle={onViewVehicle}
+            onViewBooking={onViewBooking}
+            onQuickBook={(params) => {
+              setOpen(false);
+              onQuickBook?.(params);
+            }}
+            onBookingConfirmed={(bookingId) => {
+              setOpen(false);
+              onBookingConfirmed?.(bookingId);
+            }}
+          />
         </SafeAreaView>
       </Modal>
     </>
