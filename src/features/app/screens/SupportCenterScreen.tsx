@@ -1,70 +1,130 @@
-import { useMemo, useState } from "react";
-import { Alert, Linking } from "react-native";
-import { ArrowLeft, ChevronDown, FileText, Headphones, Mail, MessageSquare, Phone } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import PolicyDetailScreen from "@/features/cms/screens/PolicyDetailScreen";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Image } from "expo-image";
+import {
+  ArrowLeft,
+  ChevronRight,
+  CircleHelp,
+  Headphones,
+  Mail,
+  Phone,
+  Search,
+  X,
+} from "lucide-react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useAuthStore } from "@/features/auth/hooks/useAuth";
+import FaqDetailScreen from "@/features/cms/screens/FaqDetailScreen";
+import { getCmsPageNavigation } from "@/features/cms/services/cmsService";
+import type { CmsPageNavigationItem } from "@/features/cms/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
-const faqs = [
-  {
-    question: "Làm thế nào để đăng ký tài khoản?",
-    answer:
-      "Bạn có thể đăng ký bằng số điện thoại hoặc email, hoặc đăng nhập nhanh qua tài khoản Google. Sau khi đăng ký, bạn cần xác thực email/SĐT qua mã OTP để kích hoạt tài khoản.",
-  },
-  {
-    question: "Làm thế nào để đặt xe?",
-    answer:
-      "Sau khi đăng nhập, bạn chọn xe mong muốn, chọn ngày giờ nhận/trả xe, điền địa điểm và gửi yêu cầu. Chủ xe sẽ phê duyệt hoặc từ chối yêu cầu của bạn.",
-  },
-  {
-    question: "Tôi cần thanh toán những gì khi đặt xe?",
-    answer:
-      "Bạn cần thanh toán tiền cọc (deposit) theo tỷ lệ phần trăm do Chủ Xe quy định. Phần còn lại thường được thanh toán sau hoặc theo thỏa thuận với Chủ Xe. Phí nền tảng MoveVN sẽ được tính vào tổng số tiền.",
-  },
-  {
-    question: "Làm thế nào để trở thành Chủ Xe?",
-    answer:
-      "Đăng nhập tài khoản, vào mục Đăng ký chủ xe, hoàn tất xác thực CCCD/CMND, cung cấp thông tin tài khoản ngân hàng, đăng ký thông tin xe và chờ MoveVN kiểm duyệt.",
-  },
-  {
-    question: "Tôi cần hỗ trợ về một booking đang xử lý?",
-    answer:
-      "Sau khi đăng nhập, bạn có thể tạo ticket trong khu vực Hỗ trợ của tài khoản. Ngoài ra có thể gọi hotline hoặc gửi email để được hỗ trợ nhanh chóng.",
-  },
-  {
-    question: "Làm thế nào để khiếu nại hoặc báo cáo vấn đề?",
-    answer:
-      "Bạn có thể mở yêu cầu giải quyết tranh chấp (dispute) từ trang chi tiết booking trong tài khoản, cung cấp bằng chứng và mô tả chi tiết. Nhân viên MoveVN sẽ điều tra và xử lý.",
-  },
-  {
-    question: "Tôi quên mật khẩu, làm thế nào để lấy lại?",
-    answer:
-      "Tại trang đăng nhập, chọn Quên mật khẩu và làm theo hướng dẫn. Bạn sẽ nhận được mã OTP qua email để đặt lại mật khẩu mới.",
-  },
-  {
-    question: "Chính sách hủy đặt xe như thế nào?",
-    answer:
-      "Chính sách hủy được áp dụng theo tầng (tiered cancellation policy). Tùy vào thời điểm hủy, bạn có thể được hoàn tiền một phần hoặc toàn bộ tiền cọc. Xem chi tiết tại Điều khoản sử dụng.",
-  },
+type FaqTab = "CUSTOMER" | "OWNER";
+
+// Same slug -> image mapping as MoveVN-FrontEnd FaqPage TOPIC_IMAGES.
+// Customer topics (top to bottom) use 1.png - 6.png, owner topics use
+// 7.png - 12.png. Unknown slugs fall back to the CircleHelp vector icon.
+const TOPIC_IMAGES: Record<string, number> = {
+  "bat-dau": require("../../../../public/images/1.png"),
+  "bat-dau-v2": require("../../../../public/images/1.png"),
+  "tim-va-thue-xe": require("../../../../public/images/2.png"),
+  "tim-va-thue-xe-v2": require("../../../../public/images/2.png"),
+  "dat-xe": require("../../../../public/images/3.png"),
+  "dat-xe-v2": require("../../../../public/images/3.png"),
+  "thanh-toan-khach": require("../../../../public/images/4.png"),
+  "thanh-toan-khach-v2": require("../../../../public/images/4.png"),
+  "nhan-tra-xe-khach": require("../../../../public/images/5.png"),
+  "nhan-tra-xe-khach-v2": require("../../../../public/images/5.png"),
+  "khi-co-van-de": require("../../../../public/images/6.png"),
+  "khi-co-van-de-v2": require("../../../../public/images/6.png"),
+  "tong-quan-chu-xe": require("../../../../public/images/7.png"),
+  "tong-quan-chu-xe-v2": require("../../../../public/images/7.png"),
+  "dang-xe": require("../../../../public/images/8.png"),
+  "dang-xe-v2": require("../../../../public/images/8.png"),
+  "quan-ly-xe": require("../../../../public/images/9.png"),
+  "quan-ly-xe-v2": require("../../../../public/images/9.png"),
+  "quan-ly-don-thue": require("../../../../public/images/10.png"),
+  "quan-ly-don-thue-v2": require("../../../../public/images/10.png"),
+  "nhan-tra-xe-chu-xe": require("../../../../public/images/11.png"),
+  "nhan-tra-xe-chu-xe-v2": require("../../../../public/images/11.png"),
+  "thanh-toan-chu-xe": require("../../../../public/images/12.png"),
+  "thanh-toan-chu-xe-v2": require("../../../../public/images/12.png"),
+};
+
+const TABS: Array<{ value: FaqTab; label: string }> = [
+  { value: "CUSTOMER", label: "Khách thuê" },
+  { value: "OWNER", label: "Chủ xe" },
 ];
 
-export default function SupportCenterScreen({ onBack }: { onBack: () => void }) {
+// Verified in MoveVN-FrontEnd: PublicLayout footer (tel:19006868) and
+// PromoTrapezoids ("hotline 1900 6868", mailto:support@movevn.com).
+const HOTLINE_DISPLAY = "1900 6868";
+const HOTLINE_URL = "tel:19006868";
+const SUPPORT_EMAIL = "support@movevn.com";
+
+function normalizeText(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+}
+
+export default function SupportCenterScreen({
+  onBack,
+  onBecomeOwner,
+}: {
+  onBack: () => void;
+  onBecomeOwner?: () => void;
+}) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [showTerms, setShowTerms] = useState(false);
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const activeRole = useAuthStore((state) => state.activeRole);
 
-  if (showTerms) {
-    return <PolicyDetailScreen slug="terms-of-service" onBack={() => setShowTerms(false)} />;
+  const [tab, setTab] = useState<FaqTab>(activeRole === "Owner" ? "OWNER" : "CUSTOMER");
+  const [topics, setTopics] = useState<CmsPageNavigationItem[]>([]);
+  const [status, setStatus] = useState<"loading" | "error" | "ready">("loading");
+  const [query, setQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+
+  const load = useCallback(async (category: FaqTab) => {
+    setStatus("loading");
+    try {
+      setTopics(await getCmsPageNavigation("FAQ", category));
+      setStatus("ready");
+    } catch {
+      setStatus("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    void load(tab === "OWNER" ? "OWNER" : "CUSTOMER");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function switchTab(next: FaqTab) {
+    if (next === tab) return;
+    setTab(next);
+    setTopics([]);
+    setQuery("");
+    setStatus("loading");
+    void load(next);
   }
 
-  function handleTicketPress() {
-    Alert.alert(
-      "Ticket hỗ trợ",
-      "Vui lòng liên hệ hotline 1900 6868 hoặc email movevn.noreply@gmail.com để tạo và theo dõi ticket.",
-      [{ text: "Đã hiểu" }],
+  // Backend has no FAQ search endpoint (admin list is the only keyword
+  // filter), so search filters the already-loaded navigation items locally.
+  const filtered = useMemo(() => {
+    const keyword = normalizeText(query.trim());
+    if (!keyword) return topics;
+    return topics.filter((topic) =>
+      normalizeText(`${topic.title} ${topic.description ?? ""}`).includes(keyword),
     );
+  }, [query, topics]);
+
+  const searching = query.trim().length > 0;
+
+  if (selectedSlug) {
+    return <FaqDetailScreen slug={selectedSlug} onBack={() => setSelectedSlug(null)} />;
   }
 
   return (
@@ -73,86 +133,186 @@ export default function SupportCenterScreen({ onBack }: { onBack: () => void }) 
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text style={styles.topBarTitle}>Trung tâm hỗ trợ</Text>
+        <Text style={styles.topBarTitle}>Hỏi và trả lời</Text>
         <View style={styles.topBarSpacer} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.eyebrow}>Hỗ trợ</Text>
-          <Text style={styles.title}>
-            Cần giúp đỡ với <Text style={styles.titleAccent}>việc thuê xe</Text>?
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.hero}>
+          <Text style={styles.eyebrow}>Trung tâm trợ giúp</Text>
+          <Text style={styles.heroTitle}>Xin chào, MoveVN có thể giúp gì?</Text>
+          <Text style={styles.heroDescription}>
+            Giải đáp cách MoveVN hoạt động và hướng dẫn sử dụng cho khách thuê và chủ xe.
           </Text>
-          <Text style={styles.description}>
-            MoveVN luôn sẵn sàng hỗ trợ bạn qua nhiều kênh liên hệ. Dưới đây là các câu hỏi thường gặp và
-            thông tin liên hệ.
-          </Text>
         </View>
 
-        <View style={styles.contactGrid}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => { void Linking.openURL("mailto:movevn.noreply@gmail.com"); }}
-            style={styles.contactCard}
-          >
-            <Mail color={theme.brand} size={26} strokeWidth={2.2} />
-            <Text style={styles.contactTitle}>Email</Text>
-            <Text style={styles.contactValue}>movevn.noreply@gmail.com</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => { void Linking.openURL("tel:19006868"); }}
-            style={styles.contactCard}
-          >
-            <Phone color={theme.brand} size={26} strokeWidth={2.2} />
-            <Text style={styles.contactTitle}>Hotline</Text>
-            <Text style={styles.contactValue}>1900 6868</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" onPress={handleTicketPress} style={styles.contactCard}>
-            <MessageSquare color={theme.brand} size={26} strokeWidth={2.2} />
-            <Text style={styles.contactTitle}>Ticket hỗ trợ</Text>
-            <Text style={styles.contactValue}>Tạo và theo dõi ticket.</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setShowTerms(true)}
-            style={styles.contactCard}
-          >
-            <FileText color={theme.brand} size={26} strokeWidth={2.2} />
-            <Text style={styles.contactTitle}>Điều khoản</Text>
-            <Text style={styles.contactValue}>Xem Điều khoản sử dụng.</Text>
-          </Pressable>
+        <View style={[styles.searchBox, searchFocused && styles.searchBoxFocused]}>
+          <Search color={theme.faint} size={19} strokeWidth={2.3} />
+          <TextInput
+            accessibilityLabel="Tìm kiếm chủ đề trợ giúp"
+            onBlur={() => setSearchFocused(false)}
+            onChangeText={setQuery}
+            onFocus={() => setSearchFocused(true)}
+            placeholder="Tìm chủ đề trợ giúp"
+            placeholderTextColor={theme.placeholder}
+            returnKeyType="search"
+            style={styles.searchInput}
+            value={query}
+          />
+          {query.length > 0 ? (
+            <Pressable
+              accessibilityLabel="Xóa tìm kiếm"
+              accessibilityRole="button"
+              onPress={() => setQuery("")}
+              style={styles.clearButton}
+            >
+              <X color={theme.muted} size={17} strokeWidth={2.4} />
+            </Pressable>
+          ) : null}
         </View>
 
-        <View style={styles.faqHeader}>
-          <Headphones color={theme.brand} size={20} strokeWidth={2.3} />
-          <Text style={styles.faqTitle}>Câu hỏi thường gặp</Text>
-        </View>
-
-        <View style={styles.faqCard}>
-          {faqs.map((faq, index) => {
-            const expanded = expandedIndex === index;
+        <View style={styles.segmented}>
+          {TABS.map((item) => {
+            const selected = tab === item.value;
             return (
-              <View key={faq.question}>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => setExpandedIndex(expanded ? null : index)}
-                  style={styles.faqRow}
-                >
-                  <Text style={styles.faqQuestion}>{faq.question}</Text>
-                  <ChevronDown
-                    color={theme.muted}
-                    size={18}
-                    strokeWidth={2.3}
-                    style={expanded ? styles.chevronOpen : null}
-                  />
-                </Pressable>
-                {expanded ? <Text style={styles.faqAnswer}>{faq.answer}</Text> : null}
-                {index < faqs.length - 1 ? <View style={styles.faqDivider} /> : null}
-              </View>
+              <Pressable
+                key={item.value}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                onPress={() => switchTab(item.value)}
+                style={[styles.segmentOption, selected && styles.segmentOptionSelected]}
+              >
+                <Text style={[styles.segmentLabel, selected && styles.segmentLabelSelected]}>{item.label}</Text>
+              </Pressable>
             );
           })}
         </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Danh mục trợ giúp</Text>
+          {status === "ready" ? (
+            <Text style={styles.sectionCount}>
+              {searching ? `${filtered.length} kết quả` : `${topics.length} chủ đề`}
+            </Text>
+          ) : null}
+        </View>
+
+        {status === "loading" ? (
+          <View style={styles.stateCard}>
+            <View style={styles.skeletonLine} />
+            <View style={styles.skeletonLine} />
+            <View style={[styles.skeletonLine, styles.skeletonShort]} />
+            <Text style={styles.muted}>Đang tải danh mục...</Text>
+          </View>
+        ) : status === "error" ? (
+          <View style={styles.stateCard}>
+            <Text style={styles.errorText}>Không thể tải danh mục hỏi đáp. Vui lòng thử lại.</Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => { void load(tab); }}
+              style={styles.retryButton}
+            >
+              <Text style={styles.retryText}>Thử lại</Text>
+            </Pressable>
+          </View>
+        ) : filtered.length === 0 ? (
+          <View style={styles.stateCard}>
+            <Text style={styles.stateTitle}>
+              {searching ? "Không tìm thấy chủ đề phù hợp" : "Chưa có nội dung hỏi đáp"}
+            </Text>
+            <Text style={styles.muted}>
+              {searching
+                ? "Thử từ khóa khác hoặc chuyển vai trò."
+                : "Danh mục này đang được cập nhật. Vui lòng quay lại sau."}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.topicList}>
+            {filtered.map((topic) => {
+              const imageSource = TOPIC_IMAGES[topic.slug];
+              return (
+                <Pressable
+                  key={topic.slug}
+                  accessibilityRole="button"
+                  onPress={() => setSelectedSlug(topic.slug)}
+                  style={styles.topicCard}
+                >
+                  <View style={styles.topicIcon}>
+                    {imageSource ? (
+                      <Image
+                        accessibilityIgnoresInvertColors
+                        accessibilityLabel={topic.title}
+                        cachePolicy="memory-disk"
+                        contentFit="cover"
+                        recyclingKey={topic.slug}
+                        source={imageSource}
+                        style={styles.topicImage}
+                        transition={150}
+                      />
+                    ) : (
+                      <CircleHelp color={theme.brand} size={21} strokeWidth={2.3} />
+                    )}
+                  </View>
+                  <View style={styles.topicInfo}>
+                    <Text numberOfLines={2} style={styles.topicTitle}>
+                      {topic.title}
+                    </Text>
+                    {topic.description ? (
+                      <Text numberOfLines={2} style={styles.topicDescription}>
+                        {topic.description}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+
+        <View style={styles.supportCard}>
+          <View style={styles.supportIcon}>
+            <Headphones color={theme.brand} size={22} strokeWidth={2.3} />
+          </View>
+          <Text style={styles.supportTitle}>Cần hỗ trợ thêm?</Text>
+          <Text style={styles.supportDescription}>
+            {`Liên hệ đội ngũ hỗ trợ qua hotline ${HOTLINE_DISPLAY} hoặc email ${SUPPORT_EMAIL}.`}
+          </Text>
+          <View style={styles.supportActions}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => { void Linking.openURL(HOTLINE_URL); }}
+              style={styles.primaryButton}
+            >
+              <Phone color={theme.onBrand} size={17} strokeWidth={2.4} />
+              <Text style={styles.primaryButtonText}>{`Gọi ${HOTLINE_DISPLAY}`}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => { void Linking.openURL(`mailto:${SUPPORT_EMAIL}`); }}
+              style={styles.secondaryButton}
+            >
+              <Mail color={theme.brand} size={17} strokeWidth={2.4} />
+              <Text style={styles.secondaryButtonText}>Gửi email</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {tab === "CUSTOMER" && onBecomeOwner ? (
+          <View style={styles.ownerCard}>
+            <Text style={styles.ownerTitle}>Cho thuê xe trên MoveVN.</Text>
+            <Text numberOfLines={2} style={styles.ownerDescription}>
+              Đăng xe nhàn rỗi để gia tăng thu nhập hàng tháng với quy trình kiểm duyệt minh bạch.
+            </Text>
+            <Pressable accessibilityRole="button" onPress={onBecomeOwner} style={styles.ownerButton}>
+              <Text style={styles.ownerButtonText}>Dành cho chủ xe</Text>
+            </Pressable>
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -168,40 +328,167 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 12,
       paddingVertical: 4,
       minHeight: 48,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.divider,
     },
     backButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 20 },
     topBarTitle: { color: theme.text, fontSize: 17, fontWeight: "800" },
     topBarSpacer: { width: 40 },
-    scroll: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 28, gap: 16 },
-    header: { gap: 8, paddingTop: 2 },
-    eyebrow: { color: theme.brand, fontSize: 12, fontWeight: "800", letterSpacing: 2 },
-    title: { color: theme.text, fontSize: 24, lineHeight: 32, fontWeight: "800" },
-    titleAccent: { color: theme.brand },
-    description: { color: theme.muted, fontSize: 13, lineHeight: 20, fontWeight: "500" },
-    contactGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-    contactCard: {
-      width: "48%",
-      flexGrow: 1,
-      borderRadius: 16,
+    scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 28, gap: 14 },
+    hero: { gap: 8 },
+    eyebrow: { color: theme.brand, fontSize: 11, fontWeight: "800", letterSpacing: 2 },
+    heroTitle: { color: theme.text, fontSize: 22, lineHeight: 30, fontWeight: "800" },
+    heroDescription: { color: theme.muted, fontSize: 13, lineHeight: 20, fontWeight: "500" },
+    searchBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      minHeight: 48,
+      borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.border,
-      padding: 14,
+      backgroundColor: theme.surface,
+      paddingHorizontal: 14,
+    },
+    searchBoxFocused: { borderColor: theme.brand },
+    searchInput: { flex: 1, color: theme.text, fontSize: 14, fontWeight: "500", paddingVertical: 12 },
+    clearButton: { width: 32, height: 32, alignItems: "center", justifyContent: "center", borderRadius: 16 },
+    segmented: {
+      flexDirection: "row",
+      borderRadius: 12,
+      backgroundColor: theme.surfaceAlt,
+      padding: 4,
+      gap: 4,
+    },
+    segmentOption: {
+      flex: 1,
+      minHeight: 40,
+      borderRadius: 9,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    segmentOptionSelected: { backgroundColor: theme.brand },
+    segmentLabel: { color: theme.muted, fontSize: 14, fontWeight: "700" },
+    segmentLabelSelected: { color: theme.onBrand, fontWeight: "800" },
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      justifyContent: "space-between",
+      gap: 8,
+      marginTop: 4,
+    },
+    sectionTitle: { color: theme.text, fontSize: 15, fontWeight: "800" },
+    sectionCount: { color: theme.muted, fontSize: 12, fontWeight: "700" },
+    topicList: { gap: 11 },
+    topicCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      borderRadius: 15,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      paddingHorizontal: 14,
+      paddingVertical: 14,
+    },
+    topicIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: theme.brandSoft,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+    },
+    topicImage: { width: "100%", height: "100%" },
+    topicInfo: { flex: 1, minWidth: 0, gap: 4 },
+    topicTitle: { color: theme.text, fontSize: 14, lineHeight: 20, fontWeight: "800" },
+    topicDescription: { color: theme.muted, fontSize: 12, lineHeight: 18, fontWeight: "500" },
+    stateCard: {
+      borderRadius: 15,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      padding: 16,
+      gap: 10,
+    },
+    skeletonLine: { height: 12, borderRadius: 6, backgroundColor: theme.surfaceAlt },
+    skeletonShort: { width: "55%" },
+    stateTitle: { color: theme.text, fontSize: 14, fontWeight: "800" },
+    muted: { color: theme.muted, fontSize: 13, lineHeight: 20, fontWeight: "500" },
+    errorText: { color: theme.danger, fontSize: 13, lineHeight: 19, fontWeight: "600" },
+    retryButton: {
+      marginTop: 2,
+      minHeight: 44,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.brandBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    retryText: { color: theme.brand, fontSize: 14, fontWeight: "700" },
+    supportCard: {
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      padding: 16,
+      gap: 10,
+      marginTop: 6,
+    },
+    supportIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: theme.brandSoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    supportTitle: { color: theme.text, fontSize: 15, fontWeight: "800" },
+    supportDescription: { color: theme.muted, fontSize: 13, lineHeight: 20, fontWeight: "500" },
+    supportActions: { flexDirection: "row", gap: 10, marginTop: 2 },
+    primaryButton: {
+      flex: 1,
+      minHeight: 46,
+      borderRadius: 12,
+      backgroundColor: theme.brand,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       gap: 8,
     },
-    contactTitle: { color: theme.text, fontSize: 12, fontWeight: "800", letterSpacing: 0.5 },
-    contactValue: { color: theme.muted, fontSize: 12, lineHeight: 17, fontWeight: "600" },
-    faqHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
-    faqTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
-    faqCard: {
-      borderRadius: 16,
+    primaryButtonText: { color: theme.onBrand, fontSize: 14, fontWeight: "800" },
+    secondaryButton: {
+      flex: 1,
+      minHeight: 46,
+      borderRadius: 12,
       borderWidth: 1,
-      borderColor: theme.border,
-      paddingHorizontal: 14,
-      paddingVertical: 4,
+      borderColor: theme.brandBorder,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
     },
-    faqRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 13 },
-    faqQuestion: { flex: 1, color: theme.text, fontSize: 14, lineHeight: 20, fontWeight: "700" },
-    chevronOpen: { transform: [{ rotate: "180deg" }] },
-    faqAnswer: { color: theme.muted, fontSize: 13, lineHeight: 21, fontWeight: "500", paddingBottom: 13 },
-    faqDivider: { height: StyleSheet.hairlineWidth, backgroundColor: theme.divider },
+    secondaryButtonText: { color: theme.brand, fontSize: 14, fontWeight: "800" },
+    ownerCard: {
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.brandBorder,
+      backgroundColor: theme.brandSoft,
+      padding: 16,
+      gap: 8,
+    },
+    ownerTitle: { color: theme.text, fontSize: 15, fontWeight: "800" },
+    ownerDescription: { color: theme.muted, fontSize: 13, lineHeight: 20, fontWeight: "500" },
+    ownerButton: {
+      alignSelf: "flex-start",
+      minHeight: 40,
+      borderRadius: 10,
+      backgroundColor: theme.brand,
+      paddingHorizontal: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 2,
+    },
+    ownerButtonText: { color: theme.onBrand, fontSize: 13, fontWeight: "800" },
   });
