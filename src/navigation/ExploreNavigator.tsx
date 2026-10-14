@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import CustomerExploreScreen from "@/features/app/screens/CustomerExploreScreen";
 import VehicleDetailScreen from "@/features/vehicles/screens/VehicleDetailScreen";
@@ -14,34 +13,6 @@ import type { ExploreStackParamList } from "./types";
 import { useTheme } from "@/theme/useTheme";
 
 const Stack = createNativeStackNavigator<ExploreStackParamList>();
-
-function QuickBookHandler({
-  quickBook,
-  onConsumed,
-}: {
-  quickBook: QuickBookParams | null;
-  onConsumed?: () => void;
-}) {
-  const navigation = useNavigation<NativeStackNavigationProp<ExploreStackParamList>>();
-  const consumedRef = useRef<QuickBookParams | null>(null);
-  useEffect(() => {
-    if (!quickBook || consumedRef.current === quickBook) return;
-    consumedRef.current = quickBook;
-    if (quickBook.vehicleId) {
-      navigation.navigate("CreateBooking", {
-        vehicleId: quickBook.vehicleId,
-        startDate: quickBook.startAt ?? undefined,
-        endDate: quickBook.endAt ?? undefined,
-        promoCode: quickBook.promoCode ?? undefined,
-        pickupAddress: quickBook.pickupAddress ?? undefined,
-        returnAddress: quickBook.returnAddress ?? undefined,
-        customerNote: quickBook.customerNote ?? undefined,
-      });
-    }
-    onConsumed?.();
-  }, [quickBook, navigation, onConsumed]);
-  return null;
-}
 
 export default function ExploreNavigator({
   user,
@@ -59,9 +30,29 @@ export default function ExploreNavigator({
   onConsumedQuickBook?: () => void;
 }) {
   const { theme } = useTheme();
+  // Giữ navigation của stack để điều hướng đặt xe nhanh từ chatbot
+  // (handler phải ở ngoài Navigator — Navigator chỉ render Screen).
+  const exploreNavRef = useRef<NativeStackNavigationProp<ExploreStackParamList> | null>(null);
+  const consumedQuickBookRef = useRef<QuickBookParams | null>(null);
   useEffect(() => {
     onRouteChange?.("ExploreMain");
   }, [onRouteChange]);
+  useEffect(() => {
+    if (!quickBook || consumedQuickBookRef.current === quickBook || !exploreNavRef.current) return;
+    consumedQuickBookRef.current = quickBook;
+    if (quickBook.vehicleId) {
+      exploreNavRef.current.navigate("CreateBooking", {
+        vehicleId: quickBook.vehicleId,
+        startDate: quickBook.startAt ?? undefined,
+        endDate: quickBook.endAt ?? undefined,
+        promoCode: quickBook.promoCode ?? undefined,
+        pickupAddress: quickBook.pickupAddress ?? undefined,
+        returnAddress: quickBook.returnAddress ?? undefined,
+        customerNote: quickBook.customerNote ?? undefined,
+      });
+    }
+    onConsumedQuickBook?.();
+  }, [quickBook, onConsumedQuickBook]);
 
   return (
     <Stack.Navigator
@@ -76,13 +67,16 @@ export default function ExploreNavigator({
       }}
     >
       <Stack.Screen name="ExploreMain">
-        {({ navigation }) => (
-          <CustomerExploreScreen
-            user={user}
-            onAvatarPress={onAvatarPress}
-            onSearch={(params) => navigation.navigate("VehicleList", params)}
-          />
-        )}
+        {({ navigation }) => {
+          exploreNavRef.current = navigation;
+          return (
+            <CustomerExploreScreen
+              user={user}
+              onAvatarPress={onAvatarPress}
+              onSearch={(params) => navigation.navigate("VehicleList", params)}
+            />
+          );
+        }}
       </Stack.Screen>
       <Stack.Screen name="VehicleList" component={VehicleListScreen} />
       <Stack.Screen name="VehicleDetail">
@@ -91,7 +85,6 @@ export default function ExploreNavigator({
       <Stack.Screen name="CreateBooking">
         {(props) => <CreateBookingScreen {...props} onCreated={(bookingId) => onBookingCreated?.(bookingId)} />}
       </Stack.Screen>
-      <QuickBookHandler quickBook={quickBook ?? null} onConsumed={onConsumedQuickBook} />
     </Stack.Navigator>
   );
 }
