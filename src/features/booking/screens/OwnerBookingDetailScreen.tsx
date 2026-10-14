@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -37,14 +38,28 @@ import type { BookingResponse, InspectionReportResponse } from "@/features/booki
 import { bookingStatusLabel, formatDateTime, formatMoney } from "@/features/booking/utils/format";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
 import { createOwnerReview, hasReviewed } from "@/features/review/reviewService";
-import type { UploadFile } from "@/types/upload";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
+import { stampWebPhoto } from "@/features/booking/utils/stampWebPhoto";
 
 type DetailRoute = RouteProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
 type DetailNav = NativeStackNavigationProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
 
 const MAX_PHOTOS = 12;
+
+type ReportPhoto = {
+  id: string;
+  name: string;
+  mime: string;
+  /** URI gốc (native) để upload. */
+  uri: string;
+  /** Ảnh hiển thị: native là uri gốc, web là ảnh đã đóng dấu. */
+  previewUri: string;
+  /** ISO UTC, null khi native chưa có (backend check EXIF thay). */
+  capturedAt: string | null;
+  /** File đã đóng dấu trên web. */
+  uploadBlob?: Blob;
+};
 
 export default function OwnerBookingDetailScreen({
   route,
@@ -73,7 +88,9 @@ export default function OwnerBookingDetailScreen({
   const [fuel, setFuel] = useState("");
   const [damageNoted, setDamageNoted] = useState(false);
   const [damageNote, setDamageNote] = useState("");
-  const [photos, setPhotos] = useState<UploadFile[]>([]);
+  const [photos, setPhotos] = useState<ReportPhoto[]>([]);
+  const [picking, setPicking] = useState(false);
+  const [modalError, setModalError] = useState("");
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [receiptModal, setReceiptModal] = useState(false);
   const [receiptDamage, setReceiptDamage] = useState(false);
@@ -100,15 +117,19 @@ export default function OwnerBookingDetailScreen({
     void load();
   }, [load]);
 
-  async function runAction(key: string, fn: () => Promise<void>, success?: string) {
-    if (busy) return;
+  async function runAction(key: string, fn: () => Promise<void>, success?: string, onError?: (message: string) => void): Promise<boolean> {
+    if (busy) return false;
     setBusy(key);
     try {
       await fn();
       await load();
       if (success) Alert.alert("Thành công", success);
+      return true;
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Vui lòng thử lại sau."));
+      const message = getApiErrorMessage(err, "Vui lòng thử lại sau.");
+      onError?.(message);
+      Alert.alert("Thất bại", message);
+      return false;
     } finally {
       setBusy(null);
     }
@@ -129,7 +150,23 @@ export default function OwnerBookingDetailScreen({
     setReason("");
   }
 
+  function revokePreviews(list: ReportPhoto[]) {
+    list.forEach((photo) => {
+      if (photo.previewUri.startsWith("blob:")) {
+        try {
+          URL.revokeObjectURL(photo.previewUri);
+        } catch {
+          // URL xem trước có thể đã được thu hồi.
+        }
+      }
+    });
+  }
+
   async function pickPhotos() {
+    if (Platform.OS === "web") {
+      await pickPhotosWeb();
+      return;
+    }
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert("Cần quyền", "Cho phép truy cập thư viện ảnh để chụp biên bản.");
@@ -142,11 +179,73 @@ export default function OwnerBookingDetailScreen({
       selectionLimit: MAX_PHOTOS,
     });
     if (result.canceled) return;
-    const files: UploadFile[] = result.assets
+    const files: ReportPhoto[] = result.assets
       .filter((a) => a.uri)
       .slice(0, MAX_PHOTOS)
-      .map((a) => ({ uri: a.uri!, name: a.fileName ?? "photo.jpg", type: a.mimeType ?? "image/jpeg" }));
+      .map((a, index) => ({
+        id: `${Date.now()}-${index}`,
+        name: a.fileName ?? "photo.jpg",
+        mime: a.mimeType ?? "image/jpeg",
+        uri: a.uri ?? "",
+        previewUri: a.uri ?? "",
+        capturedAt: null,
+      }));
     setPhotos(files);
+    setModalError("");
+  }
+
+  /** Web không có camera native: đóng dấu giờ hệ thống ngay lúc chọn để xem trước. */
+  async function pickPhotosWeb() {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        quality: 1,
+        selectionLimit: MAX_PHOTOS,
+      });
+      if (result.canceled) return;
+      setPicking(true);
+      setModalError("");
+      const code = booking?.bookingCode ?? "";
+      const kind = reportModal?.type === "CheckIn" ? "CHECK-IN" : "CHECK-OUT";
+      const stamped: ReportPhoto[] = [];
+      let skipped = 0;
+      const assets = result.assets.slice(0, MAX_PHOTOS);
+      for (const [index, asset] of assets.entries()) {
+        try {
+          const source: Blob | null =
+            asset.file ?? (await fetch(asset.uri).then((res) => res.blob()).catch(() => null));
+          if (!source) {
+            skipped += 1;
+            continue;
+          }
+          const stampedPhoto = await stampWebPhoto(source, [`MoveVN | ${code} | ${kind}`]);
+          const name = `${(asset.fileName ?? "photo.jpg").replace(/\.[^.]+$/, "")}-stamped.jpg`;
+          stamped.push({
+            id: `${Date.now()}-${index}`,
+            name,
+            mime: "image/jpeg",
+            uri: asset.uri ?? stampedPhoto.previewUrl,
+            previewUri: stampedPhoto.previewUrl,
+            capturedAt: stampedPhoto.capturedAt,
+            uploadBlob: new File([stampedPhoto.blob], name, { type: "image/jpeg" }),
+          });
+        } catch {
+          skipped += 1;
+        }
+      }
+      if (stamped.length === 0) {
+        setModalError("Không đóng dấu được ảnh. Vui lòng thử lại.");
+        return;
+      }
+      revokePreviews(photos);
+      setPhotos(stamped);
+      if (skipped > 0) setModalError(`${skipped} ảnh lỗi đã được bỏ qua.`);
+    } catch {
+      setModalError("Không chọn được ảnh. Vui lòng thử lại.");
+    } finally {
+      setPicking(false);
+    }
   }
 
   async function submitReport() {
@@ -160,15 +259,16 @@ export default function OwnerBookingDetailScreen({
       fuelLevel: fuel.trim() || undefined,
       damageNoted,
       damageDescription: damageNote.trim() || undefined,
-      images: photos,
+      images: photos.map((p) => p.uploadBlob ?? { uri: p.uri, name: p.name, type: p.mime }),
+      capturedAts: photos.map((p) => p.capturedAt),
     };
     if (input.odometerKm != null && (!Number.isFinite(input.odometerKm) || input.odometerKm < 0)) {
       Alert.alert("Sai số km", "Vui lòng nhập số km hợp lệ.");
       return;
     }
     const type = reportModal.type;
-    setReportModal(null);
-    await runAction(
+    setModalError("");
+    const ok = await runAction(
       "report",
       () =>
         (type === "CheckIn"
@@ -176,7 +276,11 @@ export default function OwnerBookingDetailScreen({
           : createOwnerCheckOutReport(bookingId, input)
         ).then(() => undefined),
       "Đã lập biên bản, chờ khách xác nhận.",
+      (message) => setModalError(message),
     );
+    if (!ok) return;
+    setReportModal(null);
+    revokePreviews(photos);
     setOdometer("");
     setFuel("");
     setDamageNoted(false);
@@ -422,15 +526,25 @@ export default function OwnerBookingDetailScreen({
                   style={[styles.input, styles.multiline]}
                 />
               )}
-              <Pressable onPress={pickPhotos} style={styles.photoButton}>
+              <Pressable onPress={() => void pickPhotos()} disabled={picking} style={styles.photoButton}>
                 <Text style={styles.photoButtonText}>
-                  {photos.length === 0 ? "Chọn ảnh (ít nhất 1, tối đa 12)" : `Đã chọn ${photos.length} ảnh — bấm để chọn lại`}
+                  {picking
+                    ? "Đang gắn ngày giờ lên ảnh…"
+                    : photos.length === 0
+                      ? "Chọn ảnh (ít nhất 1, tối đa 12)"
+                      : `Đã chọn ${photos.length} ảnh — bấm để chọn lại`}
                 </Text>
               </Pressable>
+              {modalError ? <Text style={styles.formError}>{modalError}</Text> : null}
               {photos.length > 0 && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbs}>
-                  {photos.map((p, i) => (
-                    <Image key={`${p.uri}-${i}`} source={{ uri: p.uri }} style={styles.thumb} />
+                  {photos.map((p) => (
+                    <View key={p.id} style={styles.thumbWrap}>
+                      <Image source={{ uri: p.previewUri }} style={styles.thumb} />
+                      <Text style={styles.thumbTime}>
+                        {p.capturedAt ? formatDateTime(p.capturedAt) : "Chưa có giờ chụp"}
+                      </Text>
+                    </View>
                   ))}
                 </ScrollView>
               )}
@@ -496,11 +610,14 @@ export default function OwnerBookingDetailScreen({
   );
 
   function resetReportForm() {
+    revokePreviews(photos);
     setOdometer("");
     setFuel("");
     setDamageNoted(false);
     setDamageNote("");
     setPhotos([]);
+    setPicking(false);
+    setModalError("");
   }
 }
 
@@ -623,8 +740,11 @@ const createStyles = (theme: Theme) =>
       alignItems: "center",
     },
     photoButtonText: { color: theme.brand, fontSize: 13, fontWeight: "700" },
+    formError: { color: theme.danger, fontSize: 13, fontWeight: "600" },
     thumbs: { flexDirection: "row", marginTop: 8 },
     thumb: { width: 72, height: 72, borderRadius: 8, marginRight: 8, backgroundColor: theme.surfaceAlt },
+    thumbWrap: { marginRight: 8, gap: 2, maxWidth: 80 },
+    thumbTime: { color: theme.muted, fontSize: 10 },
     reportBlock: {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.border,

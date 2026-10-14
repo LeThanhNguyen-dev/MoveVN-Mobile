@@ -65,8 +65,9 @@ function buildInspectionForm(input: InspectionFormInput): FormData {
   formData.append("damageNoted", String(input.damageNoted));
   if (input.damageDescription) formData.append("damageDescription", input.damageDescription);
   input.images.forEach((file) => appendUploadFile(formData, "images", file));
-  input.capturedAts?.forEach((capturedAt) => {
-    if (capturedAt) formData.append("capturedAts", capturedAt);
+  // Luôn gửi đủ 1 capturedAts cho mỗi ảnh (rỗng nếu không có) để backend map đúng thứ tự.
+  input.images.forEach((_, index) => {
+    formData.append("capturedAts", input.capturedAts?.[index] ?? "");
   });
   return formData;
 }
