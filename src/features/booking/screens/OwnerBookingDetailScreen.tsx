@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Image,
   Modal,
+  PixelRatio,
   Platform,
   Pressable,
   ScrollView,
@@ -41,6 +42,10 @@ import { createOwnerReview, hasReviewed } from "@/features/review/reviewService"
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { stampWebPhoto } from "@/features/booking/utils/stampWebPhoto";
+import { captureRef } from "react-native-view-shot";
+import { inspectionWatermark } from "@/features/booking/bookingDisplay";
+import { deleteInspectionPhoto, stampedInspectionPhoto } from "@/features/booking/inspectionPhoto";
+import { getServerTimeISO } from "@/features/booking/utils/serverTime";
 
 type DetailRoute = RouteProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
 type DetailNav = NativeStackNavigationProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
@@ -51,15 +56,19 @@ type ReportPhoto = {
   id: string;
   name: string;
   mime: string;
-  /** URI gốc (native) để upload. */
+  /** URI upload: native là ảnh đã đóng dấu, web là preview blob. */
   uri: string;
-  /** Ảnh hiển thị: native là uri gốc, web là ảnh đã đóng dấu. */
+  /** Ảnh hiển thị (luôn là bản đã đóng dấu). */
   previewUri: string;
-  /** ISO UTC, null khi native chưa có (backend check EXIF thay). */
+  /** ISO UTC. */
   capturedAt: string | null;
   /** File đã đóng dấu trên web. */
   uploadBlob?: Blob;
+  /** File tạm do app tạo (native) — được xóa khi gỡ/loại. */
+  ownedUri?: string;
 };
+
+type PendingStamp = { uri: string; width: number; height: number };
 
 export default function OwnerBookingDetailScreen({
   route,
@@ -91,6 +100,12 @@ export default function OwnerBookingDetailScreen({
   const [photos, setPhotos] = useState<ReportPhoto[]>([]);
   const [picking, setPicking] = useState(false);
   const [modalError, setModalError] = useState("");
+  const [stampQueue, setStampQueue] = useState<PendingStamp[]>([]);
+  const [stampingItem, setStampingItem] = useState<(PendingStamp & { capturedAt: string }) | null>(null);
+  const [stampLoaded, setStampLoaded] = useState(false);
+  const [stampLaidOut, setStampLaidOut] = useState(false);
+  const stampView = useRef<View>(null);
+  const stampCounter = useRef(0);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [receiptModal, setReceiptModal] = useState(false);
   const [receiptDamage, setReceiptDamage] = useState(false);
@@ -159,12 +174,17 @@ export default function OwnerBookingDetailScreen({
           // URL xem trước có thể đã được thu hồi.
         }
       }
+      if (photo.ownedUri) deleteInspectionPhoto(photo.ownedUri);
     });
   }
 
   async function pickPhotos() {
     if (Platform.OS === "web") {
       await pickPhotosWeb();
+      return;
+    }
+    if (photos.length >= MAX_PHOTOS) {
+      setModalError(`Đã đủ ${MAX_PHOTOS} ảnh. Xóa bớt ảnh rồi thêm tiếp.`);
       return;
     }
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -179,30 +199,103 @@ export default function OwnerBookingDetailScreen({
       selectionLimit: MAX_PHOTOS,
     });
     if (result.canceled) return;
-    const files: ReportPhoto[] = result.assets
-      .filter((a) => a.uri)
-      .slice(0, MAX_PHOTOS)
-      .map((a, index) => ({
-        id: `${Date.now()}-${index}`,
-        name: a.fileName ?? "photo.jpg",
-        mime: a.mimeType ?? "image/jpeg",
-        uri: a.uri ?? "",
-        previewUri: a.uri ?? "",
-        capturedAt: null,
-      }));
-    setPhotos(files);
+    // Native cũng đóng dấu + giờ hệ thống như web: xếp hàng chờ composition ẩn xử lý.
     setModalError("");
+    try {
+      const capturedAt = await getServerTimeISO();
+      batchCapturedAt.current = capturedAt;
+      const pending: PendingStamp[] = result.assets
+        .filter((a) => a.uri && (a.width ?? 0) > 0 && (a.height ?? 0) > 0)
+        .slice(0, MAX_PHOTOS)
+        .map((a) => ({ uri: a.uri ?? "", width: a.width ?? 0, height: a.height ?? 0 }));
+      if (pending.length === 0) {
+        setModalError("Không đọc được ảnh nào. Vui lòng thử lại.");
+        return;
+      }
+      setStampQueue((prev) => [...prev, ...pending].slice(0, MAX_PHOTOS * 2));
+    } catch {
+      setModalError("Không chọn được ảnh. Vui lòng thử lại.");
+    }
   }
+
+  const batchCapturedAt = useRef("");
+  const nativeStamping = stampingItem !== null || stampQueue.length > 0;
+  const stampScale = stampingItem ? Math.min(1, 1600 / Math.max(stampingItem.width, stampingItem.height)) : 1;
+  const stampExportWidth = stampingItem ? Math.max(1, Math.round(stampingItem.width * stampScale)) / Math.max(1, PixelRatio.get()) : 0;
+  const stampExportHeight = stampingItem ? Math.max(1, Math.round(stampingItem.height * stampScale)) / Math.max(1, PixelRatio.get()) : 0;
+  const stampFontSize = Math.max(10, Math.round(stampExportWidth * 0.024));
+
+  // Xử lý tuần tự từng ảnh native: composition ẩn -> captureRef -> file đã đóng dấu.
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    if (stampingItem || stampQueue.length === 0) return;
+    const [next, ...rest] = stampQueue;
+    if (!next) return;
+    setStampQueue(rest);
+    setStampLoaded(false);
+    setStampLaidOut(false);
+    setStampingItem({ ...next, capturedAt: batchCapturedAt.current });
+  }, [stampQueue, stampingItem]);
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    if (!stampingItem || !stampLoaded || !stampLaidOut) return;
+    let cancelled = false;
+    const scale = Math.min(1, 1600 / Math.max(stampingItem.width, stampingItem.height));
+    const outWidth = Math.max(1, Math.round(stampingItem.width * scale));
+    const outHeight = Math.max(1, Math.round(stampingItem.height * scale));
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(async () => {
+        if (cancelled) return;
+        let uri: string | null = null;
+        try {
+          uri = await captureRef(stampView, {
+            format: "jpg",
+            quality: 0.9,
+            result: "tmpfile",
+            width: outWidth,
+            height: outHeight,
+            useRenderInContext: Platform.OS === "ios",
+          });
+          const photo = stampedInspectionPhoto(uri, stampingItem.capturedAt);
+          uri = null;
+          if (cancelled) {
+            deleteInspectionPhoto(photo.uri);
+            return;
+          }
+          stampCounter.current += 1;
+          setPhotos((prev) =>
+            [
+              ...prev,
+              {
+                id: `${photo.id}-${stampCounter.current}`,
+                name: `inspection-${photo.id}.jpg`,
+                mime: "image/jpeg",
+                uri: photo.uri,
+                previewUri: photo.uri,
+                capturedAt: photo.capturedAt,
+                ownedUri: photo.uri,
+              },
+            ].slice(0, MAX_PHOTOS),
+          );
+          setModalError("");
+        } catch {
+          if (uri) deleteInspectionPhoto(uri);
+          if (!cancelled) setModalError("Không đóng dấu được ảnh. Vui lòng thử lại.");
+        } finally {
+          if (!cancelled) setStampingItem(null);
+        }
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [stampingItem, stampLoaded, stampLaidOut]);
 
   function removeReportPhoto(id: string) {
     const target = photos.find((p) => p.id === id);
-    if (target?.previewUri.startsWith("blob:")) {
-      try {
-        URL.revokeObjectURL(target.previewUri);
-      } catch {
-        // URL xem trước có thể đã được thu hồi.
-      }
-    }
+    if (target) revokePreviews([target]);
     setPhotos(photos.filter((p) => p.id !== id));
     setModalError("");
   }
@@ -553,9 +646,9 @@ export default function OwnerBookingDetailScreen({
                   style={[styles.input, styles.multiline]}
                 />
               )}
-              <Pressable onPress={() => void pickPhotos()} disabled={picking} style={styles.photoButton}>
+              <Pressable onPress={() => void pickPhotos()} disabled={picking || nativeStamping} style={styles.photoButton}>
                 <Text style={styles.photoButtonText}>
-                  {picking
+                  {picking || nativeStamping
                     ? "Đang gắn ngày giờ lên ảnh…"
                     : photos.length === 0
                       ? "Chọn ảnh (ít nhất 1, tối đa 12)"
@@ -585,6 +678,40 @@ export default function OwnerBookingDetailScreen({
                   ))}
                 </ScrollView>
               )}
+              {/* Composition ẩn để đóng dấu ảnh gallery trên native (web dùng canvas). */}
+              {stampingItem ? (
+                <View pointerEvents="none" style={styles.exportContainer}>
+                  <View
+                    ref={stampView}
+                    collapsable={false}
+                    onLayout={() => setStampLaidOut(true)}
+                    style={{ width: stampExportWidth, height: stampExportHeight, backgroundColor: "#000" }}
+                  >
+                    <Image
+                      source={{ uri: stampingItem.uri }}
+                      fadeDuration={0}
+                      onLoad={() => setStampLoaded(true)}
+                      onError={() => {
+                        setModalError("Không đọc được ảnh. Vui lòng thử lại.");
+                        setStampingItem(null);
+                      }}
+                      style={StyleSheet.absoluteFill}
+                      resizeMode="stretch"
+                    />
+                    <View style={styles.stampPill}>
+                      {inspectionWatermark(booking?.bookingCode ?? "", reportModal?.type ?? "CheckIn", stampingItem.capturedAt).map((line) => (
+                        <Text
+                          key={line}
+                          allowFontScaling={false}
+                          style={{ color: "#fff", fontSize: stampFontSize, lineHeight: stampFontSize * 1.45, fontWeight: "700" }}
+                        >
+                          {line}
+                        </Text>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              ) : null}
             </ScrollView>
             <View style={styles.modalActions}>
               <Pressable onPress={() => setReportModal(null)} style={styles.ghostButton}>
@@ -655,6 +782,8 @@ export default function OwnerBookingDetailScreen({
     setPhotos([]);
     setPicking(false);
     setModalError("");
+    setStampQueue([]);
+    setStampingItem(null);
   }
 }
 
@@ -792,6 +921,17 @@ const createStyles = (theme: Theme) =>
       justifyContent: "center",
     },
     thumbRemoveText: { color: "#fff", fontSize: 12, fontWeight: "800" },
+    exportContainer: { position: "absolute", left: -10000, top: 0 },
+    stampPill: {
+      position: "absolute",
+      right: 12,
+      bottom: 12,
+      backgroundColor: "rgba(0,0,0,0.62)",
+      paddingHorizontal: 10,
+      paddingVertical: 7,
+      borderRadius: 10,
+      maxWidth: "86%",
+    },
     thumbWrap: { marginRight: 8, gap: 2, maxWidth: 80 },
     thumbTime: { color: theme.muted, fontSize: 10 },
     reportBlock: {
