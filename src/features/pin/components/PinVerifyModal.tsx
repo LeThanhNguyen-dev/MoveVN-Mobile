@@ -21,6 +21,8 @@ export type PinVerifyModalProps = {
   onForgotPin?: () => void;
   lockoutSeconds: number | null;
   remainingAttempts: number | null;
+  /** Mô tả mục đích nhập PIN; mặc định là xem giấy tờ. */
+  purposeDescription?: string;
 };
 
 export default function PinVerifyModal({
@@ -31,6 +33,7 @@ export default function PinVerifyModal({
   onForgotPin,
   lockoutSeconds,
   remainingAttempts,
+  purposeDescription,
 }: PinVerifyModalProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -124,7 +127,7 @@ export default function PinVerifyModal({
                 <Text style={styles.title}>Nhập mã PIN</Text>
               </View>
               <Text style={styles.description}>
-                Mã PIN dùng để hiển thị chi tiết giấy tờ {documentLabel} của bạn.
+                {purposeDescription ?? `Mã PIN dùng để hiển thị chi tiết giấy tờ ${documentLabel} của bạn.`}
               </Text>
 
               <PinDigitInputs

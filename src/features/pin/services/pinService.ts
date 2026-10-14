@@ -8,6 +8,7 @@ import type {
   PinForgotResetRequest,
   PinSetupRequest,
   PinStatusResponse,
+  PinVerifyRequest,
   PinVerifyViewDocumentRequest,
   ViewDocumentPlaintextResponse,
 } from "@/features/pin/types";
@@ -77,6 +78,18 @@ export async function requestSetupPinOtp(): Promise<void> {
 export async function changePin(payload: PinChangeRequest): Promise<void> {
   try {
     const { data } = await apiClient.post<ApiResponse<null>>(endpoints.userSecurity.pinChange, payload);
+    unwrap(data);
+  } catch (error) {
+    throw toPinError(error);
+  }
+}
+
+export async function verifyPin(payload: PinVerifyRequest): Promise<void> {
+  try {
+    const { data } = await apiClient.post<ApiResponse<null>>(
+      endpoints.userSecurity.pinVerify,
+      payload,
+    );
     unwrap(data);
   } catch (error) {
     throw toPinError(error);
