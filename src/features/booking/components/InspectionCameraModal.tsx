@@ -104,7 +104,7 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
   const pixelRatio = Math.max(1, PixelRatio.get());
   const exportWidth = raw ? raw.width / pixelRatio : 0;
   const exportHeight = raw ? raw.height / pixelRatio : 0;
-  const fontSize = Math.max(10, Math.round(exportWidth * 0.027));
+  const fontSize = Math.max(10, Math.round(exportWidth * 0.024));
 
   return <Modal visible animationType="slide" onRequestClose={() => { if (!busy) onClose(); }}>
     <SafeAreaView style={styles.screen}>
@@ -124,8 +124,8 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
           <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.exportContainer}>
             <View ref={stampView} collapsable={false} onLayout={() => setLaidOut(true)} style={{ width: exportWidth, height: exportHeight, backgroundColor: "#000" }}>
               <Image source={{ uri: raw.uri }} fadeDuration={0} onLoad={() => setLoaded(true)} onError={() => { setError("Không đọc được ảnh. Vui lòng chụp lại."); setBusy(false); captureLock.current = false; }} style={StyleSheet.absoluteFill} resizeMode="stretch" />
-              <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "rgba(0,0,0,0.72)", padding: fontSize * 0.65 }}>
-                {watermark.map((line) => <Text key={line} allowFontScaling={false} style={{ color: "#fff", fontSize, lineHeight: fontSize * 1.4, fontWeight: "700" }}>{line}</Text>)}
+              <View style={{ position: "absolute", right: 12, bottom: 12, backgroundColor: "rgba(0,0,0,0.62)", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10, maxWidth: "86%" }}>
+                {watermark.map((line) => <Text key={line} allowFontScaling={false} style={{ color: "#fff", fontSize, lineHeight: fontSize * 1.45, fontWeight: "700" }}>{line}</Text>)}
               </View>
             </View>
           </View>
