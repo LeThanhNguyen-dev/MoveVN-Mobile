@@ -313,7 +313,15 @@ export default function AccountTabScreen({ onProfilePress, onWalletPress, user }
   }
 
   if (showSupport) {
-    return <SupportCenterScreen onBack={() => setShowSupport(false)} />;
+    return (
+      <SupportCenterScreen
+        onBack={() => setShowSupport(false)}
+        onBecomeOwner={() => {
+          setShowSupport(false);
+          handleRoleAction();
+        }}
+      />
+    );
   }
 
   if (showChangePassword) {

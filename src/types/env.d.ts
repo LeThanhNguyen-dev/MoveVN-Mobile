@@ -4,3 +4,8 @@ declare namespace NodeJS {
     EXPO_PUBLIC_CARTO_API_KEY?: string;
   }
 }
+
+declare module "*.png" {
+  const value: number;
+  export default value;
+}
