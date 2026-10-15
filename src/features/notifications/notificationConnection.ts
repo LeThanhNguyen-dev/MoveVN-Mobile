@@ -1,5 +1,6 @@
 import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import { getAuthUser, getSessionGeneration, getToken } from "@/features/auth/hooks/useAuth";
+import { getHubAccessToken, startHubWithAuthRecovery } from "@/services/hubStart";
 import { useNotificationStore } from "@/features/notifications/useNotifications";
 import type { NotificationCreatedPayload, NotificationUnreadCountPayload } from "@/features/notifications/types";
 import { getApiBaseUrl } from "@/services/apiClient";
@@ -35,7 +36,8 @@ export async function startNotificationConnection() {
     if (!connection) {
       const created = new HubConnectionBuilder()
         .withUrl(getNotificationHubUrl(), {
-          accessTokenFactory: () => getToken() ?? "",
+          // Refresh trước khi token hết hạn để negotiate không bị 401.
+          accessTokenFactory: () => getHubAccessToken(),
         })
         .withAutomaticReconnect()
         .configureLogging(LogLevel.Warning)
@@ -70,20 +72,21 @@ export async function startNotificationConnection() {
     }
     const active = connection;
     useNotificationStore.setState({ connectionStatus: "connecting" });
-    try {
-      await active.start();
-      if (getAuthUser()?.userId !== userId || generation !== getSessionGeneration()) {
-        connection = null;
-        connectionUserId = null;
-        await active.stop();
-        return;
-      }
-      useNotificationStore.setState({ connectionStatus: "connected" });
-      void refreshNotificationCount();
-    } catch (error) {
+    // Negotiate 401 (token vừa hết hạn) thì refresh rồi thử lại 1 lần;
+    // phiên chết hẳn thì đăng xuất thay vì log lỗi lặp lại.
+    const started = await startHubWithAuthRecovery("notifications", userId, () => active.start());
+    if (!started) {
       if (getAuthUser()?.userId === userId && generation === getSessionGeneration()) useNotificationStore.setState({ connectionStatus: "offline" });
-      throw error;
+      return;
     }
+    if (getAuthUser()?.userId !== userId || generation !== getSessionGeneration()) {
+      connection = null;
+      connectionUserId = null;
+      await active.stop();
+      return;
+    }
+    useNotificationStore.setState({ connectionStatus: "connected" });
+    void refreshNotificationCount();
   });
 }
 

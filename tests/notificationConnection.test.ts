@@ -5,23 +5,28 @@ const mocks = vi.hoisted(() => ({
     state: string; start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>;
     handlers: Map<string, (payload: unknown) => void>;
     reconnecting?: () => void; reconnected?: () => void; closed?: () => void;
-    tokenFactory?: () => string;
+    tokenFactory?: () => string | Promise<string>;
   }>,
-  nextStart: vi.fn(), count: vi.fn(), list: vi.fn(),
+  nextStart: vi.fn(), count: vi.fn(), list: vi.fn(), refresh: vi.fn(), clear: vi.fn(),
 }));
 vi.mock("@/features/auth/hooks/useAuth", () => ({
   getToken: () => mocks.userId ? mocks.token : null,
   getAuthUser: () => mocks.userId ? { userId: mocks.userId } : null,
   getSessionGeneration: () => mocks.generation,
+  clearSession: (...args: unknown[]) => mocks.clear(...args),
+  useAuthStore: { getState: () => ({ token: undefined }) },
 }));
-vi.mock("@/services/apiClient", () => ({ getApiBaseUrl: () => "http://10.0.2.2:5171" }));
+vi.mock("@/services/apiClient", () => ({
+  getApiBaseUrl: () => "http://10.0.2.2:5171",
+  refreshAuthSession: (...args: unknown[]) => mocks.refresh(...args),
+}));
 vi.mock("@/features/notifications/notificationActions", () => ({ refreshNotificationCount: mocks.count, loadNotificationPage: mocks.list }));
 vi.mock("@microsoft/signalr", () => ({
   HubConnectionState: { Disconnected: "Disconnected", Connected: "Connected", Connecting: "Connecting", Reconnecting: "Reconnecting" },
   LogLevel: { Warning: 3 },
   HubConnectionBuilder: class {
-    tokenFactory?: () => string;
-    withUrl(_url: string, options: { accessTokenFactory: () => string }) { this.tokenFactory = options.accessTokenFactory; return this; }
+    tokenFactory?: () => string | Promise<string>;
+    withUrl(_url: string, options: { accessTokenFactory: () => string | Promise<string> }) { this.tokenFactory = options.accessTokenFactory; return this; }
     withAutomaticReconnect() { return this; }
     configureLogging() { return this; }
     build() {
@@ -56,6 +61,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   mocks.userId = 1; mocks.generation = 0; mocks.token = "first-token"; mocks.connections = [];
   mocks.nextStart.mockReset().mockResolvedValue(undefined);
+  mocks.refresh.mockReset().mockImplementation(() => Promise.resolve({ token: { accessToken: mocks.token } }));
   store.getState().reset(); store.getState().activate(1);
 });
 
@@ -64,15 +70,14 @@ it("serializes concurrent starts and uses the latest access token without recrea
   expect(mocks.connections).toHaveLength(1);
   expect(mocks.connections[0]?.start).toHaveBeenCalledTimes(1);
   mocks.token = "refreshed-token";
-  expect(mocks.connections[0]?.tokenFactory?.()).toBe("refreshed-token");
+  await expect(mocks.connections[0]?.tokenFactory?.()).resolves.toBe("refreshed-token");
   expect(store.getState().connectionStatus).toBe("connected");
 });
 
-it("retries an initially failed start on the next foreground sync", async () => {
+it("recovers an initially failed start by refreshing once and retrying", async () => {
   mocks.nextStart.mockRejectedValueOnce(new Error("offline"));
-  await expect(startNotificationConnection()).rejects.toThrow("offline");
-  expect(store.getState().connectionStatus).toBe("offline");
   await startNotificationConnection();
+  expect(mocks.refresh).toHaveBeenCalledTimes(1);
   expect(mocks.connections[0]?.start).toHaveBeenCalledTimes(2);
   expect(store.getState().connectionStatus).toBe("connected");
 });
