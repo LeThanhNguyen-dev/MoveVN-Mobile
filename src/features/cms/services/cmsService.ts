@@ -3,8 +3,13 @@ import { endpoints } from "@/services/endpoints";
 import type { ApiResponse } from "@/features/auth/types";
 import type { CmsPageResponse, CmsPageNavigationItem } from "@/features/cms/types";
 
-export async function getCmsPageNavigation() {
-  const res = await apiClient.get<ApiResponse<CmsPageNavigationItem[]>>(endpoints.publicCmsPages.navigation);
+export async function getCmsPageNavigation(contentType?: string, category?: string) {
+  const res = await apiClient.get<ApiResponse<CmsPageNavigationItem[]>>(endpoints.publicCmsPages.navigation, {
+    params: {
+      ...(contentType ? { contentType } : {}),
+      ...(category ? { category } : {}),
+    },
+  });
   return res.data.data ?? [];
 }
 

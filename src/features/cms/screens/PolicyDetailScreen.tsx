@@ -1,68 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft } from "lucide-react-native";
+import type { ImageSource } from "expo-image";
+import { ArrowLeft, ChevronDown } from "lucide-react-native";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import CmsHero, { CMS_FALLBACK_BANNER_IMAGE } from "@/features/cms/components/CmsHero";
+import CmsHtmlView from "@/features/cms/components/CmsHtmlView";
+import ImageViewer from "@/features/cms/components/ImageViewer";
 import { getCmsPageBySlug } from "@/features/cms/services/cmsService";
-import type { CmsPageResponse } from "@/features/cms/types";
+import type { CmsPageResponse, CmsSection } from "@/features/cms/types";
+import { parseCmsSections } from "@/features/cms/utils/content";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
-
-export type PolicySection = {
-  id: string;
-  title: string;
-  content: string[];
-};
-
-function generateSectionId(title: string, fallback: number) {
-  const base = title
-    .toLowerCase()
-    .replace(/đ/g, "d")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-  return base || `section-${fallback}`;
-}
-
-export function parsePolicySections(content: string): PolicySection[] | null {
-  try {
-    const parsed: unknown = JSON.parse(content);
-    if (!Array.isArray(parsed) || parsed.length === 0) return null;
-    const ids = new Set<string>();
-    const sections: PolicySection[] = [];
-    parsed.forEach((item: unknown, index: number) => {
-      if (!item || typeof item !== "object") return;
-      const record = item as Record<string, unknown>;
-      const title = String(record.title ?? record.Title ?? "");
-      let id = String(record.id ?? record.Id ?? "");
-      if (!id || ids.has(id)) id = generateSectionId(title, index + 1);
-      ids.add(id);
-      const raw = record.content ?? record.Content ?? [];
-      const list = Array.isArray(raw) ? raw.map((line) => String(line ?? "")) : [String(raw ?? "")];
-      sections.push({ id, title, content: list });
-    });
-    return sections.length > 0 ? sections : null;
-  } catch {
-    return null;
-  }
-}
-
-export function htmlToText(html: string): string {
-  return html
-    .replace(/<\s*br\s*\/?>/gi, "\n")
-    .replace(/<\s*\/\s*(p|div|h[1-6]|tr)\s*>/gi, "\n")
-    .replace(/<\s*li[^>]*>/gi, "• ")
-    .replace(/<\s*\/\s*li\s*>/gi, "\n")
-    .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join("\n");
-}
 
 function formatDate(value?: string | null) {
   if (!value) return "";
@@ -71,11 +18,20 @@ function formatDate(value?: string | null) {
   return date.toLocaleDateString("vi-VN");
 }
 
-export default function PolicyDetailScreen({ onBack, slug }: { onBack: () => void; slug: string }) {
+export default function PolicyDetailScreen({
+  onBack,
+  slug,
+  groupLabel,
+}: {
+  onBack: () => void;
+  slug: string;
+  groupLabel?: string;
+}) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [page, setPage] = useState<CmsPageResponse | null | undefined>(undefined);
   const [error, setError] = useState("");
+  const [viewerSource, setViewerSource] = useState<ImageSource | null>(null);
 
   const load = useCallback(async () => {
     setError("");
@@ -93,12 +49,14 @@ export default function PolicyDetailScreen({ onBack, slug }: { onBack: () => voi
   }, [load]);
 
   const sections = useMemo(
-    () => (page?.content ? parsePolicySections(page.content) : null),
+    () => (page?.content ? parseCmsSections(page.content) : []),
     [page],
   );
-  const plainText = useMemo(
-    () => (page?.content && !sections ? htmlToText(page.content) : ""),
-    [page, sections],
+  const updatedLabel = formatDate(page?.updatedAt);
+  // Mirrors web FALLBACK_BANNER: pages without their own banner use 123.png.
+  const bannerSource = useMemo(
+    () => (page?.bannerImageUrl ? { uri: page.bannerImageUrl } : CMS_FALLBACK_BANNER_IMAGE),
+    [page?.bannerImageUrl],
   );
 
   return (
@@ -108,70 +66,151 @@ export default function PolicyDetailScreen({ onBack, slug }: { onBack: () => voi
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
         <Text numberOfLines={1} style={styles.topBarTitle}>
-          {page?.title || "Điều khoản & Chính sách"}
+          {groupLabel || "Điều khoản & Chính sách"}
         </Text>
         <View style={styles.topBarSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {page === undefined ? (
-          <View style={styles.card}>
+          <View style={styles.stateCard}>
             <Text style={styles.muted}>Đang tải nội dung...</Text>
           </View>
         ) : error ? (
-          <View style={styles.card}>
+          <View style={styles.stateCard}>
             <Text style={styles.error}>{error}</Text>
             <Pressable accessibilityRole="button" onPress={() => { void load(); }} style={styles.retryButton}>
               <Text style={styles.retryText}>Thử lại</Text>
             </Pressable>
           </View>
         ) : page === null ? (
-          <View style={styles.card}>
+          <View style={styles.stateCard}>
             <Text style={styles.muted}>Không tìm thấy nội dung.</Text>
           </View>
         ) : (
           <>
-            <View style={styles.heading}>
-              <Text style={styles.title}>{page.title}</Text>
-              {formatDate(page.updatedAt) ? (
-                <Text style={styles.updated}>Cập nhật lần cuối: {formatDate(page.updatedAt)}</Text>
-              ) : null}
-            </View>
-            {sections && sections.length > 0
-              ? sections.map((section) => (
-                <View key={section.id} style={styles.card}>
-                  {section.title ? <Text style={styles.sectionTitle}>{section.title}</Text> : null}
-                  <View style={styles.sectionBody}>
-                    {section.content.map((line, index) => (
-                      // eslint-disable-next-line react/no-array-index-key
-                      <PolicyParagraph key={index} text={line} />
-                    ))}
-                  </View>
-                </View>
-              ))
-              : (
-                <View style={styles.card}>
-                  <Text style={styles.paragraph}>{plainText}</Text>
-                </View>
-              )}
+            <CmsHero
+              meta={updatedLabel ? `Cập nhật ${updatedLabel}` : undefined}
+              onPress={() => setViewerSource(bannerSource)}
+              source={bannerSource}
+              title={page.title}
+            />
+
+            {sections.length === 0 ? (
+              <View style={styles.stateCard}>
+                <Text style={styles.muted}>Nội dung đang được cập nhật.</Text>
+              </View>
+            ) : (
+              <View style={styles.body}>
+                {sections.map((section, index) => (
+                  <ReaderSection
+                    key={section.id}
+                    onImagePress={(url) => setViewerSource({ uri: url })}
+                    section={section}
+                    // First section opens by default (mirrors web accordion UX).
+                    defaultExpanded={index === 0}
+                  />
+                ))}
+              </View>
+            )}
           </>
         )}
       </ScrollView>
+
+      <ImageViewer
+        onClose={() => setViewerSource(null)}
+        source={viewerSource}
+        title={page?.title ?? ""}
+      />
     </View>
   );
 }
 
-function PolicyParagraph({ text }: { text: string }) {
+function ReaderSection({
+  section,
+  defaultExpanded,
+  onImagePress,
+}: {
+  section: CmsSection;
+  defaultExpanded: boolean;
+  onImagePress: (url: string) => void;
+}) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  if (!text.trim()) return <View style={styles.paragraphGap} />;
-  if (text.startsWith("<")) {
-    return <Text style={styles.paragraph}>{htmlToText(text)}</Text>;
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  if (section.kind === "accordion") {
+    if (section.items.length === 0) return null;
+    return (
+      <View style={styles.section}>
+        {section.title ? (
+          <SectionToggle
+            expanded={expanded}
+            onToggle={() => setExpanded((current) => !current)}
+            title={section.title}
+          />
+        ) : null}
+        {expanded || !section.title ? section.items.map((item) => (
+          <View key={item.id} style={styles.accordionItem}>
+            {item.title ? <Text style={styles.subHeading}>{item.title}</Text> : null}
+            {item.content ? <CmsHtmlView fontSize={15} html={item.content} onImagePress={onImagePress} /> : null}
+          </View>
+        )) : null}
+      </View>
+    );
   }
-  if (text.startsWith("–") || text.startsWith("•") || text.startsWith("-")) {
-    return <Text style={styles.bullet}>{`•  ${text.substring(text.startsWith("-") ? 1 : 2).trim()}`}</Text>;
+
+  if (!section.html.trim()) return null;
+  // Untitled single-page HTML has no header to tap, so it always shows.
+  if (!section.title) {
+    return (
+      <View style={styles.section}>
+        <CmsHtmlView fontSize={15} html={section.html} onImagePress={onImagePress} />
+      </View>
+    );
   }
-  return <Text style={styles.paragraph}>{text}</Text>;
+  return (
+    <View style={styles.section}>
+      <SectionToggle
+        expanded={expanded}
+        onToggle={() => setExpanded((current) => !current)}
+        title={section.title}
+      />
+      {expanded ? <CmsHtmlView fontSize={15} html={section.html} onImagePress={onImagePress} /> : null}
+    </View>
+  );
+}
+
+function SectionToggle({
+  title,
+  expanded,
+  onToggle,
+}: {
+  title: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ expanded }}
+      onPress={onToggle}
+      style={styles.toggleRow}
+    >
+      <View style={styles.headingRow}>
+        <View style={styles.headingAccent} />
+        <Text style={styles.heading}>{title}</Text>
+      </View>
+      <ChevronDown
+        color={theme.muted}
+        size={18}
+        strokeWidth={2.4}
+        style={expanded ? styles.chevronOpen : null}
+      />
+    </Pressable>
+  );
 }
 
 const createStyles = (theme: Theme) =>
@@ -184,25 +223,25 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 12,
       paddingVertical: 4,
       minHeight: 48,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.divider,
     },
     backButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 20 },
     topBarTitle: { flex: 1, color: theme.text, fontSize: 17, fontWeight: "800", textAlign: "center" },
     topBarSpacer: { width: 40 },
-    scroll: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 28, gap: 14 },
-    card: {
-      borderRadius: 16,
-      borderWidth: 1,
+    scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 32, gap: 14 },
+    stateCard: {
+      borderRadius: 15,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.border,
+      backgroundColor: theme.surface,
       padding: 16,
       gap: 10,
     },
-    heading: { gap: 4, paddingTop: 2 },
-    title: { color: theme.text, fontSize: 20, fontWeight: "800" },
-    updated: { color: theme.muted, fontSize: 12, fontWeight: "600" },
-    muted: { color: theme.muted, fontSize: 13, fontWeight: "600" },
+    muted: { color: theme.muted, fontSize: 13, lineHeight: 20, fontWeight: "500" },
     error: { color: theme.danger, fontSize: 13, lineHeight: 19, fontWeight: "600" },
     retryButton: {
-      marginTop: 4,
+      marginTop: 2,
       minHeight: 44,
       borderRadius: 12,
       borderWidth: 1,
@@ -211,9 +250,18 @@ const createStyles = (theme: Theme) =>
       justifyContent: "center",
     },
     retryText: { color: theme.brand, fontSize: 14, fontWeight: "700" },
-    sectionTitle: { color: theme.text, fontSize: 14, fontWeight: "800", letterSpacing: 0.3 },
-    sectionBody: { gap: 8 },
-    paragraph: { color: theme.text, fontSize: 14, lineHeight: 22, fontWeight: "500" },
-    bullet: { color: theme.text, fontSize: 14, lineHeight: 22, fontWeight: "500", paddingLeft: 4 },
-    paragraphGap: { height: 4 },
+    body: { gap: 20 },
+    section: { gap: 10 },
+    toggleRow: {
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    headingRow: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 8 },
+    headingAccent: { width: 3, alignSelf: "stretch", borderRadius: 2, backgroundColor: theme.brand },
+    heading: { flex: 1, minWidth: 0, color: theme.text, fontSize: 15, lineHeight: 21, fontWeight: "800" },
+    chevronOpen: { transform: [{ rotate: "180deg" }] },
+    accordionItem: { gap: 8 },
+    subHeading: { color: theme.text, fontSize: 14, lineHeight: 20, fontWeight: "700" },
   });
