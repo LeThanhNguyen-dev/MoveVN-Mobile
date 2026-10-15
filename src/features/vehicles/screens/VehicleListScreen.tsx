@@ -29,11 +29,7 @@ import AreaPickerSheet from "@/features/vehicles/components/AreaPickerSheet";
 import RentalPeriodSheet from "@/features/vehicles/components/RentalPeriodSheet";
 import { saveSearchPrefs } from "@/features/vehicles/utils/searchPrefs";
 import { aiFilterSearchPublicVehicles, getPublicVehicles } from "@/features/vehicles/services/publicVehicleService";
-import {
-  addFavoriteVehicle,
-  getFavoriteVehicleIds,
-  removeFavoriteVehicle,
-} from "@/features/vehicles/services/favoriteVehicleService";
+import { useRefreshFavoritesOnFocus } from "@/features/favorites/useFavoriteSession";
 import {
   calculateRentalDays,
   formatPeriodSummary,
@@ -104,8 +100,7 @@ export default function VehicleListScreen({
   const aiTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const skipNextFetchRef = useRef(false);
 
-  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
-  const [favLoadingId, setFavLoadingId] = useState<number | null>(null);
+  useRefreshFavoritesOnFocus();
 
   const rentalDays = calculateRentalDays(startDate, endDate);
   const areaText = province ? `${province}${district ? ` · ${district}` : ""}` : "Toàn quốc";
@@ -185,12 +180,6 @@ export default function VehicleListScreen({
     void fetchPage(1, true, filters, sortBy, currentLoc);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, sortBy, areaId, province, district, startDate, endDate]);
-
-  useEffect(() => {
-    getFavoriteVehicleIds()
-      .then((ids) => setFavoriteIds(new Set(ids)))
-      .catch(() => undefined);
-  }, []);
 
   function handleLoadMore() {
     if (loading || loadingMore || page >= totalPages) return;
@@ -312,29 +301,6 @@ export default function VehicleListScreen({
     }
   }
 
-  async function handleToggleFavorite(vehicleId: number) {
-    if (favLoadingId !== null) return;
-    const isFav = favoriteIds.has(vehicleId);
-    setFavLoadingId(vehicleId);
-    try {
-      if (isFav) {
-        await removeFavoriteVehicle(vehicleId);
-        setFavoriteIds((prev) => {
-          const next = new Set(prev);
-          next.delete(vehicleId);
-          return next;
-        });
-      } else {
-        await addFavoriteVehicle(vehicleId);
-        setFavoriteIds((prev) => new Set(prev).add(vehicleId));
-      }
-    } catch {
-      // guest hoặc lỗi mạng: bỏ qua
-    } finally {
-      setFavLoadingId(null);
-    }
-  }
-
   function openDetail(vehicleId: number) {
     navigation.navigate("VehicleDetail", {
       vehicleId,
@@ -351,26 +317,15 @@ export default function VehicleListScreen({
     [navigation, startDate, endDate],
   );
 
-  const handleToggleFavoriteCard = useCallback(
-    (vehicleId: number) => {
-      void handleToggleFavorite(vehicleId);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [favoriteIds, favLoadingId],
-  );
-
   const renderCard = useCallback(
     ({ item }: { item: VehicleListItemResponse }) => (
       <VehicleListCard
         vehicle={item}
         onOpen={handleOpenCard}
         onBook={handleOpenCard}
-        isFavorite={favoriteIds.has(item.id)}
-        favoriteLoading={favLoadingId === item.id}
-        onToggleFavorite={handleToggleFavoriteCard}
       />
     ),
-    [favoriteIds, favLoadingId, handleOpenCard, handleToggleFavoriteCard],
+    [handleOpenCard],
   );
 
   const chips: Chip[] = useMemo(() => {

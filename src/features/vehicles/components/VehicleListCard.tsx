@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
-import { Bike, Car, Heart, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react-native";
+import { Bike, Car, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react-native";
+import FavoriteVehicleButton from "@/features/favorites/components/FavoriteVehicleButton";
 import { memo, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { VehicleListItemResponse } from "@/features/vehicles/types";
@@ -10,9 +11,6 @@ type VehicleListCardProps = {
   vehicle: VehicleListItemResponse;
   onOpen: (vehicleId: number) => void;
   onBook: (vehicleId: number) => void;
-  isFavorite?: boolean;
-  onToggleFavorite?: (vehicleId: number) => void;
-  favoriteLoading?: boolean;
 };
 
 const currencyFormatter = new Intl.NumberFormat("vi-VN");
@@ -44,9 +42,6 @@ function VehicleListCard({
   vehicle,
   onOpen,
   onBook,
-  isFavorite = false,
-  onToggleFavorite,
-  favoriteLoading = false,
 }: VehicleListCardProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -63,7 +58,7 @@ function VehicleListCard({
   const showImage = vehicle.featuredImage && !imageFailed;
 
   return (
-    <Pressable onPress={() => onOpen(vehicle.id)} style={styles.card}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Xem xe ${title}`} onPress={() => onOpen(vehicle.id)} style={styles.card}>
       <View style={styles.imageWrap}>
         {showImage ? (
           <Image
@@ -86,20 +81,7 @@ function VehicleListCard({
             <Text style={styles.badgeText}>{statusLabel}</Text>
           </View>
         ) : null}
-        {onToggleFavorite ? (
-          <Pressable
-            disabled={favoriteLoading}
-            onPress={() => onToggleFavorite(vehicle.id)}
-            style={styles.heart}
-            accessibilityLabel={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
-          >
-            <Heart
-              color={isFavorite ? "#F43F5E" : "#FFFFFF"}
-              size={17}
-              fill={isFavorite ? "#F43F5E" : "transparent"}
-            />
-          </Pressable>
-        ) : null}
+        <FavoriteVehicleButton vehicleId={vehicle.id} style={styles.heart} overlay />
       </View>
 
       <View style={styles.info}>
@@ -153,7 +135,7 @@ function VehicleListCard({
           </View>
         </View>
 
-        <Pressable onPress={() => onBook(vehicle.id)} style={styles.bookButton}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Đặt xe ${title}`} onPress={() => onBook(vehicle.id)} style={styles.bookButton}>
           <Text style={styles.bookText}>Đặt ngay</Text>
         </Pressable>
       </View>
@@ -197,9 +179,9 @@ const createStyles = (theme: Theme) =>
       position: "absolute",
       right: 10,
       top: 10,
-      width: 34,
-      height: 34,
-      borderRadius: 17,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       backgroundColor: "rgba(0, 0, 0, 0.35)",
       alignItems: "center",
       justifyContent: "center",

@@ -6,6 +6,7 @@ import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { AuthUser, UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
+import { openFavoriteVehicles } from "@/features/favorites/favoriteActions";
 
 const roleLabels: Record<UserRole, string> = {
   Admin: "quản trị",
@@ -67,10 +68,14 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
             <View style={styles.divider} />
           </>
         ) : null}
-        <Pressable accessibilityLabel="Xe yêu thích" accessibilityRole="button" style={styles.iconButton}>
-          <Heart color={theme.text} size={21} strokeWidth={2.3} />
-        </Pressable>
-        <View style={styles.divider} />
+        {activeRole === "Customer" && user.roles.includes("Customer") ? (
+          <>
+            <Pressable accessibilityLabel="Xe yêu thích" accessibilityRole="button" onPress={openFavoriteVehicles} hitSlop={6} style={styles.iconButton}>
+              <Heart color={theme.text} size={21} strokeWidth={2.3} />
+            </Pressable>
+            <View style={styles.divider} />
+          </>
+        ) : null}
         <NotificationBell />
       </View>
     </View>
