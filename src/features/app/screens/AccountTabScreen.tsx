@@ -47,6 +47,7 @@ import VerificationHubScreen from "@/features/app/screens/VerificationHubScreen"
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { useNotificationStore } from "@/features/notifications/useNotifications";
+import { openFavoriteVehicles } from "@/features/favorites/favoriteActions";
 
 type TabIcon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 
@@ -199,7 +200,7 @@ export default function AccountTabScreen({ onProfilePress, onWalletPress, user }
       items: [
         { key: "notifications", label: "Thông báo", icon: Bell, accent: theme.brand, value: unreadCount > 0 ? `${unreadCount} chưa đọc` : undefined, onPress: () => useNotificationStore.setState({ centerOpen: true }) },
         { key: "wallet", label: "Ví của tôi", icon: Wallet, accent: "#059669", onPress: onWalletPress },
-        { key: "favorites", label: "Yêu thích", icon: Heart, accent: "#E11D48" },
+        ...(activeRole === "Customer" && user.roles.includes("Customer") ? [{ key: "favorites", label: "Yêu thích", icon: Heart, accent: "#E11D48", onPress: openFavoriteVehicles }] : []),
         { key: "deals", label: "Ưu đãi", icon: BadgePercent, accent: "#D97706" },
         { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626" },
         { key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB" },

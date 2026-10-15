@@ -10,6 +10,7 @@ export type AuthStackParamList = {
 
 export type ExploreStackParamList = {
   ExploreMain: undefined;
+  FavoriteVehicles: undefined;
   VehicleList: {
     type: "Car" | "Motorbike" | "";
     province: string;

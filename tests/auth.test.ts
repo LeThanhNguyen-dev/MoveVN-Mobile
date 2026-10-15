@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AxiosError, AxiosHeaders, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
+vi.mock("react-native", () => ({ Platform: { OS: "android" } }));
 
 const storage = vi.hoisted(() => ({ values: new Map<string, string>(), fail: false }));
 vi.mock("expo-secure-store", () => ({
@@ -130,12 +131,12 @@ describe("Authentication lifecycle", () => {
     expect(storage.values.size).toBe(0);
   });
 
-  it("keeps the startup gate and stored session when current-user lookup is offline", async () => {
+  it("finishes the restore attempt and preserves the stored session when current-user lookup is offline", async () => {
     storage.values.set("movevn.auth.session", JSON.stringify(session()));
     const app = await setup();
     app.apiClient.defaults.adapter = async (config) => { throw new AxiosError("Offline", "ERR_NETWORK", config); };
     await expect(app.restoreSession()).rejects.toBeDefined();
-    expect(app.useAuthStore.getState().isHydrated).toBe(false);
+    expect(app.useAuthStore.getState().isHydrated).toBe(true);
     expect(app.getToken()).toBe("old-access");
   });
 

@@ -10,6 +10,8 @@ import type { AuthUser } from "@/features/auth/types";
 import ExploreNavigator from "./ExploreNavigator";
 import TripsNavigator from "./TripsNavigator";
 import ChatNavigator from "./ChatNavigator";
+import FavoritesNavigator from "./FavoritesNavigator";
+import { useFavoriteStore } from "@/features/favorites/useFavorites";
 import { useChatStore } from "@/features/chat/useChat";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
 import { useTheme } from "@/theme/useTheme";
@@ -28,6 +30,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
+  const showFavorites = useFavoriteStore((state) => state.open && state.userId === user.userId);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
   const [chatRoute, setChatRoute] = useState("ChatList");
@@ -55,7 +58,13 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
-      {showProfile ? (
+      {showFavorites ? (
+        <FavoritesNavigator
+          onClose={() => useFavoriteStore.setState({ open: false })}
+          onExplore={() => { useFavoriteStore.setState({ open: false }); setActiveTab("explore"); }}
+          onBookingCreated={(bookingId) => { useFavoriteStore.setState({ open: false }); goToTrip(bookingId); }}
+        />
+      ) : showProfile ? (
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />
       ) : showWallet ? (
         <View style={[styles.screen, styles.overlayPad]}>

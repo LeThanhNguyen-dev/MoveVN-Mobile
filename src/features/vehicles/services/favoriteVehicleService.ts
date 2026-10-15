@@ -5,16 +5,35 @@ import type { PagedResult } from "@/features/admin/types";
 import type { VehicleListItemResponse } from "@/features/vehicles/types";
 
 export async function getFavoriteVehicleIds() {
-  const response = await apiClient.get<ApiResponse<number[]>>(endpoints.favoriteVehicles.ids);
-  return response.data.data ?? [];
+  const response = await apiClient.get<ApiResponse<number[]>>(
+    endpoints.favoriteVehicles.ids,
+  );
+  const ids = response.data.data;
+  if (
+    !Array.isArray(ids) ||
+    ids.some((id) => !Number.isSafeInteger(id) || id <= 0)
+  )
+    throw new Error("Invalid favorite IDs response.");
+  return [...new Set(ids)];
 }
 
 export async function getFavoriteVehicles(page = 1, pageSize = 12) {
-  const response = await apiClient.get<ApiResponse<PagedResult<VehicleListItemResponse>>>(
-    endpoints.favoriteVehicles.list,
-    { params: { page, pageSize } },
-  );
-  return response.data.data ?? { items: [], totalCount: 0, page: 1, pageSize, totalPages: 0 };
+  const response = await apiClient.get<
+    ApiResponse<PagedResult<VehicleListItemResponse>>
+  >(endpoints.favoriteVehicles.list, { params: { page, pageSize } });
+  const data = response.data.data;
+  if (
+    !data ||
+    !Array.isArray(data.items) ||
+    !Number.isInteger(data.page) ||
+    data.page < 1 ||
+    !Number.isInteger(data.pageSize) ||
+    data.pageSize < 1 ||
+    !Number.isInteger(data.totalCount) ||
+    data.totalCount < 0
+  )
+    throw new Error("Invalid favorite list response.");
+  return { ...data, totalPages: Math.ceil(data.totalCount / data.pageSize) };
 }
 
 export async function addFavoriteVehicle(vehicleId: number) {
