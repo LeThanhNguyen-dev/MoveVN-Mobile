@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { useMemo, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { ArrowLeft, CalendarDays, Check, ChevronRight, Heart, ImageOff, MapPin, ShieldCheck, Star, Truck, X } from "lucide-react-native";
+import { ActivityIndicator, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { ArrowLeft, CalendarDays, Check, ChevronRight, ImageOff, MapPin, ShieldCheck, Star, Truck, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -13,7 +13,8 @@ import type { BusyPeriod, PricingQuoteResponse, VehicleResponse } from "@/featur
 import { calculateRentalDays, firstBusyDateInRange, formatPeriodSummary, getBusyDateKeys } from "@/features/vehicles/utils/rentalPeriod";
 import { formatVnd } from "@/features/vehicles/ownerDisplay";
 import { getVehicleReviews, type ReviewResponse } from "@/features/review/reviewService";
-import { addFavoriteVehicle, getFavoriteVehicleIds, removeFavoriteVehicle } from "@/features/vehicles/services/favoriteVehicleService";
+import FavoriteVehicleButton from "@/features/favorites/components/FavoriteVehicleButton";
+import { useRefreshFavoritesOnFocus } from "@/features/favorites/useFavoriteSession";
 import OwnerVehicleMap from "@/features/vehicles/components/OwnerVehicleMap";
 import RentalPeriodSheet from "@/features/vehicles/components/RentalPeriodSheet";
 import SurchargePolicySummary from "@/features/vehicles/components/SurchargePolicySummary";
@@ -39,8 +40,7 @@ export default function VehicleDetailScreen({
   const [retry, setRetry] = useState(0);
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [reviewState, setReviewState] = useState<"loading" | "ready" | "error">("loading");
-  const [favorite, setFavorite] = useState(false);
-  const [savingFavorite, setSavingFavorite] = useState(false);
+  useRefreshFavoritesOnFocus();
   const [imageIndex, setImageIndex] = useState(0);
   const [viewer, setViewer] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -81,7 +81,6 @@ export default function VehicleDetailScreen({
     setImageIndex(0);
     setReviewState("loading");
     setReviews([]);
-    setFavorite(false);
     setAvailabilityReady(false);
     setAvailabilityLoading(true);
     setAvailabilityError(false);
@@ -90,7 +89,6 @@ export default function VehicleDetailScreen({
       .catch(() => { if (!cancelled) setAvailabilityError(true); })
       .finally(() => { if (!cancelled) setAvailabilityLoading(false); });
     getVehicleReviews(vehicleId).then(data => { if (!cancelled) { setReviews(data); setReviewState("ready"); } }).catch(() => { if (!cancelled) setReviewState("error"); });
-    getFavoriteVehicleIds().then(ids => { if (!cancelled) setFavorite(ids.includes(vehicleId)); }).catch(() => undefined);
     getPublicVehicleById(vehicleId)
       .then((data) => {
         if (!cancelled) setVehicle(data ?? null);
@@ -131,14 +129,6 @@ export default function VehicleDetailScreen({
     setPeriodOpen(true);
     void refreshAvailability();
   }
-  async function toggleFavorite() {
-    if (savingFavorite) return;
-    setSavingFavorite(true);
-    try { if (favorite) await removeFavoriteVehicle(vehicleId); else await addFavoriteVehicle(vehicleId); setFavorite(value => !value); }
-    catch { Alert.alert("Chưa lưu được", "Vui lòng đăng nhập tài khoản khách hàng và thử lại."); }
-    finally { setSavingFavorite(false); }
-  }
-
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
@@ -148,7 +138,7 @@ export default function VehicleDetailScreen({
         <Text numberOfLines={1} style={styles.headerTitle}>
           Chi tiết xe
         </Text>
-        <Pressable accessibilityLabel={favorite ? "Bỏ yêu thích" : "Lưu xe yêu thích"} disabled={!vehicle || savingFavorite} onPress={toggleFavorite} style={styles.backButton}>{savingFavorite ? <ActivityIndicator color={theme.brand} /> : <Heart size={20} color={favorite ? theme.danger : theme.text} fill={favorite ? theme.danger : "transparent"} />}</Pressable>
+        <FavoriteVehicleButton vehicleId={vehicleId} disabled={!vehicle} style={styles.backButton} />
       </View>
       {vehicle === undefined ? (
         <View style={styles.center}>

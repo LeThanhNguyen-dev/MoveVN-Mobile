@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AxiosHeaders, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
+vi.mock("react-native", () => ({ Platform: { OS: "android" } }));
 
 vi.mock("@/config/apiConfig", () => ({ getConfiguredApiBaseUrl: () => "http://vehicle.test" }));
 vi.mock("expo-secure-store", () => ({

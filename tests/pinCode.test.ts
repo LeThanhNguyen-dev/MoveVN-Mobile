@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+vi.mock("react-native", () => ({ Platform: { OS: "android" } }));
 
 vi.mock("expo-secure-store", () => ({
   getItemAsync: vi.fn(async () => null),

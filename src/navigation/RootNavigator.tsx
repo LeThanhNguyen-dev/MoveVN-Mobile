@@ -12,6 +12,7 @@ import { restoreSession } from "@/features/auth/services/authSession";
 import { usePresenceConnection } from "@/features/presence/usePresenceConnection";
 import { useNotificationConnection } from "@/features/notifications/useNotificationConnection";
 import { useChatConnection } from "@/features/chat/useChatConnection";
+import { useFavoriteSession } from "@/features/favorites/useFavoriteSession";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
@@ -30,6 +31,7 @@ export default function RootNavigator() {
   usePresenceConnection();
   useNotificationConnection();
   useChatConnection();
+  useFavoriteSession();
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const activeRole = useAuthStore((state) => state.activeRole);
