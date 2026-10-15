@@ -4,64 +4,64 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { CalendarCheck } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TripsStackParamList } from "@/navigation/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { getMyBookings } from "@/features/booking/bookingService";
 import type { BookingResponse } from "@/features/booking/types";
-import { bookingStatusLabel, formatDateTime, formatMoney, totalPages } from "@/features/booking/utils/format";
+import { BOOKING_PAGE_SIZE, BOOKING_STATUS_FILTERS } from "@/features/booking/constants";
+import BookingCard from "@/features/booking/components/BookingCard";
+import BookingCardSkeleton from "@/features/booking/components/BookingCardSkeleton";
 import { getApiErrorMessage } from "@/services/apiClient";
 
 type ListNav = NativeStackNavigationProp<TripsStackParamList, "TripList">;
 
-const PAGE_SIZE = 10;
-
-const STATUS_FILTERS: { key: string; label: string }[] = [
-  { key: "", label: "Tất cả" },
-  { key: "Pending", label: "Chờ duyệt" },
-  { key: "Approved", label: "Đã duyệt" },
-  { key: "DepositPaid", label: "Đã cọc" },
-  { key: "InProgress", label: "Đang thuê" },
-  { key: "Returning", label: "Đang trả" },
-  { key: "Completed", label: "Hoàn thành" },
-  { key: "Cancelled", label: "Đã hủy" },
-];
-
 export default function TripListScreen({ navigation }: { navigation: ListNav }) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [items, setItems] = useState<BookingResponse[]>([]);
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  const pages = totalPages(totalCount, PAGE_SIZE);
+  const hasMore = items.length < totalCount;
+  const remaining = Math.max(0, totalCount - items.length);
 
-  const load = useCallback(
-    async (targetPage: number, targetStatus: string, showSpinner: boolean) => {
-      if (showSpinner) setLoading(true);
-      setError("");
+  const fetchPage = useCallback(
+    async (targetPage: number, targetStatus: string, replace: boolean) => {
+      if (replace) {
+        setLoading(true);
+        setError("");
+      } else {
+        setLoadingMore(true);
+      }
       try {
         const res = await getMyBookings({
           status: targetStatus || undefined,
           page: targetPage,
-          pageSize: PAGE_SIZE,
+          pageSize: BOOKING_PAGE_SIZE,
         });
-        setItems(res.items);
+        setItems((prev) => (replace ? res.items : [...prev, ...res.items]));
         setTotalCount(res.totalCount);
         setPage(res.page);
       } catch (err) {
-        setError(getApiErrorMessage(err, "Không tải được danh sách chuyến đi."));
+        if (replace) setError(getApiErrorMessage(err, "Không tải được danh sách chuyến đi."));
       } finally {
         setLoading(false);
+        setLoadingMore(false);
         setRefreshing(false);
       }
     },
@@ -69,149 +69,169 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
   );
 
   useEffect(() => {
-    void load(1, status, true);
-  }, [load, status]);
+    void fetchPage(1, status, true);
+  }, [fetchPage, status]);
 
   function handleRefresh() {
     setRefreshing(true);
-    void load(page, status, false);
+    void fetchPage(1, status, true);
   }
 
-  function renderItem({ item }: { item: BookingResponse }) {
-    return (
-      <Pressable
-        onPress={() => navigation.navigate("TripDetail", { bookingId: item.id })}
-        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-      >
-        <View style={styles.cardTop}>
-          <Text numberOfLines={1} style={styles.code}>
-            {item.bookingCode}
-          </Text>
-          <Text style={styles.status}>{bookingStatusLabel(item.status)}</Text>
-        </View>
-        <Text numberOfLines={1} style={styles.vehicle}>
-          {item.vehicleName ?? `Xe #${item.vehicleId}`}
-        </Text>
-        <Text style={styles.muted}>
-          {formatDateTime(item.startDate)} → {formatDateTime(item.endDate)}
-        </Text>
-        <Text style={styles.money}>Cọc {formatMoney(item.depositAmount)} · Tổng {formatMoney(item.totalAmount)}</Text>
-      </Pressable>
-    );
+  function handleLoadMore() {
+    if (loading || loadingMore || refreshing || !hasMore) return;
+    void fetchPage(page + 1, status, false);
   }
+
+  const renderItem = useCallback(
+    ({ item }: { item: BookingResponse }) => (
+      <BookingCard
+        booking={item}
+        variant="customer"
+        onPress={() => navigation.navigate("TripDetail", { bookingId: item.id })}
+      />
+    ),
+    [navigation],
+  );
 
   return (
     <View style={styles.screen}>
-      <Text style={styles.header}>Chuyến đi của tôi</Text>
-      <View style={styles.filters}>
-        {STATUS_FILTERS.map((f) => (
-          <Pressable
-            key={f.key}
-            onPress={() => setStatus(f.key)}
-            style={[styles.chip, status === f.key && styles.chipActive]}
-          >
-            <Text style={[styles.chipText, status === f.key && styles.chipTextActive]}>{f.label}</Text>
-          </Pressable>
-        ))}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Chuyến đi của tôi</Text>
+          <Text style={styles.count}>
+            {loading && items.length === 0 ? "Đang tải..." : `${totalCount} chuyến`}
+          </Text>
+        </View>
       </View>
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.brand} />
-        </View>
-      ) : error ? (
-        <View style={styles.center}>
-          <Text style={styles.muted}>{error}</Text>
-          <Pressable onPress={() => load(1, status, true)} style={styles.retryButton}>
-            <Text style={styles.retryText}>Thử lại</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <FlatList
-          data={items}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.muted}>Chưa có chuyến đi nào.</Text>}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.brand} />}
-          ListFooterComponent={
-            pages > 1 ? (
-              <View style={styles.pager}>
-                <Pressable
-                  disabled={page <= 1}
-                  onPress={() => load(page - 1, status, true)}
-                  style={[styles.pageButton, page <= 1 && styles.pageButtonDisabled]}
-                >
-                  <Text style={styles.pageButtonText}>Trước</Text>
-                </Pressable>
-                <Text style={styles.muted}>
-                  Trang {page}/{pages}
-                </Text>
-                <Pressable
-                  disabled={page >= pages}
-                  onPress={() => load(page + 1, status, true)}
-                  style={[styles.pageButton, page >= pages && styles.pageButtonDisabled]}
-                >
-                  <Text style={styles.pageButtonText}>Sau</Text>
-                </Pressable>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filters}
+        style={styles.filterBar}
+      >
+        {BOOKING_STATUS_FILTERS.map((f) => {
+          const active = status === f.key;
+          return (
+            <Pressable
+              key={f.key || "all"}
+              onPress={() => setStatus(f.key)}
+              style={[styles.chip, active && styles.chipActive]}
+            >
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <FlatList
+        data={items}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={renderItem}
+        contentContainerStyle={[styles.list, { paddingBottom: Math.max(insets.bottom, 16) + 24 }]}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.brand} />
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={styles.skeletons}>
+              <BookingCardSkeleton />
+              <BookingCardSkeleton />
+              <BookingCardSkeleton />
+            </View>
+          ) : error ? (
+            <View style={styles.center}>
+              <Text style={styles.errorText}>{error}</Text>
+              <Pressable onPress={handleRefresh} style={styles.retryBtn}>
+                <Text style={styles.retryText}>Thử lại</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.center}>
+              <View style={styles.emptyIcon}>
+                <CalendarCheck color={theme.brand} size={32} />
               </View>
-            ) : null
-          }
-        />
-      )}
+              <Text style={styles.emptyTitle}>Chưa có chuyến đi nào</Text>
+              <Text style={styles.emptyDesc}>Các chuyến bạn đặt sẽ hiện ở đây để dễ theo dõi.</Text>
+            </View>
+          )
+        }
+        ListFooterComponent={
+          loading || items.length === 0 ? null : loadingMore ? (
+            <ActivityIndicator color={theme.brand} style={styles.more} />
+          ) : hasMore ? (
+            <Pressable onPress={handleLoadMore} style={styles.moreButton}>
+              <Text style={styles.moreText}>Xem thêm ({remaining})</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.endText}>Đã hiển thị hết</Text>
+          )
+        }
+      />
     </View>
   );
 }
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    screen: { flex: 1, backgroundColor: theme.background, paddingHorizontal: 16, paddingTop: 12 },
-    header: { color: theme.text, fontSize: 20, fontWeight: "800", marginBottom: 8 },
-    filters: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
+    screen: { flex: 1, backgroundColor: theme.background },
+    header: {
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 8,
+    },
+    title: { color: theme.text, fontSize: 17, fontWeight: "800" },
+    count: { color: theme.muted, fontSize: 12, fontWeight: "600", marginTop: 2 },
+    filterBar: { flexGrow: 0, flexShrink: 0 },
+    filters: { flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
     chip: {
-      borderRadius: 16,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      backgroundColor: theme.surfaceAlt,
-    },
-    chipActive: { backgroundColor: theme.brand },
-    chipText: { color: theme.muted, fontSize: 12, fontWeight: "700" },
-    chipTextActive: { color: theme.onBrand },
-    center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10 },
-    muted: { color: theme.muted, fontSize: 13 },
-    retryButton: {
-      borderRadius: 10,
-      backgroundColor: theme.brand,
-      paddingHorizontal: 18,
-      paddingVertical: 10,
-    },
-    retryText: { color: theme.onBrand, fontWeight: "800" },
-    list: { gap: 10, paddingBottom: 24 },
-    card: {
-      backgroundColor: theme.surface,
+      height: 34,
+      borderRadius: 999,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.border,
-      borderRadius: 12,
-      padding: 14,
-      gap: 4,
-    },
-    cardPressed: { opacity: 0.7 },
-    cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    code: { color: theme.text, fontSize: 15, fontWeight: "800", flex: 1 },
-    status: { color: theme.brand, fontSize: 12, fontWeight: "800" },
-    vehicle: { color: theme.text, fontSize: 14, fontWeight: "600" },
-    money: { color: theme.text, fontSize: 13, fontWeight: "700" },
-    pager: {
-      flexDirection: "row",
+      backgroundColor: theme.surface,
       alignItems: "center",
-      justifyContent: "space-between",
-      paddingVertical: 12,
-    },
-    pageButton: {
-      borderRadius: 10,
-      backgroundColor: theme.surfaceAlt,
+      justifyContent: "center",
       paddingHorizontal: 16,
-      paddingVertical: 8,
     },
-    pageButtonDisabled: { opacity: 0.4 },
-    pageButtonText: { color: theme.text, fontWeight: "700" },
+    chipActive: { backgroundColor: theme.brand, borderColor: theme.brand },
+    chipText: { color: theme.muted, fontSize: 12, fontWeight: "700" },
+    chipTextActive: { color: theme.onBrand, fontWeight: "800" },
+    list: { paddingHorizontal: 16, paddingTop: 4, gap: 12 },
+    skeletons: { gap: 12 },
+    center: { alignItems: "center", paddingVertical: 48, gap: 8 },
+    emptyIcon: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: theme.brandSoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    emptyTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
+    emptyDesc: { color: theme.muted, fontSize: 13, textAlign: "center" },
+    errorText: { color: theme.danger, fontSize: 13, fontWeight: "600", textAlign: "center" },
+    retryBtn: {
+      marginTop: 8,
+      height: 40,
+      paddingHorizontal: 18,
+      borderRadius: 12,
+      backgroundColor: theme.brand,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    retryText: { color: theme.onBrand, fontSize: 13, fontWeight: "800" },
+    more: { marginVertical: 12 },
+    moreButton: {
+      alignSelf: "center",
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 10,
+      backgroundColor: theme.brandSoft,
+      marginTop: 4,
+    },
+    moreText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
+    endText: { color: theme.faint, fontSize: 12, textAlign: "center", marginTop: 8 },
   });

@@ -2,10 +2,12 @@ export interface BookingResponse {
   id: number;
   bookingCode: string;
   customerId: number;
+  customerName?: string;
   vehicleId: number;
   vehicleName?: string;
   vehicleImage?: string;
   ownerId: number;
+  ownerName?: string;
   startDate: string;
   endDate: string;
   totalDays: number;
