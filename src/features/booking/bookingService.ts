@@ -64,8 +64,8 @@ export async function confirmCheckIn(id: number): Promise<BookingResponse> {
   return res.data.data!;
 }
 
-export async function confirmCheckOut(id: number): Promise<BookingResponse> {
-  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.confirmCheckOut(id));
+export async function confirmCheckOut(id: number, expectedVersion = 1): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.confirmCheckOut(id), { expectedVersion });
   return res.data.data!;
 }
 

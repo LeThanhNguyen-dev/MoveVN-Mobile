@@ -130,6 +130,7 @@ export const endpoints = {
     ownerComplete: (id: number) => `/api/bookings/${id}/owner-complete`,
     checkIn: (id: number) => `/api/bookings/${id}/check-in`,
     checkOut: (id: number) => `/api/bookings/${id}/check-out`,
+    amendCheckOut: (id: number) => `/api/bookings/${id}/check-out`,
     confirmCheckIn: (id: number) => `/api/bookings/${id}/check-in/confirm`,
     confirmCheckOut: (id: number) => `/api/bookings/${id}/check-out/confirm`,
     inspectionReports: (id: number) => `/api/bookings/${id}/inspection-reports`,

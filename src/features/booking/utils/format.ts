@@ -58,6 +58,55 @@ export function totalPages(totalCount: number, pageSize: number): number {
   return Math.max(1, Math.ceil(Math.max(0, totalCount) / Math.max(1, pageSize)));
 }
 
+export const ESCROW_HOLD_HOURS = 48;
+
+export interface EscrowHoldInfo {
+  hasCheckOutReport: boolean;
+  holdUntilMs: number;
+  withinHoldWindow: boolean;
+  remainingHours: number;
+}
+
+/** Giữ tiền cọc 48h sau hoàn thành để đối soát (khớp web bookingStatus.ts). */
+export function escrowHoldInfo(
+  checkOutCreatedAt?: string | null,
+  completedAt?: string | null,
+  nowMs?: number,
+): EscrowHoldInfo {
+  const now = nowMs ?? Date.now();
+  const base = completedAt
+    ? new Date(completedAt).getTime()
+    : checkOutCreatedAt
+      ? new Date(checkOutCreatedAt).getTime()
+      : 0;
+  const withinHoldWindow = base > 0 && now < base + ESCROW_HOLD_HOURS * 60 * 60 * 1000;
+  const remainingHours = base > 0
+    ? Math.max(Math.ceil((base + ESCROW_HOLD_HOURS * 60 * 60 * 1000 - now) / (60 * 60 * 1000)), 0)
+    : 0;
+  return {
+    hasCheckOutReport: Boolean(checkOutCreatedAt),
+    holdUntilMs: base > 0 ? base + ESCROW_HOLD_HOURS * 60 * 60 * 1000 : 0,
+    withinHoldWindow,
+    remainingHours,
+  };
+}
+
+/** Parse "DD/MM/YYYY HH:mm" (định dạng hiển thị formatDateTime) sang ISO string. */
+export function parseDisplayDateTime(value: string): string | null {
+  const m = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5]));
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+export function isPickupReached(startDate: string, nowMs?: number): boolean {
+  return new Date(startDate).getTime() <= (nowMs ?? Date.now());
+}
+
+export function canOwnerCancelBooking(status: string, startDate: string, nowMs?: number): boolean {
+  return (status === "Approved" || status === "DepositPaid") && new Date(startDate).getTime() > (nowMs ?? Date.now());
+}
+
 export interface RentalProgress {
   totalDays: number;
   elapsedDays: number;

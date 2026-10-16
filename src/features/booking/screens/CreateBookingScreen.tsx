@@ -32,7 +32,7 @@ import AddressAutocomplete, {
   type SelectedAddress,
 } from "@/features/locations/components/AddressAutocomplete";
 import { createBooking } from "@/features/booking/bookingService";
-import { formatDateTime, formatMoney } from "@/features/booking/utils/format";
+import { formatDateTime, formatMoney, parseDisplayDateTime } from "@/features/booking/utils/format";
 import {
   calcDeliveryPreview,
   calcPricePreview,
@@ -59,7 +59,13 @@ export default function CreateBookingScreen({
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { vehicleId, startDate, endDate } = route.params;
+  const { vehicleId, startDate: initialStart, endDate: initialEnd } = route.params;
+  // Cho phép sửa ngày giờ nhận/trả (PayHandmade) nhưng vẫn giữ giá trị chatbot điền sẵn.
+  const [startDate, setStartDate] = useState(initialStart);
+  const [endDate, setEndDate] = useState(initialEnd);
+  const [startText, setStartText] = useState(() => formatDateTime(initialStart ?? ""));
+  const [endText, setEndText] = useState(() => formatDateTime(initialEnd ?? ""));
+  const [nextAvailableDate, setNextAvailableDate] = useState<string | null>(null);
 
   const [vehicle, setVehicle] = useState<VehicleResponse | null | undefined>(undefined);
   const [busyPeriods, setBusyPeriods] = useState<BusyPeriod[]>([]);
@@ -117,6 +123,44 @@ export default function CreateBookingScreen({
     const off = v.discountType === "Percentage" ? `${v.discountValue}%` : formatMoney(v.discountValue);
     const cap = v.maxDiscountAmount ? ` (tối đa ${formatMoney(v.maxDiscountAmount)})` : "";
     return `Giảm ${off}${cap}`;
+  }
+
+  function getNextAvailableFromError(err: unknown): string | null {
+    const data = (err as { response?: { data?: { data?: { nextAvailable?: unknown } } } })?.response?.data?.data;
+    return typeof data?.nextAvailable === "string" ? data.nextAvailable : null;
+  }
+
+  function handleStartText(v: string) {
+    setStartText(v);
+    const iso = parseDisplayDateTime(v);
+    if (iso) {
+      setStartDate(iso);
+      setNextAvailableDate(null);
+    }
+  }
+
+  function handleEndText(v: string) {
+    setEndText(v);
+    const iso = parseDisplayDateTime(v);
+    if (iso) {
+      setEndDate(iso);
+      setNextAvailableDate(null);
+    }
+  }
+
+  function applyNextAvailable(dateStr: string) {
+    const keepDays = Math.max(1, calculateRentalDays(startDate ?? "", endDate ?? ""));
+    const base = new Date(`${dateStr}T00:00:00`);
+    if (Number.isNaN(base.getTime())) return;
+    const cur = startDate ? new Date(startDate) : new Date();
+    base.setHours(cur.getHours(), cur.getMinutes(), 0, 0);
+    const newStart = base.toISOString();
+    const newEnd = new Date(base.getTime() + keepDays * 86400000).toISOString();
+    setStartDate(newStart);
+    setEndDate(newEnd);
+    setStartText(formatDateTime(newStart));
+    setEndText(formatDateTime(newEnd));
+    setNextAvailableDate(null);
   }
 
   useEffect(() => {
@@ -316,7 +360,13 @@ export default function CreateBookingScreen({
         { text: "Xem chuyến đi", onPress: () => onCreated?.(created.id) },
       ]);
     } catch (err) {
-      setSubmitError(getApiErrorMessage(err, "Không tạo được đơn. Vui lòng thử lại sau."));
+      const nextAvailable = getNextAvailableFromError(err);
+      if (nextAvailable) {
+        setNextAvailableDate(nextAvailable);
+        setSubmitError(`Xe bận trong thời gian đã chọn. Xe có thể thuê từ ngày ${new Date(nextAvailable).toLocaleDateString("vi-VN")}.`);
+      } else {
+        setSubmitError(getApiErrorMessage(err, "Không tạo được đơn. Vui lòng thử lại sau."));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -369,7 +419,22 @@ export default function CreateBookingScreen({
               )}
             </View>
 
-            <Text style={styles.label}>Nhận xe lúc: {formatDateTime(startDate ?? "")}</Text>
+            <Text style={styles.label}>Nhận xe lúc (DD/MM/YYYY HH:mm)</Text>
+            <TextInput
+              value={startText}
+              onChangeText={handleStartText}
+              placeholder="DD/MM/YYYY HH:mm"
+              placeholderTextColor={theme.placeholder}
+              style={styles.input}
+            />
+            {nextAvailableDate ? (
+              <View style={styles.card}>
+                <Text style={styles.muted}>Xe có thể thuê từ ngày {new Date(nextAvailableDate).toLocaleDateString("vi-VN")}.</Text>
+                <Pressable onPress={() => applyNextAvailable(nextAvailableDate)} style={styles.submit}>
+                  <Text style={styles.submitText}>Dùng ngày này</Text>
+                </Pressable>
+              </View>
+            ) : null}
             <View onLayout={(e) => { fieldY.current.pickup = e.nativeEvent.layout.y; }}>
             <AddressAutocomplete
               label="Địa điểm nhận xe"
@@ -405,7 +470,14 @@ export default function CreateBookingScreen({
             </View>
             {!sameReturn && (
               <>
-                <Text style={styles.label}>Trả xe lúc: {formatDateTime(endDate ?? "")}</Text>
+                <Text style={styles.label}>Trả xe lúc (DD/MM/YYYY HH:mm)</Text>
+                <TextInput
+                  value={endText}
+                  onChangeText={handleEndText}
+                  placeholder="DD/MM/YYYY HH:mm"
+                  placeholderTextColor={theme.placeholder}
+                  style={styles.input}
+                />
                 <View onLayout={(e) => { fieldY.current.ret = e.nativeEvent.layout.y; }}>
                 <AddressAutocomplete
                   label="Địa điểm trả xe"
@@ -530,6 +602,9 @@ export default function CreateBookingScreen({
                     <Text style={styles.scheduleValue}>{formatMoney(pricePreview.remaining)}</Text>
                   </View>
                 </View>
+                {vehicle?.securityRequiresDeposit ? (
+                  <Text style={styles.muted}>Cần thế chấp {formatMoney(vehicle.securityDepositAmount)} khi nhận xe (hoàn lại khi trả xe).</Text>
+                ) : null}
               </View>
             ) : null}
 
