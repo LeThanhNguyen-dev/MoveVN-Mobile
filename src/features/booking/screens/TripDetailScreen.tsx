@@ -42,6 +42,8 @@ import { getMyWallet } from "@/features/wallets/services/walletService";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
 import BookingTimeline from "@/features/booking/components/BookingTimeline";
 import PaymentWebViewModal, { payOsReturnUrl } from "@/features/payments/components/PaymentWebViewModal";
+import RiskScoreBadge from "@/features/booking/components/RiskScoreBadge";
+import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import { createCustomerReview, hasReviewed } from "@/features/review/reviewService";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
@@ -55,9 +57,11 @@ const POLL_MS = 3000;
 export default function TripDetailScreen({
   route,
   navigation,
+  onOpenDisputes,
 }: {
   route: DetailRoute;
   navigation: DetailNav;
+  onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -312,6 +316,14 @@ export default function TripDetailScreen({
             <Text style={styles.progressText}>{progress.summary}</Text>
           </View>
         )}
+        <View style={styles.statusRow}>
+          <RiskScoreBadge score={booking.riskScore} />
+          {onOpenDisputes ? (
+            <Pressable onPress={() => onOpenDisputes({ bookingId: booking.id })}>
+              <Text style={styles.disputeLink}>Tranh chấp / khiếu nại</Text>
+            </Pressable>
+          ) : null}
+        </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Lịch trình & địa điểm</Text>
@@ -630,6 +642,7 @@ const createStyles = (theme: Theme) =>
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
     body: { padding: 16, gap: 12, paddingBottom: 32 },
     statusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    disputeLink: { color: "#DC2626", fontSize: 13, fontWeight: "700" },
     status: { color: theme.brand, fontSize: 18, fontWeight: "800" },
     escrow: { color: theme.muted, fontSize: 12, fontWeight: "700" },
     progressStrip: {

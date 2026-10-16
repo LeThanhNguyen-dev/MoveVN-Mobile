@@ -11,6 +11,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       ...(config.plugins ?? []),
       "expo-secure-store",
+      ["expo-camera", {
+        cameraPermission: "MoveVN cần camera để chụp ảnh check-in/check-out xe.",
+        recordAudioAndroid: false,
+        barcodeScannerEnabled: false,
+      }],
       ...(iosClientId ? [["@react-native-google-signin/google-signin", {
         iosUrlScheme: iosClientId.split(".").reverse().join("."),
       }] as [string, { iosUrlScheme: string }]] : []),

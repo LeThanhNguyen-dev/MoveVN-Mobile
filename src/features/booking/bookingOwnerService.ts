@@ -54,6 +54,8 @@ export interface InspectionFormInput {
   damageNoted: boolean;
   damageDescription?: string;
   images: UploadFileInput[];
+  /** Gio chup từng ảnh (ISO UTC), song song theo thứ tự images. */
+  capturedAts?: (string | null)[];
 }
 
 function buildInspectionForm(input: InspectionFormInput): FormData {
@@ -63,6 +65,10 @@ function buildInspectionForm(input: InspectionFormInput): FormData {
   formData.append("damageNoted", String(input.damageNoted));
   if (input.damageDescription) formData.append("damageDescription", input.damageDescription);
   input.images.forEach((file) => appendUploadFile(formData, "images", file));
+  // Luôn gửi đủ 1 capturedAts cho mỗi ảnh (rỗng nếu không có) để backend map đúng thứ tự.
+  input.images.forEach((_, index) => {
+    formData.append("capturedAts", input.capturedAts?.[index] ?? "");
+  });
   return formData;
 }
 

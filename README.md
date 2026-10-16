@@ -4,6 +4,8 @@ MoveVN Mobile là dự án **React Native** sử dụng **Expo**, **Expo Go** v�
 
 Tài liệu này hướng dẫn cách cài đặt môi trường, đăng nhập Expo, chạy ứng dụng trên điện thoại và xử lý một số lỗi cơ bản trong quá trình phát triển.
 
+Luồng đặt xe và bàn giao: [Booking, check-in/check-out trên mobile](docs/BOOKING.md).
+
 ## Yêu cầu môi trường
 
 Cần cài đặt sẵn các công cụ sau:

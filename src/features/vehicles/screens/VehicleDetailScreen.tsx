@@ -18,6 +18,7 @@ import { useRefreshFavoritesOnFocus } from "@/features/favorites/useFavoriteSess
 import OwnerVehicleMap from "@/features/vehicles/components/OwnerVehicleMap";
 import RentalPeriodSheet from "@/features/vehicles/components/RentalPeriodSheet";
 import SurchargePolicySummary from "@/features/vehicles/components/SurchargePolicySummary";
+import { BookingButton } from "@/features/booking/components/BookingControls";
 
 type DetailRoute = RouteProp<ExploreStackParamList, "VehicleDetail">;
 type DetailNav = NativeStackNavigationProp<ExploreStackParamList, "VehicleDetail">;

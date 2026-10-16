@@ -1,6 +1,6 @@
+import * as SecureStore from "@/services/deviceStorage";
 import { create } from "zustand";
 import type { ThemeMode } from "./tokens";
-import { appStorage } from "@/utils/appStorage";
 
 const themeKey = "movevn.theme.mode";
 let hydration: Promise<ThemeMode> | null = null;
@@ -16,7 +16,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   mode: "light",
   isHydrated: false,
   setMode: async (mode) => {
-    await appStorage.setItemAsync(themeKey, mode);
+    await SecureStore.setItemAsync(themeKey, mode);
     set({ mode });
   },
   toggleMode: () => get().setMode(get().mode === "light" ? "dark" : "light"),
@@ -25,7 +25,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
 export function initializeTheme(): Promise<ThemeMode> {
   if (hydration) return hydration;
   hydration = (async () => {
-    const saved = await appStorage.getItemAsync(themeKey);
+    const saved = await SecureStore.getItemAsync(themeKey);
     const mode: ThemeMode = saved === "dark" ? "dark" : "light";
     useThemeStore.setState({ mode, isHydrated: true });
     return mode;

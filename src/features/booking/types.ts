@@ -28,6 +28,9 @@ export interface BookingResponse {
   returnAddress?: string;
   customerNote?: string;
   status: string;
+  canCheckInNow?: boolean;
+  checkInOpensAt?: string;
+  checkInUnavailableReason?: string;
   riskScore?: number;
   riskLevel?: string;
   riskFactors?: string[];
@@ -69,6 +72,7 @@ export interface BookingCancellationQuote {
 }
 
 export interface CreateBookingRequest {
+  quoteId?: string;
   vehicleId: number;
   startDate: string;
   endDate: string;

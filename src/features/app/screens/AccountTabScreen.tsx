@@ -4,6 +4,7 @@ import {
   BadgePercent,
   Bell,
   BarChart3,
+  Bot,
   ChevronRight,
   ChevronUp,
   FileBadge,
@@ -31,6 +32,7 @@ import type { AuthUser, UserRole } from "@/features/auth/types";
 import ChangePasswordScreen from "@/features/auth/screens/ChangePasswordScreen";
 import LoginSessionsScreen from "@/features/auth/screens/LoginSessionsScreen";
 import PolicyListScreen from "@/features/cms/screens/PolicyListScreen";
+import DisputesScreen, { type DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import DriverLicenseScreen from "@/features/driverLicenses/screens/DriverLicenseScreen";
 import { getMyDriverLicense } from "@/features/driverLicenses/services/driverLicenseService";
 import type { DriverLicenseStatusResponse } from "@/features/driverLicenses/types";
@@ -47,6 +49,7 @@ import VerificationHubScreen from "@/features/app/screens/VerificationHubScreen"
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { useNotificationStore } from "@/features/notifications/useNotifications";
+import { useAssistantUi } from "@/features/assistant/useAssistantUi";
 import { openFavoriteVehicles } from "@/features/favorites/favoriteActions";
 
 type TabIcon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
@@ -74,8 +77,25 @@ const roleLabels: Record<UserRole, string> = {
 
 const verificationTotal = 4;
 
-export default function AccountTabScreen({ onProfilePress, onWalletPress, user }: { onProfilePress: () => void; onWalletPress: () => void; user: AuthUser }) {
+export default function AccountTabScreen({
+  onProfilePress,
+  onWalletPress,
+  user,
+  initialDisputes,
+  onConsumedDisputes,
+  onDisputesVisibilityChange,
+  onExitDisputes,
+}: {
+  onProfilePress: () => void;
+  onWalletPress?: () => void;
+  user: AuthUser;
+  initialDisputes?: DisputeCreatePrefill | null;
+  onConsumedDisputes?: () => void;
+  onDisputesVisibilityChange?: (visible: boolean) => void;
+  onExitDisputes?: () => void;
+}) {
   const unreadCount = useNotificationStore((state) => state.userId === user.userId ? state.unreadCount : 0);
+  const fabHidden = useAssistantUi((state) => state.fabHidden);
   const activeRole = useAuthStore((state) => state.activeRole);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
   const updateUser = useAuthStore((state) => state.updateUser);
@@ -92,12 +112,19 @@ export default function AccountTabScreen({ onProfilePress, onWalletPress, user }
   const [ownerReturn, setOwnerReturn] = useState<"hub" | "cccd" | "account" | null>(null);
   const [showPolicies, setShowPolicies] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
+  const [showDisputes, setShowDisputes] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { mode, theme, toggleMode } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const isDark = mode === "dark";
+
+  const disputesVisible = showDisputes || !!initialDisputes;
+
+  useEffect(() => {
+    onDisputesVisibilityChange?.(disputesVisible);
+  }, [disputesVisible, onDisputesVisibilityChange]);
 
   useEffect(() => {
     let ignore = false;
@@ -202,13 +229,25 @@ export default function AccountTabScreen({ onProfilePress, onWalletPress, user }
         { key: "wallet", label: "Ví của tôi", icon: Wallet, accent: "#059669", onPress: onWalletPress },
         ...(activeRole === "Customer" && user.roles.includes("Customer") ? [{ key: "favorites", label: "Yêu thích", icon: Heart, accent: "#E11D48", onPress: openFavoriteVehicles }] : []),
         { key: "deals", label: "Ưu đãi", icon: BadgePercent, accent: "#D97706" },
-        { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626" },
+        { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626", onPress: () => setShowDisputes(true) },
         { key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB" },
       ],
     },
     {
       title: "Hỗ trợ",
       items: [
+        {
+          key: "chatbot",
+          label: "Chatbot MoveVN",
+          icon: Bot,
+          accent: theme.brand,
+          value: fabHidden ? "Mở lại" : undefined,
+          onPress: () => {
+            const ui = useAssistantUi.getState();
+            ui.setFabHidden(false);
+            ui.setChatOpen(true);
+          },
+        },
         {
           key: "support",
           label: "Trung tâm hỗ trợ",
@@ -310,6 +349,26 @@ export default function AccountTabScreen({ onProfilePress, onWalletPress, user }
 
   if (showPolicies) {
     return <PolicyListScreen onBack={() => setShowPolicies(false)} />;
+  }
+
+  if (showDisputes || initialDisputes) {
+    // Deep-link (vào từ chi tiết booking): back phải thoát về trang gốc,
+    // nên chỉ truyền onExit trong trường hợp này. Mở từ menu thì đi list như cũ.
+    const isDeepLink = !showDisputes && !!initialDisputes;
+    return (
+      <DisputesScreen
+        role={activeRole === "Owner" ? "Owner" : "Customer"}
+        initialCreate={showDisputes ? null : initialDisputes}
+        onConsumedInitial={onConsumedDisputes}
+        onBack={() => {
+          setShowDisputes(false);
+          onConsumedDisputes?.();
+        }}
+        onExit={isDeepLink ? onExitDisputes : undefined}
+        onRouteChange={() => onDisputesVisibilityChange?.(true)}
+        key={showDisputes ? "menu" : "deep-link"}
+      />
+    );
   }
 
   if (showSupport) {
