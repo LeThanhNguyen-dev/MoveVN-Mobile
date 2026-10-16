@@ -45,6 +45,7 @@ export default function ExploreNavigator({
             user={user}
             onAvatarPress={onAvatarPress}
             onSearch={(params) => navigation.navigate("VehicleList", params)}
+            onVehiclePress={(params) => navigation.navigate("VehicleDetail", params)}
           />
         )}
       </Stack.Screen>

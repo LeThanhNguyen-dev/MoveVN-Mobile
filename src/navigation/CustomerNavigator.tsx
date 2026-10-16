@@ -4,9 +4,9 @@ import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
 import WalletScreen from "@/features/wallets/screens/WalletScreen";
-import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
+import DealsNavigator from "./DealsNavigator";
 import ExploreNavigator from "./ExploreNavigator";
 import TripsNavigator from "./TripsNavigator";
 import ChatNavigator from "./ChatNavigator";
@@ -83,11 +83,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
             ) : activeTab === "trips" ? (
               <TripsNavigator pendingBookingId={pendingTripId} onConsumedPending={consumePendingTrip} onRouteChange={setTripRoute} />
             ) : activeTab === "deals" ? (
-              <TabPlaceholderScreen
-                description="Khuyến mãi, săn mã và ví voucher của bạn sẽ được đặt ở màn này."
-                icon={Gift}
-                title="Ưu đãi"
-              />
+              <DealsNavigator />
             ) : activeTab === "messages" ? (
               <ChatNavigator onRouteChange={setChatRoute} />
             ) : (

@@ -106,6 +106,9 @@ export const endpoints = {
     goongDetail: "/api/locations/goong/detail",
   },
   configPublic: "/api/config/public",
+  banners: {
+    homepage: "/api/banners/homepage",
+  },
   publicVehicles: {
     pricingQuote: (id: number) => `/api/public/vehicles/${id}/pricing-quote`,
     list: "/api/public/vehicles",

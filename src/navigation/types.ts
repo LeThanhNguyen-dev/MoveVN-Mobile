@@ -31,6 +31,12 @@ export type ExploreStackParamList = {
   };
 };
 
+export type DealsStackParamList = {
+  Promotions: undefined;
+  VoucherHunt: { promotionId?: number } | undefined;
+  VoucherWallet: undefined;
+};
+
 export type TripsStackParamList = {
   TripList: undefined;
   TripDetail: {
