@@ -19,10 +19,12 @@ export interface BookingResponse {
   platformFeeValue?: number;
   depositAmount: number;
   totalAmount: number;
+  outstandingSurchargeAmount?: number;
   escrowAmount: number;
   escrowStatus: string;
   escrowHeldAt?: string;
   escrowSettledAt?: string;
+  completedAt?: string | null;
   paymentDueAt?: string;
   pickupAddress: string;
   returnAddress?: string;
@@ -72,6 +74,7 @@ export interface CreateBookingRequest {
   vehicleId: number;
   startDate: string;
   endDate: string;
+  quoteId?: string;
   pickupAddress: string;
   pickupLatitude?: number;
   pickupLongitude?: number;
@@ -110,11 +113,25 @@ export interface CheckInOutImageResponse {
   createdAt: string;
 }
 
+export interface InspectionReportRevision {
+  id: number;
+  inspectionReportId: number;
+  version: number;
+  changedBy: number;
+  reason: string;
+  snapshotJson?: string | null;
+  createdAt: string;
+}
+
 export interface InspectionReportResponse {
   id: number;
   bookingId: number;
   type: string;
   createdByUserId: number;
+  version?: number;
+  actualReturnAt?: string | null;
+  lateReturnFee?: number | null;
+  revisions?: InspectionReportRevision[];
   odometerKm?: number;
   fuelLevel?: string;
   damageNoted: boolean;

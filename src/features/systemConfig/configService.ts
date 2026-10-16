@@ -9,6 +9,7 @@ interface PublicConfigResponse {
   deliveryMaxRadiusKm: number;
   withdrawalMinAmount: number;
   withdrawalMaxAmount: number;
+  pendingAutoCancelHours?: number;
 }
 
 let cached: PublicConfigResponse | null = null;
@@ -35,6 +36,12 @@ export async function getPublicConfig(): Promise<PublicConfigResponse> {
     };
   }
   return cached;
+}
+
+export async function getPendingAutoCancelHours(): Promise<number> {
+  const config = await getPublicConfig();
+  const hours = Number(config.pendingAutoCancelHours ?? 24);
+  return Number.isFinite(hours) && hours > 0 ? Math.floor(hours) : 24;
 }
 
 export async function getDeliveryConfig(): Promise<DeliveryConfig> {

@@ -74,7 +74,7 @@ const roleLabels: Record<UserRole, string> = {
 
 const verificationTotal = 4;
 
-export default function AccountTabScreen({ onProfilePress, onWalletPress, user }: { onProfilePress: () => void; onWalletPress: () => void; user: AuthUser }) {
+export default function AccountTabScreen({ onProfilePress, onWalletPress, onDisputesPress, user }: { onProfilePress: () => void; onWalletPress: () => void; onDisputesPress: () => void; user: AuthUser }) {
   const unreadCount = useNotificationStore((state) => state.userId === user.userId ? state.unreadCount : 0);
   const activeRole = useAuthStore((state) => state.activeRole);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
@@ -202,7 +202,7 @@ export default function AccountTabScreen({ onProfilePress, onWalletPress, user }
         { key: "wallet", label: "Ví của tôi", icon: Wallet, accent: "#059669", onPress: onWalletPress },
         ...(activeRole === "Customer" && user.roles.includes("Customer") ? [{ key: "favorites", label: "Yêu thích", icon: Heart, accent: "#E11D48", onPress: openFavoriteVehicles }] : []),
         { key: "deals", label: "Ưu đãi", icon: BadgePercent, accent: "#D97706" },
-        { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626" },
+        { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626", onPress: onDisputesPress },
         { key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB" },
       ],
     },

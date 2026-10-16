@@ -28,8 +28,8 @@ import {
   reportNoShow,
   reportReturn,
 } from "@/features/booking/bookingService";
-import type { BookingResponse, InspectionReportResponse } from "@/features/booking/types";
-import { bookingStatusLabel, formatDateTime, formatMoney, rentalProgress } from "@/features/booking/utils/format";
+import type { BookingCancellationQuote, BookingResponse, InspectionReportResponse } from "@/features/booking/types";
+import { bookingStatusLabel, formatDate, formatDateTime, formatMoney, rentalProgress } from "@/features/booking/utils/format";
 import {
   checkPaymentStatus,
   createBookingTopUpLink,
@@ -39,10 +39,12 @@ import {
   type BookingTopUpPendingResponse,
 } from "@/features/payments/services/paymentService";
 import { getMyWallet } from "@/features/wallets/services/walletService";
+import { getPendingAutoCancelHours } from "@/features/systemConfig/configService";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
 import BookingTimeline from "@/features/booking/components/BookingTimeline";
 import PaymentWebViewModal, { payOsReturnUrl } from "@/features/payments/components/PaymentWebViewModal";
 import { createCustomerReview, hasReviewed } from "@/features/review/reviewService";
+import { createDispute } from "@/features/disputes/disputeService";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 
@@ -72,10 +74,18 @@ export default function TripDetailScreen({
   const [reports, setReports] = useState<InspectionReportResponse[]>([]);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
+  const [cleanliness, setCleanliness] = useState(0);
+  const [accuracy, setAccuracy] = useState(0);
+  const [support, setSupport] = useState(0);
   const [comment, setComment] = useState("");
   const userId = useAuthStore((s) => s.user?.userId ?? 0);
   const [pendingOrderCode, setPendingOrderCode] = useState<number | null>(null);
   const [paySheet, setPaySheet] = useState<{ checkoutUrl: string; orderCode: number } | null>(null);
+  const [cancelQuote, setCancelQuote] = useState<BookingCancellationQuote | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [autoCancelHours, setAutoCancelHours] = useState<number | null>(null);
+  const [disputeOpen, setDisputeOpen] = useState(false);
+  const [disputeDesc, setDisputeDesc] = useState("");
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
@@ -94,6 +104,11 @@ export default function TripDetailScreen({
         getMyWallet()
           .then((w) => setWalletBalance(w.balance))
           .catch(() => setWalletBalance(null));
+      }
+      if (data.status === "Pending") {
+        getPendingAutoCancelHours()
+          .then((h) => setAutoCancelHours(h))
+          .catch(() => setAutoCancelHours(24));
       }
     } catch (err) {
       Alert.alert("Lỗi", getApiErrorMessage(err, "Không tải được chi tiết chuyến đi."));
@@ -209,27 +224,26 @@ export default function TripDetailScreen({
         Alert.alert("Không thể hủy", quote.policyMessage);
         return;
       }
-      const detail = quote.hasPaidDeposit
-        ? `Hoàn ${formatMoney(quote.refundAmount)} (${quote.refundPercent}%), mất ${formatMoney(quote.forfeitedAmount)}.`
-        : "Chưa đặt cọc nên hủy miễn phí.";
-      Alert.alert("Xác nhận hủy", `${quote.policyMessage}\n${detail}`, [
-        { text: "Giữ lại", style: "cancel" },
-        {
-          text: "Xác nhận hủy",
-          style: "destructive",
-          onPress: () => {
-            void runAction("cancel", () => cancelBooking(bookingId).then(() => undefined)).then((ok) => {
-              if (ok) {
-                Alert.alert("Thành công", "Đã hủy chuyến đi.", [
-                  { text: "Về danh sách", onPress: () => navigation.goBack() },
-                ]);
-              }
-            });
-          },
-        },
-      ]);
+      setCancelQuote(quote);
+      setCancelReason("");
     } catch (err) {
       Alert.alert("Thất bại", getApiErrorMessage(err, "Không lấy được chính sách hủy."));
+    }
+  }
+
+  async function submitCancel() {
+    if (!cancelQuote) return;
+    if (!cancelReason.trim()) {
+      Alert.alert("Thiếu lý do", "Vui lòng nhập lý do hủy.");
+      return;
+    }
+    const ok = await runAction("cancel", () => cancelBooking(bookingId, cancelReason.trim()).then(() => undefined));
+    if (ok) {
+      setCancelQuote(null);
+      setCancelReason("");
+      Alert.alert("Thành công", "Đã hủy chuyến đi.", [
+        { text: "Về danh sách", onPress: () => navigation.goBack() },
+      ]);
     }
   }
 
@@ -256,14 +270,39 @@ export default function TripDetailScreen({
     );
   }
 
+  async function submitDispute() {
+    if (!disputeDesc.trim()) {
+      Alert.alert("Thiếu mô tả", "Vui lòng mô tả điểm chưa đồng ý trong biên bản.");
+      return;
+    }
+    const ok = await runAction("dispute", () => createDispute({
+      bookingId,
+      reportType: "Damage",
+      description: disputeDesc.trim(),
+    }).then(() => undefined));
+    if (ok) {
+      setDisputeOpen(false);
+      setDisputeDesc("");
+      Alert.alert("Thành công", "Đã gửi tranh chấp. Đội hỗ trợ sẽ kiểm tra và phản hồi.");
+    }
+  }
+
   async function handleReview() {
-    if (rating < 1 || rating > 5) {
-      Alert.alert("Thiếu đánh giá", "Vui lòng chọn từ 1 đến 5 sao.");
+    const scores = [rating, cleanliness, accuracy, support];
+    if (scores.some((s) => s < 1 || s > 5)) {
+      Alert.alert("Thiếu đánh giá", "Vui lòng chấm đủ 4 mục, mỗi mục từ 1 đến 5 sao.");
       return;
     }
     await runAction(
       "review",
-      () => createCustomerReview({ bookingId, rating, comment: comment.trim() || undefined }).then(() => undefined),
+      () => createCustomerReview({
+        bookingId,
+        rating,
+        cleanlinessScore: cleanliness,
+        accuracyScore: accuracy,
+        supportScore: support,
+        comment: comment.trim() || undefined,
+      }).then(() => undefined),
       "Cảm ơn đánh giá của bạn.",
     );
   }
@@ -286,7 +325,11 @@ export default function TripDetailScreen({
   }
 
   const status = booking.status;
-  const canCancel = ["Pending", "Approved", "DepositPaid"].includes(status);
+  const pickupReached = new Date(booking.startDate).getTime() <= Date.now();
+  const checkInReport = reports.find((r) => r.type === "CheckIn");
+  const checkOutReport = reports.find((r) => r.type === "CheckOut");
+  const canCancel = ["Pending", "Approved", "DepositPaid", "Confirmed"].includes(status) && new Date(booking.startDate).getTime() > Date.now();
+  const depositExpired = status === "Approved" && (!booking.paymentDueAt || new Date(booking.paymentDueAt).getTime() <= Date.now() || new Date(booking.startDate).getTime() <= Date.now());
   const progress = status === "InProgress" || status === "Returning"
     ? rentalProgress(booking.startDate, booking.endDate)
     : null;
@@ -312,6 +355,11 @@ export default function TripDetailScreen({
             <Text style={styles.progressText}>{progress.summary}</Text>
           </View>
         )}
+        {status === "Pending" && autoCancelHours != null && booking.createdAt ? (
+          <Text style={styles.muted}>
+            Chủ xe có {autoCancelHours} giờ để duyệt. Nếu không phản hồi trước {formatDateTime(new Date(new Date(booking.createdAt).getTime() + autoCancelHours * 3600000).toISOString())}, hệ thống sẽ tự động từ chối booking.
+          </Text>
+        ) : null}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Lịch trình & địa điểm</Text>
@@ -359,6 +407,13 @@ export default function TripDetailScreen({
           ) : null}
         </View>
 
+        {(booking.outstandingSurchargeAmount ?? 0) > 0 ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Phụ phí còn nợ</Text>
+            <Text style={styles.damage}>Còn nợ {formatMoney(booking.outstandingSurchargeAmount)} phụ phí. Vui lòng thanh toán để hoàn tất chuyến đi.</Text>
+          </View>
+        ) : null}
+
         {pendingTopUp != null && pendingTopUp.amount > 0 && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Cọc bổ sung (gia hạn)</Text>
@@ -378,22 +433,28 @@ export default function TripDetailScreen({
         {status === "Approved" && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Đặt cọc giữ xe</Text>
-            {booking.paymentDueAt ? <Text style={styles.muted}>Hạn cọc: {formatDateTime(booking.paymentDueAt)}</Text> : null}
-            <ActionButton
-              theme={theme}
-              label={actionBusy === "wallet" ? "Đang trừ ví..." : `Trả bằng ví${walletBalance != null ? ` (${formatMoney(walletBalance)})` : ""}`}
-              onPress={handlePayWithWallet}
-              disabled={actionBusy !== null}
-            />
-            <ActionButton
-              theme={theme}
-              label={actionBusy === "payos" ? "Đang tạo link..." : "Trả qua PayOS"}
-              onPress={handlePayWithPayOs}
-              disabled={actionBusy !== null}
-              secondary
-            />
-            {pendingOrderCode != null && (
-              <Text style={styles.muted}>Đang chờ xác nhận giao dịch #{pendingOrderCode}...</Text>
+            {booking.paymentDueAt ? <Text style={styles.muted}>Hạn cọc: {formatDateTime(booking.paymentDueAt)}. Quá hạn booking sẽ tự hủy.</Text> : null}
+            {depositExpired ? (
+              <Text style={styles.damage}>Booking không còn hiệu lực nhận cọc (đã hết hạn thanh toán hoặc đã đến giờ nhận xe). Hệ thống sẽ tự hủy booking này.</Text>
+            ) : (
+              <>
+                <ActionButton
+                  theme={theme}
+                  label={actionBusy === "wallet" ? "Đang trừ ví..." : `Trả bằng ví${walletBalance != null ? ` (${formatMoney(walletBalance)})` : ""}`}
+                  onPress={handlePayWithWallet}
+                  disabled={actionBusy !== null}
+                />
+                <ActionButton
+                  theme={theme}
+                  label={actionBusy === "payos" ? "Đang tạo link..." : "Trả qua PayOS"}
+                  onPress={handlePayWithPayOs}
+                  disabled={actionBusy !== null}
+                  secondary
+                />
+                {pendingOrderCode != null && (
+                  <Text style={styles.muted}>Đang chờ xác nhận giao dịch #{pendingOrderCode}...</Text>
+                )}
+              </>
             )}
           </View>
         )}
@@ -408,25 +469,32 @@ export default function TripDetailScreen({
           />
         )}
 
-        {status === "DepositPaid" && (
+        {(status === "DepositPaid" || status === "Confirmed") && (
           <>
-            <ActionButton
-              theme={theme}
-              label="Xác nhận đã nhận xe"
-              onPress={() => runAction("checkin", () => confirmCheckIn(bookingId).then(() => undefined), "Đã xác nhận nhận xe. Chúc bạn đi tốt!")}
-              disabled={actionBusy !== null}
-            />
-            <ActionButton
-              theme={theme}
-              label="Chủ xe không giao xe"
-              onPress={handleNoShow}
-              disabled={actionBusy !== null}
-              secondary
-            />
+            {checkInReport && pickupReached ? (
+              <ActionButton
+                theme={theme}
+                label="Xác nhận đã nhận xe"
+                onPress={() => runAction("checkin", () => confirmCheckIn(bookingId).then(() => undefined), "Đã xác nhận nhận xe. Chúc bạn đi tốt!")}
+                disabled={actionBusy !== null}
+              />
+            ) : null}
+            {!pickupReached ? (
+              <Text style={styles.muted}>Chưa đến ngày nhận xe ({formatDate(booking.startDate)}). Nút xác nhận sẽ mở sau thời điểm nhận xe.</Text>
+            ) : null}
+            {status === "DepositPaid" && pickupReached && !checkInReport ? (
+              <ActionButton
+                theme={theme}
+                label="Chủ xe không giao xe"
+                onPress={handleNoShow}
+                disabled={actionBusy !== null}
+                secondary
+              />
+            ) : null}
           </>
         )}
 
-        {status === "InProgress" && (
+        {status === "InProgress" && !checkOutReport && pickupReached && (
           <ActionButton
             theme={theme}
             label="Báo đã trả xe"
@@ -435,12 +503,24 @@ export default function TripDetailScreen({
           />
         )}
 
-        {status === "Returning" && (
+        {(status === "Returning" || status === "InProgress") && checkOutReport && pickupReached && (
           <ActionButton
             theme={theme}
             label="Xác nhận biên bản trả xe"
-            onPress={() => runAction("checkout", () => confirmCheckOut(bookingId).then(() => undefined), "Đã xác nhận hoàn tất.")}
+            onPress={() => runAction("checkout", () => confirmCheckOut(bookingId, checkOutReport.version ?? 1).then(() => undefined), "Đã xác nhận hoàn tất.")}
             disabled={actionBusy !== null}
+          />
+        )}
+        {status === "Returning" && checkOutReport && pickupReached && (
+          <ActionButton
+            theme={theme}
+            label="Có sai sót / Mở tranh chấp"
+            onPress={() => {
+              setDisputeDesc("Tôi không đồng ý với biên bản check-out và yêu cầu kiểm tra lại.");
+              setDisputeOpen(true);
+            }}
+            disabled={actionBusy !== null}
+            secondary
           />
         )}
 
@@ -460,6 +540,36 @@ export default function TripDetailScreen({
                 ) : (
                   <Text style={styles.muted}>Không ghi nhận hư hỏng</Text>
                 )}
+                {r.type === "CheckOut" && r.actualReturnAt ? (
+                  <Text style={styles.muted}>Giờ bàn giao: {formatDateTime(r.actualReturnAt)}</Text>
+                ) : null}
+                {r.type === "CheckOut" && r.lateReturnFee != null && r.lateReturnFee > 0 ? (
+                  <Text style={styles.damage}>Phụ phí trả trễ: {formatMoney(r.lateReturnFee)}</Text>
+                ) : null}
+                {r.type === "CheckOut" && r.revisions && r.revisions.length > 0 ? (
+                  <View>
+                    <Text style={styles.muted}>Lịch sử sửa ({r.revisions.length})</Text>
+                    {r.revisions.map((rev) => {
+                      let snap: { ActualReturnAt?: string; OdometerKm?: number; LateReturnFee?: number; actualReturnAt?: string; odometerKm?: number; lateReturnFee?: number } = {};
+                      try {
+                        snap = rev.snapshotJson ? (JSON.parse(rev.snapshotJson) as typeof snap) : {};
+                      } catch {
+                        snap = {};
+                      }
+                      const at = snap.ActualReturnAt ?? snap.actualReturnAt;
+                      const odo = snap.OdometerKm ?? snap.odometerKm;
+                      const fee = snap.LateReturnFee ?? snap.lateReturnFee;
+                      return (
+                        <Text key={rev.id} style={styles.muted}>
+                          v{rev.version} · {rev.reason || "sửa biên bản"} · {formatDateTime(rev.createdAt)}
+                          {at ? ` · bàn giao ${formatDateTime(at)}` : ""}
+                          {odo != null ? ` · odo ${odo}` : ""}
+                          {fee != null ? ` · phí ${formatMoney(fee)}` : ""}
+                        </Text>
+                      );
+                    })}
+                  </View>
+                ) : null}
                 {r.images.length > 0 && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbs}>
                     {r.images.map((img) => (
@@ -488,13 +598,10 @@ export default function TripDetailScreen({
         {status === "Completed" && !alreadyReviewed && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Đánh giá chuyến đi</Text>
-            <View style={styles.stars}>
-              {[1, 2, 3, 4, 5].map((s) => (
-                <Pressable key={s} onPress={() => setRating(s)} style={styles.star}>
-                  <Text style={[styles.starText, s <= rating && styles.starActive]}>★</Text>
-                </Pressable>
-              ))}
-            </View>
+            <RatingInput label="Tổng quan" value={rating} onChange={setRating} styles={styles} />
+            <RatingInput label="Sạch sẽ" value={cleanliness} onChange={setCleanliness} styles={styles} />
+            <RatingInput label="Đúng mô tả" value={accuracy} onChange={setAccuracy} styles={styles} />
+            <RatingInput label="Hỗ trợ" value={support} onChange={setSupport} styles={styles} />
             <TextInput
               value={comment}
               onChangeText={setComment}
@@ -522,6 +629,73 @@ export default function TripDetailScreen({
         </Pressable>
       </Modal>
 
+      <Modal visible={cancelQuote !== null} transparent animationType="fade" onRequestClose={() => setCancelQuote(null)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modal}>
+            <Text style={styles.cardTitle}>Hủy chuyến đi</Text>
+            {cancelQuote ? (
+              <>
+                <Text style={styles.muted}>{cancelQuote.policyMessage}</Text>
+                <Text style={styles.muted}>
+                  {cancelQuote.hasPaidDeposit
+                    ? `Hoàn ${formatMoney(cancelQuote.refundAmount)} (${cancelQuote.refundPercent}%), mất ${formatMoney(cancelQuote.forfeitedAmount)}.`
+                    : "Chưa đặt cọc nên hủy miễn phí."}
+                </Text>
+              </>
+            ) : null}
+            <TextInput
+              value={cancelReason}
+              onChangeText={setCancelReason}
+              placeholder="Lý do hủy..."
+              placeholderTextColor={theme.placeholder}
+              multiline
+              style={[styles.input, styles.multiline]}
+            />
+            <View style={styles.modalActions}>
+              <Pressable onPress={() => setCancelQuote(null)} style={styles.ghostButton}>
+                <Text style={styles.ghostText}>Đóng</Text>
+              </Pressable>
+              <Pressable onPress={submitCancel} disabled={actionBusy !== null} style={[styles.primaryButton, actionBusy !== null && styles.disabled]}>
+                {actionBusy === "cancel" ? (
+                  <ActivityIndicator color={theme.onBrand} />
+                ) : (
+                  <Text style={styles.primaryText}>Xác nhận hủy</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={disputeOpen} transparent animationType="fade" onRequestClose={() => setDisputeOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modal}>
+            <Text style={styles.cardTitle}>Mở tranh chấp hư hỏng</Text>
+            <Text style={styles.muted}>Mô tả điểm chưa đồng ý trong biên bản trả xe. Đội hỗ trợ sẽ kiểm tra lại.</Text>
+            <TextInput
+              value={disputeDesc}
+              onChangeText={setDisputeDesc}
+              placeholder="Mô tả sai sót..."
+              placeholderTextColor={theme.placeholder}
+              multiline
+              style={[styles.input, styles.multiline]}
+            />
+            <View style={styles.modalActions}>
+              <Pressable onPress={() => setDisputeOpen(false)} style={styles.ghostButton}>
+                <Text style={styles.ghostText}>Đóng</Text>
+              </Pressable>
+              <Pressable onPress={submitDispute} disabled={actionBusy !== null} style={[styles.primaryButton, actionBusy !== null && styles.disabled]}>
+                {actionBusy === "dispute" ? (
+                  <ActivityIndicator color={theme.onBrand} />
+                ) : (
+                  <Text style={styles.primaryText}>Gửi tranh chấp</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <PaymentWebViewModal
         checkoutUrl={paySheet?.checkoutUrl ?? null}
         onClose={() => {
@@ -529,6 +703,31 @@ export default function TripDetailScreen({
           void load();
         }}
       />
+    </View>
+  );
+}
+
+function RatingInput({
+  label,
+  value,
+  onChange,
+  styles,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <View>
+      <Text style={styles.muted}>{label}</Text>
+      <View style={styles.stars}>
+        {[1, 2, 3, 4, 5].map((s) => (
+          <Pressable key={s} onPress={() => onChange(s)} style={styles.star}>
+            <Text style={[styles.starText, s <= value && styles.starActive]}>★</Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }

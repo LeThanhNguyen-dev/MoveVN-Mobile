@@ -4,6 +4,7 @@ import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
 import WalletScreen from "@/features/wallets/screens/WalletScreen";
+import DisputeListScreen from "@/features/disputes/screens/DisputeListScreen";
 import TabPlaceholderScreen from "@/features/app/screens/TabPlaceholderScreen";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
@@ -30,6 +31,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
+  const [showDisputes, setShowDisputes] = useState(false);
   const showFavorites = useFavoriteStore((state) => state.open && state.userId === user.userId);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
@@ -70,6 +72,10 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
         <View style={[styles.screen, styles.overlayPad]}>
           <WalletScreen onBack={() => setShowWallet(false)} />
         </View>
+      ) : showDisputes ? (
+        <View style={[styles.screen, styles.overlayPad]}>
+          <DisputeListScreen onBack={() => setShowDisputes(false)} />
+        </View>
       ) : (
         <>
           <View style={styles.screen}>
@@ -91,7 +97,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
             ) : activeTab === "messages" ? (
               <ChatNavigator onRouteChange={setChatRoute} />
             ) : (
-              <AccountTabScreen onProfilePress={() => setShowProfile(true)} onWalletPress={() => setShowWallet(true)} user={user} />
+              <AccountTabScreen onProfilePress={() => setShowProfile(true)} onWalletPress={() => setShowWallet(true)} onDisputesPress={() => setShowDisputes(true)} user={user} />
             )}
           </View>
           {showBottomBar ? (

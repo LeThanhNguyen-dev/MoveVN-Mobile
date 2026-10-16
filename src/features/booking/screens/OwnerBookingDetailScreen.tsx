@@ -20,6 +20,7 @@ import type { OwnerBookingsStackParamList } from "@/navigation/OwnerBookingsNavi
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import {
+  amendCheckoutReport,
   approveBooking,
   cancelBookingByOwner,
   confirmReceipt,
@@ -34,13 +35,14 @@ import {
   getInspectionReports,
 } from "@/features/booking/bookingService";
 import type { BookingResponse, InspectionReportResponse } from "@/features/booking/types";
-import { bookingStatusLabel, formatDateTime, formatMoney, rentalProgress } from "@/features/booking/utils/format";
+import { bookingStatusLabel, escrowHoldInfo, formatDateTime, formatMoney, rentalProgress } from "@/features/booking/utils/format";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
 import BookingTimeline from "@/features/booking/components/BookingTimeline";
 import { createOwnerReview, hasReviewed } from "@/features/review/reviewService";
 import type { UploadFile } from "@/types/upload";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
+import { getPendingAutoCancelHours } from "@/features/systemConfig/configService";
 
 type DetailRoute = RouteProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
 type DetailNav = NativeStackNavigationProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
@@ -75,10 +77,12 @@ export default function OwnerBookingDetailScreen({
   const [damageNoted, setDamageNoted] = useState(false);
   const [damageNote, setDamageNote] = useState("");
   const [photos, setPhotos] = useState<UploadFile[]>([]);
+  const [actualReturnAt, setActualReturnAt] = useState("");
+  const [isAmending, setIsAmending] = useState(false);
+  const [amendReason, setAmendReason] = useState("");
+  const [amendVersion, setAmendVersion] = useState(1);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
-  const [receiptModal, setReceiptModal] = useState(false);
-  const [receiptDamage, setReceiptDamage] = useState(false);
-  const [receiptNote, setReceiptNote] = useState("");
+  const [autoCancelHours, setAutoCancelHours] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -90,6 +94,11 @@ export default function OwnerBookingDetailScreen({
       ]);
       setReports(list);
       setAlreadyReviewed(reviewed);
+      if (data.status === "Pending") {
+        getPendingAutoCancelHours()
+          .then((h) => setAutoCancelHours(h))
+          .catch(() => setAutoCancelHours(24));
+      }
     } catch (err) {
       Alert.alert("Lỗi", getApiErrorMessage(err, "Không tải được chi tiết đơn thuê."));
     } finally {
@@ -158,13 +167,66 @@ export default function OwnerBookingDetailScreen({
     setPhotos(files);
   }
 
+  function parseReturnAtToIso(value: string): string | null {
+    const m = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/);
+    if (!m) return null;
+    const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5]));
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
   async function submitReport() {
     if (!reportModal) return;
+    if (isAmending) {
+      if (!amendReason.trim()) {
+        Alert.alert("Thiếu lý do", "Vui lòng nhập lý do sửa biên bản.");
+        return;
+      }
+      const iso = parseReturnAtToIso(actualReturnAt);
+      if (!iso) {
+        Alert.alert("Thiếu giờ bàn giao", "Nhập giờ thực tế nhận lại xe (DD/MM/YYYY HH:mm).");
+        return;
+      }
+      const odo = odometer.trim() ? Number(odometer.trim()) : undefined;
+      if (odo != null && (!Number.isFinite(odo) || odo < 0)) {
+        Alert.alert("Sai số km", "Vui lòng nhập số km hợp lệ.");
+        return;
+      }
+      setReportModal(null);
+      await runAction(
+        "amend",
+        () => amendCheckoutReport(bookingId, {
+          expectedVersion: amendVersion,
+          reason: amendReason.trim(),
+          actualReturnAt: iso,
+          odometerKm: odo,
+          fuelLevel: fuel.trim() || undefined,
+          damageNoted,
+          damageDescription: damageNote.trim() || undefined,
+        }).then(() => undefined),
+        "Đã sửa biên bản, khách cần kiểm tra phiên bản mới.",
+      );
+      resetReportForm();
+      return;
+    }
     if (photos.length === 0) {
       Alert.alert("Thiếu ảnh", "Cần ít nhất 1 ảnh biên bản (tối đa 12 ảnh).");
       return;
     }
+    const isCheckOut = reportModal.type === "CheckOut";
+    let actualReturnAtIso: string | undefined;
+    if (isCheckOut) {
+      actualReturnAtIso = parseReturnAtToIso(actualReturnAt) ?? undefined;
+      if (!actualReturnAtIso) {
+        Alert.alert("Thiếu giờ bàn giao", "Nhập giờ thực tế nhận lại xe (DD/MM/YYYY HH:mm).");
+        return;
+      }
+      if (new Date(actualReturnAtIso).getTime() > Date.now()) {
+        Alert.alert("Giờ không hợp lệ", "Giờ bàn giao không được ở tương lai.");
+        return;
+      }
+    }
     const input: InspectionFormInput = {
+      actualReturnAt: actualReturnAtIso,
       odometerKm: odometer.trim() ? Number(odometer.trim()) : undefined,
       fuelLevel: fuel.trim() || undefined,
       damageNoted,
@@ -191,21 +253,7 @@ export default function OwnerBookingDetailScreen({
     setDamageNoted(false);
     setDamageNote("");
     setPhotos([]);
-  }
-
-  async function submitReceipt() {
-    setReceiptModal(false);
-    await runAction(
-      "receipt",
-      () =>
-        confirmReceipt(bookingId, {
-          hasDamages: receiptDamage,
-          damageNote: receiptNote.trim() || undefined,
-        }).then(() => undefined),
-      receiptDamage ? "Đã nhận xe và ghi nhận hư hỏng (tự tạo tranh chấp)." : "Đã xác nhận nhận xe.",
-    );
-    setReceiptDamage(false);
-    setReceiptNote("");
+    setActualReturnAt("");
   }
 
   if (loading || !booking) {
@@ -226,8 +274,10 @@ export default function OwnerBookingDetailScreen({
   }
 
   const status = booking.status;
+  const pickupReached = new Date(booking.startDate).getTime() <= Date.now();
   const checkInReport = reports.find((r) => r.type === "CheckIn");
   const checkOutReport = reports.find((r) => r.type === "CheckOut");
+  const hold = escrowHoldInfo(checkOutReport?.createdAt, booking.completedAt);
   const progress = status === "InProgress" || status === "Returning"
     ? rentalProgress(booking.startDate, booking.endDate)
     : null;
@@ -302,6 +352,12 @@ export default function OwnerBookingDetailScreen({
           <Row label="Tiền cọc giữ" value={formatMoney(booking.depositAmount)} />
         </View>
 
+        {status === "Pending" && autoCancelHours != null && booking.createdAt ? (
+          <Text style={styles.muted}>
+            Vui lòng phản hồi trước {formatDateTime(new Date(new Date(booking.createdAt).getTime() + autoCancelHours * 3600000).toISOString())}. Quá {autoCancelHours} giờ hệ thống sẽ tự động từ chối.
+          </Text>
+        ) : null}
+
         {status === "Pending" && (
           <View style={styles.actionRow}>
             <Pressable
@@ -321,24 +377,51 @@ export default function OwnerBookingDetailScreen({
           </View>
         )}
 
-        {(status === "Approved" || status === "DepositPaid") && (
+        {(status === "Approved" || status === "DepositPaid") && new Date(booking.startDate).getTime() > Date.now() && (
           <ActionButton theme={theme} label="Hủy booking (hoàn 100% cọc)" onPress={() => { setReason(""); setReasonModal({ mode: "cancel" }); }} disabled={busy !== null} danger />
         )}
 
-        {status === "DepositPaid" && !checkInReport && (
+        {(status === "DepositPaid" || status === "Confirmed") && !checkInReport && pickupReached && (
           <ActionButton theme={theme} label="Lập biên bản nhận xe" onPress={() => { resetReportForm(); setReportModal({ type: "CheckIn" }); }} disabled={busy !== null} />
         )}
+        {(status === "DepositPaid" || status === "Confirmed") && !checkInReport && !pickupReached ? (
+          <Text style={styles.muted}>Chưa đến ngày nhận xe. Nút lập biên bản sẽ mở sau thời điểm nhận xe.</Text>
+        ) : null}
 
-        {(status === "InProgress" || status === "Returning") && !checkOutReport && (
-          <ActionButton theme={theme} label="Lập biên bản trả xe" onPress={() => { resetReportForm(); setReportModal({ type: "CheckOut" }); }} disabled={busy !== null} />
+        {(status === "InProgress" || status === "Returning") && !checkOutReport && pickupReached && (
+          <ActionButton theme={theme} label="Lập biên bản trả xe" onPress={() => { resetReportForm(); setActualReturnAt(formatDateTime(new Date().toISOString())); setReportModal({ type: "CheckOut" }); }} disabled={busy !== null} />
+        )}
+
+        {status === "Returning" && checkOutReport && !checkOutReport.isCustomerConfirmed && (
+          <ActionButton
+            theme={theme}
+            label="Sửa biên bản trả xe"
+            onPress={() => {
+              resetReportForm();
+              setOdometer(checkOutReport.odometerKm != null ? String(checkOutReport.odometerKm) : "");
+              setFuel(checkOutReport.fuelLevel ?? "");
+              setDamageNoted(checkOutReport.damageNoted);
+              setDamageNote(checkOutReport.damageDescription ?? "");
+              setActualReturnAt(checkOutReport.actualReturnAt ? formatDateTime(checkOutReport.actualReturnAt) : formatDateTime(new Date().toISOString()));
+              setAmendReason("");
+              setAmendVersion(checkOutReport.version ?? 1);
+              setIsAmending(true);
+              setReportModal({ type: "CheckOut" });
+            }}
+            disabled={busy !== null}
+          />
         )}
 
         {status === "Returned" && (
-          <ActionButton theme={theme} label="Xác nhận đã nhận xe" onPress={() => { setReceiptDamage(false); setReceiptNote(""); setReceiptModal(true); }} disabled={busy !== null} />
+          <ActionButton theme={theme} label="Xác nhận đã nhận xe" onPress={() => runAction("receipt", () => confirmReceipt(bookingId, {}).then(() => undefined), "Đã xác nhận nhận xe.")} disabled={busy !== null} />
         )}
 
         {status === "Completed" && booking.escrowStatus === "Held" && (
-          <ActionButton theme={theme} label="Giải ngân tiền cọc" onPress={() => runAction("settle", () => requestSettlement(bookingId).then(() => undefined), "Đã giải ngân escrow.")} disabled={busy !== null} />
+          hold.withinHoldWindow ? (
+            <Text style={styles.muted}>Tiền cọc đang giữ để đối soát. Còn khoảng {hold.remainingHours} giờ nữa mới được giải ngân.</Text>
+          ) : (
+            <ActionButton theme={theme} label="Giải ngân tiền cọc" onPress={() => runAction("settle", () => requestSettlement(bookingId).then(() => undefined), "Đã giải ngân escrow.")} disabled={busy !== null} />
+          )
         )}
 
         {reports.length > 0 && (
@@ -357,6 +440,36 @@ export default function OwnerBookingDetailScreen({
                 ) : (
                   <Text style={styles.muted}>Không ghi nhận hư hỏng</Text>
                 )}
+                {r.type === "CheckOut" && r.actualReturnAt ? (
+                  <Text style={styles.muted}>Giờ bàn giao: {formatDateTime(r.actualReturnAt)}</Text>
+                ) : null}
+                {r.type === "CheckOut" && r.lateReturnFee != null && r.lateReturnFee > 0 ? (
+                  <Text style={styles.damage}>Phụ phí trả trễ: {formatMoney(r.lateReturnFee)}</Text>
+                ) : null}
+                {r.type === "CheckOut" && r.revisions && r.revisions.length > 0 ? (
+                  <View>
+                    <Text style={styles.muted}>Lịch sử sửa ({r.revisions.length})</Text>
+                    {r.revisions.map((rev) => {
+                      let snap: { ActualReturnAt?: string; OdometerKm?: number; LateReturnFee?: number; actualReturnAt?: string; odometerKm?: number; lateReturnFee?: number } = {};
+                      try {
+                        snap = rev.snapshotJson ? (JSON.parse(rev.snapshotJson) as typeof snap) : {};
+                      } catch {
+                        snap = {};
+                      }
+                      const at = snap.ActualReturnAt ?? snap.actualReturnAt;
+                      const odo = snap.OdometerKm ?? snap.odometerKm;
+                      const fee = snap.LateReturnFee ?? snap.lateReturnFee;
+                      return (
+                        <Text key={rev.id} style={styles.muted}>
+                          v{rev.version} · {rev.reason || "sửa biên bản"} · {formatDateTime(rev.createdAt)}
+                          {at ? ` · bàn giao ${formatDateTime(at)}` : ""}
+                          {odo != null ? ` · odo ${odo}` : ""}
+                          {fee != null ? ` · phí ${formatMoney(fee)}` : ""}
+                        </Text>
+                      );
+                    })}
+                  </View>
+                ) : null}
                 {r.images.length > 0 && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbs}>
                     {r.images.map((img) => (
@@ -441,11 +554,11 @@ export default function OwnerBookingDetailScreen({
         </View>
       </Modal>
 
-      <Modal visible={reportModal !== null} transparent animationType="fade" onRequestClose={() => setReportModal(null)}>
+      <Modal visible={reportModal !== null} transparent animationType="fade" onRequestClose={() => { resetReportForm(); setReportModal(null); }}>
         <View style={styles.backdrop}>
           <View style={[styles.modal, styles.tallModal]}>
             <Text style={styles.cardTitle}>
-              Biên bản {reportModal?.type === "CheckIn" ? "nhận xe" : "trả xe"}
+              {isAmending ? "Sửa biên bản trả xe" : `Biên bản ${reportModal?.type === "CheckIn" ? "nhận xe" : "trả xe"}`}
             </Text>
             <ScrollView>
               <Text style={styles.fieldLabel}>Số km hiện tại</Text>
@@ -465,6 +578,31 @@ export default function OwnerBookingDetailScreen({
                 placeholderTextColor={theme.placeholder}
                 style={styles.input}
               />
+              {reportModal?.type === "CheckOut" && (
+                <>
+                  <Text style={styles.fieldLabel}>Giờ thực tế nhận lại xe (khách sẽ kiểm tra)</Text>
+                  <TextInput
+                    value={actualReturnAt}
+                    onChangeText={setActualReturnAt}
+                    placeholder="DD/MM/YYYY HH:mm"
+                    placeholderTextColor={theme.placeholder}
+                    style={styles.input}
+                  />
+                </>
+              )}
+              {isAmending && (
+                <>
+                  <Text style={styles.fieldLabel}>Lý do sửa (khách sẽ thấy)</Text>
+                  <TextInput
+                    value={amendReason}
+                    onChangeText={setAmendReason}
+                    placeholder="VD: nhập nhầm giờ bàn giao..."
+                    placeholderTextColor={theme.placeholder}
+                    multiline
+                    style={[styles.input, styles.multiline]}
+                  />
+                </>
+              )}
               <View style={styles.switchRow}>
                 <Text style={styles.fieldLabel}>Có hư hỏng / mất mát</Text>
                 <Switch value={damageNoted} onValueChange={setDamageNoted} />
@@ -479,62 +617,33 @@ export default function OwnerBookingDetailScreen({
                   style={[styles.input, styles.multiline]}
                 />
               )}
-              <Pressable onPress={pickPhotos} style={styles.photoButton}>
-                <Text style={styles.photoButtonText}>
-                  {photos.length === 0 ? "Chọn ảnh (ít nhất 1, tối đa 12)" : `Đã chọn ${photos.length} ảnh — bấm để chọn lại`}
-                </Text>
-              </Pressable>
-              {photos.length > 0 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbs}>
-                  {photos.map((p, i) => (
-                    <Image key={`${p.uri}-${i}`} source={{ uri: p.uri }} style={styles.thumb} />
-                  ))}
-                </ScrollView>
+              {!isAmending && (
+                <>
+                  <Pressable onPress={pickPhotos} style={styles.photoButton}>
+                    <Text style={styles.photoButtonText}>
+                      {photos.length === 0 ? "Chọn ảnh (ít nhất 1, tối đa 12)" : `Đã chọn ${photos.length} ảnh — bấm để chọn lại`}
+                    </Text>
+                  </Pressable>
+                  {photos.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbs}>
+                      {photos.map((p, i) => (
+                        <Image key={`${p.uri}-${i}`} source={{ uri: p.uri }} style={styles.thumb} />
+                      ))}
+                    </ScrollView>
+                  )}
+                </>
               )}
             </ScrollView>
             <View style={styles.modalActions}>
-              <Pressable onPress={() => setReportModal(null)} style={styles.ghostButton}>
+              <Pressable onPress={() => { resetReportForm(); setReportModal(null); }} style={styles.ghostButton}>
                 <Text style={styles.ghostText}>Đóng</Text>
               </Pressable>
               <Pressable onPress={submitReport} disabled={busy !== null} style={[styles.primaryButton, busy !== null && styles.disabled]}>
-                {busy === "report" ? (
+                {busy === "report" || busy === "amend" ? (
                   <ActivityIndicator color={theme.onBrand} />
                 ) : (
-                  <Text style={styles.primaryText}>Lập biên bản</Text>
+                  <Text style={styles.primaryText}>{isAmending ? "Lưu sửa đổi" : "Lập biên bản"}</Text>
                 )}
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={receiptModal} transparent animationType="fade" onRequestClose={() => setReceiptModal(false)}>
-        <View style={styles.backdrop}>
-          <View style={styles.modal}>
-            <Text style={styles.cardTitle}>Xác nhận đã nhận xe</Text>
-            <View style={styles.switchRow}>
-              <Text style={styles.fieldLabel}>Phát hiện hư hỏng / mất mát</Text>
-              <Switch value={receiptDamage} onValueChange={setReceiptDamage} />
-            </View>
-            {receiptDamage && (
-              <>
-                <Text style={styles.muted}>Hệ thống sẽ tự tạo tranh chấp hư hỏng.</Text>
-                <TextInput
-                  value={receiptNote}
-                  onChangeText={setReceiptNote}
-                  placeholder="Mô tả hư hỏng..."
-                  placeholderTextColor={theme.placeholder}
-                  multiline
-                  style={[styles.input, styles.multiline]}
-                />
-              </>
-            )}
-            <View style={styles.modalActions}>
-              <Pressable onPress={() => setReceiptModal(false)} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Đóng</Text>
-              </Pressable>
-              <Pressable onPress={submitReceipt} style={styles.primaryButton}>
-                <Text style={styles.primaryText}>Xác nhận</Text>
               </Pressable>
             </View>
           </View>
@@ -558,6 +667,10 @@ export default function OwnerBookingDetailScreen({
     setDamageNoted(false);
     setDamageNote("");
     setPhotos([]);
+    setActualReturnAt("");
+    setIsAmending(false);
+    setAmendReason("");
+    setAmendVersion(1);
   }
 }
 

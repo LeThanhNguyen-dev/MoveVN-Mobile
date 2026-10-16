@@ -49,6 +49,7 @@ export async function requestSettlement(id: number): Promise<BookingResponse> {
 }
 
 export interface InspectionFormInput {
+  actualReturnAt?: string;
   odometerKm?: number;
   fuelLevel?: string;
   damageNoted: boolean;
@@ -58,6 +59,7 @@ export interface InspectionFormInput {
 
 function buildInspectionForm(input: InspectionFormInput): FormData {
   const formData = new FormData();
+  if (input.actualReturnAt) formData.append("actualReturnAt", input.actualReturnAt);
   if (input.odometerKm != null) formData.append("odometerKm", String(input.odometerKm));
   if (input.fuelLevel) formData.append("fuelLevel", input.fuelLevel);
   formData.append("damageNoted", String(input.damageNoted));
@@ -86,6 +88,35 @@ export async function createOwnerCheckOutReport(
     endpoints.bookings.checkOut(id),
     buildInspectionForm(input),
     { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return res.data.data!;
+}
+
+export interface AmendCheckoutInput {
+  expectedVersion: number;
+  reason: string;
+  actualReturnAt: string;
+  odometerKm?: number;
+  fuelLevel?: string;
+  damageNoted: boolean;
+  damageDescription?: string;
+}
+
+export async function amendCheckoutReport(
+  id: number,
+  input: AmendCheckoutInput,
+): Promise<InspectionReportResponse> {
+  const res = await apiClient.patch<ApiResponse<InspectionReportResponse>>(
+    endpoints.bookings.amendCheckOut(id),
+    {
+      expectedVersion: input.expectedVersion,
+      reason: input.reason,
+      actualReturnAt: input.actualReturnAt,
+      odometerKm: input.odometerKm,
+      fuelLevel: input.fuelLevel,
+      damageNoted: input.damageNoted,
+      damageDescription: input.damageDescription,
+    },
   );
   return res.data.data!;
 }

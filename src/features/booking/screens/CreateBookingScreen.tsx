@@ -19,15 +19,15 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { ExploreStackParamList } from "@/navigation/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
-import { getPublicVehicleById } from "@/features/vehicles/services/publicVehicleService";
-import type { VehicleResponse } from "@/features/vehicles/types";
+import { createPricingQuote, getPublicVehicleById, getVehicleAvailability } from "@/features/vehicles/services/publicVehicleService";
+import type { BusyPeriod, PricingQuoteResponse, VehicleResponse } from "@/features/vehicles/types";
 import { getMinPrice } from "@/features/vehicles/ownerDisplay";
-import { calculateRentalDays, formatPeriodSummary } from "@/features/vehicles/utils/rentalPeriod";
+import { calculateRentalDays, firstBusyDateInRange, formatPeriodSummary, getBusyDateKeys } from "@/features/vehicles/utils/rentalPeriod";
 import AddressAutocomplete, {
   type SelectedAddress,
 } from "@/features/locations/components/AddressAutocomplete";
 import { createBooking } from "@/features/booking/bookingService";
-import { formatDateTime, formatMoney, getVolumeDiscountPercent } from "@/features/booking/utils/format";
+import { formatDateTime, formatMoney, getVolumeDiscountPercent, parseDisplayDateTime } from "@/features/booking/utils/format";
 import {
   calcDeliveryPreview,
   effectiveDeliveryConfig,
@@ -54,8 +54,16 @@ export default function CreateBookingScreen({
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { vehicleId, startDate, endDate } = route.params;
+  const { vehicleId, startDate: initialStart, endDate: initialEnd } = route.params;
 
+  const [start, setStart] = useState(initialStart);
+  const [end, setEnd] = useState(initialEnd);
+  const [startText, setStartText] = useState(() => formatDateTime(initialStart));
+  const [endText, setEndText] = useState(() => formatDateTime(initialEnd));
+  const [busyPeriods, setBusyPeriods] = useState<BusyPeriod[]>([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
+  const [availabilityError, setAvailabilityError] = useState(false);
+  const [nextAvailableDate, setNextAvailableDate] = useState<string | null>(null);
   const [vehicle, setVehicle] = useState<VehicleResponse | null | undefined>(undefined);
   const [pickupAddress, setPickupAddress] = useState("");
   const [pickupLat, setPickupLat] = useState<number | null>(null);
@@ -70,6 +78,7 @@ export default function CreateBookingScreen({
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig>(DEFAULT_DELIVERY_CONFIG);
+  const [pricingQuote, setPricingQuote] = useState<PricingQuoteResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [voucherModal, setVoucherModal] = useState(false);
   const [vouchers, setVouchers] = useState<VoucherClaimResponse[]>([]);
@@ -162,7 +171,71 @@ export default function CreateBookingScreen({
     };
   }, [vehicleId]);
 
-  const days = calculateRentalDays(startDate, endDate);
+  useEffect(() => {
+    let cancelled = false;
+    setAvailabilityLoading(true);
+    setAvailabilityError(false);
+    getVehicleAvailability(vehicleId)
+      .then((data) => { if (!cancelled) setBusyPeriods(data?.busyPeriods ?? []); })
+      .catch(() => { if (!cancelled) setAvailabilityError(true); })
+      .finally(() => { if (!cancelled) setAvailabilityLoading(false); });
+    return () => { cancelled = true; };
+  }, [vehicleId]);
+
+  useEffect(() => {
+    let active = true;
+    setPricingQuote(null);
+    if (calculateRentalDays(start, end) <= 0) return;
+    const timer = setTimeout(() => {
+      createPricingQuote(vehicleId, start, end)
+        .then((data) => { if (active) setPricingQuote(data); })
+        .catch(() => { if (active) setPricingQuote(null); });
+    }, 250);
+    return () => { active = false; clearTimeout(timer); };
+  }, [vehicleId, start, end]);
+
+  function getNextAvailableFromError(err: unknown): string | null {
+    const data = (err as { response?: { data?: { data?: { nextAvailable?: unknown } } } })?.response?.data?.data;
+    return typeof data?.nextAvailable === "string" ? data.nextAvailable : null;
+  }
+
+  function handleStartText(v: string) {
+    setStartText(v);
+    const iso = parseDisplayDateTime(v);
+    if (iso) {
+      setStart(iso);
+      setNextAvailableDate(null);
+    }
+  }
+
+  function handleEndText(v: string) {
+    setEndText(v);
+    const iso = parseDisplayDateTime(v);
+    if (iso) {
+      setEnd(iso);
+      setNextAvailableDate(null);
+    }
+  }
+
+  function applyNextAvailable(dateStr: string) {
+    const keepDays = Math.max(1, calculateRentalDays(start, end));
+    const base = new Date(`${dateStr}T00:00:00`);
+    if (Number.isNaN(base.getTime())) return;
+    const cur = new Date(start);
+    base.setHours(cur.getHours(), cur.getMinutes(), 0, 0);
+    const newStart = base.toISOString();
+    const newEnd = new Date(base.getTime() + keepDays * 86400000).toISOString();
+    setStart(newStart);
+    setEnd(newEnd);
+    setStartText(formatDateTime(newStart));
+    setEndText(formatDateTime(newEnd));
+    setNextAvailableDate(null);
+  }
+
+  const days = calculateRentalDays(start, end);
+  const busyKeys = useMemo(() => getBusyDateKeys(busyPeriods), [busyPeriods]);
+  const conflictDate = days > 0 ? firstBusyDateInRange(start, end, busyKeys) : null;
+  const scheduleBlocked = availabilityLoading || availabilityError || conflictDate != null;
   const pricePerDay = vehicle ? getMinPrice(vehicle) : null;
   const estimate = pricePerDay != null && days > 0 ? pricePerDay * days : null;
 
@@ -236,12 +309,29 @@ export default function CreateBookingScreen({
         return;
       }
     }
+    if (availabilityLoading) {
+      Alert.alert("Đang tải lịch xe", "Vui lòng đợi tải lịch bận của xe.");
+      return;
+    }
+    if (availabilityError) {
+      Alert.alert("Chưa tải được lịch xe", "Vui lòng thử lại sau.");
+      return;
+    }
+    if (days <= 0) {
+      Alert.alert("Thời gian chưa hợp lệ", "Ngày trả phải sau ngày nhận.");
+      return;
+    }
+    if (conflictDate) {
+      Alert.alert("Xe đã bận", `Xe bận vào ${new Date(conflictDate).toLocaleDateString("vi-VN")}. Vui lòng chọn thời gian khác.`);
+      return;
+    }
     setSubmitting(true);
     try {
       const created = await createBooking({
         vehicleId,
-        startDate,
-        endDate,
+        startDate: start,
+        endDate: end,
+        quoteId: pricingQuote?.quoteId,
         pickupAddress: pickupAddress.trim(),
         pickupLatitude: pickupLat,
         pickupLongitude: pickupLng,
@@ -257,7 +347,12 @@ export default function CreateBookingScreen({
         [{ text: "Xem chuyến đi", onPress: () => onCreated?.(created.id) }],
       );
     } catch (err) {
-      Alert.alert("Không tạo được đơn", getApiErrorMessage(err, "Vui lòng thử lại sau."));
+      const nextAvailable = getNextAvailableFromError(err);
+      if (nextAvailable) {
+        setNextAvailableDate(nextAvailable);
+      } else {
+        Alert.alert("Không tạo được đơn", getApiErrorMessage(err, "Vui lòng thử lại sau."));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -294,7 +389,7 @@ export default function CreateBookingScreen({
               <Text style={styles.cardTitle}>
                 {[vehicle.brandName, vehicle.modelName, vehicle.year].filter(Boolean).join(" ")}
               </Text>
-              <Text style={styles.muted}>{formatPeriodSummary(startDate, endDate)}</Text>
+              <Text style={styles.muted}>{formatPeriodSummary(start, end)}</Text>
               <Text style={styles.muted}>
                 {days > 0 ? `${days} ngày` : "Thời gian chưa hợp lệ"}
                 {estimate != null ? ` · tạm tính ${formatMoney(estimate)}` : ""}
@@ -302,7 +397,28 @@ export default function CreateBookingScreen({
               <Text style={styles.hint}>Chi phí tạm tính bên dưới; con số cuối cùng chốt khi chủ xe duyệt.</Text>
             </View>
 
-            <Text style={styles.label}>Nhận xe lúc: {formatDateTime(startDate)}</Text>
+            {availabilityLoading ? <Text style={styles.muted}>Đang tải lịch xe...</Text> : null}
+            {availabilityError ? <Text style={styles.warnText}>Không tải được lịch xe. Vui lòng thử lại.</Text> : null}
+            {conflictDate ? (
+              <Text style={styles.warnText}>Xe bận vào {new Date(conflictDate).toLocaleDateString("vi-VN")}. Vui lòng chọn thời gian khác.</Text>
+            ) : null}
+            {nextAvailableDate ? (
+              <View style={styles.card}>
+                <Text style={styles.muted}>Xe có thể thuê từ ngày {new Date(nextAvailableDate).toLocaleDateString("vi-VN")}.</Text>
+                <Pressable onPress={() => applyNextAvailable(nextAvailableDate)} style={styles.submit}>
+                  <Text style={styles.submitText}>Dùng ngày này</Text>
+                </Pressable>
+              </View>
+            ) : null}
+
+            <Text style={styles.label}>Nhận xe lúc (DD/MM/YYYY HH:mm)</Text>
+            <TextInput
+              value={startText}
+              onChangeText={handleStartText}
+              placeholder="DD/MM/YYYY HH:mm"
+              placeholderTextColor={theme.placeholder}
+              style={styles.input}
+            />
             <View onLayout={(e) => { fieldY.current.pickup = e.nativeEvent.layout.y; }}>
             <AddressAutocomplete
               label="Địa điểm nhận xe"
@@ -339,7 +455,14 @@ export default function CreateBookingScreen({
             </View>
             {!sameReturn && (
               <>
-                <Text style={styles.label}>Trả xe lúc: {formatDateTime(endDate)}</Text>
+                <Text style={styles.label}>Trả xe lúc (DD/MM/YYYY HH:mm)</Text>
+            <TextInput
+              value={endText}
+              onChangeText={handleEndText}
+              placeholder="DD/MM/YYYY HH:mm"
+              placeholderTextColor={theme.placeholder}
+              style={styles.input}
+            />
                 <View onLayout={(e) => { fieldY.current.ret = e.nativeEvent.layout.y; }}>
                 <AddressAutocomplete
                   label="Địa điểm trả xe"
@@ -432,6 +555,9 @@ export default function CreateBookingScreen({
                 <Row label="Đặt cọc ngay" value={formatMoney(pricePreview.deposit)} />
                 {pricePreview.remaining > 0 ? (
                   <Row label="Trả khi nhận xe" value={formatMoney(pricePreview.remaining)} />
+                ) : null}
+                {vehicle?.securityRequiresDeposit ? (
+                  <Text style={styles.muted}>Cần thế chấp {formatMoney(vehicle.securityDepositAmount)} khi nhận xe (hoàn lại khi trả xe).</Text>
                 ) : null}
               </View>
             ) : null}

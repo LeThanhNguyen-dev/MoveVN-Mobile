@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { BookingResponse } from "@/features/booking/types";
-import { formatDateTime, formatMoney } from "@/features/booking/utils/format";
+import { formatDateTime, formatMoney, rentalProgress } from "@/features/booking/utils/format";
 import BookingStatusBadge from "./BookingStatusBadge";
 
 type BookingCardProps = {
@@ -36,8 +36,15 @@ function BookingCard({ booking, variant, onPress }: BookingCardProps) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = !!booking.vehicleImage && !imageFailed;
-  const hint = actionHint(booking, variant);
-  const isUrgent = variant === "owner" && booking.status === "Pending";
+  // Quá hạn là hiển thị phụ: backend giữ status InProgress/Returning và chỉ gửi
+  // notification, nên list phải tự tính theo endDate.
+  const progress =
+    booking.status === "InProgress" || booking.status === "Returning"
+      ? rentalProgress(booking.startDate, booking.endDate)
+      : null;
+  const overdue = progress?.overdue === true;
+  const hint = overdue && progress ? progress.summary : actionHint(booking, variant);
+  const isUrgent = overdue || (variant === "owner" && booking.status === "Pending");
 
   return (
     <Pressable
