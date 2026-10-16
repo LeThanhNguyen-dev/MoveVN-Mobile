@@ -7,10 +7,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -244,7 +244,7 @@ export default function VehicleFilterSheet({
           onPress={() => onPick("")}
           style={[styles.chip, !current && styles.chipActive]}
         >
-          <Text style={[styles.chipText, !current && styles.chipTextActive]}>Tất cả</Text>
+          <AppText style={[styles.chipText, !current && styles.chipTextActive]}>Tất cả</AppText>
         </Pressable>
         {options.map((o) => {
           const active = current === o.value;
@@ -254,7 +254,7 @@ export default function VehicleFilterSheet({
               onPress={() => onPick(active ? "" : o.value)}
               style={[styles.chip, active && styles.chipActive]}
             >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{o.label}</Text>
+              <AppText style={[styles.chipText, active && styles.chipTextActive]}>{o.label}</AppText>
             </Pressable>
           );
         })}
@@ -278,7 +278,7 @@ export default function VehicleFilterSheet({
       >
           <View style={styles.handle} />
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Bộ lọc</Text>
+            <AppText display style={styles.headerTitle}>Bộ lọc</AppText>
             <Pressable onPress={handleClose} style={styles.closeButton}>
               <X color={theme.muted} size={18} />
             </Pressable>
@@ -290,7 +290,7 @@ export default function VehicleFilterSheet({
             keyboardShouldPersistTaps="handled"
             scrollEnabled={!sliding}
           >
-            <Text style={styles.label}>Tìm kiếm thông minh</Text>
+            <AppText style={styles.label}>Tìm kiếm thông minh</AppText>
             <View style={styles.searchBox}>
               <Search color={theme.placeholder} size={15} />
               <TextInput
@@ -320,7 +320,7 @@ export default function VehicleFilterSheet({
             />
 
             <View style={styles.sectionHead}>
-              <Text style={styles.sectionLabel}>Bán kính tìm kiếm</Text>
+              <AppText style={styles.sectionLabel}>Bán kính tìm kiếm</AppText>
               <View style={styles.kmBox}>
                 <TextInput
                   value={draft.radiusKm}
@@ -329,7 +329,7 @@ export default function VehicleFilterSheet({
                   keyboardType="numeric"
                   style={styles.kmInput}
                 />
-                <Text style={styles.kmSuffix}>km</Text>
+                <AppText style={styles.kmSuffix}>km</AppText>
               </View>
             </View>
             <SingleSlider
@@ -342,10 +342,10 @@ export default function VehicleFilterSheet({
             />
             <SliderCaption left="1km" right="200km" />
             {!draft.customerLat || !draft.customerLng ? (
-              <Text style={styles.hint}>Chọn địa chỉ nhận xe ở trên để áp dụng lọc khoảng cách.</Text>
+              <AppText style={styles.hint}>Chọn địa chỉ nhận xe ở trên để áp dụng lọc khoảng cách.</AppText>
             ) : null}
 
-            <Text style={styles.label}>Loại xe</Text>
+            <AppText style={styles.label}>Loại xe</AppText>
             <View style={styles.chipRow}>
               {[
                 { value: "", label: "Tất cả" },
@@ -371,13 +371,13 @@ export default function VehicleFilterSheet({
                     }}
                     style={[styles.chip, active && styles.chipActive]}
                   >
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>{o.label}</Text>
+                    <AppText style={[styles.chipText, active && styles.chipTextActive]}>{o.label}</AppText>
                   </Pressable>
                 );
               })}
             </View>
 
-            <Text style={styles.label}>Hãng xe</Text>
+            <AppText style={styles.label}>Hãng xe</AppText>
             {loadingBrands ? (
               <ActivityIndicator color={theme.brand} style={styles.loader} />
             ) : (
@@ -391,9 +391,9 @@ export default function VehicleFilterSheet({
                   }}
                   style={[styles.chip, !draft.brandId && styles.chipActive]}
                 >
-                  <Text style={[styles.chipText, !draft.brandId && styles.chipTextActive]}>
+                  <AppText style={[styles.chipText, !draft.brandId && styles.chipTextActive]}>
                     Tất cả
-                  </Text>
+                  </AppText>
                 </Pressable>
                 {brands.map((b) => {
                   const active = draft.brandId === String(b.id);
@@ -408,7 +408,7 @@ export default function VehicleFilterSheet({
                       }}
                       style={[styles.chip, active && styles.chipActive]}
                     >
-                      <Text style={[styles.chipText, active && styles.chipTextActive]}>{b.name}</Text>
+                      <AppText style={[styles.chipText, active && styles.chipTextActive]}>{b.name}</AppText>
                     </Pressable>
                   );
                 })}
@@ -417,7 +417,7 @@ export default function VehicleFilterSheet({
 
             {draft.brandId ? (
               <>
-                <Text style={styles.label}>Dòng xe</Text>
+                <AppText style={styles.label}>Dòng xe</AppText>
                 <View style={styles.chipWrap}>
                   <Pressable
                     onPress={() => {
@@ -426,9 +426,9 @@ export default function VehicleFilterSheet({
                     }}
                     style={[styles.chip, !draft.modelId && styles.chipActive]}
                   >
-                    <Text style={[styles.chipText, !draft.modelId && styles.chipTextActive]}>
+                    <AppText style={[styles.chipText, !draft.modelId && styles.chipTextActive]}>
                       Tất cả
-                    </Text>
+                    </AppText>
                   </Pressable>
                   {models.map((m) => {
                     const active = draft.modelId === String(m.id);
@@ -441,9 +441,9 @@ export default function VehicleFilterSheet({
                         }}
                         style={[styles.chip, active && styles.chipActive]}
                       >
-                        <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                        <AppText style={[styles.chipText, active && styles.chipTextActive]}>
                           {m.name}
-                        </Text>
+                        </AppText>
                       </Pressable>
                     );
                   })}
@@ -453,33 +453,33 @@ export default function VehicleFilterSheet({
 
             {showBodyType ? (
               <>
-                <Text style={styles.label}>Kiểu thân xe</Text>
+                <AppText style={styles.label}>Kiểu thân xe</AppText>
                 {renderChips(CAR_BODY_TYPES, draft.bodyType, (v) => set("bodyType", v))}
               </>
             ) : null}
 
             {showBikeType ? (
               <>
-                <Text style={styles.label}>Loại xe máy</Text>
+                <AppText style={styles.label}>Loại xe máy</AppText>
                 {renderChips(BIKE_TYPE_OPTIONS, draft.bikeType, (v) => set("bikeType", v))}
               </>
             ) : null}
 
-            <Text style={styles.label}>Nhiên liệu</Text>
+            <AppText style={styles.label}>Nhiên liệu</AppText>
             {renderChips(FUEL_OPTIONS, draft.fuelType, (v) => set("fuelType", v))}
 
-            <Text style={styles.label}>Hộp số</Text>
+            <AppText style={styles.label}>Hộp số</AppText>
             {renderChips(TRANSMISSION_OPTIONS, draft.transmission, (v) => set("transmission", v))}
 
-            <Text style={styles.label}>Số chỗ</Text>
+            <AppText style={styles.label}>Số chỗ</AppText>
             <View style={styles.chipWrap}>
               <Pressable
                 onPress={() => set("seatCount", "")}
                 style={[styles.chip, !draft.seatCount && styles.chipActive]}
               >
-                <Text style={[styles.chipText, !draft.seatCount && styles.chipTextActive]}>
+                <AppText style={[styles.chipText, !draft.seatCount && styles.chipTextActive]}>
                   Tất cả
-                </Text>
+                </AppText>
               </Pressable>
               {SEAT_OPTIONS.map((s) => {
                 const active = draft.seatCount === s;
@@ -489,21 +489,21 @@ export default function VehicleFilterSheet({
                     onPress={() => set("seatCount", active ? "" : s)}
                     style={[styles.chip, active && styles.chipActive]}
                   >
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>{s} chỗ</Text>
+                    <AppText style={[styles.chipText, active && styles.chipTextActive]}>{s} chỗ</AppText>
                   </Pressable>
                 );
               })}
             </View>
 
             <View style={styles.sectionHead}>
-              <Text style={styles.sectionLabel}>Khoảng giá</Text>
-              <Text style={styles.sectionSummary}>
+              <AppText style={styles.sectionLabel}>Khoảng giá</AppText>
+              <AppText style={styles.sectionSummary}>
                 {formatCompact(priceLow)} – {formatCompact(priceHigh)}
-              </Text>
+              </AppText>
             </View>
             <View style={styles.priceInputs}>
               <View style={styles.priceField}>
-                <Text style={styles.miniLabel}>Giá từ</Text>
+                <AppText style={styles.miniLabel}>Giá từ</AppText>
                 <TextInput
                   value={draft.minPrice}
                   onChangeText={(v) => set("minPrice", v.replace(/[^0-9]/g, ""))}
@@ -515,7 +515,7 @@ export default function VehicleFilterSheet({
                 />
               </View>
               <View style={styles.priceField}>
-                <Text style={styles.miniLabel}>Giá đến</Text>
+                <AppText style={styles.miniLabel}>Giá đến</AppText>
                 <TextInput
                   value={draft.maxPrice}
                   onChangeText={(v) => set("maxPrice", v.replace(/[^0-9]/g, ""))}
@@ -543,7 +543,7 @@ export default function VehicleFilterSheet({
 
           <View style={styles.footer}>
             <Pressable onPress={handleClear}>
-              <Text style={styles.clearText}>Reset</Text>
+              <AppText style={styles.clearText}>Reset</AppText>
             </Pressable>
             <Pressable
               disabled={searching}
@@ -554,9 +554,9 @@ export default function VehicleFilterSheet({
               style={[styles.doneButton, searching && styles.doneButtonDisabled]}
             >
               {searching ? <ActivityIndicator size="small" color={theme.onBrand} /> : (
-                <Text style={styles.doneText}>
+                <AppText style={styles.doneText}>
                   Áp dụng{resultCount !== undefined ? ` (${resultCount})` : ""}
-                </Text>
+                </AppText>
               )}
             </Pressable>
           </View>

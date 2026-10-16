@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, BackHandler, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, type TextInputProps } from "react-native";
+import { ActivityIndicator, BackHandler, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, View, type TextInputProps } from "react-native"
+import AppText from "@/components/AppText";
 import { ArrowLeft, Check, LockKeyhole, LogOut, Mail, Phone, RotateCcw, ShieldCheck, UserRound } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { clearSession, useAuthStore } from "../hooks/useAuth";
@@ -114,19 +115,19 @@ export default function AuthFlow() {
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.fill}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <AuthLayout>
-          {starting ? <View style={styles.center}><ActivityIndicator color={theme.brand} size="large" /><Text style={styles.muted}>Đang kiểm tra phiên đăng nhập...</Text></View>
+          {starting ? <View style={styles.center}><ActivityIndicator color={theme.brand} size="large" /><AppText style={styles.muted}>Đang kiểm tra phiên đăng nhập...</AppText></View>
             : startupError || storageError ? <View style={styles.stack}>
               <AuthNotice error message={storageError || startupError} />
               <AuthButton busy={busy} icon={<RotateCcw size={18} color={theme.surface} />} onPress={() => { void run(async () => { if (storageError) await clearSession(); await start(); }); }} title="Thử lại" />
               <AuthButton busy={busy} onPress={() => { void run(async () => { await clearSession(); useAuthStore.setState({ isHydrated: true }); setStartupError(""); }); }} title="Về đăng nhập" variant="outline" />
             </View>
             : authenticated ? <View style={[styles.stack, styles.success]}>
-              <View style={styles.successIcon}><Check size={30} color={theme.surface} /></View><Text style={styles.title}>Đăng nhập thành công</Text><Text style={[styles.muted, styles.centeredText]}>Chào mừng bạn trở lại với MoveVN.</Text>
+              <View style={styles.successIcon}><Check size={30} color={theme.surface} /></View><AppText display style={styles.title}>Đăng nhập thành công</AppText><AppText style={[styles.muted, styles.centeredText]}>Chào mừng bạn trở lại với MoveVN.</AppText>
               {error ? <AuthNotice error message={error} /> : null}<AuthButton busy={busy} icon={<LogOut size={18} color={theme.surface} />} onPress={() => { void run(signOut); }} title="Đăng xuất" />
             </View>
             : <View style={styles.stack}>
               {screen !== "login" ? <Pressable accessibilityLabel="Quay lại đăng nhập" accessibilityRole="button" disabled={busy} onPress={() => navigate("login")} style={styles.back}><ArrowLeft color={theme.brand} size={21} /></Pressable> : null}
-              <View style={styles.heading}><Text style={styles.title}>{heading.title}</Text><Text style={styles.muted}>{heading.description}</Text></View>
+              <View style={styles.heading}><AppText display style={styles.title}>{heading.title}</AppText><AppText style={styles.muted}>{heading.description}</AppText></View>
               {error ? <AuthNotice error message={error} /> : null}{message ? <AuthNotice message={message} /> : null}
               {registration ? field("fullName", "Họ và tên", <UserRound size={19} color={theme.muted} />, { autoComplete: "name", maxLength: 200, placeholder: "Nguyễn Văn A" }) : null}
               {field("email", "Email", <Mail size={19} color={theme.muted} />, { autoComplete: "email", keyboardType: "email-address", maxLength: 256, placeholder: "ban@email.com" })}
@@ -139,7 +140,7 @@ export default function AuthFlow() {
               <AuthButton busy={busy} onPress={submit} title={heading.action} />
               {screen === "verify" || screen === "reset" ? <AuthButton busy={busy} disabled={seconds > 0} onPress={resend} title={seconds > 0 ? `Gửi lại OTP (${seconds}s)` : "Gửi lại OTP"} variant="outline" /> : null}
               {screen === "login" ? <LoginFooter busy={busy} onGoogle={() => { void run(async () => { const result = await signInWithGoogle(); if (result) await completeSignIn(result); }); }} onRegister={() => navigate("register")} onVerify={() => { setPurpose("VerifyEmail"); navigate("verify"); }} />
-                : <Text style={styles.bottomText}>Đã có tài khoản? <Text onPress={() => navigate("login")} style={styles.link}>Đăng nhập</Text></Text>}
+                : <AppText style={styles.bottomText}>Đã có tài khoản? <AppText onPress={() => navigate("login")} style={styles.link}>Đăng nhập</AppText></AppText>}
             </View>}
         </AuthLayout>
       </ScrollView>
@@ -151,8 +152,8 @@ function LoginOptions({ busy, rememberMe, onForgot, onRemember }: { busy: boolea
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return <View style={styles.loginOptions}>
-    <Pressable accessibilityLabel="Ghi nhớ đăng nhập" accessibilityRole="checkbox" accessibilityState={{ checked: rememberMe }} disabled={busy} onPress={onRemember} style={styles.remember}><View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>{rememberMe ? <Check size={13} color={theme.surface} /> : null}</View><Text style={styles.rememberText}>Ghi nhớ đăng nhập</Text></Pressable>
-    <Pressable accessibilityLabel="open-forgot-password" accessibilityRole="button" disabled={busy} onPress={onForgot}><Text style={styles.link}>Quên mật khẩu?</Text></Pressable>
+    <Pressable accessibilityLabel="Ghi nhớ đăng nhập" accessibilityRole="checkbox" accessibilityState={{ checked: rememberMe }} disabled={busy} onPress={onRemember} style={styles.remember}><View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>{rememberMe ? <Check size={13} color={theme.surface} /> : null}</View><AppText style={styles.rememberText}>Ghi nhớ đăng nhập</AppText></Pressable>
+    <Pressable accessibilityLabel="open-forgot-password" accessibilityRole="button" disabled={busy} onPress={onForgot}><AppText style={styles.link}>Quên mật khẩu?</AppText></Pressable>
   </View>;
 }
 
@@ -160,9 +161,9 @@ function Terms({ accepted, error, onToggle, webBase }: { accepted: boolean; erro
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return <View style={styles.termsBlock}>
-    <Pressable accessibilityLabel="Đồng ý chính sách bảo mật và điều khoản sử dụng" accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} onPress={onToggle} style={styles.terms}><View style={[styles.checkbox, styles.termsCheckbox, accepted && styles.checkboxChecked]}>{accepted ? <Check size={13} color={theme.surface} /> : null}</View><Text style={styles.termsText}>Tôi đồng ý với chính sách bảo mật và điều khoản sử dụng.</Text></Pressable>
-    {webBase ? <View style={styles.policyLinks}><Pressable onPress={() => { void Linking.openURL(`${webBase}/policies/privacy-policy`); }}><Text style={styles.link}>Chính sách bảo mật</Text></Pressable><Text style={styles.policyDot}>•</Text><Pressable onPress={() => { void Linking.openURL(`${webBase}/policies/terms-of-service`); }}><Text style={styles.link}>Điều khoản sử dụng</Text></Pressable></View> : null}
-    {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+    <Pressable accessibilityLabel="Đồng ý chính sách bảo mật và điều khoản sử dụng" accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} onPress={onToggle} style={styles.terms}><View style={[styles.checkbox, styles.termsCheckbox, accepted && styles.checkboxChecked]}>{accepted ? <Check size={13} color={theme.surface} /> : null}</View><AppText style={styles.termsText}>Tôi đồng ý với chính sách bảo mật và điều khoản sử dụng.</AppText></Pressable>
+    {webBase ? <View style={styles.policyLinks}><Pressable onPress={() => { void Linking.openURL(`${webBase}/policies/privacy-policy`); }}><AppText style={styles.link}>Chính sách bảo mật</AppText></Pressable><AppText style={styles.policyDot}>•</AppText><Pressable onPress={() => { void Linking.openURL(`${webBase}/policies/terms-of-service`); }}><AppText style={styles.link}>Điều khoản sử dụng</AppText></Pressable></View> : null}
+    {error ? <AppText accessibilityRole="alert" style={styles.error}>{error}</AppText> : null}
   </View>;
 }
 
@@ -170,10 +171,10 @@ function LoginFooter({ busy, onGoogle, onRegister, onVerify }: { busy: boolean; 
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return <>
-    <Pressable accessibilityRole="button" disabled={busy} onPress={onGoogle} style={({ pressed }) => [styles.googleButton, (busy || pressed) && styles.dim]}><Text style={styles.googleMark}>G</Text><Text style={styles.googleText}>Tiếp tục với Google</Text></Pressable>
-    <View style={styles.divider}><View style={styles.dividerLine} /><Text style={styles.dividerText}>hoặc</Text><View style={styles.dividerLine} /></View>
-    <Pressable accessibilityLabel="open-register" accessibilityRole="button" disabled={busy} onPress={onRegister}><Text style={styles.bottomText}>Chưa có tài khoản? <Text style={styles.link}>Đăng ký ngay</Text></Text></Pressable>
-    <Pressable accessibilityRole="button" disabled={busy} onPress={onVerify} style={styles.textAction}><Text style={styles.mutedLink}>Xác thực email</Text></Pressable>
+    <Pressable accessibilityRole="button" disabled={busy} onPress={onGoogle} style={({ pressed }) => [styles.googleButton, (busy || pressed) && styles.dim]}><AppText style={styles.googleMark}>G</AppText><AppText style={styles.googleText}>Tiếp tục với Google</AppText></Pressable>
+    <View style={styles.divider}><View style={styles.dividerLine} /><AppText style={styles.dividerText}>hoặc</AppText><View style={styles.dividerLine} /></View>
+    <Pressable accessibilityLabel="open-register" accessibilityRole="button" disabled={busy} onPress={onRegister}><AppText style={styles.bottomText}>Chưa có tài khoản? <AppText style={styles.link}>Đăng ký ngay</AppText></AppText></Pressable>
+    <Pressable accessibilityRole="button" disabled={busy} onPress={onVerify} style={styles.textAction}><AppText style={styles.mutedLink}>Xác thực email</AppText></Pressable>
   </>;
 }
 

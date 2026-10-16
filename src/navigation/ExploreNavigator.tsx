@@ -16,11 +16,13 @@ export default function ExploreNavigator({
   onAvatarPress,
   onRouteChange,
   onBookingCreated,
+  onGoDeals,
 }: {
   user: AuthUser;
   onAvatarPress: () => void;
   onRouteChange?: (routeName: string) => void;
   onBookingCreated?: (bookingId: number) => void;
+  onGoDeals?: () => void;
 }) {
   const { theme } = useTheme();
   useEffect(() => {
@@ -46,6 +48,7 @@ export default function ExploreNavigator({
             onAvatarPress={onAvatarPress}
             onSearch={(params) => navigation.navigate("VehicleList", params)}
             onVehiclePress={(params) => navigation.navigate("VehicleDetail", params)}
+            onPromoSeeAll={onGoDeals}
           />
         )}
       </Stack.Screen>

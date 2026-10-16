@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Bell, BellOff, CalendarCheck, CarFront, CheckCheck, ChevronRight, CircleAlert, Headphones, MessageSquare, RefreshCw, Wallet } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
@@ -52,7 +53,7 @@ export default function NotificationCenter({ userId }: { userId: number }) {
 
   const ErrorNotice = ({ message }: { message: string }) => <View accessibilityRole="alert" style={styles.error}>
     <CircleAlert size={18} color={theme.danger} />
-    <Text style={styles.errorText}>{message}</Text>
+    <AppText style={styles.errorText}>{message}</AppText>
   </View>;
 
   return <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={goBack}>
@@ -63,8 +64,8 @@ export default function NotificationCenter({ userId }: { userId: number }) {
             <ArrowLeft size={23} color={theme.text} />
           </Pressable>
           <View style={styles.heading}>
-            <Text style={styles.title}>{detail ? "Chi tiết thông báo" : "Thông báo"}</Text>
-            {!detail ? <Text style={styles.subtitle}>{state.countError ? "Chưa thể cập nhật số chưa đọc" : state.countRevision === 0 ? "Đang cập nhật thông báo…" : state.unreadCount > 0 ? `${state.unreadCount} thông báo chưa đọc` : "Bạn đã đọc hết thông báo"}</Text> : null}
+            <AppText display style={styles.title}>{detail ? "Chi tiết thông báo" : "Thông báo"}</AppText>
+            {!detail ? <AppText style={styles.subtitle}>{state.countError ? "Chưa thể cập nhật số chưa đọc" : state.countRevision === 0 ? "Đang cập nhật thông báo…" : state.unreadCount > 0 ? `${state.unreadCount} thông báo chưa đọc` : "Bạn đã đọc hết thông báo"}</AppText> : null}
           </View>
           {!detail ? <Pressable accessibilityRole="button" accessibilityLabel="Làm mới thông báo" disabled={state.loading || state.refreshing} onPress={() => { void loadNotificationPage(); }} style={styles.iconButton}>
             {state.refreshing ? <ActivityIndicator color={theme.brand} /> : <RefreshCw size={20} color={theme.brand} />}
@@ -73,33 +74,33 @@ export default function NotificationCenter({ userId }: { userId: number }) {
         {detail ? <ScrollView contentContainerStyle={styles.detailContent}>
           <View style={styles.detailCard}>
             <View style={styles.row}>
-              <View style={styles.category}><Text style={styles.categoryText}>{notificationCategory(detail.type).label}</Text></View>
-              <Text style={[styles.status, { color: detail.isRead ? theme.success : theme.brand }]}>{detail.isRead ? "Đã đọc" : "Chưa đọc"}</Text>
+              <View style={styles.category}><AppText style={styles.categoryText}>{notificationCategory(detail.type).label}</AppText></View>
+              <AppText style={[styles.status, { color: detail.isRead ? theme.success : theme.brand }]}>{detail.isRead ? "Đã đọc" : "Chưa đọc"}</AppText>
             </View>
-            <Text selectable style={styles.detailTitle}>{detail.title}</Text>
-            <Text style={styles.date}>{formatNotificationDate(detail.createdAt)}</Text>
+            <AppText display selectable style={styles.detailTitle}>{detail.title}</AppText>
+            <AppText style={styles.date}>{formatNotificationDate(detail.createdAt)}</AppText>
             <View style={styles.rule} />
-            <Text selectable style={styles.body}>{detail.body}</Text>
-            {notificationReference(detail.dataJson) ? <Text selectable style={styles.reference}>{notificationReference(detail.dataJson)}</Text> : null}
+            <AppText selectable style={styles.body}>{detail.body}</AppText>
+            {notificationReference(detail.dataJson) ? <AppText selectable style={styles.reference}>{notificationReference(detail.dataJson)}</AppText> : null}
           </View>
           {actionError ? <ErrorNotice message={actionError} /> : null}
           {!detail.isRead ? <Pressable accessibilityRole="button" accessibilityLabel="Đánh dấu thông báo đã đọc" disabled={busy} onPress={() => { void openItem(detail); }} style={[styles.primaryButton, busy && styles.disabled]}>
             {busy ? <ActivityIndicator color={theme.onBrand} /> : <CheckCheck size={20} color={theme.onBrand} />}
-            <Text style={styles.primaryText}>Đánh dấu đã đọc</Text>
+            <AppText style={styles.primaryText}>Đánh dấu đã đọc</AppText>
           </Pressable> : null}
         </ScrollView> : <>
           <View style={styles.toolbar}>
             <View style={styles.tabs}>
               {(["all", "unread"] as const).map((filter) => <Pressable key={filter} accessibilityRole="tab" accessibilityState={{ selected: state.filter === filter }} onPress={() => { setActionError(null); void loadNotificationPage({ filter }); }} style={[styles.tab, state.filter === filter && styles.activeTab]}>
-                <Text style={[styles.tabText, state.filter === filter && styles.activeTabText]}>{filter === "all" ? "Tất cả" : "Chưa đọc"}</Text>
+                <AppText style={[styles.tabText, state.filter === filter && styles.activeTabText]}>{filter === "all" ? "Tất cả" : "Chưa đọc"}</AppText>
               </Pressable>)}
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel="Đánh dấu tất cả thông báo đã đọc" disabled={busy || state.unreadCount === 0} onPress={() => { void markAll(); }} style={[styles.markAll, (busy || state.unreadCount === 0) && styles.disabled]}>
               {state.markingAll ? <ActivityIndicator color={theme.brand} size="small" /> : <CheckCheck size={19} color={theme.brand} />}
-              <Text style={styles.markAllText}>Đọc tất cả</Text>
+              <AppText style={styles.markAllText}>Đọc tất cả</AppText>
             </Pressable>
           </View>
-          {state.connectionStatus !== "connected" ? <Text style={styles.connectionHint}>{state.connectionStatus === "connecting" ? "Đang kết nối cập nhật trực tiếp…" : "Cập nhật trực tiếp gián đoạn. Kéo xuống để làm mới."}</Text> : null}
+          {state.connectionStatus !== "connected" ? <AppText style={styles.connectionHint}>{state.connectionStatus === "connecting" ? "Đang kết nối cập nhật trực tiếp…" : "Cập nhật trực tiếp gián đoạn. Kéo xuống để làm mới."}</AppText> : null}
           {actionError ? <View style={styles.notice}><ErrorNotice message={actionError} /></View> : null}
           {state.error && state.items.length > 0 ? <View style={styles.notice}><ErrorNotice message={state.error} /></View> : null}
           <FlatList
@@ -113,21 +114,21 @@ export default function NotificationCenter({ userId }: { userId: number }) {
               return <Pressable accessibilityRole="button" accessibilityLabel={`${item.isRead ? "Đã đọc" : "Chưa đọc"}: ${item.title}`} onPress={() => { void openItem(item); }} style={[styles.card, !item.isRead && styles.unreadCard]}>
                 <View style={[styles.itemIcon, { backgroundColor: item.isRead ? theme.surfaceAlt : theme.brandSoft }]}><Icon size={22} color={item.isRead ? theme.muted : theme.brand} /></View>
                 <View style={styles.itemContent}>
-                  <View style={styles.row}><Text style={styles.itemCategory}>{category.label}</Text>{!item.isRead ? <View style={styles.dot} /> : null}</View>
-                  <Text numberOfLines={2} style={[styles.itemTitle, !item.isRead && styles.unreadTitle]}>{item.title}</Text>
-                  <Text numberOfLines={2} style={styles.preview}>{item.body}</Text>
-                  <Text style={styles.date}>{formatNotificationDate(item.createdAt)}</Text>
+                  <View style={styles.row}><AppText style={styles.itemCategory}>{category.label}</AppText>{!item.isRead ? <View style={styles.dot} /> : null}</View>
+                  <AppText display numberOfLines={2} style={[styles.itemTitle, !item.isRead && styles.unreadTitle]}>{item.title}</AppText>
+                  <AppText numberOfLines={2} style={styles.preview}>{item.body}</AppText>
+                  <AppText style={styles.date}>{formatNotificationDate(item.createdAt)}</AppText>
                 </View>
                 <ChevronRight size={17} color={theme.faint} />
               </Pressable>;
             }}
-            ListEmptyComponent={state.loading ? <View style={styles.empty}><ActivityIndicator size="large" color={theme.brand} /><Text style={styles.emptyText}>Đang tải thông báo…</Text></View>
-              : state.error ? <View style={styles.empty}><CircleAlert size={38} color={theme.danger} /><Text style={styles.emptyTitle}>Chưa tải được thông báo</Text><Text style={styles.emptyText}>{state.error}</Text><Pressable accessibilityRole="button" onPress={() => { void loadNotificationPage(); }} style={styles.retry}><Text style={styles.retryText}>Thử lại</Text></Pressable></View>
-                : <View style={styles.empty}><View style={styles.emptyIcon}><BellOff size={36} color={theme.brand} /></View><Text style={styles.emptyTitle}>{state.filter === "unread" ? "Không có thông báo chưa đọc" : "Chưa có thông báo"}</Text><Text style={styles.emptyText}>{state.filter === "unread" ? "Bạn đã xem hết các cập nhật." : "Các cập nhật về chuyến đi, thanh toán và hỗ trợ sẽ xuất hiện tại đây."}</Text></View>}
+            ListEmptyComponent={state.loading ? <View style={styles.empty}><ActivityIndicator size="large" color={theme.brand} /><AppText style={styles.emptyText}>Đang tải thông báo…</AppText></View>
+              : state.error ? <View style={styles.empty}><CircleAlert size={38} color={theme.danger} /><AppText display style={styles.emptyTitle}>Chưa tải được thông báo</AppText><AppText style={styles.emptyText}>{state.error}</AppText><Pressable accessibilityRole="button" onPress={() => { void loadNotificationPage(); }} style={styles.retry}><AppText style={styles.retryText}>Thử lại</AppText></Pressable></View>
+                : <View style={styles.empty}><View style={styles.emptyIcon}><BellOff size={36} color={theme.brand} /></View><AppText display style={styles.emptyTitle}>{state.filter === "unread" ? "Không có thông báo chưa đọc" : "Chưa có thông báo"}</AppText><AppText style={styles.emptyText}>{state.filter === "unread" ? "Bạn đã xem hết các cập nhật." : "Các cập nhật về chuyến đi, thanh toán và hỗ trợ sẽ xuất hiện tại đây."}</AppText></View>}
             ListFooterComponent={state.items.length > 0 ? <View style={styles.footer}>
               {state.page < state.totalPages || state.error ? <Pressable accessibilityRole="button" disabled={state.loadingMore || state.refreshing || state.loading} onPress={() => { void loadNotificationPage({ more: state.page < state.totalPages }); }} style={styles.retry}>
-                {state.loadingMore ? <ActivityIndicator color={theme.brand} /> : <Text style={styles.retryText}>{state.error ? "Thử tải lại" : "Xem thêm thông báo"}</Text>}
-              </Pressable> : <Text style={styles.footerText}>Bạn đã xem hết thông báo</Text>}
+                {state.loadingMore ? <ActivityIndicator color={theme.brand} /> : <AppText style={styles.retryText}>{state.error ? "Thử tải lại" : "Xem thêm thông báo"}</AppText>}
+              </Pressable> : <AppText style={styles.footerText}>Bạn đã xem hết thông báo</AppText>}
             </View> : null}
           />
         </>}

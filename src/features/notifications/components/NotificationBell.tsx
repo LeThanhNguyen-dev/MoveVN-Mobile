@@ -1,5 +1,6 @@
 import { Bell } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { useTheme } from "@/theme/useTheme";
 import { useNotificationStore } from "../useNotifications";
@@ -16,7 +17,7 @@ export default function NotificationBell() {
   >
     <Bell color={theme.text} size={22} strokeWidth={2.2} />
     {count > 0 ? <View style={[styles.badge, { backgroundColor: theme.danger, borderColor: theme.surface }]}>
-      <Text style={[styles.count, { color: theme.onBrand }]}>{count > 99 ? "99+" : count}</Text>
+      <AppText style={[styles.count, { color: theme.onBrand }]}>{count > 99 ? "99+" : count}</AppText>
     </View> : null}
   </Pressable>;
 }

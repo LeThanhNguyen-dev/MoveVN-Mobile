@@ -8,9 +8,9 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { DealsStackParamList } from "@/navigation/types";
@@ -52,19 +52,19 @@ function WalletVoucherCard({ voucher }: { voucher: VoucherClaimResponse }) {
       <View style={styles.ticketBody}>
         <View style={styles.nameRow}>
           <View style={styles.nameWrap}>
-            <Text style={styles.ticketName} numberOfLines={1}>
+            <AppText style={styles.ticketName} numberOfLines={1}>
               {voucher.name}
-            </Text>
+            </AppText>
             {!!voucher.description && (
-              <Text style={styles.ticketDesc} numberOfLines={2}>
+              <AppText style={styles.ticketDesc} numberOfLines={2}>
                 {voucher.description}
-              </Text>
+              </AppText>
             )}
           </View>
           {isUsed ? (
             <View style={styles.usedBadge}>
               <CircleCheck color={theme.muted} size={11} />
-              <Text style={styles.usedBadgeText}>Đã sử dụng</Text>
+              <AppText style={styles.usedBadgeText}>Đã sử dụng</AppText>
             </View>
           ) : daysLeft !== null ? (
             <View
@@ -85,7 +85,7 @@ function WalletVoucherCard({ voucher }: { voucher: VoucherClaimResponse }) {
                 }
                 size={11}
               />
-              <Text
+              <AppText
                 style={[
                   styles.daysBadgeText,
                   daysLeft <= 3
@@ -94,28 +94,28 @@ function WalletVoucherCard({ voucher }: { voucher: VoucherClaimResponse }) {
                 ]}
               >
                 🟢 {daysLeft > 0 ? `Còn ${daysLeft} ngày` : "Hết hôm nay!"}
-              </Text>
+              </AppText>
             </View>
           ) : null}
         </View>
 
         <View style={styles.metaRow}>
-          <Text style={styles.metaText}>{formatVehicleLabel(voucher.vehicleType)}</Text>
+          <AppText style={styles.metaText}>{formatVehicleLabel(voucher.vehicleType)}</AppText>
           {!!voucher.minOrderAmount && (
-            <Text style={[styles.metaText, styles.metaAmber]}>
+            <AppText style={[styles.metaText, styles.metaAmber]}>
               Đơn từ {formatVnd(voucher.minOrderAmount)}
-            </Text>
+            </AppText>
           )}
           {!!formatEndDate(voucher.endAt) && (
-            <Text style={styles.metaText}>📅 HSD: {formatEndDate(voucher.endAt)}</Text>
+            <AppText style={styles.metaText}>📅 HSD: {formatEndDate(voucher.endAt)}</AppText>
           )}
         </View>
 
         <View style={styles.copyRow}>
           <View style={styles.codeBox}>
-            <Text style={styles.codeText} numberOfLines={1}>
+            <AppText style={styles.codeText} numberOfLines={1}>
               {voucher.code}
-            </Text>
+            </AppText>
           </View>
           {!isUsed ? (
             <Pressable
@@ -129,7 +129,7 @@ function WalletVoucherCard({ voucher }: { voucher: VoucherClaimResponse }) {
               ) : (
                 <Copy color="#FFFFFF" size={13} />
               )}
-              <Text style={styles.copyButtonText}>{copied ? "Đã copy!" : "Copy"}</Text>
+              <AppText style={styles.copyButtonText}>{copied ? "Đã copy!" : "Copy"}</AppText>
             </Pressable>
           ) : null}
         </View>
@@ -176,8 +176,8 @@ export default function VoucherWalletScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Ví voucher</Text>
-        <Text style={styles.pageDesc}>Quản lý voucher đã nhận và sử dụng khi đặt xe.</Text>
+        <AppText display style={styles.pageTitle}>Ví voucher</AppText>
+        <AppText style={styles.pageDesc}>Quản lý voucher đã nhận và sử dụng khi đặt xe.</AppText>
 
         <DealsSegmentedNav />
 
@@ -188,9 +188,9 @@ export default function VoucherWalletScreen() {
             accessibilityRole="tab"
             accessibilityState={{ selected: tab === "available" }}
           >
-            <Text style={[styles.tabText, tab === "available" && styles.tabTextActive]}>
+            <AppText style={[styles.tabText, tab === "available" && styles.tabTextActive]}>
               Chưa dùng ({available.length})
-            </Text>
+            </AppText>
           </Pressable>
           <Pressable
             onPress={() => setTab("used")}
@@ -198,9 +198,9 @@ export default function VoucherWalletScreen() {
             accessibilityRole="tab"
             accessibilityState={{ selected: tab === "used" }}
           >
-            <Text style={[styles.tabText, tab === "used" && styles.tabTextActive]}>
+            <AppText style={[styles.tabText, tab === "used" && styles.tabTextActive]}>
               Đã dùng ({used.length})
-            </Text>
+            </AppText>
           </Pressable>
         </View>
 
@@ -211,12 +211,12 @@ export default function VoucherWalletScreen() {
         ) : displayed.length === 0 ? (
           <View style={styles.emptyBox}>
             <Wallet color={theme.faint} size={44} />
-            <Text style={styles.emptyTitle}>
+            <AppText display style={styles.emptyTitle}>
               {tab === "available" ? "Chưa có voucher nào." : "Chưa sử dụng voucher nào."}
-            </Text>
+            </AppText>
             {tab === "available" ? (
               <Pressable onPress={() => navigation.navigate("VoucherHunt")} style={styles.emptyLinkTouch}>
-                <Text style={styles.emptyLink}>Đi săn mã ngay! →</Text>
+                <AppText style={styles.emptyLink}>Đi săn mã ngay! →</AppText>
               </Pressable>
             ) : null}
           </View>

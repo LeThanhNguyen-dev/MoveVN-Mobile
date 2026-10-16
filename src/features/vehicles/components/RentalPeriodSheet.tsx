@@ -6,9 +6,9 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -63,16 +63,16 @@ function HourPicker({
 
   return (
     <View style={styles.hourBlock}>
-      <Text style={styles.hourLabel}>
+      <AppText style={styles.hourLabel}>
         <Clock color={theme.muted} size={13} /> {label}
-      </Text>
+      </AppText>
       <Pressable
         accessibilityRole="button"
         disabled={disabled}
         onPress={() => setOpen((v) => !v)}
         style={[styles.hourButton, disabled && styles.disabled]}
       >
-        <Text style={styles.hourButtonText}>{value}</Text>
+        <AppText style={styles.hourButtonText}>{value}</AppText>
         <ChevronDown color={theme.muted} size={16} />
       </Pressable>
       {open ? (
@@ -90,7 +90,7 @@ function HourPicker({
                 }}
                 style={[styles.hourOption, selected && styles.hourOptionSelected]}
               >
-                <Text
+                <AppText
                   style={[
                     styles.hourOptionText,
                     hourDisabled && styles.hourOptionDisabled,
@@ -98,7 +98,7 @@ function HourPicker({
                   ]}
                 >
                   {hour}
-                </Text>
+                </AppText>
                 {selected ? <Check color={theme.brand} size={15} /> : null}
               </Pressable>
             );
@@ -240,8 +240,8 @@ export default function RentalPeriodSheet({
           <View style={styles.handle} />
           <View style={styles.header}>
             <View>
-              <Text style={styles.headerTitle}>Chọn thời gian thuê</Text>
-              <Text style={styles.headerSub}>Chọn ngày nhận trước, sau đó chọn ngày trả.</Text>
+              <AppText display style={styles.headerTitle}>Chọn thời gian thuê</AppText>
+              <AppText display style={styles.headerSub}>Chọn ngày nhận trước, sau đó chọn ngày trả.</AppText>
             </View>
             <Pressable onPress={handleClose} style={styles.closeButton} accessibilityLabel="Đóng lịch">
               <X color={theme.muted} size={18} />
@@ -258,22 +258,22 @@ export default function RentalPeriodSheet({
                 >
                   <ChevronLeft color={theme.muted} size={18} />
                 </Pressable>
-                <Text style={styles.monthLabel}>
+                <AppText style={styles.monthLabel}>
                   {MONTHS_VI[month]} {year}
-                </Text>
+                </AppText>
                 <Pressable onPress={() => moveMonth(1)} style={styles.monthButton}>
                   <ChevronRight color={theme.muted} size={18} />
                 </Pressable>
               </View>
               <View style={styles.weekRow}>
                 {DAYS_VI.map((d) => (
-                  <Text key={d} style={styles.weekLabel}>
+                  <AppText key={d} style={styles.weekLabel}>
                     {d}
-                  </Text>
+                  </AppText>
                 ))}
               </View>
-              {availabilityLoading && <Text style={styles.availabilityInfo}>Đang tải lịch trống của xe…</Text>}
-              {availabilityError && <View style={styles.availabilityRow}><Text style={styles.error}>Không tải được lịch trống của xe.</Text><Pressable onPress={onRetryAvailability}><Text style={styles.retryText}>Thử lại</Text></Pressable></View>}
+              {availabilityLoading && <AppText style={styles.availabilityInfo}>Đang tải lịch trống của xe…</AppText>}
+              {availabilityError && <View style={styles.availabilityRow}><AppText style={styles.error}>Không tải được lịch trống của xe.</AppText><Pressable onPress={onRetryAvailability}><AppText style={styles.retryText}>Thử lại</AppText></Pressable></View>}
               <View style={styles.daysGrid}>
                 {cells.map((cell) => {
                   if (!cell || cell.empty || !cell.date) return <View key={cell?.key} style={styles.dayCell} />;
@@ -300,7 +300,7 @@ export default function RentalPeriodSheet({
                           isBusy && styles.dayBusy,
                         ]}
                       >
-                        <Text
+                        <AppText
                           style={[
                             styles.dayText,
                             isPast && styles.dayPast,
@@ -310,14 +310,14 @@ export default function RentalPeriodSheet({
                           ]}
                         >
                           {date.getDate()}
-                        </Text>
+                        </AppText>
                       </Pressable>
                     </View>
                   );
                 })}
               </View>
               <View style={styles.legendRow}>
-                <Text style={styles.legend}>● Ngày đã chọn  ░ Trong khoảng  × Đã đặt / khóa</Text>
+                <AppText style={styles.legend}>● Ngày đã chọn  ░ Trong khoảng  × Đã đặt / khóa</AppText>
               </View>
             </View>
 
@@ -341,26 +341,26 @@ export default function RentalPeriodSheet({
                 }}
               />
             </View>
-            {rangeError ? <Text style={styles.error}>{rangeError}</Text> : null}
-            {selectionError ? <Text style={styles.error}>{selectionError}</Text> : null}
-            {busyDateInSelection ? <Text style={styles.error}>Khoảng thuê có ngày đã đặt hoặc bị khóa.</Text> : null}
+            {rangeError ? <AppText style={styles.error}>{rangeError}</AppText> : null}
+            {selectionError ? <AppText style={styles.error}>{selectionError}</AppText> : null}
+            {busyDateInSelection ? <AppText style={styles.error}>Khoảng thuê có ngày đã đặt hoặc bị khóa.</AppText> : null}
 
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryTitle}>Thời gian đã chọn</Text>
+              <AppText display style={styles.summaryTitle}>Thời gian đã chọn</AppText>
               <View style={styles.summaryRow}>
                 <View style={styles.summaryCol}>
-                  <Text style={styles.summaryLabel}>Nhận xe</Text>
-                  <Text style={styles.summaryValue}>{formatPeriodPart(startDate)}</Text>
+                  <AppText style={styles.summaryLabel}>Nhận xe</AppText>
+                  <AppText style={styles.summaryValue}>{formatPeriodPart(startDate)}</AppText>
                 </View>
-                <Text style={styles.summaryArrow}>→</Text>
+                <AppText style={styles.summaryArrow}>→</AppText>
                 <View style={[styles.summaryCol, styles.summaryColRight]}>
-                  <Text style={styles.summaryLabel}>Trả xe</Text>
-                  <Text style={styles.summaryValue}>{formatPeriodPart(endDate)}</Text>
+                  <AppText style={styles.summaryLabel}>Trả xe</AppText>
+                  <AppText style={styles.summaryValue}>{formatPeriodPart(endDate)}</AppText>
                 </View>
               </View>
               <View style={styles.summaryDaysRow}>
-                <Text style={styles.summaryLabel}>Số ngày</Text>
-                <Text style={styles.summaryDays}>{rentalDays > 0 ? `${rentalDays} ngày` : "-"}</Text>
+                <AppText style={styles.summaryLabel}>Số ngày</AppText>
+                <AppText style={styles.summaryDays}>{rentalDays > 0 ? `${rentalDays} ngày` : "-"}</AppText>
               </View>
             </View>
           </ScrollView>
@@ -373,7 +373,7 @@ export default function RentalPeriodSheet({
                 onEndDateChange("");
               }}
             >
-              <Text style={styles.clearText}>Xóa thời gian</Text>
+              <AppText style={styles.clearText}>Xóa thời gian</AppText>
             </Pressable>
             <Pressable
               disabled={!startDate || !endDate || Boolean(rangeError) || Boolean(busyDateInSelection) || availabilityLoading || availabilityError}
@@ -383,7 +383,7 @@ export default function RentalPeriodSheet({
                 (!startDate || !endDate || Boolean(rangeError) || Boolean(busyDateInSelection) || availabilityLoading || availabilityError) && styles.doneDisabled,
               ]}
             >
-              <Text style={styles.doneText}>Hoàn tất</Text>
+              <AppText style={styles.doneText}>Hoàn tất</AppText>
             </Pressable>
           </View>
         </Animated.View>

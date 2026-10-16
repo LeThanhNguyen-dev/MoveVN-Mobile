@@ -9,10 +9,10 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
   TextInput,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { ArrowLeft } from "lucide-react-native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -269,9 +269,9 @@ export default function CreateBookingScreen({
         <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={20} />
         </Pressable>
-        <Text numberOfLines={1} style={styles.headerTitle}>
+        <AppText display numberOfLines={1} style={styles.headerTitle}>
           Xác nhận đặt xe
-        </Text>
+        </AppText>
         <View style={styles.backButton} />
       </View>
       <KeyboardAvoidingView
@@ -287,22 +287,22 @@ export default function CreateBookingScreen({
         {vehicle === undefined ? (
           <ActivityIndicator color={theme.brand} />
         ) : vehicle === null ? (
-          <Text style={styles.muted}>Không tải được thông tin xe.</Text>
+          <AppText style={styles.muted}>Không tải được thông tin xe.</AppText>
         ) : (
           <>
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>
+              <AppText display style={styles.cardTitle}>
                 {[vehicle.brandName, vehicle.modelName, vehicle.year].filter(Boolean).join(" ")}
-              </Text>
-              <Text style={styles.muted}>{formatPeriodSummary(startDate, endDate)}</Text>
-              <Text style={styles.muted}>
+              </AppText>
+              <AppText style={styles.muted}>{formatPeriodSummary(startDate, endDate)}</AppText>
+              <AppText style={styles.muted}>
                 {days > 0 ? `${days} ngày` : "Thời gian chưa hợp lệ"}
                 {estimate != null ? ` · tạm tính ${formatMoney(estimate)}` : ""}
-              </Text>
-              <Text style={styles.hint}>Chi phí tạm tính bên dưới; con số cuối cùng chốt khi chủ xe duyệt.</Text>
+              </AppText>
+              <AppText style={styles.hint}>Chi phí tạm tính bên dưới; con số cuối cùng chốt khi chủ xe duyệt.</AppText>
             </View>
 
-            <Text style={styles.label}>Nhận xe lúc: {formatDateTime(startDate)}</Text>
+            <AppText style={styles.label}>Nhận xe lúc: {formatDateTime(startDate)}</AppText>
             <View onLayout={(e) => { fieldY.current.pickup = e.nativeEvent.layout.y; }}>
             <AddressAutocomplete
               label="Địa điểm nhận xe"
@@ -319,27 +319,27 @@ export default function CreateBookingScreen({
 
             {deliveryPreview ? (
               deliveryPreview.overMax ? (
-                <Text style={styles.warnText}>
+                <AppText style={styles.warnText}>
                   Điểm nhận xe cách vị trí xe {deliveryPreview.distanceKm} km, vượt quá {effectiveConfig.maxKm} km cho phép.
                   Vui lòng chọn điểm nhận gần hơn.
-                </Text>
+                </AppText>
               ) : (
-                <Text style={styles.deliveryInfo}>
+                <AppText style={styles.deliveryInfo}>
                   Cách vị trí xe {deliveryPreview.distanceKm} km ·{" "}
                   {deliveryPreview.fee > 0
                     ? `Phí giao xe tận nơi ${formatMoney(deliveryPreview.fee)}`
                     : "Miễn phí giao xe"}
-                </Text>
+                </AppText>
               )
             ) : null}
 
             <View style={styles.switchRow}>
-              <Text style={styles.label}>Trả xe tại điểm nhận</Text>
+              <AppText style={styles.label}>Trả xe tại điểm nhận</AppText>
               <Switch value={sameReturn} onValueChange={setSameReturn} />
             </View>
             {!sameReturn && (
               <>
-                <Text style={styles.label}>Trả xe lúc: {formatDateTime(endDate)}</Text>
+                <AppText style={styles.label}>Trả xe lúc: {formatDateTime(endDate)}</AppText>
                 <View onLayout={(e) => { fieldY.current.ret = e.nativeEvent.layout.y; }}>
                 <AddressAutocomplete
                   label="Địa điểm trả xe"
@@ -356,7 +356,7 @@ export default function CreateBookingScreen({
               </>
             )}
 
-            <Text style={styles.label}>Ghi chú cho chủ xe</Text>
+            <AppText style={styles.label}>Ghi chú cho chủ xe</AppText>
             <View onLayout={(e) => { fieldY.current.note = e.nativeEvent.layout.y; }}>
             <TextInput
               value={note}
@@ -370,7 +370,7 @@ export default function CreateBookingScreen({
             </View>
             <View onLayout={(e) => { fieldY.current.promo = e.nativeEvent.layout.y; }} />
 
-            <Text style={styles.label}>Mã khuyến mãi (nếu có)</Text>
+            <AppText style={styles.label}>Mã khuyến mãi (nếu có)</AppText>
             <View style={styles.promoRow}>
               <TextInput
                 value={promoCode}
@@ -386,7 +386,7 @@ export default function CreateBookingScreen({
                 style={[styles.input, styles.promoInput]}
               />
               <Pressable onPress={openVoucherPicker} style={styles.voucherButton}>
-                <Text style={styles.voucherButtonText}>Ví</Text>
+                <AppText style={styles.voucherButtonText}>Ví</AppText>
               </Pressable>
               <Pressable
                 onPress={() => validateCode(promoCode)}
@@ -396,20 +396,20 @@ export default function CreateBookingScreen({
                 {promoLoading ? (
                   <ActivityIndicator color={theme.onBrand} size="small" />
                 ) : (
-                  <Text style={styles.applyButtonText}>Áp dụng</Text>
+                  <AppText style={styles.applyButtonText}>Áp dụng</AppText>
                 )}
               </Pressable>
             </View>
             {promoResult ? (
-              <Text style={styles.promoOk}>
+              <AppText style={styles.promoOk}>
                 Đã áp mã {promoResult.code}: giảm {formatMoney(promoResult.discountAmount)}
-              </Text>
+              </AppText>
             ) : null}
-            {promoError ? <Text style={styles.warnText}>{promoError}</Text> : null}
+            {promoError ? <AppText style={styles.warnText}>{promoError}</AppText> : null}
 
             {pricePreview ? (
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>Chi phí tạm tính</Text>
+                <AppText display style={styles.cardTitle}>Chi phí tạm tính</AppText>
                 <Row label={`Giá thuê (${days} ngày)`} value={formatMoney(pricePreview.base)} />
                 {pricePreview.discPct > 0 ? (
                   <Row label={`Giảm giá (${pricePreview.discPct}%)`} value={`-${formatMoney(pricePreview.discAmt)}`} tone="success" />
@@ -444,7 +444,7 @@ export default function CreateBookingScreen({
               {submitting ? (
                 <ActivityIndicator color={theme.onBrand} />
               ) : (
-                <Text style={styles.submitText}>Gửi yêu cầu thuê xe</Text>
+                <AppText style={styles.submitText}>Gửi yêu cầu thuê xe</AppText>
               )}
             </Pressable>
           </>
@@ -455,11 +455,11 @@ export default function CreateBookingScreen({
       <Modal visible={voucherModal} transparent animationType="fade" onRequestClose={() => setVoucherModal(false)}>
         <View style={styles.backdrop}>
           <View style={[styles.modal, styles.tallModal]}>
-            <Text style={styles.cardTitle}>Ví voucher của bạn</Text>
+            <AppText display style={styles.cardTitle}>Ví voucher của bạn</AppText>
             {vouchersLoading ? (
               <ActivityIndicator color={theme.brand} />
             ) : vouchers.length === 0 ? (
-              <Text style={styles.muted}>Chưa có voucher nào dùng được. Săn mã ở tab Ưu đãi.</Text>
+              <AppText style={styles.muted}>Chưa có voucher nào dùng được. Săn mã ở tab Ưu đãi.</AppText>
             ) : (
               <ScrollView style={styles.voucherList}>
                 {vouchers.map((v) => {
@@ -476,19 +476,19 @@ export default function CreateBookingScreen({
                       style={[styles.voucherItem, !ok && styles.voucherDisabled]}
                     >
                       <View style={styles.voucherInfo}>
-                        <Text style={styles.voucherCode}>{v.code}</Text>
-                        <Text style={styles.muted}>{v.name}</Text>
-                        <Text style={styles.muted}>{describeVoucher(v)}</Text>
-                        {!ok && <Text style={styles.warnText}>Không áp dụng cho loại xe này</Text>}
+                        <AppText style={styles.voucherCode}>{v.code}</AppText>
+                        <AppText style={styles.muted}>{v.name}</AppText>
+                        <AppText style={styles.muted}>{describeVoucher(v)}</AppText>
+                        {!ok && <AppText style={styles.warnText}>Không áp dụng cho loại xe này</AppText>}
                       </View>
-                      <Text style={styles.useText}>{ok ? "Dùng" : ""}</Text>
+                      <AppText style={styles.useText}>{ok ? "Dùng" : ""}</AppText>
                     </Pressable>
                   );
                 })}
               </ScrollView>
             )}
             <Pressable onPress={() => setVoucherModal(false)} style={styles.ghostButton}>
-              <Text style={styles.ghostText}>Đóng</Text>
+              <AppText style={styles.ghostText}>Đóng</AppText>
             </Pressable>
           </View>
         </View>
@@ -510,8 +510,8 @@ function Row({
 }) {
   return (
     <View style={rowStyles.row}>
-      <Text style={[rowStyles.label, strong && rowStyles.strongLabel]}>{label}</Text>
-      <Text
+      <AppText style={[rowStyles.label, strong && rowStyles.strongLabel]}>{label}</AppText>
+      <AppText
         style={[
           rowStyles.value,
           tone === "success" && rowStyles.success,
@@ -519,7 +519,7 @@ function Row({
         ]}
       >
         {value}
-      </Text>
+      </AppText>
     </View>
   );
 }

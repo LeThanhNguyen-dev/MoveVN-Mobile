@@ -7,10 +7,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -151,14 +151,14 @@ export default function AreaPickerSheet({
                 </Pressable>
               ) : null}
               <View>
-                <Text style={styles.headerTitle}>
+                <AppText display style={styles.headerTitle}>
                   {step === "province" ? "Chọn tỉnh / thành phố" : `Xã tại ${draftProvince}`}
-                </Text>
-                <Text style={styles.headerSub}>
+                </AppText>
+                <AppText display style={styles.headerSub}>
                   {draftProvince
                     ? `${draftProvince}${draftDistrict ? ` · ${draftDistrict}` : ""}`
                     : "Chọn nơi bạn muốn thuê xe"}
-                </Text>
+                </AppText>
               </View>
             </View>
             <Pressable onPress={handleClose} style={styles.closeButton}>
@@ -170,7 +170,7 @@ export default function AreaPickerSheet({
             <View style={[styles.stepDot, styles.stepDone]} />
             <View style={[styles.stepLine, draftProvince && styles.stepDone]} />
             <View style={[styles.stepDot, draftProvince && styles.stepDone]} />
-            <Text style={styles.stepText}>Tỉnh → Phường/Xã (xã tùy chọn)</Text>
+            <AppText style={styles.stepText}>Tỉnh → Phường/Xã (xã tùy chọn)</AppText>
           </View>
 
           <View style={styles.searchBox}>
@@ -193,11 +193,11 @@ export default function AreaPickerSheet({
             {loading ? (
               <View style={styles.center}>
                 <ActivityIndicator color={theme.brand} />
-                <Text style={styles.muted}>Đang tải khu vực...</Text>
+                <AppText style={styles.muted}>Đang tải khu vực...</AppText>
               </View>
             ) : loadError ? (
               <View style={styles.center}>
-                <Text style={styles.error}>{loadError}</Text>
+                <AppText style={styles.error}>{loadError}</AppText>
               </View>
             ) : step === "province" ? (
               filteredProvinces.map((p) => {
@@ -214,17 +214,17 @@ export default function AreaPickerSheet({
                     style={[styles.item, selected && styles.itemSelected]}
                   >
                     <MapPin color={selected ? theme.brand : theme.muted} size={17} />
-                    <Text style={[styles.itemText, selected && styles.itemTextSelected]}>
+                    <AppText style={[styles.itemText, selected && styles.itemTextSelected]}>
                       {p.name}
-                    </Text>
-                    <Text style={styles.itemCount}>{p.count}</Text>
+                    </AppText>
+                    <AppText style={styles.itemCount}>{p.count}</AppText>
                     {selected ? <Check color={theme.brand} size={16} /> : null}
                   </Pressable>
                 );
               })
             ) : filteredDistricts.length === 0 ? (
               <View style={styles.center}>
-                <Text style={styles.muted}>Chưa có phường / xã cho khu vực này.</Text>
+                <AppText style={styles.muted}>Chưa có phường / xã cho khu vực này.</AppText>
               </View>
             ) : (
               filteredDistricts.map((d) => {
@@ -236,9 +236,9 @@ export default function AreaPickerSheet({
                     style={[styles.item, selected && styles.itemSelected]}
                   >
                     <MapPin color={selected ? theme.brand : theme.muted} size={17} />
-                    <Text style={[styles.itemText, selected && styles.itemTextSelected]}>
+                    <AppText style={[styles.itemText, selected && styles.itemTextSelected]}>
                       {d.name}
-                    </Text>
+                    </AppText>
                     {selected ? <Check color={theme.brand} size={16} /> : null}
                   </Pressable>
                 );
@@ -248,12 +248,12 @@ export default function AreaPickerSheet({
 
           <View style={styles.footer}>
             <Pressable onPress={handleClear}>
-              <Text style={styles.clearText}>Xóa</Text>
+              <AppText style={styles.clearText}>Xóa</AppText>
             </Pressable>
             <View style={styles.footerButtons}>
               {step === "district" ? (
                 <Pressable onPress={() => setStep("province")} style={styles.ghostButton}>
-                  <Text style={styles.ghostText}>Đổi tỉnh</Text>
+                  <AppText style={styles.ghostText}>Đổi tỉnh</AppText>
                 </Pressable>
               ) : null}
               <Pressable
@@ -261,7 +261,7 @@ export default function AreaPickerSheet({
                 onPress={handleApply}
                 style={[styles.doneButton, !canApply && styles.doneDisabled]}
               >
-                <Text style={styles.doneText}>Áp dụng</Text>
+                <AppText style={styles.doneText}>Áp dụng</AppText>
               </Pressable>
             </View>
           </View>

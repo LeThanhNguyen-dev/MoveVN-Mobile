@@ -1,6 +1,7 @@
 import { Expand, MapPin } from "lucide-react-native";
 import { memo, useMemo, useState } from "react";
-import { Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, Modal, Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
@@ -68,15 +69,15 @@ function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: 
       <View style={styles.headRow}>
         <View style={styles.headLeft}>
           <MapPin color={theme.muted} size={15} />
-          <Text style={styles.headTitle}>Vị trí xe</Text>
+          <AppText display style={styles.headTitle}>Vị trí xe</AppText>
         </View>
         <Pressable onPress={openGoogleMaps} style={styles.mapsButton}>
-          <Text style={styles.mapsText}>Mở Google Maps</Text>
+          <AppText style={styles.mapsText}>Mở Google Maps</AppText>
         </Pressable>
       </View>
-      <Text numberOfLines={2} style={styles.address}>
+      <AppText numberOfLines={2} style={styles.address}>
         {address}
-      </Text>
+      </AppText>
       {hasCoords ? (
         <View style={[styles.mapBox, { height }]}>
           <WebView
@@ -95,7 +96,7 @@ function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: 
       ) : (
         <View style={styles.noCoords}>
           <MapPin color={theme.faint} size={20} />
-          <Text style={styles.noCoordsText}>Chưa có tọa độ, xem vị trí theo địa chỉ trên Google Maps.</Text>
+          <AppText style={styles.noCoordsText}>Chưa có tọa độ, xem vị trí theo địa chỉ trên Google Maps.</AppText>
         </View>
       )}
 
@@ -103,15 +104,15 @@ function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: 
         <View style={[styles.full, { paddingTop: Math.max(insets.top, 12) }]}>
           <View style={styles.fullHead}>
             <View style={styles.fullTitleWrap}>
-              <Text numberOfLines={1} style={styles.fullTitle}>
+              <AppText display numberOfLines={1} style={styles.fullTitle}>
                 {title}
-              </Text>
-              <Text numberOfLines={1} style={styles.fullAddr}>
+              </AppText>
+              <AppText numberOfLines={1} style={styles.fullAddr}>
                 {address}
-              </Text>
+              </AppText>
             </View>
             <Pressable onPress={() => setExpanded(false)} style={styles.closeBtn}>
-              <Text style={styles.closeText}>Đóng</Text>
+              <AppText style={styles.closeText}>Đóng</AppText>
             </Pressable>
           </View>
           {hasCoords ? (
@@ -125,7 +126,7 @@ function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: 
           ) : null}
           <View style={[styles.fullFoot, { paddingBottom: Math.max(insets.bottom, 14) }]}>
             <Pressable onPress={openGoogleMaps} style={styles.primaryBtn}>
-              <Text style={styles.primaryText}>Mở Google Maps</Text>
+              <AppText style={styles.primaryText}>Mở Google Maps</AppText>
             </Pressable>
           </View>
         </View>

@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { Reply } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import { chatTime } from "../chatPresentation";
@@ -30,7 +31,7 @@ export default function ChatMessageCard({
   const foreground = own ? theme.onBrand : theme.text;
   return (
     <View style={[styles.row, { alignItems: own ? "flex-end" : "flex-start" }]}>
-      <Text
+      <AppText
         style={{
           color: theme.muted,
           fontSize: 11,
@@ -39,7 +40,7 @@ export default function ChatMessageCard({
         }}
       >
         {message.senderName}
-      </Text>
+      </AppText>
       <View
         style={[
           styles.bubble,
@@ -64,17 +65,17 @@ export default function ChatMessageCard({
               borderRadius: 4,
             }}
           >
-            <Text
+            <AppText
               style={{ color: foreground, fontWeight: "700", fontSize: 12 }}
             >
               {message.replyTo?.senderName ?? "Tin nhắn không còn khả dụng"}
-            </Text>
-            <Text numberOfLines={2} style={{ color: foreground, fontSize: 12 }}>
+            </AppText>
+            <AppText numberOfLines={2} style={{ color: foreground, fontSize: 12 }}>
               {message.replyTo?.content ||
                 (message.replyTo?.attachments?.length
                   ? `📷 ${message.replyTo.attachments.length} ảnh`
                   : "")}
-            </Text>
+            </AppText>
           </Pressable>
         ) : null}
         {message.attachments?.map((attachment, index) => (
@@ -96,15 +97,15 @@ export default function ChatMessageCard({
           </View>
         ))}
         {message.content ? (
-          <Text
+          <AppText
             selectable
             style={{ color: foreground, fontSize: 15, lineHeight: 22 }}
           >
             {message.content}
-          </Text>
+          </AppText>
         ) : null}
         {!message.content && !message.attachments?.length ? (
-          <Text style={{ color: foreground }}>Tin nhắn ảnh</Text>
+          <AppText style={{ color: foreground }}>Tin nhắn ảnh</AppText>
         ) : null}
       </View>
       <View
@@ -115,10 +116,10 @@ export default function ChatMessageCard({
           paddingHorizontal: 6,
         }}
       >
-        <Text style={{ color: theme.muted, fontSize: 10 }}>
+        <AppText style={{ color: theme.muted, fontSize: 10 }}>
           {chatTime(message.sentAt)}
           {own ? " · Đã gửi" : ""}
-        </Text>
+        </AppText>
         {onReply ? (
           <Pressable
             accessibilityRole="button"
@@ -127,7 +128,7 @@ export default function ChatMessageCard({
             style={{ flexDirection: "row", gap: 4, paddingVertical: 8 }}
           >
             <Reply size={14} color={theme.brand} />
-            <Text style={{ color: theme.brand, fontSize: 11 }}>Trả lời</Text>
+            <AppText style={{ color: theme.brand, fontSize: 11 }}>Trả lời</AppText>
           </Pressable>
         ) : null}
       </View>

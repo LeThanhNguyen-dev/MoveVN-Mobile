@@ -79,6 +79,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onAvatarPress={() => setShowProfile(true)}
                 onRouteChange={handleExploreRouteChange}
                 onBookingCreated={goToTrip}
+                onGoDeals={() => setActiveTab("deals")}
               />
             ) : activeTab === "trips" ? (
               <TripsNavigator pendingBookingId={pendingTripId} onConsumedPending={consumePendingTrip} onRouteChange={setTripRoute} />

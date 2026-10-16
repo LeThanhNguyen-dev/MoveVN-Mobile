@@ -1,6 +1,7 @@
 import { Check, ChevronDown, Search, X } from "lucide-react-native";
 import { memo, useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -49,18 +50,18 @@ function FormDropdownSheet({
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label}>{label}</Text>
+      <AppText style={styles.label}>{label}</AppText>
       <Pressable
         disabled={disabled}
         onPress={() => setOpen(true)}
         style={[styles.button, disabled && styles.buttonDisabled]}
       >
-        <Text
+        <AppText
           numberOfLines={1}
           style={[styles.buttonText, !selected && styles.placeholderText, disabled && styles.disabledText]}
         >
           {selected ? selected.label : placeholder}
-        </Text>
+        </AppText>
         <ChevronDown color={theme.muted} size={16} />
       </Pressable>
 
@@ -69,7 +70,7 @@ function FormDropdownSheet({
           <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
           <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
             <View style={styles.sheetHead}>
-              <Text style={styles.sheetTitle}>{label}</Text>
+              <AppText display style={styles.sheetTitle}>{label}</AppText>
               <Pressable onPress={() => setOpen(false)} style={styles.closeBtn}>
                 <X color={theme.muted} size={18} />
               </Pressable>
@@ -99,14 +100,14 @@ function FormDropdownSheet({
                     style={[styles.option, active && styles.optionActive]}
                   >
                     <View style={styles.optionTextWrap}>
-                      <Text style={[styles.optionText, active && styles.optionTextActive]}>{o.label}</Text>
-                      {o.hint ? <Text style={styles.optionHint}>{o.hint}</Text> : null}
+                      <AppText style={[styles.optionText, active && styles.optionTextActive]}>{o.label}</AppText>
+                      {o.hint ? <AppText style={styles.optionHint}>{o.hint}</AppText> : null}
                     </View>
                     {active ? <Check color={theme.brand} size={16} /> : null}
                   </Pressable>
                 );
               })}
-              {filtered.length === 0 ? <Text style={styles.empty}>Không có lựa chọn nào.</Text> : null}
+              {filtered.length === 0 ? <AppText style={styles.empty}>Không có lựa chọn nào.</AppText> : null}
             </ScrollView>
           </View>
         </View>

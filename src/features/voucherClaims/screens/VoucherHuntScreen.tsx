@@ -9,9 +9,9 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { DealsStackParamList } from "@/navigation/types";
@@ -85,9 +85,9 @@ function HuntVoucherCard({
 
         <View style={styles.ticketBody}>
           <View style={styles.nameRow}>
-            <Text style={styles.ticketName} numberOfLines={1}>
+            <AppText style={styles.ticketName} numberOfLines={1}>
               {item.name}
-            </Text>
+            </AppText>
             {daysLeft !== null ? (
               <View
                 style={[
@@ -99,7 +99,7 @@ function HuntVoucherCard({
                   color={daysLeft <= 3 ? (theme.mode === "dark" ? "#FB7185" : "#B91C1C") : theme.muted}
                   size={11}
                 />
-                <Text
+                <AppText
                   style={[
                     styles.daysBadgeText,
                     daysLeft <= 3
@@ -108,18 +108,18 @@ function HuntVoucherCard({
                   ]}
                 >
                   ⏰ {daysLeft > 0 ? `Còn ${daysLeft} ngày` : "Hôm nay!"}
-                </Text>
+                </AppText>
               </View>
             ) : null}
           </View>
 
           <View style={styles.tagRow}>
             <View style={styles.tag}>
-              <Text style={styles.tagText}>{formatVehicleLabel(item.vehicleType)}</Text>
+              <AppText style={styles.tagText}>{formatVehicleLabel(item.vehicleType)}</AppText>
             </View>
             {!!item.minOrderAmount && (
               <View style={styles.tag}>
-                <Text style={[styles.tagText, styles.tagAmber]}>Đơn từ {formatVnd(item.minOrderAmount)}</Text>
+                <AppText style={[styles.tagText, styles.tagAmber]}>Đơn từ {formatVnd(item.minOrderAmount)}</AppText>
               </View>
             )}
             <Pressable
@@ -129,7 +129,7 @@ function HuntVoucherCard({
               accessibilityLabel={`Sao chép mã ${item.code}`}
             >
               <Copy color={theme.brand} size={11} />
-              <Text style={styles.codeTagText}>🎟️ {item.code}</Text>
+              <AppText style={styles.codeTagText}>🎟️ {item.code}</AppText>
             </Pressable>
           </View>
 
@@ -142,9 +142,9 @@ function HuntVoucherCard({
                 style={[styles.progressFill, { width: `${percent}%` }]}
               />
             </View>
-            <Text style={[styles.remainingText, almostGone && styles.remainingUrgent]}>
+            <AppText style={[styles.remainingText, almostGone && styles.remainingUrgent]}>
               Còn {remaining} lượt
-            </Text>
+            </AppText>
           </View>
 
           <Pressable
@@ -164,7 +164,7 @@ function HuntVoucherCard({
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
                 <>
-                  <Text style={styles.claimText}>✨ Nhận voucher</Text>
+                  <AppText style={styles.claimText}>✨ Nhận voucher</AppText>
                   <Sparkles color="#FFFFFF" size={14} />
                 </>
               )}
@@ -242,18 +242,18 @@ export default function VoucherHuntScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Săn voucher</Text>
-        <Text style={styles.pageDesc}>Nhận voucher và lưu vào ví để dùng khi đặt xe.</Text>
+        <AppText display style={styles.pageTitle}>Săn voucher</AppText>
+        <AppText style={styles.pageDesc}>Nhận voucher và lưu vào ví để dùng khi đặt xe.</AppText>
 
         <DealsSegmentedNav />
 
         {deepMissed ? (
           <View style={styles.warnBox}>
-            <Text style={styles.warnText}>
+            <AppText style={styles.warnText}>
               Voucher này có thể bạn đã nhận hoặc hiện không còn khả dụng.
-            </Text>
+            </AppText>
             <Pressable onPress={() => navigation.navigate("VoucherWallet")} style={styles.warnButton}>
-              <Text style={styles.warnButtonText}>Xem voucher đã nhận →</Text>
+              <AppText style={styles.warnButtonText}>Xem voucher đã nhận →</AppText>
             </Pressable>
           </View>
         ) : null}
@@ -265,12 +265,12 @@ export default function VoucherHuntScreen() {
         ) : vouchers.length === 0 && deepPromotionId === null ? (
           <View style={styles.emptyBox}>
             <TicketPercent color={theme.faint} size={44} />
-            <Text style={styles.emptyTitle}>Tất cả voucher đã được nhận hết.</Text>
-            <Text style={styles.emptyDesc}>Quay lại sau nhé!</Text>
+            <AppText display style={styles.emptyTitle}>Tất cả voucher đã được nhận hết.</AppText>
+            <AppText style={styles.emptyDesc}>Quay lại sau nhé!</AppText>
           </View>
         ) : vouchers.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Text style={styles.emptyDesc}>Hiện không có voucher nào khác để nhận.</Text>
+            <AppText style={styles.emptyDesc}>Hiện không có voucher nào khác để nhận.</AppText>
           </View>
         ) : (
           <View style={styles.cardList}>

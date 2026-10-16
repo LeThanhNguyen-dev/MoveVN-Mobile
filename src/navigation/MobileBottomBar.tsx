@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -48,11 +49,11 @@ export default function MobileBottomBar<T extends string>({
             >
               <View style={[styles.iconWrap, item.prominent && styles.prominentIconWrap]}>
                 <Icon color={color} size={item.prominent ? 25 : 22} strokeWidth={item.prominent ? 2.6 : 2.3} />
-                {item.badge && item.badge > 0 ? <View style={{ position: "absolute", top: -4, right: -8, minWidth: 18, paddingHorizontal: 4, borderRadius: 10, backgroundColor: theme.brand }}><Text style={{ color: theme.onBrand, fontSize: 10, fontWeight: "700", textAlign: "center" }}>{item.badge > 99 ? "99+" : item.badge}</Text></View> : null}
+                {item.badge && item.badge > 0 ? <View style={{ position: "absolute", top: -4, right: -8, minWidth: 18, paddingHorizontal: 4, borderRadius: 10, backgroundColor: theme.brand }}><AppText style={{ color: theme.onBrand, fontSize: 10, fontWeight: "700", textAlign: "center" }}>{item.badge > 99 ? "99+" : item.badge}</AppText></View> : null}
               </View>
-              <Text numberOfLines={1} style={[styles.label, active && styles.activeLabel, item.prominent && styles.prominentLabel]}>
+              <AppText numberOfLines={1} style={[styles.label, active && styles.activeLabel, item.prominent && styles.prominentLabel]}>
                 {item.label}
-              </Text>
+              </AppText>
             </Pressable>
           );
         })}

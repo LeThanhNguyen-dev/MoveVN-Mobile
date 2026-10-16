@@ -7,9 +7,9 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  Text,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -519,22 +519,22 @@ export default function VehicleListScreen({
         <View style={styles.headerText}>
           <Pressable onPress={() => setAreaVisible(true)} style={styles.headerRow}>
             <MapPin color={theme.brand} size={14} />
-            <Text numberOfLines={1} style={styles.headerArea}>
+            <AppText display numberOfLines={1} style={styles.headerArea}>
               {areaText}
-            </Text>
+            </AppText>
           </Pressable>
           <Pressable onPress={() => setPeriodVisible(true)} style={styles.headerRow}>
             <CalendarDays color={theme.brand} size={14} />
-            <Text numberOfLines={1} style={styles.headerTime}>
+            <AppText display numberOfLines={1} style={styles.headerTime}>
               {formatPeriodSummary(startDate, endDate)}
-            </Text>
+            </AppText>
           </Pressable>
         </View>
         <Pressable onPress={() => setFilterVisible(true)} style={styles.filterButton}>
           <SlidersHorizontal color={theme.brand} size={18} />
           {activeFilterCount > 0 ? (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{activeFilterCount}</Text>
+              <AppText style={styles.badgeText}>{activeFilterCount}</AppText>
             </View>
           ) : null}
         </Pressable>
@@ -546,13 +546,13 @@ export default function VehicleListScreen({
             accessibilityRole="button" accessibilityState={{ selected: viewMode === "list" }}
             style={[styles.viewSwitchButton, viewMode === "list" && styles.viewSwitchActive]}>
             <List size={16} color={viewMode === "list" ? theme.onBrand : theme.muted} />
-            <Text style={[styles.viewSwitchText, viewMode === "list" && styles.viewSwitchTextActive]}>Danh sách</Text>
+            <AppText style={[styles.viewSwitchText, viewMode === "list" && styles.viewSwitchTextActive]}>Danh sách</AppText>
           </Pressable>
           <Pressable onPress={() => setViewMode("map")}
             accessibilityRole="button" accessibilityState={{ selected: viewMode === "map" }}
             style={[styles.viewSwitchButton, viewMode === "map" && styles.viewSwitchActive]}>
             <MapIcon size={16} color={viewMode === "map" ? theme.onBrand : theme.muted} />
-            <Text style={[styles.viewSwitchText, viewMode === "map" && styles.viewSwitchTextActive]}>Bản đồ</Text>
+            <AppText style={[styles.viewSwitchText, viewMode === "map" && styles.viewSwitchTextActive]}>Bản đồ</AppText>
           </Pressable>
         </View>
       </View>
@@ -573,46 +573,46 @@ export default function VehicleListScreen({
             {aiSearching && loading ? (
               <View style={styles.aiSearchingRow}>
                 <ActivityIndicator size="small" color={theme.brand} />
-                <Text numberOfLines={2} style={styles.aiSummary}>
+                <AppText numberOfLines={2} style={styles.aiSummary}>
                   AI đang tìm kiếm... {aiElapsed}s
-                </Text>
+                </AppText>
               </View>
             ) : aiActiveQuery ? (
-              <Text numberOfLines={2} style={[styles.aiSummary, aiMatched === false && styles.aiNoMatch]}>
+              <AppText numberOfLines={2} style={[styles.aiSummary, aiMatched === false && styles.aiNoMatch]}>
                 {aiMatched === false
                   ? "Khong co ket qua AI phu hop, dang hien thi danh sach theo bo loc hien tai."
                   : `AI: ${aiSemanticQuery || aiActiveQuery}`}
-              </Text>
+              </AppText>
             ) : null}
             {chips.length > 0 ? (
               <View style={styles.chips}>
                 {chips.map((chip) => (
                   <Pressable key={chip.key} onPress={chip.clear} style={styles.chip}>
-                    <Text numberOfLines={1} style={styles.chipText}>
+                    <AppText numberOfLines={1} style={styles.chipText}>
                       {chip.label}
-                    </Text>
+                    </AppText>
                     <X color={theme.brand} size={13} />
                   </Pressable>
                 ))}
               </View>
             ) : null}
             <View style={styles.countRow}>
-              <Text style={styles.countText}>
+              <AppText style={styles.countText}>
                 {loading && items.length === 0
                   ? "Đang tìm xe..."
                   : `Tìm thấy ${totalCount} xe${rentalDays > 0 ? ` · ${rentalDays} ngày` : ""}`}
-              </Text>
+              </AppText>
               {loading && items.length > 0 ? (
                 <ActivityIndicator size="small" color={theme.brand} />
               ) : null}
               <Pressable onPress={() => setSortVisible(true)} style={styles.sortButton}>
-                <Text numberOfLines={1} style={styles.sortText}>
+                <AppText numberOfLines={1} style={styles.sortText}>
                   {sortLabel}
-                </Text>
+                </AppText>
                 <ChevronDown color={theme.muted} size={15} />
               </Pressable>
             </View>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <AppText style={styles.error}>{error}</AppText> : null}
           </View>
         }
         ListEmptyComponent={
@@ -625,8 +625,8 @@ export default function VehicleListScreen({
             </View>
           ) : (
             <View style={styles.center}>
-              <Text style={styles.emptyTitle}>Chưa có xe phù hợp</Text>
-              <Text style={styles.muted}>Thử đổi địa điểm, thời gian hoặc bộ lọc.</Text>
+              <AppText display style={styles.emptyTitle}>Chưa có xe phù hợp</AppText>
+              <AppText style={styles.muted}>Thử đổi địa điểm, thời gian hoặc bộ lọc.</AppText>
               <Pressable
                 onPress={() => {
                   setFilters({ ...EMPTY_FILTERS, type: base.type });
@@ -634,7 +634,7 @@ export default function VehicleListScreen({
                 }}
                 style={styles.resetButton}
               >
-                <Text style={styles.resetText}>Đặt lại bộ lọc</Text>
+                <AppText style={styles.resetText}>Đặt lại bộ lọc</AppText>
               </Pressable>
             </View>
           )
@@ -648,13 +648,13 @@ export default function VehicleListScreen({
         <View style={styles.mapScreen}>
           <View style={styles.mapControls}>
             {aiSearching ? (
-              <Text style={styles.mapStatus}>AI đang tìm kiếm... {aiElapsed}s</Text>
+              <AppText style={styles.mapStatus}>AI đang tìm kiếm... {aiElapsed}s</AppText>
             ) : aiActiveQuery ? (
-              <Text numberOfLines={1} style={styles.mapStatus}>AI: {aiSemanticQuery || aiActiveQuery}</Text>
+              <AppText numberOfLines={1} style={styles.mapStatus}>AI: {aiSemanticQuery || aiActiveQuery}</AppText>
             ) : null}
             <View style={styles.mapSortRow}>
               <Pressable onPress={() => setSortVisible(true)} style={styles.sortButton}>
-                <Text numberOfLines={1} style={styles.sortText}>{sortLabel}</Text>
+                <AppText numberOfLines={1} style={styles.sortText}>{sortLabel}</AppText>
                 <ChevronDown color={theme.muted} size={15} />
               </Pressable>
             </View>
@@ -716,7 +716,7 @@ export default function VehicleListScreen({
         <View style={styles.sortOverlay}>
           <Pressable style={styles.sortBackdrop} onPress={() => setSortVisible(false)} />
           <View style={[styles.sortSheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-            <Text style={styles.sortTitle}>Sắp xếp</Text>
+            <AppText display style={styles.sortTitle}>Sắp xếp</AppText>
             {SORT_OPTIONS.map((o) => {
               const active = sortBy === o.value;
               return (
@@ -728,9 +728,9 @@ export default function VehicleListScreen({
                   }}
                   style={styles.sortOption}
                 >
-                  <Text style={[styles.sortOptionText, active && styles.sortOptionActive]}>
+                  <AppText style={[styles.sortOptionText, active && styles.sortOptionActive]}>
                     {o.label}
-                  </Text>
+                  </AppText>
                   {active ? <Check color={theme.brand} size={17} /> : null}
                 </Pressable>
               );

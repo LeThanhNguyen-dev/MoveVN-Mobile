@@ -8,10 +8,10 @@ import {
   PanResponder,
   Pressable,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import WebView from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
@@ -233,21 +233,21 @@ export default function VehicleSearchMap({
         </Pressable>
       ) : null}
       <View style={[styles.attribution, { bottom: sheetHeight + 6 }]}>
-        <Text style={styles.attributionText}>
-          © <Text style={styles.attributionLink} onPress={() => void Linking.openURL("https://www.openstreetmap.org/copyright")}>OpenStreetMap</Text>
+        <AppText style={styles.attributionText}>
+          © <AppText style={styles.attributionLink} onPress={() => void Linking.openURL("https://www.openstreetmap.org/copyright")}>OpenStreetMap</AppText>
           {" contributors · © "}
-          <Text style={styles.attributionLink} onPress={() => void Linking.openURL("https://carto.com/attribution/")}>CARTO</Text>
-        </Text>
+          <AppText style={styles.attributionLink} onPress={() => void Linking.openURL("https://carto.com/attribution/")}>CARTO</AppText>
+        </AppText>
       </View>
       {loading ? (
         <View style={styles.loadingBadge}>
           <ActivityIndicator size="small" color={theme.brand} />
-          <Text style={styles.loadingText}>Đang tải xe trên bản đồ...</Text>
+          <AppText style={styles.loadingText}>Đang tải xe trên bản đồ...</AppText>
         </View>
       ) : null}
       {error || mapError ? (
         <View style={styles.errorBadge}>
-          <Text style={styles.errorText}>{mapError ? "Không tải được bản đồ." : "Không tải thêm được xe trên bản đồ."}</Text>
+          <AppText style={styles.errorText}>{mapError ? "Không tải được bản đồ." : "Không tải thêm được xe trên bản đồ."}</AppText>
         </View>
       ) : null}
       <View style={[styles.sheet, { height: sheetHeight, paddingBottom: Math.max(insets.bottom, 8) }]}>
@@ -257,9 +257,9 @@ export default function VehicleSearchMap({
             <View style={styles.sheetHandle} />
             <View style={styles.sheetTitleRow}>
               <View style={styles.sheetTitleWrap}>
-                <Text style={styles.sheetTitle}>{clusterIds ? `${visibleVehicles.length} xe tại vị trí này` : `${located.length} xe trên bản đồ`}</Text>
+                <AppText display style={styles.sheetTitle}>{clusterIds ? `${visibleVehicles.length} xe tại vị trí này` : `${located.length} xe trên bản đồ`}</AppText>
                 {expanded && result.totalCount > located.length ? (
-                  <Text style={styles.sheetSubtitle}>{result.totalCount} xe phù hợp · chỉ hiện xe có vị trí</Text>
+                  <AppText style={styles.sheetSubtitle}>{result.totalCount} xe phù hợp · chỉ hiện xe có vị trí</AppText>
                 ) : null}
               </View>
               <ChevronUp size={18} color={theme.muted} style={expanded ? { transform: [{ rotate: "180deg" }] } : undefined} />
@@ -278,17 +278,17 @@ export default function VehicleSearchMap({
                     : <View style={styles.rowImageFallback}>{item.vehicleType === "Motorbike"
                       ? <Bike size={25} color={theme.brand} /> : <Car size={25} color={theme.brand} />}</View>}
                   <View style={styles.rowInfo}>
-                    <Text numberOfLines={1} style={styles.vehicleName}>{item.brandName} {item.modelName} {item.year}</Text>
-                    <Text style={styles.vehiclePrice}>{formatVehicleCurrency(item.averageDailyPrice ?? item.pricePerDay)}/ngày</Text>
-                    {item.distanceKm != null ? <Text style={styles.vehicleDistance}>Cách điểm nhận {item.distanceKm.toFixed(1)} km</Text> : null}
+                    <AppText numberOfLines={1} style={styles.vehicleName}>{item.brandName} {item.modelName} {item.year}</AppText>
+                    <AppText style={styles.vehiclePrice}>{formatVehicleCurrency(item.averageDailyPrice ?? item.pricePerDay)}/ngày</AppText>
+                    {item.distanceKm != null ? <AppText style={styles.vehicleDistance}>Cách điểm nhận {item.distanceKm.toFixed(1)} km</AppText> : null}
                   </View>
                 </Pressable>
                 <Pressable onPress={() => onOpenVehicle(item.id)} style={styles.detailLink} accessibilityLabel={`Xem xe ${item.brandName} ${item.modelName}`}>
-                  <Text style={styles.detailLinkText}>Xem xe</Text>
+                  <AppText style={styles.detailLinkText}>Xem xe</AppText>
                 </Pressable>
               </View>
             )}
-            ListEmptyComponent={!loading ? <Text style={styles.emptyText}>Chưa có xe phù hợp có vị trí trên bản đồ.</Text> : null}
+            ListEmptyComponent={!loading ? <AppText style={styles.emptyText}>Chưa có xe phù hợp có vị trí trên bản đồ.</AppText> : null}
           />
         ) : null}
       </View>

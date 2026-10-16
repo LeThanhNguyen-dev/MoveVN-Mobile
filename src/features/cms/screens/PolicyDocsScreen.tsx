@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, ChevronRight, FileText, Search, X } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 import { filterPolicyItems } from "@/features/cms/utils/groups";
 import type { PolicyGroup } from "@/features/cms/utils/groups";
 import type { Theme } from "@/theme/tokens";
@@ -28,9 +29,9 @@ export default function PolicyDocsScreen({ group, initialQuery = "", onBack, onO
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text numberOfLines={1} style={styles.topBarTitle}>
+        <AppText display numberOfLines={1} style={styles.topBarTitle}>
           {group.title}
-        </Text>
+        </AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
@@ -65,22 +66,22 @@ export default function PolicyDocsScreen({ group, initialQuery = "", onBack, onO
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Danh sách văn bản</Text>
-          <Text style={styles.sectionCount}>
+          <AppText display style={styles.sectionTitle}>Danh sách văn bản</AppText>
+          <AppText style={styles.sectionCount}>
             {searching ? `${docs.length} kết quả` : `${group.items.length} văn bản`}
-          </Text>
+          </AppText>
         </View>
 
         {docs.length === 0 ? (
           <View style={styles.stateCard}>
-            <Text style={styles.stateTitle}>
+            <AppText display style={styles.stateTitle}>
               {searching ? "Không tìm thấy văn bản phù hợp" : "Chưa có văn bản"}
-            </Text>
-            <Text style={styles.muted}>
+            </AppText>
+            <AppText style={styles.muted}>
               {searching
                 ? "Thử từ khóa khác."
                 : "Nhóm tài liệu này đang được cập nhật. Vui lòng quay lại sau."}
-            </Text>
+            </AppText>
           </View>
         ) : (
           <View style={styles.docCard}>
@@ -95,13 +96,13 @@ export default function PolicyDocsScreen({ group, initialQuery = "", onBack, onO
                   <FileText color={theme.brand} size={20} strokeWidth={2.3} />
                 </View>
                 <View style={styles.docInfo}>
-                  <Text numberOfLines={3} style={styles.docTitle}>
+                  <AppText display numberOfLines={3} style={styles.docTitle}>
                     {doc.title}
-                  </Text>
+                  </AppText>
                   {doc.description ? (
-                    <Text numberOfLines={2} style={styles.docDescription}>
+                    <AppText numberOfLines={2} style={styles.docDescription}>
                       {doc.description}
-                    </Text>
+                    </AppText>
                   ) : null}
                 </View>
                 <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />

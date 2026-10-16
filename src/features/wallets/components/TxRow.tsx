@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -58,15 +59,15 @@ export default function TxRow({ tx }: { tx: WalletTransactionDto }) {
         <Icon color={incoming ? theme.success : theme.danger} size={18} strokeWidth={2.2} />
       </View>
       <View style={styles.mid}>
-        <Text style={styles.title} numberOfLines={1}>{txTypeLabel(tx.type)}</Text>
+        <AppText display style={styles.title} numberOfLines={1}>{txTypeLabel(tx.type)}</AppText>
         {tx.note ? (
-          <Text numberOfLines={1} style={styles.note}>{tx.note}</Text>
+          <AppText numberOfLines={1} style={styles.note}>{tx.note}</AppText>
         ) : null}
-        <Text style={styles.time}>{formatDateTime(tx.createdAt)}</Text>
+        <AppText style={styles.time}>{formatDateTime(tx.createdAt)}</AppText>
       </View>
-      <Text style={[styles.amount, incoming ? styles.amountIn : styles.amountOut]}>
+      <AppText style={[styles.amount, incoming ? styles.amountIn : styles.amountOut]}>
         {incoming ? "+" : "−"}{formatMoney(Math.abs(tx.amount))}
-      </Text>
+      </AppText>
     </View>
   );
 }

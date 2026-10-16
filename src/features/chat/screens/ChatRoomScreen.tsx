@@ -9,10 +9,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import {
@@ -223,7 +223,7 @@ export default function ChatRoomScreen({
     </Pressable>
   );
   const notice = (message: string) => (
-    <Text
+    <AppText
       accessibilityRole="alert"
       style={{
         color: theme.danger,
@@ -233,7 +233,7 @@ export default function ChatRoomScreen({
       }}
     >
       {message}
-    </Text>
+    </AppText>
   );
 
   return (
@@ -251,24 +251,24 @@ export default function ChatRoomScreen({
           <ArrowLeft size={23} color={theme.text} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text
+          <AppText
             numberOfLines={1}
             style={{ color: theme.text, fontSize: 17, fontWeight: "800" }}
           >
             {person?.name ?? "Chat booking"}
-          </Text>
+          </AppText>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Xem booking"
             disabled={!room}
             onPress={() => room && onBookingPress(room.bookingId)}
           >
-            <Text
+            <AppText
               numberOfLines={1}
               style={{ color: theme.brand, fontSize: 11, marginTop: 3 }}
             >
               {room?.bookingCode ?? "Đang mở…"} · Xem booking
-            </Text>
+            </AppText>
           </Pressable>
         </View>
         {iconButton(
@@ -285,7 +285,7 @@ export default function ChatRoomScreen({
         )}
       </View>
       {state.connectionStatus !== "connected" ? (
-        <Text
+        <AppText
           style={{
             color: theme.muted,
             fontSize: 11,
@@ -296,7 +296,7 @@ export default function ChatRoomScreen({
           {state.connectionStatus === "connecting"
             ? "Đang kết nối tin nhắn…"
             : "Chưa có kết nối trực tiếp · Tự cập nhật mỗi 30 giây"}
-        </Text>
+        </AppText>
       ) : null}
       {opening ? (
         <ActivityIndicator color={theme.brand} style={{ padding: 24 }} />
@@ -310,7 +310,7 @@ export default function ChatRoomScreen({
             onPress={() => setRetry((value) => value + 1)}
             style={{ padding: 16 }}
           >
-            <Text style={{ color: theme.brand }}>Thử lại</Text>
+            <AppText style={{ color: theme.brand }}>Thử lại</AppText>
           </Pressable>
         </View>
       ) : null}
@@ -355,9 +355,9 @@ export default function ChatRoomScreen({
                 {history.loading ? (
                   <ActivityIndicator color={theme.brand} />
                 ) : !history.error ? (
-                  <Text style={{ color: theme.muted }}>
+                  <AppText style={{ color: theme.muted }}>
                     Chưa có tin nhắn. Hãy bắt đầu trao đổi về booking này.
-                  </Text>
+                  </AppText>
                 ) : null}
               </View>
             }
@@ -377,7 +377,7 @@ export default function ChatRoomScreen({
                       }}
                       style={{ padding: 12 }}
                     >
-                      <Text style={{ color: theme.brand }}>Thử lại</Text>
+                      <AppText style={{ color: theme.brand }}>Thử lại</AppText>
                     </Pressable>
                   </View>
                 ) : null}
@@ -394,9 +394,9 @@ export default function ChatRoomScreen({
                     {history.loading ? (
                       <ActivityIndicator color={theme.brand} />
                     ) : (
-                      <Text style={{ color: theme.brand }}>
+                      <AppText style={{ color: theme.brand }}>
                         Tải tin nhắn cũ
-                      </Text>
+                      </AppText>
                     )}
                   </Pressable>
                 ) : null}
@@ -420,7 +420,7 @@ export default function ChatRoomScreen({
               }}
             >
               <ArrowDown size={16} color={theme.brand} />
-              <Text style={{ color: theme.brand }}>Tin mới nhất</Text>
+              <AppText style={{ color: theme.brand }}>Tin mới nhất</AppText>
             </Pressable>
           ) : null}
           {state.readErrors[roomId] ? (
@@ -453,7 +453,7 @@ export default function ChatRoomScreen({
                   }}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text
+                    <AppText
                       style={{
                         color: theme.brand,
                         fontWeight: "700",
@@ -461,14 +461,14 @@ export default function ChatRoomScreen({
                       }}
                     >
                       Trả lời {draft.reply.senderName}
-                    </Text>
-                    <Text
+                    </AppText>
+                    <AppText
                       numberOfLines={2}
                       style={{ color: theme.text, fontSize: 12 }}
                     >
                       {draft.reply.content ||
                         `📷 ${draft.reply.attachments?.length ?? 1} ảnh`}
-                    </Text>
+                    </AppText>
                   </View>
                   {iconButton(
                     "Hủy trả lời",
@@ -522,11 +522,11 @@ export default function ChatRoomScreen({
                 ? notice(state.sendErrors[roomId]!)
                 : null}
               {sending && draft.images.length ? (
-                <Text style={{ color: theme.brand, fontSize: 12 }}>
+                <AppText style={{ color: theme.brand, fontSize: 12 }}>
                   {sending.progress >= 100
                     ? "Đang xử lý ảnh…"
                     : `Đang gửi ảnh ${sending.progress}%`}
-                </Text>
+                </AppText>
               ) : null}
               <View
                 style={{ flexDirection: "row", alignItems: "flex-end", gap: 6 }}
@@ -607,7 +607,7 @@ export default function ChatRoomScreen({
                 </Pressable>
               </View>
               {draft.content.length > 1800 ? (
-                <Text
+                <AppText
                   style={{
                     color:
                       draft.content.trim().length > 2000
@@ -618,15 +618,15 @@ export default function ChatRoomScreen({
                   }}
                 >
                   {draft.content.length}/2000
-                </Text>
+                </AppText>
               ) : null}
             </View>
           ) : (
-            <Text
+            <AppText
               style={{ color: theme.muted, padding: 16, textAlign: "center" }}
             >
               Cuộc trò chuyện đã đóng. Bạn vẫn có thể xem lịch sử.
-            </Text>
+            </AppText>
           )}
         </KeyboardAvoidingView>
       ) : null}
@@ -660,9 +660,9 @@ export default function ChatRoomScreen({
                 >
                   <ArrowLeft color={theme.text} />
                 </Pressable>
-                <Text numberOfLines={1} style={{ color: theme.text, flex: 1 }}>
+                <AppText numberOfLines={1} style={{ color: theme.text, flex: 1 }}>
                   {photo.attachment.name}
-                </Text>
+                </AppText>
               </View>
               <View
                 style={{
@@ -702,11 +702,11 @@ export default function ChatRoomScreen({
                 >
                   <ArrowLeft color={theme.text} />
                 </Pressable>
-                <Text
+                <AppText
                   style={{ color: theme.text, fontSize: 18, fontWeight: "700" }}
                 >
                   Tin nhắn gốc
-                </Text>
+                </AppText>
               </View>
               <ScrollView>
                 {quote ? (

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, LockKeyhole, ShieldCheck } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { AuthButton, AuthField, AuthNotice } from "../components/AuthControls";
 import { changePassword } from "../services/authService";
 import { getFriendlyAuthError } from "../utils/authErrors";
@@ -95,7 +96,7 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={handleBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text style={styles.topBarTitle}>Đổi mật khẩu</Text>
+        <AppText display style={styles.topBarTitle}>Đổi mật khẩu</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
@@ -106,13 +107,13 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
               <KeyRound color="#D97706" size={22} strokeWidth={2.3} />
             </View>
             <View style={styles.cardTitleWrap}>
-              <Text style={styles.cardTitle}>Đổi mật khẩu</Text>
-              <Text style={styles.cardDescription}>Cập nhật mật khẩu cho phiên đăng nhập hiện tại.</Text>
+              <AppText display style={styles.cardTitle}>Đổi mật khẩu</AppText>
+              <AppText style={styles.cardDescription}>Cập nhật mật khẩu cho phiên đăng nhập hiện tại.</AppText>
             </View>
           </View>
 
           <View style={styles.progressRow}>
-            <Text style={styles.progressText}>{STEP_META[step].progress}</Text>
+            <AppText style={styles.progressText}>{STEP_META[step].progress}</AppText>
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${(step / 3) * 100}%` }]} />
             </View>
@@ -120,9 +121,9 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
 
           <View style={styles.heading}>
             <ShieldCheck color={theme.brand} size={20} strokeWidth={2.3} />
-            <Text style={styles.title}>{STEP_META[step].title}</Text>
+            <AppText display style={styles.title}>{STEP_META[step].title}</AppText>
           </View>
-          <Text style={styles.description}>{STEP_META[step].description}</Text>
+          <AppText style={styles.description}>{STEP_META[step].description}</AppText>
 
           {success ? <AuthNotice message={success} /> : null}
           {error ? <AuthNotice error message={error} /> : null}

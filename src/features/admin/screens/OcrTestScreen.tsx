@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { ArrowLeft, Camera, CheckCircle2, CircleAlert, ImagePlus } from "lucide-react-native";
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 import { previewAdminVehicleOcr } from "@/features/admin/services/adminPostManagementService";
 import { previewOwnerOcr } from "@/features/admin/services/adminUserService";
 import type {
@@ -177,14 +178,14 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text style={styles.topBarTitle}>Kiểm tra OCR</Text>
+        <AppText display style={styles.topBarTitle}>Kiểm tra OCR</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.hint}>
+        <AppText style={styles.hint}>
           Chạy thử OCR mà không lưu gì vào hồ sơ. Staff chỉ kiểm tra được CCCD/GPLX.
-        </Text>
+        </AppText>
 
         <View style={styles.tabs}>
           {(["cccd", "gplx"] as OcrTab[]).map((key) => (
@@ -194,9 +195,9 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
               onPress={() => handleTabChange(key)}
               style={[styles.tab, tab === key && styles.tabActive]}
             >
-              <Text style={[styles.tabText, tab === key && styles.tabTextActive]}>
+              <AppText style={[styles.tabText, tab === key && styles.tabTextActive]}>
                 {key === "cccd" ? "CCCD" : "GPLX"}
-              </Text>
+              </AppText>
             </Pressable>
           ))}
           {isAdmin ? (
@@ -205,16 +206,16 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
               onPress={() => handleTabChange("cavet")}
               style={[styles.tab, tab === "cavet" && styles.tabActive]}
             >
-              <Text style={[styles.tabText, tab === "cavet" && styles.tabTextActive]}>Cavet</Text>
+              <AppText style={[styles.tabText, tab === "cavet" && styles.tabTextActive]}>Cavet</AppText>
             </Pressable>
           ) : null}
         </View>
 
         {tab === "cccd" ? (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Ảnh mặt trước CCCD</Text>
+            <AppText display style={styles.cardTitle}>Ảnh mặt trước CCCD</AppText>
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Họ tên (tùy chọn)</Text>
+              <AppText style={styles.fieldLabel}>Họ tên (tùy chọn)</AppText>
               <TextInput
                 editable={!busy && !processing}
                 placeholder="Nguyễn Văn A"
@@ -236,7 +237,7 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
               }
               processing={processing}
             />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <AppText style={styles.error}>{error}</AppText> : null}
             <SubmitButton
               busy={busy}
               disabled={!cccdFile}
@@ -260,9 +261,9 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
 
         {tab === "gplx" ? (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Ảnh mặt trước GPLX</Text>
+            <AppText display style={styles.cardTitle}>Ảnh mặt trước GPLX</AppText>
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Họ tên (để kiểm tra khớp tên)</Text>
+              <AppText style={styles.fieldLabel}>Họ tên (để kiểm tra khớp tên)</AppText>
               <TextInput
                 editable={!busy && !processing}
                 placeholder="Nguyễn Văn A"
@@ -284,7 +285,7 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
               }
               processing={processing}
             />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <AppText style={styles.error}>{error}</AppText> : null}
             <SubmitButton
               busy={busy}
               disabled={!gplxFile}
@@ -307,7 +308,7 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
 
         {tab === "cavet" && isAdmin ? (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Ảnh cavet xe</Text>
+            <AppText display style={styles.cardTitle}>Ảnh cavet xe</AppText>
             <View style={styles.tabs}>
               {(["Car", "Motorbike"] as const).map((type) => (
                 <Pressable
@@ -316,9 +317,9 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
                   onPress={() => setVehicleType(type)}
                   style={[styles.tab, vehicleType === type && styles.tabActive]}
                 >
-                  <Text style={[styles.tabText, vehicleType === type && styles.tabTextActive]}>
+                  <AppText style={[styles.tabText, vehicleType === type && styles.tabTextActive]}>
                     {type === "Car" ? "Ô tô" : "Xe máy"}
-                  </Text>
+                  </AppText>
                 </Pressable>
               ))}
             </View>
@@ -335,7 +336,7 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
               processing={processing}
             />
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Biển số kỳ vọng (tùy chọn)</Text>
+              <AppText style={styles.fieldLabel}>Biển số kỳ vọng (tùy chọn)</AppText>
               <TextInput
                 autoCapitalize="characters"
                 editable={!busy && !processing}
@@ -347,7 +348,7 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
               />
             </View>
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Hãng kỳ vọng (tùy chọn)</Text>
+              <AppText style={styles.fieldLabel}>Hãng kỳ vọng (tùy chọn)</AppText>
               <TextInput
                 editable={!busy && !processing}
                 placeholder="Honda"
@@ -358,7 +359,7 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
               />
             </View>
             <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Model kỳ vọng (tùy chọn)</Text>
+              <AppText style={styles.fieldLabel}>Model kỳ vọng (tùy chọn)</AppText>
               <TextInput
                 editable={!busy && !processing}
                 placeholder="Air Blade"
@@ -368,7 +369,7 @@ export default function OcrTestScreen({ user, onBack }: OcrTestScreenProps) {
                 onChangeText={setExpectedModel}
               />
             </View>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <AppText style={styles.error}>{error}</AppText> : null}
             <SubmitButton
               busy={busy}
               disabled={!cavetFile}
@@ -416,10 +417,10 @@ function ImagePreview({
       ) : (
         <View style={styles.previewPlaceholder}>
           <ImagePlus color={theme.faint} size={30} strokeWidth={2} />
-          <Text style={styles.muted}>Chưa có ảnh nào được chọn</Text>
+          <AppText style={styles.muted}>Chưa có ảnh nào được chọn</AppText>
         </View>
       )}
-      {processing ? <Text style={styles.muted}>Đang xử lý ảnh...</Text> : null}
+      {processing ? <AppText style={styles.muted}>Đang xử lý ảnh...</AppText> : null}
       <View style={styles.pickRow}>
         <Pressable
           accessibilityRole="button"
@@ -428,7 +429,7 @@ function ImagePreview({
           style={[styles.pickButton, busy && styles.disabled]}
         >
           <Camera color={theme.brand} size={18} strokeWidth={2.3} />
-          <Text style={styles.pickText}>Chụp ảnh</Text>
+          <AppText style={styles.pickText}>Chụp ảnh</AppText>
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -437,7 +438,7 @@ function ImagePreview({
           style={[styles.pickButton, busy && styles.disabled]}
         >
           <ImagePlus color={theme.brand} size={18} strokeWidth={2.3} />
-          <Text style={styles.pickText}>Thư viện</Text>
+          <AppText style={styles.pickText}>Thư viện</AppText>
         </Pressable>
       </View>
     </>
@@ -465,7 +466,7 @@ function SubmitButton({
       onPress={onPress}
       style={[styles.submitButton, blocked && styles.disabled]}
     >
-      <Text style={styles.submitText}>{busy ? "Đang kiểm tra..." : label}</Text>
+      <AppText style={styles.submitText}>{busy ? "Đang kiểm tra..." : label}</AppText>
     </Pressable>
   );
 }
@@ -480,9 +481,9 @@ function ResultBadge({ success }: { success: boolean }) {
       ) : (
         <CircleAlert color={theme.danger} size={15} strokeWidth={2.5} />
       )}
-      <Text style={[styles.badgeText, success ? styles.badgeTextOk : styles.badgeTextFail]}>
+      <AppText style={[styles.badgeText, success ? styles.badgeTextOk : styles.badgeTextFail]}>
         {success ? "Đọc thành công" : "Đọc thất bại"}
-      </Text>
+      </AppText>
     </View>
   );
 }
@@ -492,8 +493,8 @@ function ResultLine({ label, value }: { label: string; value: string }) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.detailLine}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
+      <AppText style={styles.detailLabel}>{label}</AppText>
+      <AppText style={styles.detailValue}>{value}</AppText>
     </View>
   );
 }
@@ -505,11 +506,11 @@ function FlagsList({ flags }: { flags?: string[] | null }) {
   if (items.length === 0) return null;
   return (
     <View style={styles.flagBox}>
-      <Text style={styles.detailLabel}>Cờ AI ({items.length})</Text>
+      <AppText style={styles.detailLabel}>Cờ AI ({items.length})</AppText>
       {items.map((flag) => (
-        <Text key={flag} style={styles.flagText}>
+        <AppText key={flag} style={styles.flagText}>
           • {driverLicenseStatusLabel[flag] ?? flag}
-        </Text>
+        </AppText>
       ))}
     </View>
   );

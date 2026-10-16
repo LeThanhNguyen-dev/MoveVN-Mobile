@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LockKeyhole, Mail } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { AuthButton, AuthField, AuthNotice } from "../components/AuthControls";
 import { AuthScreenHeader } from "../components/AuthScreenHeader";
 import { AuthScreenLayout } from "../components/AuthScreenLayout";
@@ -42,12 +43,12 @@ export default function LoginScreen({ navigation, route }: Props) {
     {route.params?.notice ? <AuthNotice message={route.params.notice} /> : null}{error ? <AuthNotice error message={error} /> : null}
     <AuthField autoComplete="email" editable={!busy} icon={<Mail color={theme.muted} size={19} />} keyboardType="email-address" label="Email" onChangeText={setEmail} placeholder="ban@email.com" value={email} />
     <AuthField autoComplete="current-password" editable={!busy} icon={<LockKeyhole color={theme.muted} size={19} />} label="Mật khẩu" onChangeText={setPassword} password placeholder="Nhập mật khẩu" value={password} />
-    <View style={styles.options}><Text style={styles.remember}>Ghi nhớ đăng nhập</Text><Pressable onPress={() => navigation.navigate("ForgotPassword")}><Text style={styles.link}>Quên mật khẩu?</Text></Pressable></View>
+    <View style={styles.options}><AppText style={styles.remember}>Ghi nhớ đăng nhập</AppText><Pressable onPress={() => navigation.navigate("ForgotPassword")}><AppText style={styles.link}>Quên mật khẩu?</AppText></Pressable></View>
     <AuthButton busy={busy} onPress={() => { void submit(); }} title="Đăng nhập" />
-    <Pressable disabled={busy} onPress={() => { void google(); }} style={styles.google}><Text style={styles.googleMark}>G</Text><Text style={styles.googleText}>Tiếp tục với Google</Text></Pressable>
-    <View style={styles.divider}><View style={styles.line} /><Text style={styles.dividerText}>hoặc</Text><View style={styles.line} /></View>
-    <Pressable onPress={() => navigation.navigate("Register")}><Text style={styles.bottom}>Chưa có tài khoản? <Text style={styles.link}>Đăng ký ngay</Text></Text></Pressable>
-    <Pressable onPress={() => navigation.navigate("VerifyEmail", { email, purpose: "VerifyEmail" })}><Text style={styles.mutedCenter}>Xác thực email</Text></Pressable>
+    <Pressable disabled={busy} onPress={() => { void google(); }} style={styles.google}><AppText style={styles.googleMark}>G</AppText><AppText style={styles.googleText}>Tiếp tục với Google</AppText></Pressable>
+    <View style={styles.divider}><View style={styles.line} /><AppText style={styles.dividerText}>hoặc</AppText><View style={styles.line} /></View>
+    <Pressable onPress={() => navigation.navigate("Register")}><AppText style={styles.bottom}>Chưa có tài khoản? <AppText style={styles.link}>Đăng ký ngay</AppText></AppText></Pressable>
+    <Pressable onPress={() => navigation.navigate("VerifyEmail", { email, purpose: "VerifyEmail" })}><AppText style={styles.mutedCenter}>Xác thực email</AppText></Pressable>
   </View></AuthScreenLayout>;
 }
 

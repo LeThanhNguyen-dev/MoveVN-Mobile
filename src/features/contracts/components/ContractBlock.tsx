@@ -6,10 +6,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import {
@@ -148,21 +148,21 @@ export default function ContractBlock({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Hợp đồng ({contracts.length})</Text>
+      <AppText display style={styles.cardTitle}>Hợp đồng ({contracts.length})</AppText>
       {loading ? (
         <ActivityIndicator color={theme.brand} />
       ) : contracts.length === 0 ? (
-        <Text style={styles.muted}>Chưa có hợp đồng. Hệ thống thường tự tạo lúc duyệt booking.</Text>
+        <AppText style={styles.muted}>Chưa có hợp đồng. Hệ thống thường tự tạo lúc duyệt booking.</AppText>
       ) : (
         contracts.map((c) => {
           const signable = canSignContract(c, userId);
           return (
             <View key={c.id} style={styles.row}>
               <View style={styles.info}>
-                <Text style={styles.version}>
+                <AppText style={styles.version}>
                   v{c.version} · {c.contractNumber}
-                </Text>
-                <Text style={styles.muted}>
+                </AppText>
+                <AppText style={styles.muted}>
                   {CONTRACT_STATUS_LABELS[c.status] ?? c.status} ·{" "}
                   {userId === c.ownerId
                     ? c.ownerSignStatus === "Signed"
@@ -171,12 +171,12 @@ export default function ContractBlock({
                     : c.customerSignStatus === "Signed"
                       ? "bạn đã ký"
                       : "bạn chưa ký"}
-                </Text>
+                </AppText>
               </View>
               <View style={styles.actions}>
                 {(isParty(c, userId) || canManage) && (
                   <Pressable onPress={() => handleView(c)} style={styles.smallButton}>
-                    <Text style={styles.smallText}>Xem</Text>
+                    <AppText style={styles.smallText}>Xem</AppText>
                   </Pressable>
                 )}
                 {signable && (
@@ -188,7 +188,7 @@ export default function ContractBlock({
                     {signingId === c.id ? (
                       <ActivityIndicator size="small" color={theme.onBrand} />
                     ) : (
-                      <Text style={[styles.smallText, styles.signText]}>Ký</Text>
+                      <AppText style={[styles.smallText, styles.signText]}>Ký</AppText>
                     )}
                   </Pressable>
                 )}
@@ -201,7 +201,7 @@ export default function ContractBlock({
                     {sendingId === c.id ? (
                       <ActivityIndicator size="small" color={theme.onBrand} />
                     ) : (
-                      <Text style={[styles.smallText, styles.signText]}>Gửi ký</Text>
+                      <AppText style={[styles.smallText, styles.signText]}>Gửi ký</AppText>
                     )}
                   </Pressable>
                 )}
@@ -214,8 +214,8 @@ export default function ContractBlock({
       <Modal visible={otpModal !== null} transparent animationType="fade" onRequestClose={() => setOtpModal(null)}>
         <View style={styles.backdrop}>
           <View style={styles.modal}>
-            <Text style={styles.cardTitle}>Ký hợp đồng</Text>
-            <Text style={styles.muted}>Mã OTP ký đã gửi đến email của bạn, hiệu lực 10 phút.</Text>
+            <AppText display style={styles.cardTitle}>Ký hợp đồng</AppText>
+            <AppText style={styles.muted}>Mã OTP ký đã gửi đến email của bạn, hiệu lực 10 phút.</AppText>
             <TextInput
               value={otp}
               onChangeText={setOtp}
@@ -227,13 +227,13 @@ export default function ContractBlock({
             />
             <View style={styles.modalActions}>
               <Pressable onPress={() => setOtpModal(null)} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Đóng</Text>
+                <AppText style={styles.ghostText}>Đóng</AppText>
               </Pressable>
               <Pressable onPress={handleOtpConfirm} disabled={otpBusy} style={[styles.primaryButton, otpBusy && styles.disabled]}>
                 {otpBusy ? (
                   <ActivityIndicator color={theme.onBrand} />
                 ) : (
-                  <Text style={styles.primaryText}>Xác nhận</Text>
+                  <AppText style={styles.primaryText}>Xác nhận</AppText>
                 )}
               </Pressable>
             </View>
@@ -257,9 +257,9 @@ export default function ContractBlock({
       <Modal visible={content !== null} transparent animationType="fade" onRequestClose={() => setContent(null)}>
         <View style={styles.backdrop}>
           <View style={[styles.modal, styles.contentModal]}>
-            <Text style={styles.cardTitle}>
+            <AppText display style={styles.cardTitle}>
               Hợp đồng {content?.contractNumber} · v{content?.version}
-            </Text>
+            </AppText>
             <ScrollView style={styles.contentScroll}>
               {content ? <ContractDocument content={content} /> : null}
             </ScrollView>
@@ -272,11 +272,11 @@ export default function ContractBlock({
                   }}
                   style={styles.primaryButton}
                 >
-                  <Text style={styles.primaryText}>Ký hợp đồng</Text>
+                  <AppText style={styles.primaryText}>Ký hợp đồng</AppText>
                 </Pressable>
               ) : null}
               <Pressable onPress={() => setContent(null)} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Đóng</Text>
+                <AppText style={styles.ghostText}>Đóng</AppText>
               </Pressable>
             </View>
           </View>
@@ -289,8 +289,8 @@ export default function ContractBlock({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <View style={rowStyles.row}>
-      <Text style={rowStyles.label}>{label}</Text>
-      <Text style={rowStyles.value}>{value}</Text>
+      <AppText style={rowStyles.label}>{label}</AppText>
+      <AppText style={rowStyles.value}>{value}</AppText>
     </View>
   );
 }

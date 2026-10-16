@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { ContractContent } from "@/features/contracts/types";
@@ -13,7 +14,7 @@ function Article({ title, children }: { title: string; children: React.ReactNode
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.article}>
-      <Text style={styles.articleTitle}>{title}</Text>
+      <AppText display style={styles.articleTitle}>{title}</AppText>
       {children}
     </View>
   );
@@ -22,7 +23,7 @@ function Article({ title, children }: { title: string; children: React.ReactNode
 function P({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  return <Text style={styles.p}>{children}</Text>;
+  return <AppText style={styles.p}>{children}</AppText>;
 }
 
 function Bullet({ children }: { children: React.ReactNode }) {
@@ -30,8 +31,8 @@ function Bullet({ children }: { children: React.ReactNode }) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.bulletRow}>
-      <Text style={styles.p}>• </Text>
-      <Text style={[styles.p, styles.bulletText]}>{children}</Text>
+      <AppText style={styles.p}>• </AppText>
+      <AppText style={[styles.p, styles.bulletText]}>{children}</AppText>
     </View>
   );
 }
@@ -40,10 +41,10 @@ function KV({ n, children }: { n: string; children: React.ReactNode }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
-    <Text style={styles.p}>
-      <Text style={styles.bold}>{n}: </Text>
+    <AppText style={styles.p}>
+      <AppText style={styles.bold}>{n}: </AppText>
       {children}
-    </Text>
+    </AppText>
   );
 }
 
@@ -64,43 +65,43 @@ export default function ContractDocument({ content }: { content: ContractContent
   return (
     <View style={styles.doc}>
       <View style={styles.header}>
-        <Text style={styles.motto}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</Text>
-        <Text style={styles.motto}>Độc lập - Tự do - Hạnh phúc</Text>
-        <Text style={styles.docTitle}>HỢP ĐỒNG THUÊ XE</Text>
-        <Text style={styles.muted}>MoveVN – Smart Car Rental Management System</Text>
+        <AppText style={styles.motto}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</AppText>
+        <AppText style={styles.motto}>Độc lập - Tự do - Hạnh phúc</AppText>
+        <AppText display style={styles.docTitle}>HỢP ĐỒNG THUÊ XE</AppText>
+        <AppText style={styles.muted}>MoveVN – Smart Car Rental Management System</AppText>
       </View>
 
       <View style={styles.metaGrid}>
         <View style={styles.metaCol}>
-          <Text style={styles.muted}>Mã hợp đồng: <Text style={styles.bold}>{content.contractNumber}</Text></Text>
-          <Text style={styles.muted}>Phiên bản: {content.version}</Text>
+          <AppText style={styles.muted}>Mã hợp đồng: <AppText style={styles.bold}>{content.contractNumber}</AppText></AppText>
+          <AppText style={styles.muted}>Phiên bản: {content.version}</AppText>
         </View>
         <View style={styles.metaCol}>
-          <Text style={styles.muted}>Mã booking: <Text style={styles.bold}>{v(s?.bookingCode)}</Text></Text>
-          <Text style={styles.muted}>Ngày tạo: {formatDate(content.createdAt)}</Text>
+          <AppText style={styles.muted}>Mã booking: <AppText style={styles.bold}>{v(s?.bookingCode)}</AppText></AppText>
+          <AppText style={styles.muted}>Ngày tạo: {formatDate(content.createdAt)}</AppText>
         </View>
       </View>
 
-      <Text style={[styles.p, styles.justify, styles.bold]}>
+      <AppText style={[styles.p, styles.justify, styles.bold]}>
         Căn cứ Bộ luật Dân sự số 91/2015/QH13; Căn cứ Luật Giao dịch điện tử; Căn cứ nhu cầu và sự thỏa thuận của các bên thông qua nền tảng MoveVN.
-      </Text>
+      </AppText>
 
       <Article title="THÔNG TIN CÁC BÊN LIÊN QUAN">
-        <Text style={styles.h3}>Bên Cho Thuê</Text>
+        <AppText style={styles.h3}>Bên Cho Thuê</AppText>
         <KV n="Họ và tên">{v(a?.fullName)}</KV>
         <KV n="Số điện thoại">{v(a?.phone)}</KV>
         <KV n="Email">{v(a?.email)}</KV>
         <KV n="CCCD">{v(a?.nationalId ?? a?.nationalIdMasked)}</KV>
         <KV n="Địa chỉ">{v(a?.address)}</KV>
         <P>Sau đây gọi là Bên Cho Thuê.</P>
-        <Text style={styles.h3}>Bên Thuê</Text>
+        <AppText style={styles.h3}>Bên Thuê</AppText>
         <KV n="Họ và tên">{v(b?.fullName)}</KV>
         <KV n="Số điện thoại">{v(b?.phone)}</KV>
         <KV n="Email">{v(b?.email)}</KV>
         <KV n="CCCD">{v(b?.nationalId ?? b?.nationalIdMasked)}</KV>
         <KV n="Giấy phép lái xe">{gplx}</KV>
         <P>Sau đây gọi là Bên Thuê.</P>
-        <Text style={styles.h3}>Nền tảng MoveVN</Text>
+        <AppText style={styles.h3}>Nền tảng MoveVN</AppText>
         <P>MoveVN – Smart Car Rental Management System</P>
         <P>MoveVN là nền tảng cung cấp dịch vụ kết nối giữa Bên Cho Thuê và Bên Thuê, hỗ trợ đặt xe, thanh toán, xác thực thông tin, ký kết hợp đồng điện tử, ghi nhận quá trình giao nhận xe và hỗ trợ xử lý tranh chấp.</P>
       </Article>
@@ -146,11 +147,11 @@ export default function ContractDocument({ content }: { content: ContractContent
         ) : (
           (s?.surchargeTerms ?? []).map((t, i) => (
             <View key={i} style={styles.termBox}>
-              <Text style={[styles.p, styles.bold]}>{t.name || t.feeType}</Text>
-              <Text style={styles.p}>
+              <AppText style={[styles.p, styles.bold]}>{t.name || t.feeType}</AppText>
+              <AppText style={styles.p}>
                 {t.description ||
                   `${t.calculationMethod === "PerHour" ? `${money(t.unitPrice)}/giờ` : money(t.unitPrice)}${t.lateDayThresholdHours ? `; quá ${t.lateDayThresholdHours} giờ tính thêm 01 ngày thuê theo chính sách` : ""}`}
-              </Text>
+              </AppText>
             </View>
           ))
         )}
@@ -232,28 +233,28 @@ export default function ContractDocument({ content }: { content: ContractContent
       </Article>
 
       <View style={styles.signBlock}>
-        <Text style={styles.signTitle}>THÔNG TIN KÝ ĐIỆN TỬ</Text>
+        <AppText display style={styles.signTitle}>THÔNG TIN KÝ ĐIỆN TỬ</AppText>
         <View style={styles.signGrid}>
           <View style={styles.signCol}>
-            <Text style={styles.bold}>BÊN CHO THUÊ</Text>
-            <Text style={styles.p}>({content.ownerSignStatus === "Signed" ? "Đã ký điện tử" : "Chưa ký"})</Text>
-            <Text style={styles.p}>Họ tên: {v(a?.fullName)}</Text>
-            <Text style={styles.p}>Thời gian ký: {content.ownerSignedAt ? formatDateTime(content.ownerSignedAt) : "-"}</Text>
-            <Text style={[styles.p, styles.bold, content.ownerSignStatus === "Signed" && styles.signed]}>
+            <AppText style={styles.bold}>BÊN CHO THUÊ</AppText>
+            <AppText style={styles.p}>({content.ownerSignStatus === "Signed" ? "Đã ký điện tử" : "Chưa ký"})</AppText>
+            <AppText style={styles.p}>Họ tên: {v(a?.fullName)}</AppText>
+            <AppText style={styles.p}>Thời gian ký: {content.ownerSignedAt ? formatDateTime(content.ownerSignedAt) : "-"}</AppText>
+            <AppText style={[styles.p, styles.bold, content.ownerSignStatus === "Signed" && styles.signed]}>
               {content.ownerSignStatus === "Signed" ? "ĐÃ KÝ" : "CHƯA KÝ"}
-            </Text>
+            </AppText>
           </View>
           <View style={styles.signCol}>
-            <Text style={styles.bold}>BÊN THUÊ</Text>
-            <Text style={styles.p}>({content.customerSignStatus === "Signed" ? "Đã ký điện tử" : "Chưa ký"})</Text>
-            <Text style={styles.p}>Họ tên: {v(b?.fullName)}</Text>
-            <Text style={styles.p}>Thời gian ký: {content.customerSignedAt ? formatDateTime(content.customerSignedAt) : "-"}</Text>
-            <Text style={[styles.p, styles.bold, content.customerSignStatus === "Signed" && styles.signed]}>
+            <AppText style={styles.bold}>BÊN THUÊ</AppText>
+            <AppText style={styles.p}>({content.customerSignStatus === "Signed" ? "Đã ký điện tử" : "Chưa ký"})</AppText>
+            <AppText style={styles.p}>Họ tên: {v(b?.fullName)}</AppText>
+            <AppText style={styles.p}>Thời gian ký: {content.customerSignedAt ? formatDateTime(content.customerSignedAt) : "-"}</AppText>
+            <AppText style={[styles.p, styles.bold, content.customerSignStatus === "Signed" && styles.signed]}>
               {content.customerSignStatus === "Signed" ? "ĐÃ KÝ" : "CHƯA KÝ"}
-            </Text>
+            </AppText>
           </View>
         </View>
-        <Text style={styles.verify}>Mã xác thực hợp đồng: {content.verificationCode || "-"}</Text>
+        <AppText style={styles.verify}>Mã xác thực hợp đồng: {content.verificationCode || "-"}</AppText>
       </View>
     </View>
   );
@@ -264,8 +265,8 @@ function MoneyRow({ label, value, header }: { label: string; value: string; head
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={[styles.moneyRow, header && styles.moneyTotal]}>
-      <Text style={[styles.p, header && styles.bold]}>{label}</Text>
-      <Text style={[styles.p, header && styles.bold]}>{value}</Text>
+      <AppText style={[styles.p, header && styles.bold]}>{label}</AppText>
+      <AppText style={[styles.p, header && styles.bold]}>{value}</AppText>
     </View>
   );
 }

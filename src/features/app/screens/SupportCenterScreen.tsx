@@ -10,7 +10,8 @@ import {
   Search,
   X,
 } from "lucide-react-native";
-import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import FaqDetailScreen from "@/features/cms/screens/FaqDetailScreen";
 import { getCmsPageNavigation } from "@/features/cms/services/cmsService";
@@ -133,7 +134,7 @@ export default function SupportCenterScreen({
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text style={styles.topBarTitle}>Hỏi và trả lời</Text>
+        <AppText display style={styles.topBarTitle}>Hỏi và trả lời</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
@@ -143,11 +144,11 @@ export default function SupportCenterScreen({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
-          <Text style={styles.eyebrow}>Trung tâm trợ giúp</Text>
-          <Text style={styles.heroTitle}>Xin chào, MoveVN có thể giúp gì?</Text>
-          <Text style={styles.heroDescription}>
+          <AppText style={styles.eyebrow}>Trung tâm trợ giúp</AppText>
+          <AppText display style={styles.heroTitle}>Xin chào, MoveVN có thể giúp gì?</AppText>
+          <AppText style={styles.heroDescription}>
             Giải đáp cách MoveVN hoạt động và hướng dẫn sử dụng cho khách thuê và chủ xe.
-          </Text>
+          </AppText>
         </View>
 
         <View style={[styles.searchBox, searchFocused && styles.searchBoxFocused]}>
@@ -186,18 +187,18 @@ export default function SupportCenterScreen({
                 onPress={() => switchTab(item.value)}
                 style={[styles.segmentOption, selected && styles.segmentOptionSelected]}
               >
-                <Text style={[styles.segmentLabel, selected && styles.segmentLabelSelected]}>{item.label}</Text>
+                <AppText style={[styles.segmentLabel, selected && styles.segmentLabelSelected]}>{item.label}</AppText>
               </Pressable>
             );
           })}
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Danh mục trợ giúp</Text>
+          <AppText display style={styles.sectionTitle}>Danh mục trợ giúp</AppText>
           {status === "ready" ? (
-            <Text style={styles.sectionCount}>
+            <AppText style={styles.sectionCount}>
               {searching ? `${filtered.length} kết quả` : `${topics.length} chủ đề`}
-            </Text>
+            </AppText>
           ) : null}
         </View>
 
@@ -206,29 +207,29 @@ export default function SupportCenterScreen({
             <View style={styles.skeletonLine} />
             <View style={styles.skeletonLine} />
             <View style={[styles.skeletonLine, styles.skeletonShort]} />
-            <Text style={styles.muted}>Đang tải danh mục...</Text>
+            <AppText style={styles.muted}>Đang tải danh mục...</AppText>
           </View>
         ) : status === "error" ? (
           <View style={styles.stateCard}>
-            <Text style={styles.errorText}>Không thể tải danh mục hỏi đáp. Vui lòng thử lại.</Text>
+            <AppText style={styles.errorText}>Không thể tải danh mục hỏi đáp. Vui lòng thử lại.</AppText>
             <Pressable
               accessibilityRole="button"
               onPress={() => { void load(tab); }}
               style={styles.retryButton}
             >
-              <Text style={styles.retryText}>Thử lại</Text>
+              <AppText style={styles.retryText}>Thử lại</AppText>
             </Pressable>
           </View>
         ) : filtered.length === 0 ? (
           <View style={styles.stateCard}>
-            <Text style={styles.stateTitle}>
+            <AppText display style={styles.stateTitle}>
               {searching ? "Không tìm thấy chủ đề phù hợp" : "Chưa có nội dung hỏi đáp"}
-            </Text>
-            <Text style={styles.muted}>
+            </AppText>
+            <AppText style={styles.muted}>
               {searching
                 ? "Thử từ khóa khác hoặc chuyển vai trò."
                 : "Danh mục này đang được cập nhật. Vui lòng quay lại sau."}
-            </Text>
+            </AppText>
           </View>
         ) : (
           <View style={styles.topicList}>
@@ -258,13 +259,13 @@ export default function SupportCenterScreen({
                     )}
                   </View>
                   <View style={styles.topicInfo}>
-                    <Text numberOfLines={2} style={styles.topicTitle}>
+                    <AppText display numberOfLines={2} style={styles.topicTitle}>
                       {topic.title}
-                    </Text>
+                    </AppText>
                     {topic.description ? (
-                      <Text numberOfLines={2} style={styles.topicDescription}>
+                      <AppText numberOfLines={2} style={styles.topicDescription}>
                         {topic.description}
-                      </Text>
+                      </AppText>
                     ) : null}
                   </View>
                   <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
@@ -278,10 +279,10 @@ export default function SupportCenterScreen({
           <View style={styles.supportIcon}>
             <Headphones color={theme.brand} size={22} strokeWidth={2.3} />
           </View>
-          <Text style={styles.supportTitle}>Cần hỗ trợ thêm?</Text>
-          <Text style={styles.supportDescription}>
+          <AppText display style={styles.supportTitle}>Cần hỗ trợ thêm?</AppText>
+          <AppText style={styles.supportDescription}>
             {`Liên hệ đội ngũ hỗ trợ qua hotline ${HOTLINE_DISPLAY} hoặc email ${SUPPORT_EMAIL}.`}
-          </Text>
+          </AppText>
           <View style={styles.supportActions}>
             <Pressable
               accessibilityRole="button"
@@ -289,7 +290,7 @@ export default function SupportCenterScreen({
               style={styles.primaryButton}
             >
               <Phone color={theme.onBrand} size={17} strokeWidth={2.4} />
-              <Text style={styles.primaryButtonText}>{`Gọi ${HOTLINE_DISPLAY}`}</Text>
+              <AppText style={styles.primaryButtonText}>{`Gọi ${HOTLINE_DISPLAY}`}</AppText>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -297,19 +298,19 @@ export default function SupportCenterScreen({
               style={styles.secondaryButton}
             >
               <Mail color={theme.brand} size={17} strokeWidth={2.4} />
-              <Text style={styles.secondaryButtonText}>Gửi email</Text>
+              <AppText style={styles.secondaryButtonText}>Gửi email</AppText>
             </Pressable>
           </View>
         </View>
 
         {tab === "CUSTOMER" && onBecomeOwner ? (
           <View style={styles.ownerCard}>
-            <Text style={styles.ownerTitle}>Cho thuê xe trên MoveVN.</Text>
-            <Text numberOfLines={2} style={styles.ownerDescription}>
+            <AppText display style={styles.ownerTitle}>Cho thuê xe trên MoveVN.</AppText>
+            <AppText numberOfLines={2} style={styles.ownerDescription}>
               Đăng xe nhàn rỗi để gia tăng thu nhập hàng tháng với quy trình kiểm duyệt minh bạch.
-            </Text>
+            </AppText>
             <Pressable accessibilityRole="button" onPress={onBecomeOwner} style={styles.ownerButton}>
-              <Text style={styles.ownerButtonText}>Dành cho chủ xe</Text>
+              <AppText style={styles.ownerButtonText}>Dành cho chủ xe</AppText>
             </Pressable>
           </View>
         ) : null}

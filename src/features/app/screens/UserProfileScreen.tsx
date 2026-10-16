@@ -13,7 +13,8 @@ import {
   UserRound,
   X,
 } from "lucide-react-native";
-import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { toApiError, updateProfile, uploadAvatar } from "@/features/auth/services/authService";
@@ -178,7 +179,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text style={styles.topBarTitle}>Thông tin tài khoản</Text>
+        <AppText display style={styles.topBarTitle}>Thông tin tài khoản</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
@@ -202,13 +203,13 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               )}
             </View>
             <View style={styles.profileInfo}>
-              <Text numberOfLines={2} style={styles.name}>
+              <AppText numberOfLines={2} style={styles.name}>
                 {user.fullName}
-              </Text>
+              </AppText>
               <View style={styles.roleRow}>
                 {user.roles.map((role) => (
                   <View key={role} style={[styles.roleBadge, { backgroundColor: roleBadgeStyles[role].backgroundColor }]}>
-                    <Text style={[styles.roleBadgeText, { color: roleBadgeStyles[role].color }]}>{roleLabels[role]}</Text>
+                    <AppText style={[styles.roleBadgeText, { color: roleBadgeStyles[role].color }]}>{roleLabels[role]}</AppText>
                   </View>
                 ))}
               </View>
@@ -217,17 +218,17 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
         </View>
 
         <View style={styles.infoCard}>
-          <Text style={styles.cardTitle}>Thông tin tài khoản</Text>
+          <AppText display style={styles.cardTitle}>Thông tin tài khoản</AppText>
 
           <View style={styles.row}>
             <View style={[styles.rowIcon, styles.rowIconStatic]}>
               <Mail color={theme.brand} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>Email</Text>
-              <Text numberOfLines={1} style={styles.rowValue}>
+              <AppText style={styles.rowLabel}>Email</AppText>
+              <AppText numberOfLines={1} style={styles.rowValue}>
                 {user.email}
-              </Text>
+              </AppText>
             </View>
           </View>
 
@@ -238,8 +239,8 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <Phone color={theme.brand} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>Số điện thoại</Text>
-              <Text style={styles.rowValue}>{user.phone || "Chưa cập nhật"}</Text>
+              <AppText style={styles.rowLabel}>Số điện thoại</AppText>
+              <AppText style={styles.rowValue}>{user.phone || "Chưa cập nhật"}</AppText>
             </View>
           </View>
 
@@ -250,7 +251,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <IdCard color={cccdVerified ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>CCCD</Text>
+              <AppText style={styles.rowLabel}>CCCD</AppText>
               <VerifyBadge verified={cccdVerified} />
             </View>
             <ChevronDown
@@ -265,7 +266,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               {ownerApp ? (
                 <>
                   <View style={styles.detailLine}>
-                    <Text style={styles.detailLabel}>Số CCCD</Text>
+                    <AppText style={styles.detailLabel}>Số CCCD</AppText>
                     <MaskedDocumentValue
                       canReveal={cccdVerified}
                       documentType="CCCD"
@@ -280,7 +281,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   />
                 </>
               ) : (
-                <Text style={styles.detailEmpty}>Bạn chưa xác minh CCCD.</Text>
+                <AppText style={styles.detailEmpty}>Bạn chưa xác minh CCCD.</AppText>
               )}
             </View>
           ) : null}
@@ -292,7 +293,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <FileBadge color={gplxVerified ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>GPLX</Text>
+              <AppText style={styles.rowLabel}>GPLX</AppText>
               <VerifyBadge verified={gplxVerified} />
             </View>
             <ChevronDown
@@ -308,7 +309,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                 <>
                   <DetailLine label="Hạng GPLX" value={driverLicense.licenseClass || "-"} />
                   <View style={styles.detailLine}>
-                    <Text style={styles.detailLabel}>Số GPLX</Text>
+                    <AppText style={styles.detailLabel}>Số GPLX</AppText>
                     <MaskedDocumentValue
                       canReveal={gplxVerified}
                       documentType="GPLX"
@@ -326,7 +327,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   ) : null}
                 </>
               ) : (
-                <Text style={styles.detailEmpty}>Chưa có thông tin GPLX.</Text>
+                <AppText style={styles.detailEmpty}>Chưa có thông tin GPLX.</AppText>
               )}
             </View>
           ) : null}
@@ -338,7 +339,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <Landmark color={bankCompleted ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>Ngân hàng</Text>
+              <AppText style={styles.rowLabel}>Ngân hàng</AppText>
               <VerifyBadge completed={bankCompleted} verified={bankCompleted} />
             </View>
             <ChevronDown
@@ -357,7 +358,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   <DetailLine label="Chủ tài khoản" value={ownerApp.bankAccountHolderName || "-"} />
                 </>
               ) : (
-                <Text style={styles.detailEmpty}>Chưa cập nhật thông tin ngân hàng.</Text>
+                <AppText style={styles.detailEmpty}>Chưa cập nhật thông tin ngân hàng.</AppText>
               )}
             </View>
           ) : null}
@@ -396,7 +397,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                 >
                   <X color={theme.text} size={22} strokeWidth={2.3} />
                 </Pressable>
-                <Text style={styles.sheetTitle}>Chỉnh sửa thông tin</Text>
+                <AppText display style={styles.sheetTitle}>Chỉnh sửa thông tin</AppText>
                 <View style={styles.sheetHeaderSpacer} />
               </View>
 
@@ -434,7 +435,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Họ và tên</Text>
+                <AppText style={styles.fieldLabel}>Họ và tên</AppText>
                 <TextInput
                   autoCapitalize="words"
                   editable={!isSaving}
@@ -450,7 +451,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Số điện thoại</Text>
+                <AppText style={styles.fieldLabel}>Số điện thoại</AppText>
                 <TextInput
                   ref={phoneInputRef}
                   editable={!isSaving}
@@ -465,11 +466,11 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Email</Text>
-                <Text style={styles.fieldReadonly}>{user.email}</Text>
+                <AppText style={styles.fieldLabel}>Email</AppText>
+                <AppText style={styles.fieldReadonly}>{user.email}</AppText>
               </View>
 
-              {editError ? <Text style={styles.sheetError}>{editError}</Text> : null}
+              {editError ? <AppText style={styles.sheetError}>{editError}</AppText> : null}
 
               <Pressable
                 accessibilityRole="button"
@@ -479,7 +480,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                 }}
                 style={[styles.sheetSaveButton, isSaving ? styles.saveButtonDisabled : null]}
               >
-                <Text style={styles.saveText}>{isSaving ? "Đang lưu..." : "Lưu thay đổi"}</Text>
+                <AppText style={styles.saveText}>{isSaving ? "Đang lưu..." : "Lưu thay đổi"}</AppText>
               </Pressable>
             </ScrollView>
             </View>
@@ -496,13 +497,13 @@ function VerifyBadge({ completed, verified }: { completed?: boolean; verified: b
   if (verified) {
     return (
       <View style={[styles.badge, styles.badgeVerified]}>
-        <Text style={[styles.badgeText, styles.badgeTextVerified]}>{completed ? "Đã hoàn thành" : "Đã xác minh"}</Text>
+        <AppText style={[styles.badgeText, styles.badgeTextVerified]}>{completed ? "Đã hoàn thành" : "Đã xác minh"}</AppText>
       </View>
     );
   }
   return (
     <View style={[styles.badge, styles.badgeUnverified]}>
-      <Text style={[styles.badgeText, styles.badgeTextUnverified]}>Chưa xác minh</Text>
+      <AppText style={[styles.badgeText, styles.badgeTextUnverified]}>Chưa xác minh</AppText>
     </View>
   );
 }
@@ -512,8 +513,8 @@ function DetailLine({ label, value }: { label: string; value: string }) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.detailLine}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
+      <AppText style={styles.detailLabel}>{label}</AppText>
+      <AppText style={styles.detailValue}>{value}</AppText>
     </View>
   );
 }

@@ -8,10 +8,10 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
   TextInput,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { ArrowLeft, MessageSquare } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import type { RouteProp } from "@react-navigation/native";
@@ -215,11 +215,11 @@ export default function OwnerBookingDetailScreen({
           <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
             <ArrowLeft color={theme.text} size={20} />
           </Pressable>
-          <Text style={styles.headerTitle}>Chi tiết đơn thuê</Text>
+          <AppText display style={styles.headerTitle}>Chi tiết đơn thuê</AppText>
           <View style={styles.backButton} />
         </View>
         <View style={styles.center}>
-          {loading ? <ActivityIndicator color={theme.brand} /> : <Text style={styles.muted}>Không tải được.</Text>}
+          {loading ? <ActivityIndicator color={theme.brand} /> : <AppText style={styles.muted}>Không tải được.</AppText>}
         </View>
       </View>
     );
@@ -238,48 +238,48 @@ export default function OwnerBookingDetailScreen({
         <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={20} />
         </Pressable>
-        <Text numberOfLines={1} style={styles.headerTitle}>
+        <AppText display numberOfLines={1} style={styles.headerTitle}>
           {booking.bookingCode}
-        </Text>
+        </AppText>
         <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với khách thuê" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.backButton}><MessageSquare color={theme.brand} size={22} /></Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.statusRow}>
-          <Text style={styles.status}>{bookingStatusLabel(status)}</Text>
-          {booking.escrowStatus === "Held" && <Text style={styles.escrow}>Giữ cọc {formatMoney(booking.escrowAmount)}</Text>}
+          <AppText style={styles.status}>{bookingStatusLabel(status)}</AppText>
+          {booking.escrowStatus === "Held" && <AppText style={styles.escrow}>Giữ cọc {formatMoney(booking.escrowAmount)}</AppText>}
         </View>
         {progress && (
           <View style={[styles.progressStrip, progress.overdue && styles.progressOverdue]}>
-            <Text style={styles.progressText}>{progress.summary}</Text>
+            <AppText style={styles.progressText}>{progress.summary}</AppText>
           </View>
         )}
 
         {status === "Pending" && booking.riskScore != null && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Đánh giá rủi ro khách thuê</Text>
-            <Text style={styles.riskScore}>
+            <AppText display style={styles.cardTitle}>Đánh giá rủi ro khách thuê</AppText>
+            <AppText style={styles.riskScore}>
               {Math.round(booking.riskScore)}/100{booking.riskLevel ? ` · ${booking.riskLevel}` : ""}
-            </Text>
+            </AppText>
             {(booking.riskFactors ?? []).map((f) => (
-              <Text key={f} style={styles.muted}>
+              <AppText key={f} style={styles.muted}>
                 • {f}
-              </Text>
+              </AppText>
             ))}
           </View>
         )}
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Lịch trình & địa điểm</Text>
+          <AppText display style={styles.cardTitle}>Lịch trình & địa điểm</AppText>
           <Row label="Nhận xe" value={formatDateTime(booking.startDate)} />
-          <Text style={styles.address}>{booking.pickupAddress}</Text>
+          <AppText style={styles.address}>{booking.pickupAddress}</AppText>
           <Row label="Trả xe" value={formatDateTime(booking.endDate)} />
-          <Text style={styles.address}>{booking.returnAddress || booking.pickupAddress}</Text>
+          <AppText style={styles.address}>{booking.returnAddress || booking.pickupAddress}</AppText>
           <Row label="Khách thuê" value={`#${booking.customerId}`} />
-          {booking.customerNote ? <Text style={styles.note}>Ghi chú khách: {booking.customerNote}</Text> : null}
+          {booking.customerNote ? <AppText style={styles.note}>Ghi chú khách: {booking.customerNote}</AppText> : null}
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Chi tiết chi phí</Text>
+          <AppText display style={styles.cardTitle}>Chi tiết chi phí</AppText>
           <Row label={`Giá thuê (${booking.totalDays} ngày)`} value={formatMoney(booking.basePrice)} />
           {booking.discountPercent > 0 ? (
             <Row label={`Giảm giá (${booking.discountPercent}%)`} value={`-${formatMoney(booking.discountAmount)}`} tone="success" />
@@ -309,14 +309,14 @@ export default function OwnerBookingDetailScreen({
               disabled={busy !== null}
               style={[styles.flexButton, styles.primaryButton, busy !== null && styles.disabled]}
             >
-              <Text style={styles.primaryText}>{busy === "approve" ? "..." : "Duyệt"}</Text>
+              <AppText style={styles.primaryText}>{busy === "approve" ? "..." : "Duyệt"}</AppText>
             </Pressable>
             <Pressable
               onPress={() => { setReason(""); setReasonModal({ mode: "reject" }); }}
               disabled={busy !== null}
               style={[styles.flexButton, styles.dangerButton, busy !== null && styles.disabled]}
             >
-              <Text style={styles.primaryText}>Từ chối</Text>
+              <AppText style={styles.primaryText}>Từ chối</AppText>
             </Pressable>
           </View>
         )}
@@ -343,19 +343,19 @@ export default function OwnerBookingDetailScreen({
 
         {reports.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Biên bản ({reports.length})</Text>
+            <AppText display style={styles.cardTitle}>Biên bản ({reports.length})</AppText>
             {reports.map((r) => (
               <View key={r.id} style={styles.reportBlock}>
-                <Text style={styles.reportTitle}>
+                <AppText display style={styles.reportTitle}>
                   {r.type === "CheckIn" ? "Nhận xe" : "Trả xe"} · {formatDateTime(r.createdAt)}
                   {r.isCustomerConfirmed ? " · khách đã xác nhận" : " · chờ khách xác nhận"}
-                </Text>
-                {r.odometerKm != null && <Text style={styles.muted}>Odo: {r.odometerKm} km</Text>}
-                {r.fuelLevel ? <Text style={styles.muted}>Nhiên liệu: {r.fuelLevel}</Text> : null}
+                </AppText>
+                {r.odometerKm != null && <AppText style={styles.muted}>Odo: {r.odometerKm} km</AppText>}
+                {r.fuelLevel ? <AppText style={styles.muted}>Nhiên liệu: {r.fuelLevel}</AppText> : null}
                 {r.damageNoted ? (
-                  <Text style={styles.damage}>Hư hỏng: {r.damageDescription || "có ghi nhận"}</Text>
+                  <AppText style={styles.damage}>Hư hỏng: {r.damageDescription || "có ghi nhận"}</AppText>
                 ) : (
-                  <Text style={styles.muted}>Không ghi nhận hư hỏng</Text>
+                  <AppText style={styles.muted}>Không ghi nhận hư hỏng</AppText>
                 )}
                 {r.images.length > 0 && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbs}>
@@ -375,8 +375,8 @@ export default function OwnerBookingDetailScreen({
 
         {(status === "Cancelled" || status === "Rejected") && booking.cancelReason ? (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Lý do {status === "Rejected" ? "từ chối" : "hủy"}</Text>
-            <Text style={styles.muted}>{booking.cancelReason}</Text>
+            <AppText display style={styles.cardTitle}>Lý do {status === "Rejected" ? "từ chối" : "hủy"}</AppText>
+            <AppText style={styles.muted}>{booking.cancelReason}</AppText>
           </View>
         ) : null}
 
@@ -384,11 +384,11 @@ export default function OwnerBookingDetailScreen({
 
         {status === "Completed" && !alreadyReviewed && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Đánh giá khách thuê</Text>
+            <AppText display style={styles.cardTitle}>Đánh giá khách thuê</AppText>
             <View style={styles.stars}>
               {[1, 2, 3, 4, 5].map((s) => (
                 <Pressable key={s} onPress={() => setRating(s)} style={styles.star}>
-                  <Text style={[styles.starText, s <= rating && styles.starActive]}>★</Text>
+                  <AppText style={[styles.starText, s <= rating && styles.starActive]}>★</AppText>
                 </Pressable>
               ))}
             </View>
@@ -417,9 +417,9 @@ export default function OwnerBookingDetailScreen({
       <Modal visible={reasonModal !== null} transparent animationType="fade" onRequestClose={() => setReasonModal(null)}>
         <View style={styles.backdrop}>
           <View style={styles.modal}>
-            <Text style={styles.cardTitle}>{reasonModal?.mode === "reject" ? "Từ chối đơn thuê" : "Hủy booking"}</Text>
+            <AppText display style={styles.cardTitle}>{reasonModal?.mode === "reject" ? "Từ chối đơn thuê" : "Hủy booking"}</AppText>
             {reasonModal?.mode === "cancel" && (
-              <Text style={styles.muted}>Toàn bộ tiền cọc sẽ hoàn 100% vào ví khách.</Text>
+              <AppText style={styles.muted}>Toàn bộ tiền cọc sẽ hoàn 100% vào ví khách.</AppText>
             )}
             <TextInput
               value={reason}
@@ -431,10 +431,10 @@ export default function OwnerBookingDetailScreen({
             />
             <View style={styles.modalActions}>
               <Pressable onPress={() => setReasonModal(null)} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Đóng</Text>
+                <AppText style={styles.ghostText}>Đóng</AppText>
               </Pressable>
               <Pressable onPress={submitReason} style={styles.primaryButton}>
-                <Text style={styles.primaryText}>Xác nhận</Text>
+                <AppText style={styles.primaryText}>Xác nhận</AppText>
               </Pressable>
             </View>
           </View>
@@ -444,11 +444,11 @@ export default function OwnerBookingDetailScreen({
       <Modal visible={reportModal !== null} transparent animationType="fade" onRequestClose={() => setReportModal(null)}>
         <View style={styles.backdrop}>
           <View style={[styles.modal, styles.tallModal]}>
-            <Text style={styles.cardTitle}>
+            <AppText display style={styles.cardTitle}>
               Biên bản {reportModal?.type === "CheckIn" ? "nhận xe" : "trả xe"}
-            </Text>
+            </AppText>
             <ScrollView>
-              <Text style={styles.fieldLabel}>Số km hiện tại</Text>
+              <AppText style={styles.fieldLabel}>Số km hiện tại</AppText>
               <TextInput
                 value={odometer}
                 onChangeText={setOdometer}
@@ -457,7 +457,7 @@ export default function OwnerBookingDetailScreen({
                 keyboardType="number-pad"
                 style={styles.input}
               />
-              <Text style={styles.fieldLabel}>Mức nhiên liệu / pin</Text>
+              <AppText style={styles.fieldLabel}>Mức nhiên liệu / pin</AppText>
               <TextInput
                 value={fuel}
                 onChangeText={setFuel}
@@ -466,7 +466,7 @@ export default function OwnerBookingDetailScreen({
                 style={styles.input}
               />
               <View style={styles.switchRow}>
-                <Text style={styles.fieldLabel}>Có hư hỏng / mất mát</Text>
+                <AppText style={styles.fieldLabel}>Có hư hỏng / mất mát</AppText>
                 <Switch value={damageNoted} onValueChange={setDamageNoted} />
               </View>
               {damageNoted && (
@@ -480,9 +480,9 @@ export default function OwnerBookingDetailScreen({
                 />
               )}
               <Pressable onPress={pickPhotos} style={styles.photoButton}>
-                <Text style={styles.photoButtonText}>
+                <AppText style={styles.photoButtonText}>
                   {photos.length === 0 ? "Chọn ảnh (ít nhất 1, tối đa 12)" : `Đã chọn ${photos.length} ảnh — bấm để chọn lại`}
-                </Text>
+                </AppText>
               </Pressable>
               {photos.length > 0 && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbs}>
@@ -494,13 +494,13 @@ export default function OwnerBookingDetailScreen({
             </ScrollView>
             <View style={styles.modalActions}>
               <Pressable onPress={() => setReportModal(null)} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Đóng</Text>
+                <AppText style={styles.ghostText}>Đóng</AppText>
               </Pressable>
               <Pressable onPress={submitReport} disabled={busy !== null} style={[styles.primaryButton, busy !== null && styles.disabled]}>
                 {busy === "report" ? (
                   <ActivityIndicator color={theme.onBrand} />
                 ) : (
-                  <Text style={styles.primaryText}>Lập biên bản</Text>
+                  <AppText style={styles.primaryText}>Lập biên bản</AppText>
                 )}
               </Pressable>
             </View>
@@ -511,14 +511,14 @@ export default function OwnerBookingDetailScreen({
       <Modal visible={receiptModal} transparent animationType="fade" onRequestClose={() => setReceiptModal(false)}>
         <View style={styles.backdrop}>
           <View style={styles.modal}>
-            <Text style={styles.cardTitle}>Xác nhận đã nhận xe</Text>
+            <AppText display style={styles.cardTitle}>Xác nhận đã nhận xe</AppText>
             <View style={styles.switchRow}>
-              <Text style={styles.fieldLabel}>Phát hiện hư hỏng / mất mát</Text>
+              <AppText style={styles.fieldLabel}>Phát hiện hư hỏng / mất mát</AppText>
               <Switch value={receiptDamage} onValueChange={setReceiptDamage} />
             </View>
             {receiptDamage && (
               <>
-                <Text style={styles.muted}>Hệ thống sẽ tự tạo tranh chấp hư hỏng.</Text>
+                <AppText style={styles.muted}>Hệ thống sẽ tự tạo tranh chấp hư hỏng.</AppText>
                 <TextInput
                   value={receiptNote}
                   onChangeText={setReceiptNote}
@@ -531,10 +531,10 @@ export default function OwnerBookingDetailScreen({
             )}
             <View style={styles.modalActions}>
               <Pressable onPress={() => setReceiptModal(false)} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Đóng</Text>
+                <AppText style={styles.ghostText}>Đóng</AppText>
               </Pressable>
               <Pressable onPress={submitReceipt} style={styles.primaryButton}>
-                <Text style={styles.primaryText}>Xác nhận</Text>
+                <AppText style={styles.primaryText}>Xác nhận</AppText>
               </Pressable>
             </View>
           </View>
@@ -546,7 +546,7 @@ export default function OwnerBookingDetailScreen({
           {viewingImage ? (
             <Image source={{ uri: viewingImage }} style={styles.fullImage} resizeMode="contain" />
           ) : null}
-          <Text style={styles.fullHint}>Chạm để đóng</Text>
+          <AppText style={styles.fullHint}>Chạm để đóng</AppText>
         </Pressable>
       </Modal>
     </View>
@@ -574,10 +574,10 @@ function Row({
 }) {
   return (
     <View style={rowStyles.row}>
-      <Text style={[rowStyles.label, strong && rowStyles.strongLabel]}>{label}</Text>
-      <Text style={[rowStyles.value, tone === "success" && rowStyles.success, strong && rowStyles.strong]}>
+      <AppText style={[rowStyles.label, strong && rowStyles.strongLabel]}>{label}</AppText>
+      <AppText style={[rowStyles.value, tone === "success" && rowStyles.success, strong && rowStyles.strong]}>
         {value}
-      </Text>
+      </AppText>
     </View>
   );
 }
@@ -619,7 +619,7 @@ function ActionButton({
         },
       ]}
     >
-      <Text style={{ fontWeight: "800", fontSize: 15, color: "#fff" }}>{label}</Text>
+      <AppText style={{ fontWeight: "800", fontSize: 15, color: "#fff" }}>{label}</AppText>
     </Pressable>
   );
 }

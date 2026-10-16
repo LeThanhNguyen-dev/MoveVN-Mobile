@@ -6,9 +6,9 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { CalendarCheck } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -97,10 +97,10 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
     <View style={styles.screen}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Chuyến đi của tôi</Text>
-          <Text style={styles.count}>
+          <AppText display style={styles.title}>Chuyến đi của tôi</AppText>
+          <AppText style={styles.count}>
             {loading && items.length === 0 ? "Đang tải..." : `${totalCount} chuyến`}
-          </Text>
+          </AppText>
         </View>
       </View>
 
@@ -118,7 +118,7 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
               onPress={() => setStatus(f.key)}
               style={[styles.chip, active && styles.chipActive]}
             >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</Text>
+              <AppText style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</AppText>
             </Pressable>
           );
         })}
@@ -143,9 +143,9 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
             </View>
           ) : error ? (
             <View style={styles.center}>
-              <Text style={styles.errorText}>{error}</Text>
+              <AppText style={styles.errorText}>{error}</AppText>
               <Pressable onPress={handleRefresh} style={styles.retryBtn}>
-                <Text style={styles.retryText}>Thử lại</Text>
+                <AppText style={styles.retryText}>Thử lại</AppText>
               </Pressable>
             </View>
           ) : (
@@ -153,8 +153,8 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
               <View style={styles.emptyIcon}>
                 <CalendarCheck color={theme.brand} size={32} />
               </View>
-              <Text style={styles.emptyTitle}>Chưa có chuyến đi nào</Text>
-              <Text style={styles.emptyDesc}>Các chuyến bạn đặt sẽ hiện ở đây để dễ theo dõi.</Text>
+              <AppText display style={styles.emptyTitle}>Chưa có chuyến đi nào</AppText>
+              <AppText style={styles.emptyDesc}>Các chuyến bạn đặt sẽ hiện ở đây để dễ theo dõi.</AppText>
             </View>
           )
         }
@@ -163,10 +163,10 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
             <ActivityIndicator color={theme.brand} style={styles.more} />
           ) : hasMore ? (
             <Pressable onPress={handleLoadMore} style={styles.moreButton}>
-              <Text style={styles.moreText}>Xem thêm ({remaining})</Text>
+              <AppText style={styles.moreText}>Xem thêm ({remaining})</AppText>
             </Pressable>
           ) : (
-            <Text style={styles.endText}>Đã hiển thị hết</Text>
+            <AppText style={styles.endText}>Đã hiển thị hết</AppText>
           )
         }
       />

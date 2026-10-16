@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 import { PIN_DIGIT_COUNT } from "@/features/pin/services/pinErrorMessage";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -95,7 +96,7 @@ const PinDigitInputs = forwardRef<PinDigitInputsHandle, PinDigitInputsProps>(fun
 
   return (
     <View style={styles.block}>
-      <Text style={styles.label}>{label}</Text>
+      <AppText style={styles.label}>{label}</AppText>
       <View style={styles.row}>
         {Array.from({ length: PIN_DIGIT_COUNT }).map((_, index) => (
           <TextInput

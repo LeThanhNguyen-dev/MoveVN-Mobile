@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type TextInputProps } from "react-native"
+import AppText from "@/components/AppText";
 import { ArrowRight, CheckCircle2, CircleAlert, Eye, EyeOff } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import type { Theme } from "@/theme/tokens";
@@ -11,7 +12,7 @@ export function AuthButton({ title, onPress, disabled, busy, variant = "primary"
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled: inactive, busy }} disabled={inactive} onPress={onPress}
     style={({ pressed }) => [styles.button, variant === "outline" && styles.buttonOutline, (inactive || pressed) && styles.dim]}>
     {busy ? <ActivityIndicator color={variant === "primary" ? theme.surface : theme.brand} /> : icon}
-    <Text style={[styles.buttonLabel, variant === "outline" && styles.buttonLabelAlt]}>{title}</Text>
+    <AppText style={[styles.buttonLabel, variant === "outline" && styles.buttonLabelAlt]}>{title}</AppText>
     {variant === "primary" && !busy ? <ArrowRight size={18} color={theme.surface} /> : null}
   </Pressable>;
 }
@@ -21,7 +22,7 @@ export function AuthField({ label, error, password, icon, ...props }: TextInputP
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [visible, setVisible] = useState(false);
   return <View style={styles.field}>
-    <Text style={styles.label}>{label}</Text>
+    <AppText style={styles.label}>{label}</AppText>
     <View style={[styles.inputRow, Boolean(error) && styles.invalid]}>
       <View style={styles.leadingIcon}>{icon}</View>
       <TextInput {...props} accessibilityLabel={label} accessibilityHint={error} autoCapitalize="none" autoCorrect={false}
@@ -31,7 +32,7 @@ export function AuthField({ label, error, password, icon, ...props }: TextInputP
         {visible ? <EyeOff size={19} color={theme.muted} /> : <Eye size={19} color={theme.muted} />}
       </Pressable> : null}
     </View>
-    {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+    {error ? <AppText accessibilityRole="alert" style={styles.error}>{error}</AppText> : null}
   </View>;
 }
 
@@ -40,13 +41,13 @@ export function OtpField({ value, error, disabled, onChange }: { value: string; 
   const styles = useMemo(() => createStyles(theme), [theme]);
   const input = useRef<TextInput>(null);
   return <View style={styles.field}>
-    <Text style={styles.label}>Mã OTP</Text>
+    <AppText style={styles.label}>Mã OTP</AppText>
     <Pressable accessibilityRole="button" accessibilityLabel="Nhập mã OTP" disabled={disabled} onPress={() => input.current?.focus()} style={styles.otpRow}>
-      {Array.from({ length: 6 }, (_, index) => <View key={index} style={[styles.otpCell, Boolean(error) && styles.otpInvalid, value[index] ? styles.otpFilled : null]}><Text style={styles.otpText}>{value[index] ?? ""}</Text></View>)}
+      {Array.from({ length: 6 }, (_, index) => <View key={index} style={[styles.otpCell, Boolean(error) && styles.otpInvalid, value[index] ? styles.otpFilled : null]}><AppText style={styles.otpText}>{value[index] ?? ""}</AppText></View>)}
       <TextInput ref={input} accessibilityLabel="Mã OTP" accessibilityHint={error} editable={!disabled} keyboardType="number-pad" maxLength={6}
         onChangeText={(next) => onChange(next.replace(/\D/g, ""))} style={styles.otpNativeInput} textContentType="oneTimeCode" value={value} />
     </Pressable>
-    {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+    {error ? <AppText accessibilityRole="alert" style={styles.error}>{error}</AppText> : null}
   </View>;
 }
 
@@ -55,7 +56,7 @@ export function AuthNotice({ message, error = false }: { message: string; error?
   const styles = useMemo(() => createStyles(theme), [theme]);
   return <View style={[styles.notice, error && styles.noticeError]}>
     {error ? <CircleAlert size={18} color={theme.error} /> : <CheckCircle2 size={18} color={theme.brand} />}
-    <Text accessibilityRole={error ? "alert" : undefined} style={[styles.noticeText, error && styles.noticeErrorText]}>{message}</Text>
+    <AppText accessibilityRole={error ? "alert" : undefined} style={[styles.noticeText, error && styles.noticeErrorText]}>{message}</AppText>
   </View>;
 }
 

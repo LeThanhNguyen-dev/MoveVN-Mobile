@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { DarkTheme, DefaultTheme, NavigationContainer, type Theme as NavTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthNavigator from "./AuthNavigator";
 import CustomerNavigator from "./CustomerNavigator";
@@ -76,7 +77,7 @@ export default function RootNavigator() {
 function Startup({ label }: { label: string }) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  return <SafeAreaView style={styles.safe}><View style={styles.content}><ActivityIndicator color={theme.brand} size="large" /><Text style={styles.label}>{label}</Text></View></SafeAreaView>;
+  return <SafeAreaView style={styles.safe}><View style={styles.content}><ActivityIndicator color={theme.brand} size="large" /><AppText style={styles.label}>{label}</AppText></View></SafeAreaView>;
 }
 
 const createStyles = (theme: Theme) => StyleSheet.create({

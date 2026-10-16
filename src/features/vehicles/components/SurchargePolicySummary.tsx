@@ -1,6 +1,7 @@
 import { BadgeInfo } from "lucide-react-native";
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { VehicleSurchargePolicy } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -41,15 +42,15 @@ function formatHours(hours: number) {
 function SurchargeDescription({ policy, styles }: { policy: VehicleSurchargePolicy; styles: ReturnType<typeof createStyles> }) {
   if (policy.feeType === "ExcessMileage" && policy.includedKm != null) {
     return (
-      <Text style={styles.desc}>
-        Phụ phí phát sinh nếu di chuyển quá <Text style={styles.bold}>{policy.includedKm.toLocaleString("vi-VN")} km</Text>{" "}
+      <AppText style={styles.desc}>
+        Phụ phí phát sinh nếu di chuyển quá <AppText style={styles.bold}>{policy.includedKm.toLocaleString("vi-VN")} km</AppText>{" "}
         {policy.allowanceScope === "PerBooking" ? "trong toàn bộ chuyến thuê" : "khi thuê xe 1 ngày"}
         {policy.maxAmount != null ? (
           <>
-            . Tối đa <Text style={styles.bold}>{formatCurrency(policy.maxAmount)}</Text>
+            . Tối đa <AppText style={styles.bold}>{formatCurrency(policy.maxAmount)}</AppText>
           </>
         ) : null}
-      </Text>
+      </AppText>
     );
   }
 
@@ -57,39 +58,39 @@ function SurchargeDescription({ policy, styles }: { policy: VehicleSurchargePoli
     const graceHours = resolveGraceHours(policy);
     const dayThresholdHours = resolveDayThresholdHours(policy);
     return (
-      <Text style={styles.desc}>
+      <AppText style={styles.desc}>
         Phụ phí phát sinh nếu hoàn trả xe trễ giờ
         {graceHours != null && graceHours > 0 ? (
           <>
-            , miễn trễ <Text style={styles.bold}>{formatHours(graceHours)} giờ</Text> đầu
+            , miễn trễ <AppText style={styles.bold}>{formatHours(graceHours)} giờ</AppText> đầu
           </>
         ) : null}
         {dayThresholdHours != null && dayThresholdHours > 0 ? (
           <>
-            . Trường hợp trễ quá <Text style={styles.bold}>{formatHours(dayThresholdHours)} giờ</Text> phụ phí thêm{" "}
-            <Text style={styles.bold}>1 ngày</Text>
+            . Trường hợp trễ quá <AppText style={styles.bold}>{formatHours(dayThresholdHours)} giờ</AppText> phụ phí thêm{" "}
+            <AppText style={styles.bold}>1 ngày</AppText>
           </>
         ) : null}
         {policy.lateDailyRate != null ? <> ({formatCurrency(policy.lateDailyRate)}/ngày)</> : null}
         {policy.maxAmount != null ? (
           <>
-            . Tối đa <Text style={styles.bold}>{formatCurrency(policy.maxAmount)}</Text>
+            . Tối đa <AppText style={styles.bold}>{formatCurrency(policy.maxAmount)}</AppText>
           </>
         ) : null}
-      </Text>
+      </AppText>
     );
   }
 
   return (
-    <Text style={styles.desc}>
+    <AppText style={styles.desc}>
       {policy.description || "Phụ phí có thể phát sinh theo tình trạng xe khi hoàn trả."}
       {policy.maxAmount != null ? (
         <>
           {" "}
-          Tối đa <Text style={styles.bold}>{formatCurrency(policy.maxAmount)}</Text>.
+          Tối đa <AppText style={styles.bold}>{formatCurrency(policy.maxAmount)}</AppText>.
         </>
       ) : null}
-    </Text>
+    </AppText>
   );
 }
 
@@ -106,17 +107,17 @@ export default function SurchargePolicySummary({ policies = [], showInactive = f
         <View style={styles.iconTile}>
           <BadgeInfo color={theme.brand} size={15} />
         </View>
-        <Text style={styles.title}>Phụ phí có thể phát sinh</Text>
+        <AppText display style={styles.title}>Phụ phí có thể phát sinh</AppText>
       </View>
       <View style={styles.list}>
         {items.map((policy) => (
           <View key={`${policy.id ?? policy.name}`} style={styles.item}>
             <View style={styles.itemHead}>
               <View style={styles.nameWrap}>
-                <Text style={styles.itemTitle}>{policy.name}</Text>
-                {!policy.isActive ? <Text style={styles.inactive}>Tắt</Text> : null}
+                <AppText display style={styles.itemTitle}>{policy.name}</AppText>
+                {!policy.isActive ? <AppText style={styles.inactive}>Tắt</AppText> : null}
               </View>
-              <Text style={styles.price}>{calculationLabel(policy)}</Text>
+              <AppText style={styles.price}>{calculationLabel(policy)}</AppText>
             </View>
             <SurchargeDescription policy={policy} styles={styles} />
           </View>

@@ -1,6 +1,7 @@
 import { LayoutDashboard } from "lucide-react-native";
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
 import type { AuthUser } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
@@ -17,8 +18,8 @@ export default function OwnerOverviewScreen({ onAvatarPress, onBellPress, user }
         <View style={styles.iconWrap}>
           <LayoutDashboard color={theme.brand} size={30} strokeWidth={2.4} />
         </View>
-        <Text style={styles.title}>Tổng quan</Text>
-        <Text style={styles.description}>Thống kê doanh thu, đơn thuê và hiệu suất xe sẽ hiển thị ở đây.</Text>
+        <AppText display style={styles.title}>Tổng quan</AppText>
+        <AppText style={styles.description}>Thống kê doanh thu, đơn thuê và hiệu suất xe sẽ hiển thị ở đây.</AppText>
       </View>
     </View>
   );

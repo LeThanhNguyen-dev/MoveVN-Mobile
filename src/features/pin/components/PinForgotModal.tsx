@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { KeyRound } from "lucide-react-native";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import PinDigitInputs, { type PinDigitInputsHandle } from "@/features/pin/components/PinDigitInputs";
 import { getAuthUser } from "@/features/auth/hooks/useAuth";
 import { PIN_DIGIT_COUNT, getFriendlyPinMessage, getPinErrorCode, isOtpErrorCode } from "@/features/pin/services/pinErrorMessage";
@@ -123,27 +124,27 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
         <View style={styles.card}>
           <View style={styles.heading}>
             <KeyRound color={theme.brand} size={22} strokeWidth={2.3} />
-            <Text style={styles.title}>Quên mã PIN</Text>
+            <AppText display style={styles.title}>Quên mã PIN</AppText>
           </View>
-          <Text style={styles.description}>
+          <AppText style={styles.description}>
             {step === "request-otp"
               ? "Mã OTP sẽ được gửi đến email của tài khoản của bạn."
               : "Nhập mã OTP và mã PIN mới bên dưới."}
-          </Text>
+          </AppText>
 
           {step === "request-otp" ? (
             <View style={styles.stack}>
               <View style={styles.emailBox}>
-                <Text style={styles.emailText}>{maskEmail(email)}</Text>
+                <AppText style={styles.emailText}>{maskEmail(email)}</AppText>
               </View>
               {errorMessage !== null ? (
-                <Text accessibilityRole="alert" style={styles.error}>
+                <AppText accessibilityRole="alert" style={styles.error}>
                   {errorMessage}
-                </Text>
+                </AppText>
               ) : null}
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <Text style={styles.secondaryText}>Hủy</Text>
+                  <AppText style={styles.secondaryText}>Hủy</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -151,7 +152,7 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
                   onPress={() => { void handleRequestOtp(); }}
                   style={[styles.primaryButton, isSubmitting && styles.disabled]}
                 >
-                  <Text style={styles.primaryText}>{isSubmitting ? "Đang gửi..." : "Gửi mã OTP"}</Text>
+                  <AppText style={styles.primaryText}>{isSubmitting ? "Đang gửi..." : "Gửi mã OTP"}</AppText>
                 </Pressable>
               </View>
             </View>
@@ -172,15 +173,15 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
                 onComplete={() => newPinGroupRef.current?.focusFirst()}
                 value={otp}
               />
-              <Text style={styles.muted}>
+              <AppText style={styles.muted}>
                 Mã OTP có hiệu lực trong 10 phút.{" "}
-                <Text
+                <AppText
                   onPress={() => { void handleResendOtp(); }}
                   style={[styles.link, (isResending || isSubmitting) && styles.disabledText]}
                 >
                   {isResending ? "Đang gửi..." : "Gửi lại mã"}
-                </Text>
-              </Text>
+                </AppText>
+              </AppText>
               <PinDigitInputs
                 ref={newPinGroupRef}
                 disabled={isSubmitting}
@@ -198,28 +199,28 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
                 value={confirmPin}
               />
               {hasMismatch ? (
-                <Text accessibilityRole="alert" style={styles.error}>
+                <AppText accessibilityRole="alert" style={styles.error}>
                   Mã PIN xác nhận không khớp.
-                </Text>
+                </AppText>
               ) : null}
-              {infoMessage !== null ? <Text style={styles.muted}>{infoMessage}</Text> : null}
+              {infoMessage !== null ? <AppText style={styles.muted}>{infoMessage}</AppText> : null}
               {errorMessage !== null ? (
-                <Text accessibilityRole="alert" style={styles.error}>
+                <AppText accessibilityRole="alert" style={styles.error}>
                   {errorMessage}
-                </Text>
+                </AppText>
               ) : null}
               {successMessage !== null ? (
-                <Text accessibilityRole="alert" style={styles.success}>
+                <AppText accessibilityRole="alert" style={styles.success}>
                   {successMessage}
-                </Text>
+                </AppText>
               ) : null}
-              <Text style={styles.counter}>
+              <AppText style={styles.counter}>
                 {otp.length} / {PIN_DIGIT_COUNT} OTP · {newPin.length} / {PIN_DIGIT_COUNT} PIN mới ·{" "}
                 {confirmPin.length} / {PIN_DIGIT_COUNT} xác nhận
-              </Text>
+              </AppText>
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <Text style={styles.secondaryText}>Hủy</Text>
+                  <AppText style={styles.secondaryText}>Hủy</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -227,7 +228,7 @@ export default function PinForgotModal({ visible, onClose, onResetDone }: PinFor
                   onPress={() => { void handleReset(); }}
                   style={[styles.primaryButton, (!isResetFilled || isSubmitting) && styles.disabled]}
                 >
-                  <Text style={styles.primaryText}>{isSubmitting ? "Đang đặt lại..." : "Đặt lại mã PIN"}</Text>
+                  <AppText style={styles.primaryText}>{isSubmitting ? "Đang đặt lại..." : "Đặt lại mã PIN"}</AppText>
                 </Pressable>
               </View>
             </View>

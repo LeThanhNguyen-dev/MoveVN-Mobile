@@ -4,10 +4,10 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
-  Text,
   TextInput,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { MessageSquare, RefreshCw } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
@@ -48,12 +48,12 @@ export default function ChatListScreen({
         }}
       >
         <View style={{ flex: 1 }}>
-          <Text style={{ color: theme.text, fontWeight: "800", fontSize: 25 }}>
+          <AppText style={{ color: theme.text, fontWeight: "800", fontSize: 25 }}>
             Tin nhắn
-          </Text>
-          <Text style={{ color: theme.muted, marginTop: 4 }}>
+          </AppText>
+          <AppText style={{ color: theme.muted, marginTop: 4 }}>
             Trao đổi theo từng booking
-          </Text>
+          </AppText>
         </View>
         <NotificationBell />
         <Pressable
@@ -86,7 +86,7 @@ export default function ChatListScreen({
         }}
       />
       {state.roomsError ? (
-        <Text
+        <AppText
           accessibilityRole="alert"
           style={{
             color: theme.danger,
@@ -95,7 +95,7 @@ export default function ChatListScreen({
           }}
         >
           {state.roomsError}
-        </Text>
+        </AppText>
       ) : null}
       {state.roomsLoading && !state.roomsLoaded ? (
         <ActivityIndicator color={theme.brand} style={{ padding: 24 }} />
@@ -117,12 +117,12 @@ export default function ChatListScreen({
           !state.roomsLoading && !state.roomsError ? (
             <View style={{ alignItems: "center", padding: 36, gap: 12 }}>
               <MessageSquare size={36} color={theme.muted} />
-              <Text style={{ color: theme.text, fontWeight: "700" }}>
+              <AppText style={{ color: theme.text, fontWeight: "700" }}>
                 {query ? "Không tìm thấy booking" : "Chưa có cuộc trò chuyện"}
-              </Text>
-              <Text style={{ color: theme.muted, textAlign: "center" }}>
+              </AppText>
+              <AppText style={{ color: theme.muted, textAlign: "center" }}>
                 Mở chi tiết chuyến đi hoặc đơn thuê và chọn Nhắn tin để bắt đầu.
-              </Text>
+              </AppText>
             </View>
           ) : null
         }
@@ -161,7 +161,7 @@ export default function ChatListScreen({
                 <MessageSquare size={22} color={theme.brand} />
               </View>
               <View style={{ flex: 1, gap: 4 }}>
-                <Text
+                <AppText
                   numberOfLines={1}
                   style={{
                     color: theme.text,
@@ -170,24 +170,24 @@ export default function ChatListScreen({
                   }}
                 >
                   {person.name}
-                </Text>
-                <Text
+                </AppText>
+                <AppText
                   numberOfLines={1}
                   style={{ color: theme.brand, fontSize: 11 }}
                 >
                   {room.bookingCode} · {room.vehicleName || "Đơn thuê xe"}
-                </Text>
-                <Text
+                </AppText>
+                <AppText
                   numberOfLines={1}
                   style={{ color: theme.muted, fontSize: 13 }}
                 >
                   {room.lastMessage?.text || "Bắt đầu trò chuyện"}
-                </Text>
+                </AppText>
               </View>
               <View style={{ alignItems: "flex-end", gap: 8 }}>
-                <Text style={{ color: theme.muted, fontSize: 10 }}>
+                <AppText style={{ color: theme.muted, fontSize: 10 }}>
                   {room.lastMessage ? chatTime(room.lastMessage.sentAt) : ""}
-                </Text>
+                </AppText>
                 {room.unreadCount > 0 ? (
                   <View
                     style={{
@@ -197,7 +197,7 @@ export default function ChatListScreen({
                       padding: 4,
                     }}
                   >
-                    <Text
+                    <AppText
                       style={{
                         color: theme.onBrand,
                         fontSize: 11,
@@ -206,7 +206,7 @@ export default function ChatListScreen({
                       }}
                     >
                       {room.unreadCount > 99 ? "99+" : room.unreadCount}
-                    </Text>
+                    </AppText>
                   </View>
                 ) : null}
               </View>

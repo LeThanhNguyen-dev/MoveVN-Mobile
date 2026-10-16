@@ -4,10 +4,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { TriangleAlert } from "lucide-react-native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -84,7 +84,7 @@ export default function WalletCashflowScreen({
           onPress={() => setPane("topup")}
           style={[styles.segButton, pane === "topup" && styles.segActive]}
         >
-          <Text style={[styles.segText, pane === "topup" && styles.segTextActive]}>Nạp tiền</Text>
+          <AppText style={[styles.segText, pane === "topup" && styles.segTextActive]}>Nạp tiền</AppText>
         </Pressable>
         <Pressable
           accessibilityRole="tab"
@@ -92,14 +92,14 @@ export default function WalletCashflowScreen({
           onPress={() => setPane("withdraw")}
           style={[styles.segButton, pane === "withdraw" && styles.segActive]}
         >
-          <Text style={[styles.segText, pane === "withdraw" && styles.segTextActive]}>Rút tiền</Text>
+          <AppText style={[styles.segText, pane === "withdraw" && styles.segTextActive]}>Rút tiền</AppText>
         </Pressable>
       </View>
 
       {pane === "topup" ? (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Nạp tiền vào ví</Text>
-          <Text style={styles.muted}>Thanh toán qua PayOS, tiền vào ví sau khi xác nhận.</Text>
+          <AppText display style={styles.cardTitle}>Nạp tiền vào ví</AppText>
+          <AppText style={styles.muted}>Thanh toán qua PayOS, tiền vào ví sau khi xác nhận.</AppText>
           <View style={styles.presets}>
             {TOPUP_PRESETS.map((amt) => (
               <Pressable
@@ -107,9 +107,9 @@ export default function WalletCashflowScreen({
                 onPress={() => setTopUpAmount(String(amt))}
                 style={[styles.preset, topUpAmount === String(amt) && styles.presetActive]}
               >
-                <Text style={[styles.presetText, topUpAmount === String(amt) && styles.presetTextActive]}>
+                <AppText style={[styles.presetText, topUpAmount === String(amt) && styles.presetTextActive]}>
                   {formatMoney(amt)}
-                </Text>
+                </AppText>
               </Pressable>
             ))}
           </View>
@@ -121,9 +121,9 @@ export default function WalletCashflowScreen({
             keyboardType="number-pad"
             style={styles.input}
           />
-          <Text style={styles.hint}>
+          <AppText style={styles.hint}>
             Tối thiểu {formatMoney(TOPUP_MIN_AMOUNT)} · tối đa {formatMoney(TOPUP_MAX_AMOUNT)} mỗi lần nạp.
-          </Text>
+          </AppText>
           <Pressable
             onPress={() => void handleTopUp()}
             disabled={busy !== null}
@@ -132,34 +132,34 @@ export default function WalletCashflowScreen({
             {busy === "topup" ? (
               <ActivityIndicator color={theme.onBrand} />
             ) : (
-              <Text style={styles.primaryText}>Thanh toán PayOS</Text>
+              <AppText style={styles.primaryText}>Thanh toán PayOS</AppText>
             )}
           </Pressable>
         </View>
       ) : (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Rút tiền về ngân hàng</Text>
-          <Text style={styles.balanceLine}>
-            Số dư khả dụng: <Text style={styles.balanceValue}>{formatMoney(balance)}</Text>
-          </Text>
-          <Text style={styles.muted}>
+          <AppText display style={styles.cardTitle}>Rút tiền về ngân hàng</AppText>
+          <AppText style={styles.balanceLine}>
+            Số dư khả dụng: <AppText style={styles.balanceValue}>{formatMoney(balance)}</AppText>
+          </AppText>
+          <AppText style={styles.muted}>
             Về: {bank?.bankName ?? "-"} · {bank?.bankAccountNumber ?? "chưa thiết lập"}
-          </Text>
+          </AppText>
           {!bank?.bankAccountNumber && (
             <Pressable onPress={onNeedBank} style={styles.linkButton}>
-              <Text style={styles.linkText}>Thiết lập ngân hàng ngay →</Text>
+              <AppText style={styles.linkText}>Thiết lập ngân hàng ngay →</AppText>
             </Pressable>
           )}
           {activeWithdrawal && (
             <View style={styles.activeBanner}>
               <TriangleAlert color="#F59E0B" size={18} />
               <View style={styles.flexOne}>
-                <Text style={styles.activeTitle}>
+                <AppText display style={styles.activeTitle}>
                   Yêu cầu #{activeWithdrawal.id} đang {withdrawalStatusLabel(activeWithdrawal.status).toLowerCase()}
-                </Text>
-                <Text style={styles.muted}>
+                </AppText>
+                <AppText style={styles.muted}>
                   Vui lòng chờ hoàn tất hoặc hủy yêu cầu này trước khi tạo yêu cầu mới.
-                </Text>
+                </AppText>
               </View>
             </View>
           )}
@@ -173,15 +173,15 @@ export default function WalletCashflowScreen({
             style={styles.input}
           />
           <View style={styles.withdrawMeta}>
-            <Text style={styles.hint}>
+            <AppText style={styles.hint}>
               Tối thiểu {formatMoney(WITHDRAW_MIN_AMOUNT)} · tối đa {formatMoney(WITHDRAW_MAX_AMOUNT)}.
-            </Text>
+            </AppText>
             <Pressable
               onPress={() => setWithdrawAmount(String(balance))}
               disabled={activeWithdrawal != null}
               style={styles.linkButton}
             >
-              <Text style={styles.linkText}>Rút tối đa</Text>
+              <AppText style={styles.linkText}>Rút tối đa</AppText>
             </Pressable>
           </View>
           <Pressable
@@ -192,7 +192,7 @@ export default function WalletCashflowScreen({
             {busy === "withdraw" ? (
               <ActivityIndicator color={theme.onBrand} />
             ) : (
-              <Text style={styles.primaryText}>Tạo yêu cầu rút</Text>
+              <AppText style={styles.primaryText}>Tạo yêu cầu rút</AppText>
             )}
           </Pressable>
         </View>
@@ -200,7 +200,7 @@ export default function WalletCashflowScreen({
 
       {pane === "withdraw" && withdrawals.length > 0 && (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Yêu cầu rút tiền</Text>
+          <AppText display style={styles.cardTitle}>Yêu cầu rút tiền</AppText>
           {withdrawals.map((w) => (
             <WithdrawalRow key={w.id} w={w} onCancel={handleCancelWithdrawal} />
           ))}

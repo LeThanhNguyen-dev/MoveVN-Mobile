@@ -9,7 +9,8 @@ import {
   Landmark,
   Mail,
 } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
@@ -95,17 +96,17 @@ export default function VerificationHubScreen({
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text style={styles.topBarTitle}>Xác minh tài khoản</Text>
+        <AppText display style={styles.topBarTitle}>Xác minh tài khoản</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <Text style={styles.subtitle}>Kiểm tra trạng thái xác minh giấy tờ của bạn</Text>
+          <AppText style={styles.subtitle}>Kiểm tra trạng thái xác minh giấy tờ của bạn</AppText>
           <View style={[styles.countPill, allVerified ? styles.countPillDone : styles.countPillPending]}>
-            <Text style={[styles.countText, allVerified ? styles.countTextDone : styles.countTextPending]}>
+            <AppText style={[styles.countText, allVerified ? styles.countTextDone : styles.countTextPending]}>
               {`${verifiedCount}/${items.length} đã xác minh`}
-            </Text>
+            </AppText>
           </View>
         </View>
 
@@ -122,13 +123,13 @@ export default function VerificationHubScreen({
             )}
           </View>
           <View style={styles.infoBody}>
-            <Text style={styles.infoTitle}>
+            <AppText display style={styles.infoTitle}>
               {allVerified ? "Tài khoản đã sẵn sàng" : "Còn bước xác minh cần hoàn tất"}
-            </Text>
-            <Text style={styles.infoDescription}>
+            </AppText>
+            <AppText style={styles.infoDescription}>
               Các bước xác minh giúp giảm rủi ro khi đặt xe, hỗ trợ duyệt hồ sơ nhanh hơn và bảo vệ
               giao dịch giữa khách hàng với chủ xe.
-            </Text>
+            </AppText>
           </View>
         </View>
       </ScrollView>
@@ -146,9 +147,9 @@ function VerifiedBadge({ verified }: { verified: boolean }) {
       ) : (
         <CircleAlert color={theme.muted} size={12} strokeWidth={2.5} />
       )}
-      <Text style={[styles.badgeText, verified ? styles.badgeTextVerified : styles.badgeTextUnverified]}>
+      <AppText style={[styles.badgeText, verified ? styles.badgeTextVerified : styles.badgeTextUnverified]}>
         {verified ? "Đã xác minh" : "Chưa xác minh"}
-      </Text>
+      </AppText>
     </View>
   );
 }
@@ -172,10 +173,10 @@ function DocumentCard({ item }: { item: HubItem }) {
           <Icon color={item.verified ? theme.success : theme.muted} size={21} strokeWidth={2.3} />
         </View>
         <View style={styles.cardTitleWrap}>
-          <Text style={styles.cardTitle}>{item.label}</Text>
-          <Text numberOfLines={1} style={styles.cardDescription}>
+          <AppText display style={styles.cardTitle}>{item.label}</AppText>
+          <AppText numberOfLines={1} style={styles.cardDescription}>
             {item.description}
-          </Text>
+          </AppText>
           <View style={styles.badgeRow}>
             <VerifiedBadge verified={item.verified} />
           </View>
@@ -184,7 +185,7 @@ function DocumentCard({ item }: { item: HubItem }) {
       </Pressable>
       {actionable ? (
         <Pressable accessibilityRole="button" onPress={item.onVerify} style={styles.verifyButton}>
-          <Text style={styles.verifyText}>{item.verifyLabel}</Text>
+          <AppText style={styles.verifyText}>{item.verifyLabel}</AppText>
         </Pressable>
       ) : null}
     </View>

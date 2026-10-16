@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { ContractContent, ContractSummary } from "@/features/contracts/types";
@@ -147,14 +148,14 @@ export default function ContractPinFlow({
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.modal}>
-          <Text style={styles.title}>Xem hợp đồng</Text>
+          <AppText display style={styles.title}>Xem hợp đồng</AppText>
           {step === "loading" && <ActivityIndicator color={theme.brand} />}
 
           {step === "verify" && (
             <>
-              <Text style={styles.muted}>Nhập mã PIN của app để mở hợp đồng (không gửi OTP).</Text>
+              <AppText style={styles.muted}>Nhập mã PIN của app để mở hợp đồng (không gửi OTP).</AppText>
               {lockSeconds != null && lockSeconds > 0 && (
-                <Text style={styles.warn}>Nhập sai nhiều lần, thử lại sau {lockSeconds}s.</Text>
+                <AppText style={styles.warn}>Nhập sai nhiều lần, thử lại sau {lockSeconds}s.</AppText>
               )}
               <PinInput value={pin} onChange={setPin} />
               <RowButtons
@@ -164,7 +165,7 @@ export default function ContractPinFlow({
                 submitLabel="Mở hợp đồng"
                 extra={
                   <Pressable onPress={() => { setStep("forgot"); setOtp(""); setNewPin(""); }}>
-                    <Text style={styles.link}>Quên mã PIN?</Text>
+                    <AppText style={styles.link}>Quên mã PIN?</AppText>
                   </Pressable>
                 }
               />
@@ -173,12 +174,12 @@ export default function ContractPinFlow({
 
           {step === "setup" && (
             <>
-              <Text style={styles.muted}>
+              <AppText style={styles.muted}>
                 Bạn chưa có mã PIN. Mã OTP vừa gửi đến email — nhập OTP rồi đặt PIN 6 số để mở hợp đồng.
-              </Text>
-              <Text style={styles.fieldLabel}>Mã OTP email</Text>
+              </AppText>
+              <AppText style={styles.fieldLabel}>Mã OTP email</AppText>
               <OtpInput value={otp} onChange={setOtp} />
-              <Text style={styles.fieldLabel}>Mã PIN mới (6 số)</Text>
+              <AppText style={styles.fieldLabel}>Mã PIN mới (6 số)</AppText>
               <PinInput value={newPin} onChange={setNewPin} />
               <RowButtons busy={busy} onClose={onClose} onSubmit={handleSetup} submitLabel="Tạo PIN & mở" />
             </>
@@ -186,13 +187,13 @@ export default function ContractPinFlow({
 
           {step === "forgot" && (
             <>
-              <Text style={styles.muted}>Nhập mã OTP gửi đến {userEmail} rồi đặt PIN mới.</Text>
+              <AppText style={styles.muted}>Nhập mã OTP gửi đến {userEmail} rồi đặt PIN mới.</AppText>
               <Pressable onPress={sendForgotOtp} disabled={busy} style={styles.otpButton}>
-                <Text style={styles.otpButtonText}>Gửi mã OTP</Text>
+                <AppText style={styles.otpButtonText}>Gửi mã OTP</AppText>
               </Pressable>
-              <Text style={styles.fieldLabel}>Mã OTP email</Text>
+              <AppText style={styles.fieldLabel}>Mã OTP email</AppText>
               <OtpInput value={otp} onChange={setOtp} />
-              <Text style={styles.fieldLabel}>Mã PIN mới (6 số)</Text>
+              <AppText style={styles.fieldLabel}>Mã PIN mới (6 số)</AppText>
               <PinInput value={newPin} onChange={setNewPin} />
               <RowButtons busy={busy} onClose={onClose} onSubmit={handleForgot} submitLabel="Đặt lại & mở" />
             </>
@@ -256,13 +257,13 @@ function RowButtons({
       {extra}
       <View style={styles.actions}>
         <Pressable onPress={onClose} style={styles.ghostButton}>
-          <Text style={styles.ghostText}>Đóng</Text>
+          <AppText style={styles.ghostText}>Đóng</AppText>
         </Pressable>
         <Pressable onPress={onSubmit} disabled={busy} style={[styles.primaryButton, busy && styles.disabled]}>
           {busy ? (
             <ActivityIndicator color={theme.onBrand} />
           ) : (
-            <Text style={styles.primaryText}>{submitLabel}</Text>
+            <AppText style={styles.primaryText}>{submitLabel}</AppText>
           )}
         </Pressable>
       </View>

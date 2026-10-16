@@ -10,6 +10,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: { ...config.android, ...(process.env.MOVEVN_ANDROID_PACKAGE ? { package: process.env.MOVEVN_ANDROID_PACKAGE } : {}) },
     plugins: [
       ...(config.plugins ?? []),
+      "expo-font",
       "expo-secure-store",
       ...(iosClientId ? [["@react-native-google-signin/google-signin", {
         iosUrlScheme: iosClientId.split(".").reverse().join("."),
