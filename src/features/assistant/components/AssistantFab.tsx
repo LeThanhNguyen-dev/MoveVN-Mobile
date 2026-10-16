@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { useMemo, useRef } from "react";
+import { Animated, Dimensions, Modal, PanResponder, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Bot, X } from "lucide-react-native";
 
@@ -8,10 +8,33 @@ import { useTheme } from "@/theme/useTheme";
 import AssistantScreen, { type QuickBookParams } from "@/features/assistant/screens/AssistantScreen";
 import { useAssistantUi } from "@/features/assistant/useAssistantUi";
 
+const FAB_SIZE = 56;
+const DEFAULT_RIGHT = 18;
+const DEFAULT_BOTTOM = 96;
+const MARGIN = 8;
+const DRAG_THRESHOLD = 4;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+// Giới hạn kéo để nút luôn nằm gọn trong màn hình (tính theo vị trí mặc định).
+function dragBounds() {
+  const { width: W, height: H } = Dimensions.get("window");
+  const x0 = W - DEFAULT_RIGHT - FAB_SIZE;
+  const y0 = H - DEFAULT_BOTTOM - FAB_SIZE;
+  return {
+    minX: MARGIN - x0,
+    maxX: DEFAULT_RIGHT - MARGIN,
+    minY: MARGIN - y0,
+    maxY: DEFAULT_BOTTOM - MARGIN,
+  };
+}
+
 // Nút tròn nổi giống web (AssistantWidget) nhưng mở full-screen modal RN.
 // Mọi điều hướng xe/booking do parent truyền vào.
-// Người dùng có thể bấm X để ẩn hẳn nút nổi (đỡ che giao diện);
-// mở lại từ thẻ "Chatbot MoveVN" trong Trung tâm hỗ trợ.
+// - Kéo-thả tự do tới bất kỳ chỗ nào trên màn hình (vị trí giữ trong phiên).
+// - Nút X để ẩn hẳn nút nổi (đỡ che giao diện); mở lại từ "Chatbot MoveVN".
 export default function AssistantFab({
   onViewVehicle,
   onViewBooking,
@@ -29,11 +52,47 @@ export default function AssistantFab({
   const setChatOpen = useAssistantUi((state) => state.setChatOpen);
   const fabHidden = useAssistantUi((state) => state.fabHidden);
   const setFabHidden = useAssistantUi((state) => state.setFabHidden);
+  const setFabPos = useAssistantUi((state) => state.setFabPos);
+
+  const committed = useRef(useAssistantUi.getState().fabPos ?? { x: 0, y: 0 });
+  const pan = useRef(new Animated.ValueXY(committed.current)).current;
+  const dragStart = useRef({ x: 0, y: 0 });
+
+  const responder = useRef(
+    PanResponder.create({
+      // Không cướp touch lúc chạm — để bấm mở chat / bấm X vẫn nhạy.
+      // Chỉ thành responder khi rê đủ xa (kéo-thả).
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gesture) =>
+        Math.abs(gesture.dx) > DRAG_THRESHOLD || Math.abs(gesture.dy) > DRAG_THRESHOLD,
+      onPanResponderGrant: () => {
+        dragStart.current = { ...committed.current };
+      },
+      onPanResponderMove: (_, gesture) => {
+        const bounds = dragBounds();
+        const next = {
+          x: clamp(dragStart.current.x + gesture.dx, bounds.minX, bounds.maxX),
+          y: clamp(dragStart.current.y + gesture.dy, bounds.minY, bounds.maxY),
+        };
+        committed.current = next;
+        pan.setValue(next);
+      },
+      onPanResponderRelease: () => {
+        setFabPos({ ...committed.current });
+      },
+      onPanResponderTerminate: () => {
+        setFabPos({ ...committed.current });
+      },
+    }),
+  ).current;
 
   return (
     <>
       {!fabHidden ? (
-        <View style={styles.fabWrap}>
+        <Animated.View
+          style={[styles.fabWrap, { transform: pan.getTranslateTransform() }]}
+          {...responder.panHandlers}
+        >
           <Pressable
             accessibilityLabel="Mở trợ lý MoveVN"
             accessibilityRole="button"
@@ -50,7 +109,7 @@ export default function AssistantFab({
           >
             <X color="#fff" size={12} strokeWidth={3} />
           </Pressable>
-        </View>
+        </Animated.View>
       ) : null}
       <Modal visible={chatOpen} animationType="slide" onRequestClose={() => setChatOpen(false)}>
         {/* SafeAreaView để header không chui lên vùng giờ/pin, ô chat không cấn thanh home. */}
@@ -78,16 +137,16 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     fabWrap: {
       position: "absolute",
-      right: 18,
-      bottom: 96,
-      width: 56,
-      height: 56,
+      right: DEFAULT_RIGHT,
+      bottom: DEFAULT_BOTTOM,
+      width: FAB_SIZE,
+      height: FAB_SIZE,
       zIndex: 60,
     },
     fab: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      width: FAB_SIZE,
+      height: FAB_SIZE,
+      borderRadius: FAB_SIZE / 2,
       backgroundColor: theme.brand,
       alignItems: "center",
       justifyContent: "center",
