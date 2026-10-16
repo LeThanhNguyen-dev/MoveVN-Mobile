@@ -26,8 +26,12 @@ export type ExploreStackParamList = {
   };
   CreateBooking: {
     vehicleId: number;
-    startDate: string;
-    endDate: string;
+    startDate?: string;
+    endDate?: string;
+    promoCode?: string;
+    pickupAddress?: string;
+    returnAddress?: string;
+    customerNote?: string;
   };
 };
 

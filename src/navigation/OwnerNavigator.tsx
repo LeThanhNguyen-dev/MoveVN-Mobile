@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { CalendarCheck, CarFront, LayoutDashboard, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -6,6 +6,8 @@ import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
 import WalletScreen from "@/features/wallets/screens/WalletScreen";
 import OwnerOverviewScreen from "@/features/app/screens/OwnerOverviewScreen";
 import OwnerVehiclesScreen from "@/features/app/screens/OwnerVehiclesScreen";
+import AssistantFab from "@/features/assistant/components/AssistantFab";
+import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import ChatNavigator from "./ChatNavigator";
 import { useChatStore } from "@/features/chat/useChat";
 import OwnerBookingsNavigator from "./OwnerBookingsNavigator";
@@ -30,8 +32,30 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [showWallet, setShowWallet] = useState(false);
   const [chatRoute, setChatRoute] = useState("ChatList");
   const [bookingRoute, setBookingRoute] = useState("OwnerBookingList");
+  const [pendingDispute, setPendingDispute] = useState<DisputeCreatePrefill | null>(null);
+  const [disputeOrigin, setDisputeOrigin] = useState<{ tab: "bookings" } | null>(null);
+  const [disputesVisible, setDisputesVisible] = useState(false);
   const unread = useChatStore((state) => state.rooms.reduce((sum, room) => sum + room.unreadCount, 0));
   const { theme } = useTheme();
+
+  const openDisputes = useCallback((prefill?: DisputeCreatePrefill) => {
+    setPendingDispute(prefill ?? null);
+    // Luồng này chỉ được gọi từ chi tiết đơn thuê → back phải về lại đó.
+    setDisputeOrigin(prefill?.bookingId != null ? { tab: "bookings" as const } : null);
+    setActiveTab("account");
+  }, []);
+
+  const consumeDisputes = useCallback(() => {
+    setPendingDispute(null);
+    setDisputeOrigin(null);
+  }, []);
+
+  // Thoát khỏi luồng deep-link: dọn prefill rồi quay về đúng tab đơn thuê.
+  const exitDisputesToOrigin = useCallback(() => {
+    setPendingDispute(null);
+    setDisputeOrigin(null);
+    setActiveTab("bookings");
+  }, []);
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -47,16 +71,26 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
             {activeTab === "overview" ? (
               <OwnerOverviewScreen onAvatarPress={() => setShowProfile(true)} user={user} />
             ) : activeTab === "bookings" ? (
-              <OwnerBookingsNavigator onRouteChange={setBookingRoute} />
+              <OwnerBookingsNavigator onRouteChange={setBookingRoute} onOpenDisputes={openDisputes} />
             ) : activeTab === "vehicles" ? (
               <OwnerVehiclesScreen />
             ) : activeTab === "messages" ? (
               <ChatNavigator owner onRouteChange={setChatRoute} />
             ) : (
-              <AccountTabScreen onProfilePress={() => setShowProfile(true)} onWalletPress={() => setShowWallet(true)} user={user} />
+              <AccountTabScreen
+                onProfilePress={() => setShowProfile(true)}
+                onWalletPress={() => setShowWallet(true)}
+                user={user}
+                initialDisputes={pendingDispute}
+                onConsumedDisputes={consumeDisputes}
+                onDisputesVisibilityChange={setDisputesVisible}
+                onExitDisputes={disputeOrigin ? exitDisputesToOrigin : undefined}
+              />
             )}
           </View>
-          {(activeTab !== "messages" || chatRoute === "ChatList") && (activeTab !== "bookings" || bookingRoute !== "BookingChat") ? <MobileBottomBar activeKey={activeTab} items={ownerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} /> : null}
+          {(activeTab !== "messages" || chatRoute === "ChatList") && (activeTab !== "bookings" || bookingRoute !== "BookingChat") && !disputesVisible ? <MobileBottomBar activeKey={activeTab} items={ownerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} /> : null}
+          {/* ChatbotAI (không booking) cho chủ xe */}
+          <AssistantFab />
         </>
       )}
     </SafeAreaView>

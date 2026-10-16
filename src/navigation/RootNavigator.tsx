@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DarkTheme, DefaultTheme, NavigationContainer, type Theme as NavTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthNavigator from "./AuthNavigator";
 import CustomerNavigator from "./CustomerNavigator";
@@ -54,13 +54,18 @@ export default function RootNavigator() {
     };
   }, [mode, theme]);
 
-  useEffect(() => {
-    void initializeTheme();
-    void restoreSession().catch(() => setStartupError("Chưa thể kiểm tra phiên đăng nhập."));
+  const retryStartup = useCallback(() => {
+    setStartupError("");
+    void restoreSession().catch(() => setStartupError("Chưa thể kiểm tra phiên đăng nhập. Hãy kiểm tra kết nối và thử lại."));
   }, []);
 
+  useEffect(() => {
+    void initializeTheme();
+    retryStartup();
+  }, [retryStartup]);
+
+  if (startupError) return <Startup label={startupError} onRetry={retryStartup} />;
   if (!hydrated) return <Startup label="Đang mở MoveVN..." />;
-  if (startupError && token) return <Startup label={startupError} />;
 
   const role = user ? getActiveLandingRole(user.roles, activeRole) : null;
   return <NavigationContainer theme={navTheme}>
@@ -73,14 +78,20 @@ export default function RootNavigator() {
   </NavigationContainer>;
 }
 
-function Startup({ label }: { label: string }) {
+function Startup({ label, onRetry }: { label: string; onRetry?: () => void }) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  return <SafeAreaView style={styles.safe}><View style={styles.content}><ActivityIndicator color={theme.brand} size="large" /><Text style={styles.label}>{label}</Text></View></SafeAreaView>;
+  return <SafeAreaView style={styles.safe}><View style={styles.content}>
+    {!onRetry && <ActivityIndicator color={theme.brand} size="large" />}
+    <Text accessibilityRole={onRetry ? "alert" : undefined} style={styles.label}>{label}</Text>
+    {onRetry && <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><Text style={styles.retryLabel}>Thử lại</Text></Pressable>}
+  </View></SafeAreaView>;
 }
 
 const createStyles = (theme: Theme) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.background },
   content: { flex: 1, justifyContent: "center", alignItems: "center", gap: 16 },
   label: { color: theme.muted, fontSize: 15, fontWeight: "600" },
+  retry: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, backgroundColor: theme.brand },
+  retryLabel: { color: theme.surface, fontSize: 15, fontWeight: "600" },
 });

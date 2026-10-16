@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import TripDetailScreen from "@/features/booking/screens/TripDetailScreen";
 import TripListScreen from "@/features/booking/screens/TripListScreen";
 import ChatRoomScreen from "@/features/chat/screens/ChatRoomScreen";
+import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import type { TripsStackParamList } from "./types";
 import { useTheme } from "@/theme/useTheme";
 
@@ -12,10 +13,12 @@ export default function TripsNavigator({
   pendingBookingId,
   onConsumedPending,
   onRouteChange,
+  onOpenDisputes,
 }: {
   pendingBookingId: number | null;
   onConsumedPending: () => void;
   onRouteChange?: (route: string) => void;
+  onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
 }) {
   const { theme } = useTheme();
   const consumedRef = useRef(false);
@@ -24,11 +27,12 @@ export default function TripsNavigator({
   // Mở thẳng chi tiết khi vừa tạo booking xong (dùng initialParams thay vì
   // navigate tay lúc mount để tránh race "not handled by any navigator").
   useEffect(() => {
+    onRouteChange?.(hasPending ? "TripDetail" : "TripList");
     if (hasPending && !consumedRef.current) {
       consumedRef.current = true;
       onConsumedPending();
     }
-  }, [hasPending, onConsumedPending]);
+  }, [hasPending, onConsumedPending, onRouteChange]);
 
   return (
     <Stack.Navigator
@@ -36,12 +40,14 @@ export default function TripsNavigator({
       screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}
       screenListeners={({ route }) => ({ focus: () => onRouteChange?.(route.name) })}
     >
+
       <Stack.Screen name="TripList" component={TripListScreen} />
       <Stack.Screen
         name="TripDetail"
-        component={TripDetailScreen}
         initialParams={hasPending ? { bookingId: pendingBookingId! } : undefined}
-      />
+      >
+        {(props) => <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} />}
+      </Stack.Screen>
       <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} />}</Stack.Screen>
     </Stack.Navigator>
   );

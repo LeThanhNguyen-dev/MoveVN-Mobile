@@ -1,9 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import CustomerExploreScreen from "@/features/app/screens/CustomerExploreScreen";
-import CreateBookingScreen from "@/features/booking/screens/CreateBookingScreen";
 import VehicleDetailScreen from "@/features/vehicles/screens/VehicleDetailScreen";
 import VehicleListScreen from "@/features/vehicles/screens/VehicleListScreen";
+import CreateBookingScreen from "@/features/booking/screens/CreateBookingScreen";
+import BookingDetailScreen from "@/features/booking/screens/BookingDetailScreen";
+import type { QuickBookParams } from "@/features/assistant/screens/AssistantScreen";
 import type { AuthUser } from "@/features/auth/types";
 import type { ExploreStackParamList } from "./types";
 
@@ -16,16 +19,40 @@ export default function ExploreNavigator({
   onAvatarPress,
   onRouteChange,
   onBookingCreated,
+  quickBook,
+  onConsumedQuickBook,
 }: {
   user: AuthUser;
   onAvatarPress: () => void;
   onRouteChange?: (routeName: string) => void;
   onBookingCreated?: (bookingId: number) => void;
+  quickBook?: QuickBookParams | null;
+  onConsumedQuickBook?: () => void;
 }) {
   const { theme } = useTheme();
+  // Giữ navigation của stack để điều hướng đặt xe nhanh từ chatbot
+  // (handler phải ở ngoài Navigator — Navigator chỉ render Screen).
+  const exploreNavRef = useRef<NativeStackNavigationProp<ExploreStackParamList> | null>(null);
+  const consumedQuickBookRef = useRef<QuickBookParams | null>(null);
   useEffect(() => {
     onRouteChange?.("ExploreMain");
   }, [onRouteChange]);
+  useEffect(() => {
+    if (!quickBook || consumedQuickBookRef.current === quickBook || !exploreNavRef.current) return;
+    consumedQuickBookRef.current = quickBook;
+    if (quickBook.vehicleId) {
+      exploreNavRef.current.navigate("CreateBooking", {
+        vehicleId: quickBook.vehicleId,
+        startDate: quickBook.startAt ?? undefined,
+        endDate: quickBook.endAt ?? undefined,
+        promoCode: quickBook.promoCode ?? undefined,
+        pickupAddress: quickBook.pickupAddress ?? undefined,
+        returnAddress: quickBook.returnAddress ?? undefined,
+        customerNote: quickBook.customerNote ?? undefined,
+      });
+    }
+    onConsumedQuickBook?.();
+  }, [quickBook, onConsumedQuickBook]);
 
   return (
     <Stack.Navigator
@@ -40,13 +67,16 @@ export default function ExploreNavigator({
       }}
     >
       <Stack.Screen name="ExploreMain">
-        {({ navigation }) => (
-          <CustomerExploreScreen
-            user={user}
-            onAvatarPress={onAvatarPress}
-            onSearch={(params) => navigation.navigate("VehicleList", params)}
-          />
-        )}
+        {({ navigation }) => {
+          exploreNavRef.current = navigation;
+          return (
+            <CustomerExploreScreen
+              user={user}
+              onAvatarPress={onAvatarPress}
+              onSearch={(params) => navigation.navigate("VehicleList", params)}
+            />
+          );
+        }}
       </Stack.Screen>
       <Stack.Screen name="VehicleList" component={VehicleListScreen} />
       <Stack.Screen name="VehicleDetail">

@@ -11,6 +11,97 @@ import { parseCmsSections } from "@/features/cms/utils/content";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
+// Shim tương thích cho tests/policy.test.ts (định dạng JSON chính sách cũ).
+// Code mới dùng parseCmsSections từ utils/content; giữ lại export này để test cũ vẫn xanh.
+export { htmlToText } from "@/features/cms/utils/content";
+
+export type PolicyAccordionItem = {
+  id: string;
+  title: string;
+  content: string;
+};
+
+export type PolicySection = {
+  id: string;
+  title: string;
+  content: string[];
+  items?: PolicyAccordionItem[];
+};
+
+function generateSectionId(title: string, fallback: number) {
+  const base = title
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return base || `section-${fallback}`;
+}
+
+function splitParagraphs(text: string): string[] {
+  return String(text ?? "")
+    .split(/\n\s*\n/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function normalizeSection(raw: unknown, ids: Set<string>, fallback: number): PolicySection | null {
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  const title = String(record.title ?? record.Title ?? "");
+  let id = String(record.id ?? record.Id ?? "");
+  if (!id || ids.has(id)) id = generateSectionId(title, fallback);
+  ids.add(id);
+  const type = String(record.type ?? "").toLowerCase();
+  const items = record.items ?? record.Items;
+  if ((type === "accordion" || (record.content == null && record.Content == null && Array.isArray(items))) && Array.isArray(items)) {
+    const used = new Set<string>();
+    const parsed = (items as unknown[])
+      .filter((it): it is Record<string, unknown> => !!it && typeof it === "object")
+      .map((it, index) => {
+        let itemId = String(it.id ?? it.Id ?? "");
+        if (!itemId || used.has(itemId)) itemId = `${id}-item-${index + 1}`;
+        used.add(itemId);
+        return { id: itemId, title: String(it.title ?? it.Title ?? `Mục ${index + 1}`), content: String(it.content ?? it.Content ?? "") };
+      });
+    return { id, title, content: [], items: parsed };
+  }
+  const rawContent = record.content ?? record.Content ?? [];
+  const content = Array.isArray(rawContent)
+    ? rawContent.map((line) => String(line ?? ""))
+    : splitParagraphs(String(rawContent ?? ""));
+  return { id, title, content };
+}
+
+export function parsePolicySections(content: string): PolicySection[] | null {
+  try {
+    const parsed: unknown = JSON.parse(content);
+    const ids = new Set<string>();
+    // Format mảng cũ: [{id,title,content:[]}].
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const sections = parsed
+        .map((item, index) => normalizeSection(item, ids, index + 1))
+        .filter((s): s is PolicySection => s !== null);
+      return sections.length > 0 ? sections : null;
+    }
+    // Format mới: {version,sections:[{id,type,title,content,items}]}.
+    if (parsed && typeof parsed === "object") {
+      const record = parsed as Record<string, unknown>;
+      const nested = record.sections ?? record.Sections;
+      if (Array.isArray(nested) && nested.length > 0) {
+        const sections = nested
+          .map((item, index) => normalizeSection(item, ids, index + 1))
+          .filter((s): s is PolicySection => s !== null);
+        return sections.length > 0 ? sections : null;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 function formatDate(value?: string | null) {
   if (!value) return "";
   const date = new Date(value);

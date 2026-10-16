@@ -1,6 +1,6 @@
+import * as SecureStore from "@/services/deviceStorage";
 import { create } from "zustand";
 import type { AuthSession, AuthState, AuthUser, UserRole } from "@/features/auth/types";
-import { appStorage } from "@/utils/appStorage";
 
 const sessionKey = "movevn.auth.session";
 const activeRoleKey = "movevn.auth.activeRole";
@@ -20,12 +20,12 @@ function persist(session: AuthSession, role: UserRole | null) {
   // Serialize writes so an older refresh cannot overwrite a later logout.
   const operation = storageQueue.then(async () => {
     if (session.token) {
-      await appStorage.setItemAsync(sessionKey, JSON.stringify(session));
+      await SecureStore.setItemAsync(sessionKey, JSON.stringify(session));
     } else {
-      await appStorage.deleteItemAsync(sessionKey);
+      await SecureStore.deleteItemAsync(sessionKey);
     }
-    if (role) await appStorage.setItemAsync(activeRoleKey, role);
-    else await appStorage.deleteItemAsync(activeRoleKey);
+    if (role) await SecureStore.setItemAsync(activeRoleKey, role);
+    else await SecureStore.deleteItemAsync(activeRoleKey);
     useAuthStore.setState({ storageError: null });
   });
   storageQueue = operation.catch(() => {
@@ -71,7 +71,7 @@ export function initializeAuthSession(): Promise<AuthSession> {
   const expected = generation;
   hydration = (async () => {
     const [raw, role] = await Promise.all([
-      appStorage.getItemAsync(sessionKey), appStorage.getItemAsync(activeRoleKey),
+      SecureStore.getItemAsync(sessionKey), SecureStore.getItemAsync(activeRoleKey),
     ]);
     let session: AuthSession = emptySession;
     if (raw) {
