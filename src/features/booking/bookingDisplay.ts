@@ -6,9 +6,16 @@ export const MAX_INSPECTION_PHOTOS = 12;
 export const MAX_INSPECTION_PHOTO_BYTES = 5 * 1024 * 1024;
 
 export const BOOKING_STATUS_LABELS: Record<string, string> = {
-  Pending: "Chờ duyệt", Approved: "Chờ đặt cọc", DepositPaid: "Đã đặt cọc",
-  Confirmed: "Đã xác nhận", InProgress: "Đang thuê", Completed: "Hoàn thành",
-  Rejected: "Đã từ chối", Cancelled: "Đã hủy",
+  Pending: "Chờ duyệt",
+  Approved: "Đã duyệt",
+  Rejected: "Đã từ chối",
+  Cancelled: "Đã hủy",
+  DepositPaid: "Đã đặt cọc",
+  Confirmed: "Đã xác nhận",
+  InProgress: "Đang nhận xe",
+  Returning: "Đang trả xe",
+  Returned: "Đã trả xe, chờ nhận",
+  Completed: "Hoàn thành",
 };
 
 export function parseServerDate(value: string): Date {

@@ -28,9 +28,9 @@ export const BOOKING_STATUS_LABELS: Record<string, string> = {
   Cancelled: "Đã hủy",
   DepositPaid: "Đã đặt cọc",
   Confirmed: "Đã xác nhận",
-  InProgress: "Đang thuê",
+  InProgress: "Đang nhận xe",
   Returning: "Đang trả xe",
-  Returned: "Đã trả, chờ nhận",
+  Returned: "Đã trả xe, chờ nhận",
   Completed: "Hoàn thành",
 };
 

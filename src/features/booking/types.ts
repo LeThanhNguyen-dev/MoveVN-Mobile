@@ -51,6 +51,39 @@ export interface BookingResponse {
   createdAt: string;
   updatedAt: string;
   statusHistory: BookingStatusHistoryDto[];
+  pricingDetails?: BookingPricingDetailResponse[];
+  surchargeTerms?: BookingSurchargeTermResponse[];
+}
+
+export interface BookingPricingDetailResponse {
+  rentalDate: string;
+  basePrice: number;
+  dateAdjustment: number;
+  demandRate: number;
+  demandAdjustment: number;
+  idleDays: number;
+  idleAdjustment: number;
+  totalAdjustment: number;
+  finalMultiplier: number;
+  finalDailyPrice: number;
+  appliedRuleNames: string[];
+}
+
+export interface BookingSurchargeTermResponse {
+  id: number;
+  feeType: string;
+  name: string;
+  description?: string;
+  calculationMethod: string;
+  unitPrice: number;
+  includedKm?: number;
+  allowanceScope?: string;
+  lateGraceHours?: number;
+  lateDayThresholdHours?: number;
+  lateDailyRate?: number;
+  maxAmount?: number;
+  createdAt: string;
+  vehicleSurchargePolicyId?: number;
 }
 
 export interface BookingStatusHistoryDto {
