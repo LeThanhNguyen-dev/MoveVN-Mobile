@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { WalletTransactionDto } from "@/features/wallets/types";
@@ -10,8 +11,8 @@ function Row({ label, value, accent }: { label: string; value: string; accent?: 
   const { theme } = useTheme();
   return (
     <View style={detailRowStyles.row}>
-      <Text style={[detailRowStyles.label, { color: theme.muted }]}>{label}</Text>
-      <Text style={[detailRowStyles.value, { color: accent ?? theme.text }]}>{value}</Text>
+      <AppText style={[detailRowStyles.label, { color: theme.muted }]}>{label}</AppText>
+      <AppText style={[detailRowStyles.value, { color: accent ?? theme.text }]}>{value}</AppText>
     </View>
   );
 }
@@ -39,10 +40,10 @@ export default function TxDetailSheet({
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
           {tx && (
             <>
-              <Text style={styles.title}>{txTypeLabel(tx.type)}</Text>
-              <Text style={[styles.amount, incoming ? styles.amountIn : styles.amountOut]}>
+              <AppText display style={styles.title}>{txTypeLabel(tx.type)}</AppText>
+              <AppText style={[styles.amount, incoming ? styles.amountIn : styles.amountOut]}>
                 {incoming ? "+" : "−"}{formatMoney(Math.abs(tx.amount))}
-              </Text>
+              </AppText>
               <View style={styles.divider} />
               <Row label="Thời gian" value={formatDateTime(tx.createdAt)} />
               <Row label="Số dư sau GD" value={formatMoney(tx.balanceAfter)} accent={theme.brand} />
@@ -50,7 +51,7 @@ export default function TxDetailSheet({
               {tx.status ? <Row label="Trạng thái" value={tx.status} /> : null}
               {tx.note ? <Row label="Ghi chú" value={tx.note} /> : null}
               <Pressable onPress={onClose} style={styles.closeButton}>
-                <Text style={styles.closeText}>Đóng</Text>
+                <AppText style={styles.closeText}>Đóng</AppText>
               </Pressable>
             </>
           )}

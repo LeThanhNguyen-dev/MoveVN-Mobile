@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ImageSource } from "expo-image";
 import { ArrowLeft, ChevronDown } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import CmsHero, { CMS_FALLBACK_BANNER_IMAGE } from "@/features/cms/components/CmsHero";
 import CmsHtmlView from "@/features/cms/components/CmsHtmlView";
 import ImageViewer from "@/features/cms/components/ImageViewer";
@@ -156,27 +157,27 @@ export default function PolicyDetailScreen({
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text numberOfLines={1} style={styles.topBarTitle}>
+        <AppText display numberOfLines={1} style={styles.topBarTitle}>
           {groupLabel || "Điều khoản & Chính sách"}
-        </Text>
+        </AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {page === undefined ? (
           <View style={styles.stateCard}>
-            <Text style={styles.muted}>Đang tải nội dung...</Text>
+            <AppText style={styles.muted}>Đang tải nội dung...</AppText>
           </View>
         ) : error ? (
           <View style={styles.stateCard}>
-            <Text style={styles.error}>{error}</Text>
+            <AppText style={styles.error}>{error}</AppText>
             <Pressable accessibilityRole="button" onPress={() => { void load(); }} style={styles.retryButton}>
-              <Text style={styles.retryText}>Thử lại</Text>
+              <AppText style={styles.retryText}>Thử lại</AppText>
             </Pressable>
           </View>
         ) : page === null ? (
           <View style={styles.stateCard}>
-            <Text style={styles.muted}>Không tìm thấy nội dung.</Text>
+            <AppText style={styles.muted}>Không tìm thấy nội dung.</AppText>
           </View>
         ) : (
           <>
@@ -189,7 +190,7 @@ export default function PolicyDetailScreen({
 
             {sections.length === 0 ? (
               <View style={styles.stateCard}>
-                <Text style={styles.muted}>Nội dung đang được cập nhật.</Text>
+                <AppText style={styles.muted}>Nội dung đang được cập nhật.</AppText>
               </View>
             ) : (
               <View style={styles.body}>
@@ -243,7 +244,7 @@ function ReaderSection({
         ) : null}
         {expanded || !section.title ? section.items.map((item) => (
           <View key={item.id} style={styles.accordionItem}>
-            {item.title ? <Text style={styles.subHeading}>{item.title}</Text> : null}
+            {item.title ? <AppText display style={styles.subHeading}>{item.title}</AppText> : null}
             {item.content ? <CmsHtmlView fontSize={15} html={item.content} onImagePress={onImagePress} /> : null}
           </View>
         )) : null}
@@ -292,7 +293,7 @@ function SectionToggle({
     >
       <View style={styles.headingRow}>
         <View style={styles.headingAccent} />
-        <Text style={styles.heading}>{title}</Text>
+        <AppText display style={styles.heading}>{title}</AppText>
       </View>
       <ChevronDown
         color={theme.muted}

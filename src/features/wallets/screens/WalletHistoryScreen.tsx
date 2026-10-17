@@ -6,10 +6,10 @@ import {
   ScrollView,
   SectionList,
   StyleSheet,
-  Text,
   TextInput,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import TxRow from "@/features/wallets/components/TxRow";
@@ -102,9 +102,9 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
           onPress={() => setSub("tx")}
           style={[styles.subButton, sub === "tx" && styles.subActive]}
         >
-          <Text style={[styles.subText, sub === "tx" && styles.subTextActive]}>
+          <AppText style={[styles.subText, sub === "tx" && styles.subTextActive]}>
             Giao dịch{transactions.length > 0 ? ` (${txTotal})` : ""}
-          </Text>
+          </AppText>
         </Pressable>
         <Pressable
           accessibilityRole="tab"
@@ -112,9 +112,9 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
           onPress={() => setSub("withdraw")}
           style={[styles.subButton, sub === "withdraw" && styles.subActive]}
         >
-          <Text style={[styles.subText, sub === "withdraw" && styles.subTextActive]}>
+          <AppText style={[styles.subText, sub === "withdraw" && styles.subTextActive]}>
             Rút tiền{withdrawals.length > 0 ? ` (${wdTotal})` : ""}
-          </Text>
+          </AppText>
         </Pressable>
       </View>
 
@@ -136,9 +136,9 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
                     onPress={() => void setTxTypeFilter(c.key)}
                     style={[styles.chip, txType === c.key && styles.chipActive]}
                   >
-                    <Text style={[styles.chipText, txType === c.key && styles.chipTextActive]}>
+                    <AppText style={[styles.chipText, txType === c.key && styles.chipTextActive]}>
                       {c.label}
-                    </Text>
+                    </AppText>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -152,7 +152,7 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
             </View>
           }
           renderSectionHeader={({ section }) => (
-            <Text style={styles.monthTitle}>{section.title}</Text>
+            <AppText display style={styles.monthTitle}>{section.title}</AppText>
           )}
           renderItem={({ item }) => (
             <Pressable onPress={() => setSelectedTx(item)} style={styles.card}>
@@ -160,16 +160,16 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
             </Pressable>
           )}
           ListEmptyComponent={
-            <Text style={styles.muted}>
+            <AppText style={styles.muted}>
               {keyword.trim() ? "Không tìm thấy giao dịch phù hợp." : "Chưa có giao dịch nào."}
-            </Text>
+            </AppText>
           }
           ListFooterComponent={
             !keyword.trim() && searched.length < txTotal ? (
               <Pressable onPress={loadMoreTx} disabled={loadingMore} style={styles.moreButton}>
-                <Text style={styles.moreText}>
+                <AppText style={styles.moreText}>
                   {loadingMore ? "Đang tải..." : `Xem thêm (${txTotal - searched.length})`}
-                </Text>
+                </AppText>
               </Pressable>
             ) : null
           }
@@ -187,13 +187,13 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
               <WithdrawalRow w={item} onCancel={handleCancelWithdrawal} />
             </View>
           )}
-          ListEmptyComponent={<Text style={styles.muted}>Chưa có yêu cầu rút tiền nào.</Text>}
+          ListEmptyComponent={<AppText style={styles.muted}>Chưa có yêu cầu rút tiền nào.</AppText>}
           ListFooterComponent={
             withdrawals.length < wdTotal ? (
               <Pressable onPress={loadMoreWd} disabled={loadingMoreWd} style={styles.moreButton}>
-                <Text style={styles.moreText}>
+                <AppText style={styles.moreText}>
                   {loadingMoreWd ? "Đang tải..." : `Xem thêm (${wdTotal - withdrawals.length})`}
-                </Text>
+                </AppText>
               </Pressable>
             ) : null
           }

@@ -7,10 +7,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -49,9 +49,9 @@ export default function ImageViewer({
   >
       <SafeAreaView style={styles.safe}>
         <View style={styles.topBar}>
-          <Text numberOfLines={1} style={styles.topBarTitle}>
+          <AppText display numberOfLines={1} style={styles.topBarTitle}>
             {title}
-          </Text>
+          </AppText>
           <Pressable
             accessibilityLabel="Đóng xem ảnh"
             accessibilityRole="button"
@@ -96,7 +96,7 @@ export default function ImageViewer({
 
           {failed ? (
             <View pointerEvents="none" style={styles.centerOverlay}>
-              <Text style={styles.errorText}>Không tải được ảnh.</Text>
+              <AppText style={styles.errorText}>Không tải được ảnh.</AppText>
             </View>
           ) : null}
         </View>

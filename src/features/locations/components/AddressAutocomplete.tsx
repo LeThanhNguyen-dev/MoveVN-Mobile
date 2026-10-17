@@ -1,6 +1,7 @@
 import { MapPin, X } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { GoongPlacePrediction } from "@/features/locations/types";
 import {
   autocompleteGoongPlaces,
@@ -105,7 +106,7 @@ export default function AddressAutocomplete({
 
   return (
     <View style={styles.wrap}>
-      {showLabel ? <Text style={styles.label}>{label}</Text> : null}
+      {showLabel ? <AppText style={styles.label}>{label}</AppText> : null}
       <View style={styles.searchBox}>
         <MapPin color={theme.placeholder} size={15} />
         <TextInput
@@ -124,19 +125,19 @@ export default function AddressAutocomplete({
           </Pressable>
         ) : null}
       </View>
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
       {predictions.length > 0 ? (
         <View style={styles.placeList}>
           {predictions.map((p) => (
             <Pressable key={p.placeId} onPress={() => void handleSelect(p)} style={styles.placeItem}>
               <MapPin color={theme.brand} size={15} />
               <View style={styles.placeText}>
-                <Text numberOfLines={1} style={styles.placeMain}>
+                <AppText numberOfLines={1} style={styles.placeMain}>
                   {p.structuredFormatting?.mainText || p.description}
-                </Text>
-                <Text numberOfLines={1} style={styles.placeSub}>
+                </AppText>
+                <AppText numberOfLines={1} style={styles.placeSub}>
                   {p.structuredFormatting?.secondaryText || ""}
-                </Text>
+                </AppText>
               </View>
             </Pressable>
           ))}

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { ShieldAlert } from "lucide-react-native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -15,17 +16,17 @@ export default function RoleNotSupportedScreen({ role }: { role: UserRole }) {
   return (
     <View style={styles.screen}>
       <ShieldAlert color={theme.brand} size={48} />
-      <Text style={styles.title}>Vai trò chưa hỗ trợ trên app</Text>
-      <Text style={styles.muted}>
+      <AppText display style={styles.title}>Vai trò chưa hỗ trợ trên app</AppText>
+      <AppText style={styles.muted}>
         Tài khoản {user?.email ?? ""} có quyền {role}. Ứng dụng di động hiện chỉ phục vụ Khách thuê và
         Chủ xe — vui lòng dùng bản web để tiếp tục.
-      </Text>
+      </AppText>
       <View style={styles.notifications}>
-        <Text style={styles.muted}>Thông báo của bạn</Text>
+        <AppText style={styles.muted}>Thông báo của bạn</AppText>
         <NotificationBell />
       </View>
       <Pressable onPress={() => clearSession()} style={styles.button}>
-        <Text style={styles.buttonText}>Đăng xuất</Text>
+        <AppText style={styles.buttonText}>Đăng xuất</AppText>
       </Pressable>
     </View>
   );

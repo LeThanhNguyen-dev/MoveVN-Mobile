@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Clock, ImagePlus, RefreshCw } from "lucide-react-native";
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { driverLicenseStatusLabel } from "@/features/driverLicenses/driverLicenseDisplay";
 import {
   createApplication,
@@ -147,7 +148,7 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text style={styles.topBarTitle}>Xác minh CCCD</Text>
+        <AppText display style={styles.topBarTitle}>Xác minh CCCD</AppText>
         <Pressable
           accessibilityLabel="Tải lại trạng thái"
           accessibilityRole="button"
@@ -161,25 +162,25 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Trạng thái xác minh</Text>
+          <AppText display style={styles.cardTitle}>Trạng thái xác minh</AppText>
           {loadingStatus ? (
             <View style={styles.center}>
               <ActivityIndicator color={theme.brand} size="large" />
-              <Text style={styles.muted}>Đang tải trạng thái...</Text>
+              <AppText style={styles.muted}>Đang tải trạng thái...</AppText>
             </View>
           ) : statusError || !application ? (
             <View style={styles.stack}>
-              {statusError ? <Text style={styles.error}>{statusError}</Text> : null}
+              {statusError ? <AppText style={styles.error}>{statusError}</AppText> : null}
               <Pressable accessibilityRole="button" onPress={() => { void loadStatus(); }} style={styles.outlineButton}>
                 <RefreshCw color={theme.brand} size={18} strokeWidth={2.3} />
-                <Text style={styles.pickText}>Thử lại</Text>
+                <AppText style={styles.pickText}>Thử lại</AppText>
               </Pressable>
             </View>
           ) : (
             <View style={styles.statusBox}>
               <StatusBadge status={verified ? "Verified" : requestStatus} />
               <View style={styles.detailLine}>
-                <Text style={styles.detailLabel}>Số CCCD</Text>
+                <AppText style={styles.detailLabel}>Số CCCD</AppText>
                 <MaskedDocumentValue
                   canReveal={verified}
                   documentType="CCCD"
@@ -194,7 +195,7 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
           {showPendingNotice ? (
             <View style={styles.infoBox}>
               <Clock color={theme.brand} size={18} strokeWidth={2.3} />
-              <Text style={styles.infoText}>Ảnh CCCD của bạn đang chờ nhân viên kiểm tra. Vui lòng quay lại sau.</Text>
+              <AppText style={styles.infoText}>Ảnh CCCD của bạn đang chờ nhân viên kiểm tra. Vui lòng quay lại sau.</AppText>
             </View>
           ) : null}
 
@@ -202,30 +203,30 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
           && (requestStatus === "Rejected" || requestStatus === "Failed" || requestStatus === "NeedMoreInfo") ? (
             <View style={styles.warnBox}>
               <AlertTriangle color={theme.danger} size={18} strokeWidth={2.3} />
-              <Text style={styles.warnText}>
+              <AppText style={styles.warnText}>
                 {driverLicenseStatusLabel[requestStatus] ?? requestStatus}: vui lòng chụp lại ảnh rõ hơn.
-              </Text>
+              </AppText>
             </View>
           ) : null}
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Nộp ảnh CCCD mới</Text>
-          <Text style={styles.hint}>Chụp mặt trước CCCD rõ nét, dung lượng tối đa 5MB (JPG/PNG/WebP).</Text>
+          <AppText display style={styles.cardTitle}>Nộp ảnh CCCD mới</AppText>
+          <AppText style={styles.hint}>Chụp mặt trước CCCD rõ nét, dung lượng tối đa 5MB (JPG/PNG/WebP).</AppText>
 
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.preview} />
           ) : (
             <View style={styles.previewPlaceholder}>
               <ImagePlus color={theme.faint} size={30} strokeWidth={2} />
-              <Text style={styles.muted}>Chưa có ảnh nào được chọn</Text>
+              <AppText style={styles.muted}>Chưa có ảnh nào được chọn</AppText>
             </View>
           )}
 
           {processing ? (
             <View style={styles.processingRow}>
               <ActivityIndicator color={theme.brand} size="small" />
-              <Text style={styles.muted}>Đang xử lý ảnh...</Text>
+              <AppText style={styles.muted}>Đang xử lý ảnh...</AppText>
             </View>
           ) : null}
 
@@ -237,7 +238,7 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
               style={[styles.pickButton, (busy || processing) && styles.disabled]}
             >
               <Camera color={theme.brand} size={18} strokeWidth={2.3} />
-              <Text style={styles.pickText}>Chụp ảnh</Text>
+              <AppText style={styles.pickText}>Chụp ảnh</AppText>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -246,15 +247,15 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
               style={[styles.pickButton, (busy || processing) && styles.disabled]}
             >
               <ImagePlus color={theme.brand} size={18} strokeWidth={2.3} />
-              <Text style={styles.pickText}>Thư viện</Text>
+              <AppText style={styles.pickText}>Thư viện</AppText>
             </Pressable>
           </View>
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <AppText style={styles.error}>{error}</AppText> : null}
           {notice ? (
             <View style={styles.successBox}>
               <CheckCircle2 color={theme.success} size={18} strokeWidth={2.3} />
-              <Text style={styles.successText}>{notice}</Text>
+              <AppText style={styles.successText}>{notice}</AppText>
             </View>
           ) : null}
 
@@ -264,7 +265,7 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
             onPress={() => { void handleSubmit(); }}
             style={[styles.submitButton, submitDisabled && styles.disabled]}
           >
-            <Text style={styles.submitText}>{busy ? "Đang gửi..." : "Gửi xác minh"}</Text>
+            <AppText style={styles.submitText}>{busy ? "Đang gửi..." : "Gửi xác minh"}</AppText>
           </Pressable>
         </View>
       </ScrollView>
@@ -284,14 +285,14 @@ function StatusBadge({ status }: { status: string }) {
         verified ? styles.badgeVerified : pending ? styles.badgePending : styles.badgeUnverified,
       ]}
     >
-      <Text
+      <AppText
         style={[
           styles.badgeText,
           verified ? styles.badgeTextVerified : pending ? styles.badgeTextPending : styles.badgeTextUnverified,
         ]}
       >
         {driverLicenseStatusLabel[status] ?? status}
-      </Text>
+      </AppText>
     </View>
   );
 }
@@ -301,8 +302,8 @@ function DetailLine({ label, value }: { label: string; value: string }) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.detailLine}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
+      <AppText style={styles.detailLabel}>{label}</AppText>
+      <AppText style={styles.detailValue}>{value}</AppText>
     </View>
   );
 }

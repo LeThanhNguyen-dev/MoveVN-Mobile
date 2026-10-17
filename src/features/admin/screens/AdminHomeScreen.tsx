@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { LogOut, ScanLine, ShieldCheck, UserRound } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OcrTestScreen from "@/features/admin/screens/OcrTestScreen";
 import { signOut } from "@/features/auth/services/authSession";
@@ -33,8 +34,8 @@ export default function AdminHomeScreen({ role, user }: { role: UserRole | null;
             <UserRound color={theme.brand} size={24} />
           </View>
           <View>
-            <Text style={styles.eyebrow}>{role ? roleLabels[role] : "Tài khoản"}</Text>
-            <Text style={styles.name}>{user.fullName}</Text>
+            <AppText style={styles.eyebrow}>{role ? roleLabels[role] : "Tài khoản"}</AppText>
+            <AppText style={styles.name}>{user.fullName}</AppText>
           </View>
         </View>
 
@@ -42,23 +43,23 @@ export default function AdminHomeScreen({ role, user }: { role: UserRole | null;
           <View style={styles.heroIcon}>
             <ShieldCheck color={theme.onBrand} size={31} />
           </View>
-          <Text style={styles.title}>Khu vực vận hành</Text>
-          <Text style={styles.description}>
+          <AppText display style={styles.title}>Khu vực vận hành</AppText>
+          <AppText style={styles.description}>
             Chạy thử OCR CCCD, GPLX và cavet mà không ảnh hưởng dữ liệu người dùng.
-          </Text>
+          </AppText>
         </View>
 
         <Pressable accessibilityRole="button" onPress={() => setShowOcrTest(true)} style={styles.action}>
           <ScanLine color={theme.onBrand} size={19} />
-          <Text style={styles.actionText}>Kiểm tra OCR</Text>
+          <AppText style={styles.actionText}>Kiểm tra OCR</AppText>
         </Pressable>
         {!isAdmin ? (
-          <Text style={styles.hint}>Tài khoản Staff chỉ kiểm tra được CCCD và GPLX (Cavet cần quyền Admin).</Text>
+          <AppText style={styles.hint}>Tài khoản Staff chỉ kiểm tra được CCCD và GPLX (Cavet cần quyền Admin).</AppText>
         ) : null}
 
         <Pressable accessibilityRole="button" onPress={() => { void signOut(); }} style={styles.logout}>
           <LogOut color={theme.muted} size={18} />
-          <Text style={styles.logoutText}>Đăng xuất</Text>
+          <AppText style={styles.logoutText}>Đăng xuất</AppText>
         </Pressable>
       </View>
     </SafeAreaView>

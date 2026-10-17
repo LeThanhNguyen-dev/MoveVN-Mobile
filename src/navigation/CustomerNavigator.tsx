@@ -122,6 +122,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onBookingCreated={goToTrip}
                 quickBook={quickBook}
                 onConsumedQuickBook={consumeQuickBook}
+                onGoDeals={() => setActiveTab("deals")}
               />
             ) : activeTab === "trips" ? (
               <TripsNavigator

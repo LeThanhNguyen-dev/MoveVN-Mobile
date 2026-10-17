@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
+import { PanResponder, Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
@@ -227,8 +228,8 @@ export function SliderCaption({ left, right }: { left: string; right: string }) 
   const { theme } = useTheme();
   return (
     <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 2 }}>
-      <Text style={{ color: theme.faint, fontSize: 10, fontWeight: "600" }}>{left}</Text>
-      <Text style={{ color: theme.faint, fontSize: 10, fontWeight: "600" }}>{right}</Text>
+      <AppText style={{ color: theme.faint, fontSize: 10, fontWeight: "600" }}>{left}</AppText>
+      <AppText style={{ color: theme.faint, fontSize: 10, fontWeight: "600" }}>{right}</AppText>
     </View>
   );
 }

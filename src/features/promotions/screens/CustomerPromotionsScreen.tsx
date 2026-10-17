@@ -9,11 +9,11 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
   useWindowDimensions,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { DealsStackParamList } from "@/navigation/types";
@@ -73,38 +73,38 @@ function PromotionTicketCard({ item, onOpen }: { item: Promotion; onOpen: (p: Pr
       <View style={styles.ticketBody}>
         <View style={styles.badgeRow}>
           <View style={styles.liveBadge}>
-            <Text style={styles.liveBadgeText}>🔴 Đang diễn ra</Text>
+            <AppText style={styles.liveBadgeText}>🔴 Đang diễn ra</AppText>
           </View>
           {expiringSoon ? (
             <View style={styles.soonBadge}>
-              <Text style={styles.soonBadgeText}>⏰ Sắp hết hạn</Text>
+              <AppText style={styles.soonBadgeText}>⏰ Sắp hết hạn</AppText>
             </View>
           ) : null}
         </View>
 
-        <Text style={styles.ticketName} numberOfLines={1}>
+        <AppText style={styles.ticketName} numberOfLines={1}>
           {item.name}
-        </Text>
+        </AppText>
         {!!item.description && (
-          <Text style={styles.ticketDesc} numberOfLines={2}>
+          <AppText style={styles.ticketDesc} numberOfLines={2}>
             {item.description}
-          </Text>
+          </AppText>
         )}
 
         <View style={styles.ticketMetaRow}>
           <View style={styles.metaItem}>
             <Car color={theme.mode === "dark" ? "#A1A1AA" : "#94A3B8"} size={13} />
-            <Text style={styles.metaText}>{formatVehicleLabel(item.vehicleType)}</Text>
+            <AppText style={styles.metaText}>{formatVehicleLabel(item.vehicleType)}</AppText>
           </View>
           {!!endLabel && (
             <View style={styles.metaItem}>
               <CalendarDays color={theme.mode === "dark" ? "#A1A1AA" : "#94A3B8"} size={13} />
-              <Text style={styles.metaText}>📅 HSD: {endLabel}</Text>
+              <AppText style={styles.metaText}>📅 HSD: {endLabel}</AppText>
             </View>
           )}
         </View>
 
-        <Text style={styles.ticketLink}>Xem ưu đãi →</Text>
+        <AppText style={styles.ticketLink}>Xem ưu đãi →</AppText>
       </View>
     </Pressable>
   );
@@ -163,9 +163,9 @@ function HeroCarousel({
               colors={["transparent", "rgba(0,0,0,0.6)"]}
               style={styles.heroShade}
             />
-            <Text style={styles.heroTitle} numberOfLines={1}>
+            <AppText display style={styles.heroTitle} numberOfLines={1}>
               {s.title}
-            </Text>
+            </AppText>
           </Pressable>
         ))}
       </ScrollView>
@@ -269,11 +269,11 @@ export default function CustomerPromotionsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Khuyến mãi</Text>
-        <Text style={styles.pageDesc}>
+        <AppText display style={styles.pageTitle}>Khuyến mãi</AppText>
+        <AppText style={styles.pageDesc}>
           Khám phá các ưu đãi mới nhất từ MoveVN.
           {!loading && !error && items.length > 0 ? ` Hiện có ${items.length} chương trình đang diễn ra.` : ""}
-        </Text>
+        </AppText>
 
         <DealsSegmentedNav />
 
@@ -299,7 +299,7 @@ export default function CustomerPromotionsScreen() {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: active }}
               >
-                <Text style={[styles.filterText, active && styles.filterTextActive]}>{f.label}</Text>
+                <AppText style={[styles.filterText, active && styles.filterTextActive]}>{f.label}</AppText>
               </Pressable>
             );
           })}
@@ -311,18 +311,18 @@ export default function CustomerPromotionsScreen() {
           </View>
         ) : error ? (
           <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
+            <AppText style={styles.errorText}>{error}</AppText>
           </View>
         ) : items.length === 0 ? (
           <View style={styles.emptyBox}>
             <TicketPercent color={theme.faint} size={44} />
-            <Text style={styles.emptyTitle}>Chưa có ưu đãi</Text>
-            <Text style={styles.emptyDesc}>Hiện tại chưa có chương trình nào đang diễn ra.</Text>
+            <AppText display style={styles.emptyTitle}>Chưa có ưu đãi</AppText>
+            <AppText style={styles.emptyDesc}>Hiện tại chưa có chương trình nào đang diễn ra.</AppText>
             <Pressable
               onPress={() => navigation.navigate("VoucherHunt")}
               style={styles.emptyLinkTouch}
             >
-              <Text style={styles.emptyLink}>Săn voucher ngay →</Text>
+              <AppText style={styles.emptyLink}>Săn voucher ngay →</AppText>
             </Pressable>
           </View>
         ) : (
@@ -333,12 +333,12 @@ export default function CustomerPromotionsScreen() {
 
             {filtered.length === 0 ? (
               <View style={styles.emptyBox}>
-                <Text style={styles.emptyTitle}>Không tìm thấy ưu đãi phù hợp</Text>
-                <Text style={styles.emptyDesc}>Thử thay đổi từ khóa hoặc bộ lọc.</Text>
+                <AppText display style={styles.emptyTitle}>Không tìm thấy ưu đãi phù hợp</AppText>
+                <AppText style={styles.emptyDesc}>Thử thay đổi từ khóa hoặc bộ lọc.</AppText>
               </View>
             ) : (
               <>
-                <Text style={styles.listTitle}>Các ưu đãi đang diễn ra</Text>
+                <AppText display style={styles.listTitle}>Các ưu đãi đang diễn ra</AppText>
                 <View style={styles.ticketList}>
                   {filtered.map((p) => (
                     <MemoTicketCard key={p.id} item={p} onOpen={(item) => setSelected(toDetailSlide(item))} />

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Clipboard from "expo-clipboard";
 import { Check, Copy, Eye, EyeOff, KeyRound } from "lucide-react-native";
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import PinForgotModal from "@/features/pin/components/PinForgotModal";
 import PinSetupModal from "@/features/pin/components/PinSetupModal";
 import PinVerifyModal from "@/features/pin/components/PinVerifyModal";
@@ -100,11 +101,11 @@ export default function MaskedDocumentValue({
     <View style={styles.wrap}>
       {isRevealed && plaintext !== null ? (
         <View style={styles.revealedWrap}>
-          <Text style={styles.plaintext}>{plaintext}</Text>
+          <AppText style={styles.plaintext}>{plaintext}</AppText>
           <View style={styles.revealedRow}>
-            <Text numberOfLines={1} style={styles.countdown}>
+            <AppText numberOfLines={1} style={styles.countdown}>
               Đang hiển thị · {secondsLeft}s
-            </Text>
+            </AppText>
             <Pressable
               accessibilityLabel="Sao chép số giấy tờ"
               accessibilityRole="button"
@@ -131,7 +132,7 @@ export default function MaskedDocumentValue({
         </View>
       ) : (
         <View style={styles.row}>
-          <Text style={styles.masked}>{maskedValue ?? "••••••"}</Text>
+          <AppText style={styles.masked}>{maskedValue ?? "••••••"}</AppText>
           <Pressable
             accessibilityLabel="Hiển thị số giấy tờ"
             accessibilityRole="button"
@@ -146,7 +147,7 @@ export default function MaskedDocumentValue({
           </Pressable>
         </View>
       )}
-      {hintVisible && !isRevealed ? <Text style={styles.hint}>{eyeTitle}</Text> : null}
+      {hintVisible && !isRevealed ? <AppText style={styles.hint}>{eyeTitle}</AppText> : null}
 
       {mode === "setup" ? (
         <PinSetupModal
@@ -187,17 +188,17 @@ export default function MaskedDocumentValue({
             <View style={styles.noticeIcon}>
               <KeyRound color={theme.brand} size={22} strokeWidth={2.3} />
             </View>
-            <Text style={styles.noticeTitle}>Cần thiết lập mã PIN</Text>
-            <Text style={styles.noticeDescription}>
+            <AppText display style={styles.noticeTitle}>Cần thiết lập mã PIN</AppText>
+            <AppText style={styles.noticeDescription}>
               Bạn cần thiết lập mã PIN để xem thông tin giấy tờ này.
-            </Text>
+            </AppText>
             <View style={styles.noticeActions}>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => setShowSetupNotice(false)}
                 style={styles.secondaryButton}
               >
-                <Text style={styles.secondaryText}>Để sau</Text>
+                <AppText style={styles.secondaryText}>Để sau</AppText>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
@@ -207,7 +208,7 @@ export default function MaskedDocumentValue({
                 }}
                 style={styles.primaryButton}
               >
-                <Text style={styles.primaryText}>Thiết lập ngay</Text>
+                <AppText style={styles.primaryText}>Thiết lập ngay</AppText>
               </Pressable>
             </View>
           </View>

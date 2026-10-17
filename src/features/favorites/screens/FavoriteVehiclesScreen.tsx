@@ -6,9 +6,9 @@ import {
   Pressable,
   RefreshControl,
   StyleSheet,
-  Text,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { useFocusEffect } from "@react-navigation/native";
 import { ArrowLeft, Heart, RefreshCw } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
@@ -75,12 +75,12 @@ export default function FavoriteVehiclesScreen({
           <ArrowLeft color={theme.text} size={23} />
         </Pressable>
         <View style={styles.heading}>
-          <Text style={styles.title}>Xe yêu thích</Text>
-          <Text style={styles.subtitle}>
+          <AppText display style={styles.title}>Xe yêu thích</AppText>
+          <AppText style={styles.subtitle}>
             {state.listLoaded
               ? `${state.totalCount} xe đang hiển thị`
               : "Những chiếc xe bạn muốn thuê"}
-          </Text>
+          </AppText>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -100,14 +100,14 @@ export default function FavoriteVehiclesScreen({
             void refreshFavoriteIds();
           }}
         >
-          <Text style={styles.error}>{state.idsError}</Text>
+          <AppText style={styles.error}>{state.idsError}</AppText>
         </Pressable>
       ) : null}
       {state.listError ? (
         <View style={styles.errorBox}>
-          <Text accessibilityRole="alert" style={styles.error}>
+          <AppText accessibilityRole="alert" style={styles.error}>
             {state.listError}
-          </Text>
+          </AppText>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Thử tải lại xe yêu thích"
@@ -118,14 +118,14 @@ export default function FavoriteVehiclesScreen({
             }}
             style={styles.retry}
           >
-            <Text style={styles.link}>Thử lại</Text>
+            <AppText style={styles.link}>Thử lại</AppText>
           </Pressable>
         </View>
       ) : null}
       {state.items.length ? (
-        <Text style={styles.hint}>
+        <AppText style={styles.hint}>
           Giá tham khảo. Mở chi tiết để chọn thời gian và kiểm tra lịch xe.
-        </Text>
+        </AppText>
       ) : null}
       <FlatList
         data={state.items}
@@ -147,25 +147,25 @@ export default function FavoriteVehiclesScreen({
           state.loading || (!state.listLoaded && !state.listError) ? (
             <View style={styles.empty}>
               <ActivityIndicator size="large" color={theme.brand} />
-              <Text style={styles.subtitle}>Đang tải xe yêu thích…</Text>
+              <AppText style={styles.subtitle}>Đang tải xe yêu thích…</AppText>
             </View>
           ) : state.listError ? null : (
             <View style={styles.empty}>
               <View style={styles.emptyIcon}>
                 <Heart size={34} color={theme.brand} />
               </View>
-              <Text style={styles.emptyTitle}>Chưa có xe yêu thích</Text>
-              <Text style={styles.emptyText}>
+              <AppText display style={styles.emptyTitle}>Chưa có xe yêu thích</AppText>
+              <AppText style={styles.emptyText}>
                 Nhấn biểu tượng trái tim trên một chiếc xe để lưu tại đây. Danh
                 sách hiển thị các xe đã được duyệt và còn công khai.
-              </Text>
+              </AppText>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Khám phá xe để yêu thích"
                 onPress={onExplore}
                 style={styles.primary}
               >
-                <Text style={styles.primaryText}>Khám phá xe</Text>
+                <AppText style={styles.primaryText}>Khám phá xe</AppText>
               </Pressable>
             </View>
           )
@@ -184,7 +184,7 @@ export default function FavoriteVehiclesScreen({
               {state.loadingMore ? (
                 <ActivityIndicator color={theme.brand} />
               ) : (
-                <Text style={styles.link}>Xem thêm xe</Text>
+                <AppText style={styles.link}>Xem thêm xe</AppText>
               )}
             </Pressable>
           ) : null

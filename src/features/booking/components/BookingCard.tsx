@@ -1,7 +1,8 @@
 import { Image } from "expo-image";
 import { CalendarCheck, CalendarClock, Car, ChevronRight, MapPin } from "lucide-react-native";
 import { memo, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { BookingResponse } from "@/features/booking/types";
@@ -71,46 +72,46 @@ function BookingCard({ booking, variant, onPress }: BookingCardProps) {
           </View>
           <View style={styles.daysPill}>
             <CalendarClock color={theme.brand} size={12} />
-            <Text style={styles.daysPillText}>{booking.totalDays} ngày</Text>
+            <AppText style={styles.daysPillText}>{booking.totalDays} ngày</AppText>
           </View>
         </View>
 
         <View style={styles.info}>
           <View style={styles.topRow}>
-            <Text numberOfLines={1} style={styles.code}>
+            <AppText numberOfLines={1} style={styles.code}>
               {(booking.bookingCode ?? "").toUpperCase()}
-            </Text>
+            </AppText>
             <BookingStatusBadge status={booking.status} />
           </View>
 
-          <Text numberOfLines={1} style={styles.vehicle}>
+          <AppText numberOfLines={1} style={styles.vehicle}>
             {booking.vehicleName ?? `Xe #${booking.vehicleId}`}
-          </Text>
+          </AppText>
           {variant === "owner" ? (
-            <Text numberOfLines={1} style={styles.sub}>
+            <AppText numberOfLines={1} style={styles.sub}>
               {booking.customerName ? `Khách: ${booking.customerName}` : `Khách #${booking.customerId}`}
-            </Text>
+            </AppText>
           ) : null}
 
           <View style={styles.metaRow}>
             <CalendarClock color={theme.faint} size={14} />
-            <Text numberOfLines={1} style={styles.meta}>
-              <Text style={styles.metaLabel}>Nhận: </Text>
+            <AppText numberOfLines={1} style={styles.meta}>
+              <AppText style={styles.metaLabel}>Nhận: </AppText>
               {formatDateTime(booking.startDate)}
-            </Text>
+            </AppText>
           </View>
           <View style={styles.metaRow}>
             <CalendarCheck color={theme.faint} size={14} />
-            <Text numberOfLines={1} style={styles.meta}>
-              <Text style={styles.metaLabel}>Trả: </Text>
+            <AppText numberOfLines={1} style={styles.meta}>
+              <AppText style={styles.metaLabel}>Trả: </AppText>
               {formatDateTime(booking.endDate)}
-            </Text>
+            </AppText>
           </View>
           <View style={styles.metaRow}>
             <MapPin color={theme.faint} size={14} />
-            <Text numberOfLines={2} style={styles.meta}>
+            <AppText numberOfLines={2} style={styles.meta}>
               {booking.pickupAddress}
-            </Text>
+            </AppText>
           </View>
         </View>
       </View>
@@ -119,9 +120,9 @@ function BookingCard({ booking, variant, onPress }: BookingCardProps) {
 
       <View style={styles.priceRow}>
         <View style={styles.priceLeft}>
-          <Text style={styles.total}>{formatMoney(booking.totalAmount)}</Text>
+          <AppText style={styles.total}>{formatMoney(booking.totalAmount)}</AppText>
           <View style={styles.depositPill}>
-            <Text style={styles.depositText}>Cọc {formatMoney(booking.depositAmount)}</Text>
+            <AppText style={styles.depositText}>Cọc {formatMoney(booking.depositAmount)}</AppText>
           </View>
         </View>
         <View style={styles.chevronWrap}>
@@ -132,9 +133,9 @@ function BookingCard({ booking, variant, onPress }: BookingCardProps) {
       {hint ? (
         <View style={[styles.hint, isUrgent && styles.hintUrgent]}>
           <View style={[styles.hintBar, isUrgent && styles.hintBarUrgent]} />
-          <Text numberOfLines={1} style={[styles.hintText, isUrgent && styles.hintTextUrgent]}>
+          <AppText numberOfLines={1} style={[styles.hintText, isUrgent && styles.hintTextUrgent]}>
             {hint}
-          </Text>
+          </AppText>
         </View>
       ) : null}
     </Pressable>

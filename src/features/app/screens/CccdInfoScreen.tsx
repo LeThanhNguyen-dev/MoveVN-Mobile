@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { ArrowLeft, CheckCircle2, CircleAlert, IdCard } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { OwnerApplicationDto } from "@/features/owner/types";
 import MaskedDocumentValue from "@/features/pin/components/MaskedDocumentValue";
 import type { Theme } from "@/theme/tokens";
@@ -37,8 +38,8 @@ export default function CccdInfoScreen({ onBack, onVerify, application }: CccdIn
         {verified && application ? (
           <>
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>Thông tin CCCD</Text>
-              <Text style={styles.headerDescription}>Thông tin định danh đã được xác minh</Text>
+              <AppText display style={styles.headerTitle}>Thông tin CCCD</AppText>
+              <AppText display style={styles.headerDescription}>Thông tin định danh đã được xác minh</AppText>
             </View>
 
             <View style={styles.card}>
@@ -46,7 +47,7 @@ export default function CccdInfoScreen({ onBack, onVerify, application }: CccdIn
                 <StatusBadge />
                 <DetailLine label="Họ và tên" value={application.fullName || "-"} />
                 <View style={styles.detailLine}>
-                  <Text style={styles.detailLabel}>Số CCCD</Text>
+                  <AppText style={styles.detailLabel}>Số CCCD</AppText>
                   <MaskedDocumentValue
                     canReveal
                     documentType="CCCD"
@@ -61,8 +62,8 @@ export default function CccdInfoScreen({ onBack, onVerify, application }: CccdIn
             <View style={styles.successBox}>
               <CheckCircle2 color={theme.success} size={20} strokeWidth={2.3} />
               <View style={styles.successBody}>
-                <Text style={styles.successTitle}>CCCD đã được xác thực</Text>
-                <Text style={styles.successText}>Thông tin được lưu trữ an toàn.</Text>
+                <AppText display style={styles.successTitle}>CCCD đã được xác thực</AppText>
+                <AppText style={styles.successText}>Thông tin được lưu trữ an toàn.</AppText>
               </View>
             </View>
           </>
@@ -73,19 +74,19 @@ export default function CccdInfoScreen({ onBack, onVerify, application }: CccdIn
                 <IdCard color={theme.brand} size={24} strokeWidth={2.3} />
               </View>
               <View style={styles.cardTitleWrap}>
-                <Text style={styles.cardTitle}>Căn cước công dân</Text>
+                <AppText display style={styles.cardTitle}>Căn cước công dân</AppText>
                 <View style={styles.statusRow}>
                   <CircleAlert color={theme.danger} size={15} strokeWidth={2.5} />
-                  <Text style={[styles.statusText, styles.statusUnverified]}>Chưa xác minh</Text>
+                  <AppText style={[styles.statusText, styles.statusUnverified]}>Chưa xác minh</AppText>
                 </View>
               </View>
             </View>
             <View style={styles.stack}>
-              <Text style={styles.description}>
+              <AppText style={styles.description}>
                 Bạn chưa xác minh CCCD. Xác minh ngay để mở khóa đầy đủ tính năng của MoveVN.
-              </Text>
+              </AppText>
               <Pressable accessibilityRole="button" onPress={onVerify} style={styles.verifyButton}>
-                <Text style={styles.verifyText}>Xác minh CCCD</Text>
+                <AppText style={styles.verifyText}>Xác minh CCCD</AppText>
               </Pressable>
             </View>
           </View>
@@ -101,7 +102,7 @@ function StatusBadge() {
   return (
     <View style={[styles.badge, styles.badgeVerified]}>
       <CheckCircle2 color={theme.success} size={14} strokeWidth={2.5} />
-      <Text style={[styles.badgeText, styles.badgeTextVerified]}>Đã xác minh</Text>
+      <AppText style={[styles.badgeText, styles.badgeTextVerified]}>Đã xác minh</AppText>
     </View>
   );
 }
@@ -111,8 +112,8 @@ function DetailLine({ label, value }: { label: string; value: string }) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.detailLine}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
+      <AppText style={styles.detailLabel}>{label}</AppText>
+      <AppText style={styles.detailValue}>{value}</AppText>
     </View>
   );
 }

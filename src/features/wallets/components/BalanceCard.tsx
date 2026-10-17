@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { Eye, EyeOff, LoaderCircle } from "lucide-react-native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -38,7 +39,7 @@ export default function BalanceCard({
       <View pointerEvents="none" style={styles.decorB} />
 
       <View style={styles.topRow}>
-        <Text style={styles.label}>Số dư khả dụng</Text>
+        <AppText style={styles.label}>Số dư khả dụng</AppText>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={locked === true ? "Mở khóa số dư" : hidden ? "Hiện số dư" : "Ẩn số dư"}
@@ -52,30 +53,30 @@ export default function BalanceCard({
         </Pressable>
       </View>
 
-      <Text style={styles.balance}>
+      <AppText style={styles.balance}>
         {masked ? "***" : formatMoney(balance)}
-      </Text>
+      </AppText>
 
       <View style={styles.statsRow}>
         <View style={styles.stat}>
-          <Text style={styles.statLabel}>{isOwner ? "Tổng thu nhập" : "Đã nạp"}</Text>
-          <Text style={styles.statValue}>
+          <AppText style={styles.statLabel}>{isOwner ? "Tổng thu nhập" : "Đã nạp"}</AppText>
+          <AppText style={styles.statValue}>
             {masked ? "***" : formatMoney(totalEarned)}
-          </Text>
+          </AppText>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>
-          <Text style={styles.statLabel}>Đã chi</Text>
-          <Text style={styles.statValue}>
+          <AppText style={styles.statLabel}>Đã chi</AppText>
+          <AppText style={styles.statValue}>
             {masked ? "***" : formatMoney(totalSpent)}
-          </Text>
+          </AppText>
         </View>
       </View>
 
       {pendingOrderCode != null && (
         <View style={styles.pendingChip}>
           <LoaderCircle color={theme.onBrand} size={14} />
-          <Text style={styles.pendingText}>Đang chờ nạp #{pendingOrderCode}...</Text>
+          <AppText style={styles.pendingText}>Đang chờ nạp #{pendingOrderCode}...</AppText>
         </View>
       )}
     </View>

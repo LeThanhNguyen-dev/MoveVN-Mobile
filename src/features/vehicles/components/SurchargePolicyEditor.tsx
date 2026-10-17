@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from "lucide-react-native";
 import { useMemo, useRef } from "react";
-import { Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Switch, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { VehicleSurchargePolicy } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -139,21 +140,21 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
     <View style={styles.box}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Text style={styles.title}>Phụ phí có thể phát sinh</Text>
-          <Text style={styles.sub}>Chỉ cấu hình quy định cho xe, chưa tính vào booking ở bước này. Thời gian tính theo giờ.</Text>
+          <AppText display style={styles.title}>Phụ phí có thể phát sinh</AppText>
+          <AppText style={styles.sub}>Chỉ cấu hình quy định cho xe, chưa tính vào booking ở bước này. Thời gian tính theo giờ.</AppText>
         </View>
         <Pressable onPress={() => addPolicy()} style={styles.addBtn}>
           <Plus color={theme.onBrand} size={14} />
-          <Text style={styles.addText}>Thêm</Text>
+          <AppText style={styles.addText}>Thêm</AppText>
         </Pressable>
       </View>
 
-      {value.length === 0 ? <Text style={styles.empty}>Chưa cấu hình phụ phí.</Text> : null}
+      {value.length === 0 ? <AppText style={styles.empty}>Chưa cấu hình phụ phí.</AppText> : null}
 
       {value.map((policy, index) => (
         <View key={`${policy.id ?? "new"}-${index}`} style={[styles.card, !policy.isActive && styles.cardInactive]}>
           <View style={styles.rowBetween}>
-            <Text style={styles.cardTitle}>{policy.name || "Phụ phí"}</Text>
+            <AppText display style={styles.cardTitle}>{policy.name || "Phụ phí"}</AppText>
             <View style={styles.actions}>
               <Switch value={policy.isActive} onValueChange={(checked) => update(index, { isActive: checked })} trackColor={{ false: theme.faint, true: theme.brand }} />
               <Pressable onPress={() => removePolicy(index)} style={styles.iconBtn}>
@@ -162,7 +163,7 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
             </View>
           </View>
 
-          <Text style={styles.label}>Loại phí</Text>
+          <AppText style={styles.label}>Loại phí</AppText>
           <View style={styles.chips}>
             {feeTypeOptions.map((option) => (
               <Pressable
@@ -173,26 +174,26 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
                 }}
                 style={[styles.chip, policy.feeType === option.value && styles.chipActive]}
               >
-                <Text style={[styles.chipText, policy.feeType === option.value && styles.chipTextActive]}>{option.label}</Text>
+                <AppText style={[styles.chipText, policy.feeType === option.value && styles.chipTextActive]}>{option.label}</AppText>
               </Pressable>
             ))}
           </View>
 
-          <Text style={styles.label}>Tên phí *</Text>
+          <AppText style={styles.label}>Tên phí *</AppText>
           <TextInput value={policy.name} onChangeText={(text) => update(index, { name: text })} style={styles.input} placeholderTextColor={theme.placeholder} />
 
-          <Text style={styles.label}>Cách tính *</Text>
+          <AppText style={styles.label}>Cách tính *</AppText>
           <View style={styles.chips}>
             {calculationOptions.map((option) => (
               <Pressable key={option.value} onPress={() => update(index, { calculationMethod: option.value })} style={[styles.chip, policy.calculationMethod === option.value && styles.chipActive]}>
-                <Text style={[styles.chipText, policy.calculationMethod === option.value && styles.chipTextActive]}>{option.label}</Text>
+                <AppText style={[styles.chipText, policy.calculationMethod === option.value && styles.chipTextActive]}>{option.label}</AppText>
               </Pressable>
             ))}
           </View>
 
           <View style={styles.twoCol}>
             <View style={styles.col}>
-              <Text style={styles.label}>Đơn giá *</Text>
+              <AppText style={styles.label}>Đơn giá *</AppText>
               <TextInput
                 value={numberText(policy.unitPrice)}
                 onChangeText={(text) => update(index, { unitPrice: optionalNumber(text) ?? 0 })}
@@ -203,7 +204,7 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
               />
             </View>
             <View style={styles.col}>
-              <Text style={styles.label}>Tối đa</Text>
+              <AppText style={styles.label}>Tối đa</AppText>
               <TextInput
                 value={numberText(policy.maxAmount)}
                 onChangeText={(text) => update(index, { maxAmount: optionalNumber(text) })}
@@ -218,7 +219,7 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
           {policy.feeType === "ExcessMileage" ? (
             <View style={styles.twoCol}>
               <View style={styles.col}>
-                <Text style={styles.label}>Km bao gồm</Text>
+                <AppText style={styles.label}>Km bao gồm</AppText>
                 <TextInput
                   value={numberText(policy.includedKm)}
                   onChangeText={(text) => update(index, { includedKm: optionalNumber(text) })}
@@ -229,11 +230,11 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
                 />
               </View>
               <View style={styles.col}>
-                <Text style={styles.label}>Phạm vi</Text>
+                <AppText style={styles.label}>Phạm vi</AppText>
                 <View style={styles.scopeRow}>
                   {(["PerBooking", "PerDay"] as const).map((scope) => (
                     <Pressable key={scope} onPress={() => update(index, { allowanceScope: scope })} style={[styles.scopeBtn, (policy.allowanceScope ?? "PerBooking") === scope && styles.scopeBtnActive]}>
-                      <Text style={[styles.scopeText, (policy.allowanceScope ?? "PerBooking") === scope && styles.scopeTextActive]}>{scope === "PerDay" ? "Ngày" : "Chuyến"}</Text>
+                      <AppText style={[styles.scopeText, (policy.allowanceScope ?? "PerBooking") === scope && styles.scopeTextActive]}>{scope === "PerDay" ? "Ngày" : "Chuyến"}</AppText>
                     </Pressable>
                   ))}
                 </View>
@@ -245,7 +246,7 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
             <>
               <View style={styles.twoCol}>
                 <View style={styles.col}>
-                  <Text style={styles.label}>Miễn trễ (giờ)</Text>
+                  <AppText style={styles.label}>Miễn trễ (giờ)</AppText>
                   <TextInput
                     value={hoursInputValue(resolveHours(policy.lateGraceHours, policy.lateGraceMinutes))}
                     onChangeText={(text) => {
@@ -259,7 +260,7 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
                   />
                 </View>
                 <View style={styles.col}>
-                  <Text style={styles.label}>Ngưỡng 1 ngày (giờ)</Text>
+                  <AppText style={styles.label}>Ngưỡng 1 ngày (giờ)</AppText>
                   <TextInput
                     value={hoursInputValue(resolveHours(policy.lateDayThresholdHours, policy.lateDayThresholdMinutes))}
                     onChangeText={(text) => {
@@ -273,12 +274,12 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
                   />
                 </View>
               </View>
-              <Text style={styles.label}>Giá/ngày trễ</Text>
+              <AppText style={styles.label}>Giá/ngày trễ</AppText>
               <TextInput value={numberText(policy.lateDailyRate)} onChangeText={(text) => update(index, { lateDailyRate: optionalNumber(text) })} keyboardType="numeric" style={styles.input} />
             </>
           ) : null}
 
-          <Text style={styles.label}>Mô tả</Text>
+          <AppText style={styles.label}>Mô tả</AppText>
           <TextInput
             ref={(input) => {
               descriptionInputRefs.current[index] = input;

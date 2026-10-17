@@ -7,9 +7,9 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { VehicleListItemResponse } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
@@ -143,14 +143,14 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.title}>Xe của tôi</Text>
-            <Text style={styles.count}>
+            <AppText display style={styles.title}>Xe của tôi</AppText>
+            <AppText style={styles.count}>
               {loading && items.length === 0 ? "Đang tải..." : `${totalCount} xe`}
-            </Text>
+            </AppText>
           </View>
           <Pressable onPress={onAdd} style={styles.addButton}>
             <Plus color={theme.onBrand} size={18} />
-            <Text style={styles.addText}>Thêm xe</Text>
+            <AppText style={styles.addText}>Thêm xe</AppText>
           </Pressable>
         </View>
 
@@ -168,7 +168,7 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
                 {Icon ? (
                   <Icon color={active ? theme.onBrand : theme.brand} size={18} />
                 ) : (
-                  <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
+                  <AppText style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</AppText>
                 )}
               </Pressable>
             );
@@ -187,7 +187,7 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
                 onPress={() => setStatusFilter(t.value)}
                 style={[styles.tabSmall, active && styles.tabActive]}
               >
-                <Text style={[styles.tabTextSmall, active && styles.tabTextActive]}>{t.label}</Text>
+                <AppText style={[styles.tabTextSmall, active && styles.tabTextActive]}>{t.label}</AppText>
               </Pressable>
             );
           })}
@@ -212,17 +212,17 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
             </View>
           ) : error ? (
             <View style={styles.center}>
-              <Text style={styles.errorText}>{error}</Text>
+              <AppText style={styles.errorText}>{error}</AppText>
               <Pressable onPress={handleRefresh} style={styles.retryBtn}>
-                <Text style={styles.retryText}>Thử lại</Text>
+                <AppText style={styles.retryText}>Thử lại</AppText>
               </Pressable>
             </View>
           ) : (
             <View style={styles.center}>
-              <Text style={styles.emptyTitle}>Chưa có xe nào</Text>
-              <Text style={styles.emptyDesc}>Thêm xe đầu tiên để bắt đầu cho thuê.</Text>
+              <AppText display style={styles.emptyTitle}>Chưa có xe nào</AppText>
+              <AppText style={styles.emptyDesc}>Thêm xe đầu tiên để bắt đầu cho thuê.</AppText>
               <Pressable onPress={onAdd} style={styles.retryBtn}>
-                <Text style={styles.retryText}>Thêm xe ngay</Text>
+                <AppText style={styles.retryText}>Thêm xe ngay</AppText>
               </Pressable>
             </View>
           )

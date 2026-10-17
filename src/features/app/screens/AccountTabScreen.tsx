@@ -24,7 +24,8 @@ import {
   UserRound,
   Wallet,
 } from "lucide-react-native";
-import { Image, Pressable, ScrollView, StyleSheet, Switch, Text, View, type DimensionValue } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Switch, View, type DimensionValue } from "react-native"
+import AppText from "@/components/AppText";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { signOut } from "@/features/auth/services/authSession";
 import { getCurrentUser } from "@/features/auth/services/authService";
@@ -403,12 +404,12 @@ export default function AccountTabScreen({
           )}
         </View>
         <View style={styles.profileInfo}>
-          <Text numberOfLines={1} style={styles.profileName}>{user.fullName || "Tài khoản MoveVN"}</Text>
-          <Text numberOfLines={1} style={styles.profileMeta}>{user.email || user.phone || "Xem thông tin tài khoản"}</Text>
+          <AppText numberOfLines={1} style={styles.profileName}>{user.fullName || "Tài khoản MoveVN"}</AppText>
+          <AppText numberOfLines={1} style={styles.profileMeta}>{user.email || user.phone || "Xem thông tin tài khoản"}</AppText>
           <View style={styles.roleRow}>
             {(user.roles.length ? user.roles : ["Customer"]).map((role) => (
               <View key={role} style={styles.rolePill}>
-                <Text style={styles.roleText}>{roleLabels[role as UserRole] ?? role}</Text>
+                <AppText style={styles.roleText}>{roleLabels[role as UserRole] ?? role}</AppText>
               </View>
             ))}
           </View>
@@ -425,14 +426,14 @@ export default function AccountTabScreen({
           )}
         </View>
         <View style={styles.ownerInfo}>
-          <Text style={styles.ownerTitle}>{roleAction.title}</Text>
-          <Text style={styles.ownerDescription}>{roleAction.description}</Text>
+          <AppText display style={styles.ownerTitle}>{roleAction.title}</AppText>
+          <AppText style={styles.ownerDescription}>{roleAction.description}</AppText>
         </View>
         <ChevronRight color={theme.brand} size={21} strokeWidth={2.5} />
       </Pressable>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Giao diện</Text>
+        <AppText display style={styles.sectionTitle}>Giao diện</AppText>
         <View style={styles.menuCard}>
           <View style={styles.menuRow}>
             <View style={[styles.menuIcon, { backgroundColor: theme.brandSoft }]}>
@@ -443,8 +444,8 @@ export default function AccountTabScreen({
               )}
             </View>
             <View style={styles.menuContent}>
-              <Text numberOfLines={1} style={styles.menuLabel}>Chế độ tối</Text>
-              <Text style={styles.themeHint}>{isDark ? "Đang dùng giao diện tối" : "Đang dùng giao diện sáng"}</Text>
+              <AppText numberOfLines={1} style={styles.menuLabel}>Chế độ tối</AppText>
+              <AppText style={styles.themeHint}>{isDark ? "Đang dùng giao diện tối" : "Đang dùng giao diện sáng"}</AppText>
             </View>
             <Switch
               accessibilityLabel="Chuyển chế độ sáng tối"
@@ -474,7 +475,7 @@ export default function AccountTabScreen({
 
       {sections.map((section) => (
         <View key={section.title} style={styles.section}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
+          <AppText display style={styles.sectionTitle}>{section.title}</AppText>
           <View style={styles.menuCard}>
             {section.items.map((item, index) => (
               <MenuRow
@@ -490,7 +491,7 @@ export default function AccountTabScreen({
 
       <Pressable accessibilityRole="button" onPress={() => { void signOut(); }} style={styles.logoutButton}>
         <LogOut color={theme.danger} size={19} strokeWidth={2.4} />
-        <Text style={styles.logoutText}>Đăng xuất</Text>
+        <AppText style={styles.logoutText}>Đăng xuất</AppText>
       </Pressable>
     </ScrollView>
     <PinSetupModal
@@ -539,9 +540,9 @@ function VerificationSection({
             <ShieldCheck color={theme.success} size={20} strokeWidth={2.3} />
           </View>
           <View style={styles.menuContent}>
-            <Text numberOfLines={1} style={styles.menuLabel}>
+            <AppText numberOfLines={1} style={styles.menuLabel}>
               Xác minh
-            </Text>
+            </AppText>
           </View>
           {expanded ? (
             <ChevronUp color={theme.faint} size={19} strokeWidth={2.4} />
@@ -562,10 +563,10 @@ function VerificationSection({
               </View>
               <View style={styles.menuContent}>
                 <View style={styles.menuLine}>
-                  <Text numberOfLines={1} style={styles.menuLabel}>
+                  <AppText numberOfLines={1} style={styles.menuLabel}>
                     Tổng quan xác minh
-                  </Text>
-                  <Text style={[styles.menuValue, { color: theme.brand }]}>{overviewValue}</Text>
+                  </AppText>
+                  <AppText style={[styles.menuValue, { color: theme.brand }]}>{overviewValue}</AppText>
                 </View>
               </View>
               <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
@@ -581,10 +582,10 @@ function VerificationSection({
               </View>
               <View style={styles.menuContent}>
                 <View style={styles.menuLine}>
-                  <Text numberOfLines={1} style={styles.menuLabel}>
+                  <AppText numberOfLines={1} style={styles.menuLabel}>
                     CCCD / CMND
-                  </Text>
-                  {cccdValue ? <Text style={[styles.menuValue, { color: theme.brand }]}>{cccdValue}</Text> : null}
+                  </AppText>
+                  {cccdValue ? <AppText style={[styles.menuValue, { color: theme.brand }]}>{cccdValue}</AppText> : null}
                 </View>
               </View>
               <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
@@ -596,10 +597,10 @@ function VerificationSection({
               </View>
               <View style={styles.menuContent}>
                 <View style={styles.menuLine}>
-                  <Text numberOfLines={1} style={styles.menuLabel}>
+                  <AppText numberOfLines={1} style={styles.menuLabel}>
                     Giấy phép lái xe
-                  </Text>
-                  {gplxValue ? <Text style={[styles.menuValue, { color: theme.brand }]}>{gplxValue}</Text> : null}
+                  </AppText>
+                  {gplxValue ? <AppText style={[styles.menuValue, { color: theme.brand }]}>{gplxValue}</AppText> : null}
                 </View>
               </View>
               <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
@@ -624,8 +625,8 @@ function MenuRow({ item, last, progress }: { item: AccountMenuItem; last: boolea
       </View>
       <View style={styles.menuContent}>
         <View style={styles.menuLine}>
-          <Text numberOfLines={1} style={styles.menuLabel}>{item.label}</Text>
-          {item.value ? <Text style={[styles.menuValue, { color: item.accent }]}>{item.value}</Text> : null}
+          <AppText numberOfLines={1} style={styles.menuLabel}>{item.label}</AppText>
+          {item.value ? <AppText style={[styles.menuValue, { color: item.accent }]}>{item.value}</AppText> : null}
         </View>
         {typeof progress === "number" ? (
           <View style={styles.progressTrack}>

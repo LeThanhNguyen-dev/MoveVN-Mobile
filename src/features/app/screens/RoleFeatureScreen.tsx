@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react-native";
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -10,7 +11,7 @@ export default function RoleFeatureScreen({ title, description, onBack }: { titl
   const styles = useMemo(() => createStyles(theme), [theme]);
   return <SafeAreaView style={styles.safe}><View style={styles.content}>
     <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.back}><ArrowLeft color={theme.brand} size={21} /></Pressable>
-    <View style={styles.copy}><Text style={styles.title}>{title}</Text><Text style={styles.description}>{description}</Text></View>
+    <View style={styles.copy}><AppText display style={styles.title}>{title}</AppText><AppText style={styles.description}>{description}</AppText></View>
   </View></SafeAreaView>;
 }
 

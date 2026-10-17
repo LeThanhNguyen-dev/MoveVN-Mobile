@@ -1,5 +1,6 @@
 import { useMemo, type ComponentType } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
@@ -29,7 +30,7 @@ export default function QuickActions({ actions }: { actions: QuickAction[] }) {
             <View style={styles.circle}>
               <Icon color={theme.brand} size={22} strokeWidth={2.2} />
             </View>
-            <Text numberOfLines={2} style={styles.label}>{a.label}</Text>
+            <AppText numberOfLines={2} style={styles.label}>{a.label}</AppText>
           </Pressable>
         );
       })}

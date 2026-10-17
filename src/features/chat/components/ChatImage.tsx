@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, View } from "react-native"
+import AppText from "@/components/AppText";
 import { useTheme } from "@/theme/useTheme";
 import { getChatImageData } from "../chatService";
 import type { ChatAttachment } from "../types";
@@ -64,9 +65,9 @@ export default function ChatImage({
           style={{ width: "100%", height: "100%" }}
         />
       ) : error ? (
-        <Text style={{ color: theme.danger, textAlign: "center", padding: 12 }}>
+        <AppText style={{ color: theme.danger, textAlign: "center", padding: 12 }}>
           Chưa tải được ảnh. Nhấn thử lại.
-        </Text>
+        </AppText>
       ) : (
         <View>
           <ActivityIndicator color={theme.brand} />

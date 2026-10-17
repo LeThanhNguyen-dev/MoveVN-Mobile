@@ -5,10 +5,10 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -118,8 +118,8 @@ function BlockedDateSheet({
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <View style={styles.head}>
             <View>
-              <Text style={styles.title}>Chặn ngày</Text>
-              <Text style={styles.sub}>Chạm ngày bắt đầu, chạm tiếp ngày kết thúc.</Text>
+              <AppText display style={styles.title}>Chặn ngày</AppText>
+              <AppText style={styles.sub}>Chạm ngày bắt đầu, chạm tiếp ngày kết thúc.</AppText>
             </View>
             <Pressable onPress={onClose} style={styles.closeBtn}>
               <X color={theme.muted} size={18} />
@@ -134,18 +134,18 @@ function BlockedDateSheet({
             >
               <ChevronLeft color={theme.muted} size={18} />
             </Pressable>
-            <Text style={styles.monthLabel}>
+            <AppText style={styles.monthLabel}>
               {MONTHS_VI[month]} {year}
-            </Text>
+            </AppText>
             <Pressable onPress={() => moveMonth(1)} style={styles.monthBtn}>
               <ChevronRight color={theme.muted} size={18} />
             </Pressable>
           </View>
           <View style={styles.weekRow}>
             {DAYS_VI.map((d) => (
-              <Text key={d} style={styles.weekLabel}>
+              <AppText key={d} style={styles.weekLabel}>
                 {d}
-              </Text>
+              </AppText>
             ))}
           </View>
           <View style={styles.grid}>
@@ -172,7 +172,7 @@ function BlockedDateSheet({
                       isBooked && styles.dayBooked,
                     ]}
                   >
-                    <Text
+                    <AppText
                       style={[
                         styles.dayText,
                         isPast && styles.dayPast,
@@ -183,7 +183,7 @@ function BlockedDateSheet({
                       ]}
                     >
                       {cell.date.getDate()}
-                    </Text>
+                    </AppText>
                   </Pressable>
                 </View>
               );
@@ -192,23 +192,23 @@ function BlockedDateSheet({
           <View style={styles.legend}>
             <View style={styles.legendItem}>
               <View style={[styles.dot, styles.dotBlocked]} />
-              <Text style={styles.legendText}>Đã chặn</Text>
+              <AppText style={styles.legendText}>Đã chặn</AppText>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.dot, styles.dotBooked]} />
-              <Text style={styles.legendText}>Đã đặt</Text>
+              <AppText style={styles.legendText}>Đã đặt</AppText>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.dot, styles.dotFree]} />
-              <Text style={styles.legendText}>Còn trống</Text>
+              <AppText style={styles.legendText}>Còn trống</AppText>
             </View>
           </View>
 
-          <Text style={styles.summary}>
+          <AppText style={styles.summary}>
             {from
               ? `Chặn: ${from}${to && to !== from ? ` → ${to}` : " (1 ngày)"}`
               : "Chưa chọn ngày nào"}
-          </Text>
+          </AppText>
           <TextInput
             value={reason}
             onChangeText={setReason}
@@ -224,7 +224,7 @@ function BlockedDateSheet({
             {saving ? (
               <ActivityIndicator color={theme.onBrand} size="small" />
             ) : (
-              <Text style={styles.confirmText}>Xác nhận chặn</Text>
+              <AppText style={styles.confirmText}>Xác nhận chặn</AppText>
             )}
           </Pressable>
         </View>

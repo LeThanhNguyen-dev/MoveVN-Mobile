@@ -1,6 +1,7 @@
 import { CircleCheck, CircleX, Info, X } from "lucide-react-native";
 import { memo, useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -25,8 +26,8 @@ function ToastHost() {
           <View key={toast.id} style={[styles.card, { borderColor: accent.border }]}>
             <Icon color={accent.icon} size={20} />
             <View style={styles.textWrap}>
-              <Text style={styles.title}>{toast.title}</Text>
-              {!!toast.message && <Text style={styles.message}>{toast.message}</Text>}
+              <AppText display style={styles.title}>{toast.title}</AppText>
+              {!!toast.message && <AppText style={styles.message}>{toast.message}</AppText>}
             </View>
             <Pressable
               onPress={() => dismissToast(toast.id)}

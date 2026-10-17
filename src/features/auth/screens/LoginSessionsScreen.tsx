@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { ArrowLeft, Monitor, RefreshCw, ShieldCheck, Smartphone } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import AppText from "@/components/AppText";
 import { clearSession, useAuthStore } from "../hooks/useAuth";
 import { getLoginSessions, revokeLoginSession, revokeOtherLoginSessions, type LoginSession } from "../services/loginSessionService";
 import { getApiErrorMessage } from "@/services/apiClient";
@@ -100,7 +101,7 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text style={styles.topBarTitle}>Phiên đăng nhập</Text>
+        <AppText display style={styles.topBarTitle}>Phiên đăng nhập</AppText>
         <Pressable
           accessibilityLabel="Tải lại"
           accessibilityRole="button"
@@ -119,8 +120,8 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
               <Monitor color="#2563EB" size={22} strokeWidth={2.3} />
             </View>
             <View style={styles.cardTitleWrap}>
-              <Text style={styles.cardTitle}>Phiên đăng nhập</Text>
-              <Text style={styles.cardDescription}>Kiểm tra và đăng xuất các thiết bị đang truy cập tài khoản.</Text>
+              <AppText display style={styles.cardTitle}>Phiên đăng nhập</AppText>
+              <AppText style={styles.cardDescription}>Kiểm tra và đăng xuất các thiết bị đang truy cập tài khoản.</AppText>
             </View>
           </View>
 
@@ -132,18 +133,18 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
             }
             style={[styles.outlineButton, (!currentSessionId || activeSessions.length < 2 || busyId !== "") && styles.disabled]}
           >
-            <Text style={styles.outlineText}>
+            <AppText style={styles.outlineText}>
               {busyId === "others" ? "Đang xử lý..." : "Đăng xuất thiết bị khác"}
-            </Text>
+            </AppText>
           </Pressable>
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          {notice ? <Text style={styles.notice}>{notice}</Text> : null}
+          {error ? <AppText style={styles.error}>{error}</AppText> : null}
+          {notice ? <AppText style={styles.notice}>{notice}</AppText> : null}
 
           {loading ? (
-            <Text style={styles.muted}>Đang tải danh sách...</Text>
+            <AppText style={styles.muted}>Đang tải danh sách...</AppText>
           ) : sessions.length === 0 ? (
-            <Text style={styles.muted}>Chưa có dữ liệu phiên đăng nhập mới.</Text>
+            <AppText style={styles.muted}>Chưa có dữ liệu phiên đăng nhập mới.</AppText>
           ) : (
             <View style={styles.list}>
               {sessions.map((session) => {
@@ -158,23 +159,23 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
                     </View>
                     <View style={styles.rowBody}>
                       <View style={styles.rowTitleLine}>
-                        <Text numberOfLines={1} style={styles.rowTitle}>
+                        <AppText display numberOfLines={1} style={styles.rowTitle}>
                           {device.label}
-                        </Text>
+                        </AppText>
                         {isCurrent ? (
                           <View style={styles.currentPill}>
                             <ShieldCheck color={theme.success} size={12} strokeWidth={2.5} />
-                            <Text style={styles.currentPillText}>Thiết bị này</Text>
+                            <AppText style={styles.currentPillText}>Thiết bị này</AppText>
                           </View>
                         ) : null}
                         {!session.isActive ? (
                           <View style={styles.expiredPill}>
-                            <Text style={styles.expiredPillText}>Đã hết phiên</Text>
+                            <AppText style={styles.expiredPillText}>Đã hết phiên</AppText>
                           </View>
                         ) : null}
                       </View>
-                      <Text style={styles.rowMeta}>IP: {session.ipAddress || "Không xác định"}</Text>
-                      <Text style={styles.rowMetaSmall}>Đăng nhập lúc {formatDate(session.signedInAt)}</Text>
+                      <AppText style={styles.rowMeta}>IP: {session.ipAddress || "Không xác định"}</AppText>
+                      <AppText style={styles.rowMetaSmall}>Đăng nhập lúc {formatDate(session.signedInAt)}</AppText>
                     </View>
                     {session.isActive ? (
                       <Pressable
@@ -185,7 +186,7 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
                         }
                         style={[styles.smallButton, busy && styles.disabled]}
                       >
-                        <Text style={styles.smallButtonText}>{busy ? "..." : "Đăng xuất"}</Text>
+                        <AppText style={styles.smallButtonText}>{busy ? "..." : "Đăng xuất"}</AppText>
                       </Pressable>
                     ) : null}
                   </View>

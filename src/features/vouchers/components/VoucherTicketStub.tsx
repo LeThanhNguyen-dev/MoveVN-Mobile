@@ -1,7 +1,8 @@
 import { TicketPercent } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo, useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { CTA_GRADIENT, formatDiscountShort } from "@/features/vouchers/voucherFormat";
@@ -28,10 +29,10 @@ function VoucherTicketStub({ discountType, discountValue, dimmed = false }: Vouc
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <Text style={styles.stubLabel}>GIẢM</Text>
-      <Text style={styles.stubValue} numberOfLines={1}>
+      <AppText style={styles.stubLabel}>GIẢM</AppText>
+      <AppText style={styles.stubValue} numberOfLines={1}>
         {formatDiscountShort(discountType, discountValue)}
-      </Text>
+      </AppText>
       <TicketPercent color="rgba(255,255,255,0.6)" size={16} />
     </View>
   );

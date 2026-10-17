@@ -6,9 +6,9 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   View,
-} from "react-native";
+} from "react-native"
+import AppText from "@/components/AppText";
 import { ClipboardList } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -97,10 +97,10 @@ export default function OwnerBookingListScreen({ navigation }: { navigation: Lis
     <View style={styles.screen}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Đơn thuê xe của tôi</Text>
-          <Text style={styles.count}>
+          <AppText display style={styles.title}>Đơn thuê xe của tôi</AppText>
+          <AppText style={styles.count}>
             {loading && items.length === 0 ? "Đang tải..." : `${totalCount} đơn`}
-          </Text>
+          </AppText>
         </View>
       </View>
 
@@ -118,7 +118,7 @@ export default function OwnerBookingListScreen({ navigation }: { navigation: Lis
               onPress={() => setStatus(f.key)}
               style={[styles.chip, active && styles.chipActive]}
             >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</Text>
+              <AppText style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</AppText>
             </Pressable>
           );
         })}
@@ -143,9 +143,9 @@ export default function OwnerBookingListScreen({ navigation }: { navigation: Lis
             </View>
           ) : error ? (
             <View style={styles.center}>
-              <Text style={styles.errorText}>{error}</Text>
+              <AppText style={styles.errorText}>{error}</AppText>
               <Pressable onPress={handleRefresh} style={styles.retryBtn}>
-                <Text style={styles.retryText}>Thử lại</Text>
+                <AppText style={styles.retryText}>Thử lại</AppText>
               </Pressable>
             </View>
           ) : (
@@ -153,8 +153,8 @@ export default function OwnerBookingListScreen({ navigation }: { navigation: Lis
               <View style={styles.emptyIcon}>
                 <ClipboardList color={theme.brand} size={32} />
               </View>
-              <Text style={styles.emptyTitle}>Chưa có đơn thuê nào</Text>
-              <Text style={styles.emptyDesc}>Khi khách đặt xe của bạn, đơn sẽ hiện ở đây.</Text>
+              <AppText display style={styles.emptyTitle}>Chưa có đơn thuê nào</AppText>
+              <AppText style={styles.emptyDesc}>Khi khách đặt xe của bạn, đơn sẽ hiện ở đây.</AppText>
             </View>
           )
         }
@@ -163,10 +163,10 @@ export default function OwnerBookingListScreen({ navigation }: { navigation: Lis
             <ActivityIndicator color={theme.brand} style={styles.more} />
           ) : hasMore ? (
             <Pressable onPress={handleLoadMore} style={styles.moreButton}>
-              <Text style={styles.moreText}>Xem thêm ({remaining})</Text>
+              <AppText style={styles.moreText}>Xem thêm ({remaining})</AppText>
             </Pressable>
           ) : (
-            <Text style={styles.endText}>Đã hiển thị hết</Text>
+            <AppText style={styles.endText}>Đã hiển thị hết</AppText>
           )
         }
       />

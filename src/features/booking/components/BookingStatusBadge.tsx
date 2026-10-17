@@ -1,5 +1,6 @@
 import { memo, useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { bookingStatusLabel } from "@/features/booking/utils/format";
@@ -36,9 +37,9 @@ function BookingStatusBadge({ status }: { status: string }) {
   return (
     <View style={[styles.badge, { backgroundColor: s.bg }]}>
       <View style={[styles.dot, { backgroundColor: s.dot }]} />
-      <Text numberOfLines={1} style={[styles.text, { color: s.text }]}>
+      <AppText numberOfLines={1} style={[styles.text, { color: s.text }]}>
         {bookingStatusLabel(status)}
-      </Text>
+      </AppText>
     </View>
   );
 }

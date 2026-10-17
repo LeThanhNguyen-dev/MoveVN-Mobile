@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { ArrowUpRight, ChevronRight, Clock3, Landmark, Plus, TriangleAlert } from "lucide-react-native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -41,7 +42,7 @@ export default function WalletHomeScreen({
       <View style={styles.center}>
         {loading
           ? <ActivityIndicator color={theme.brand} />
-          : <Text style={styles.muted}>Không tải được ví.</Text>}
+          : <AppText style={styles.muted}>Không tải được ví.</AppText>}
       </View>
     );
   }
@@ -90,23 +91,23 @@ export default function WalletHomeScreen({
         <Pressable onPress={onGoBank} style={styles.warnBanner}>
           <TriangleAlert color={theme.brand} size={20} />
           <View style={styles.flexOne}>
-            <Text style={styles.warnTitle}>Chưa liên kết ngân hàng</Text>
-            <Text style={styles.warnSub}>Thiết lập để rút tiền về tài khoản.</Text>
+            <AppText display style={styles.warnTitle}>Chưa liên kết ngân hàng</AppText>
+            <AppText style={styles.warnSub}>Thiết lập để rút tiền về tài khoản.</AppText>
           </View>
           <ChevronRight color={theme.brand} size={18} />
         </Pressable>
       ) : (
         <Pressable onPress={onGoBank} style={styles.bankCard}>
           <View style={styles.bankAvatar}>
-            <Text style={styles.bankAvatarText}>
+            <AppText style={styles.bankAvatarText}>
               {(bank?.bankName ?? "N").trim().charAt(0).toUpperCase()}
-            </Text>
+            </AppText>
           </View>
           <View style={styles.flexOne}>
-            <Text style={styles.bankName} numberOfLines={1}>
+            <AppText style={styles.bankName} numberOfLines={1}>
               {bank?.bankName} · ****{(bank?.bankAccountNumber ?? "").slice(-4)}
-            </Text>
-            <Text style={styles.muted} numberOfLines={1}>{bank?.bankAccountHolderName}</Text>
+            </AppText>
+            <AppText style={styles.muted} numberOfLines={1}>{bank?.bankAccountHolderName}</AppText>
           </View>
           <ChevronRight color={theme.muted} size={18} />
         </Pressable>
@@ -114,14 +115,14 @@ export default function WalletHomeScreen({
 
       <View style={styles.card}>
         <View style={styles.cardHead}>
-          <Text style={styles.cardTitle}>Giao dịch gần đây</Text>
+          <AppText display style={styles.cardTitle}>Giao dịch gần đây</AppText>
           <Pressable onPress={onGoHistory} style={styles.linkHit}>
-            <Text style={styles.linkText}>Xem tất cả</Text>
+            <AppText style={styles.linkText}>Xem tất cả</AppText>
             <ChevronRight color={theme.brand} size={15} />
           </Pressable>
         </View>
         {recent.length === 0 && (
-          <Text style={styles.muted}>Chưa có giao dịch nào. Nạp tiền để bắt đầu.</Text>
+          <AppText style={styles.muted}>Chưa có giao dịch nào. Nạp tiền để bắt đầu.</AppText>
         )}
         {recent.map((t) => (
           <TxRow key={t.id} tx={t} />

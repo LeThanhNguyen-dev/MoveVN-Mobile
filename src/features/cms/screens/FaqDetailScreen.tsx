@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ImageSource } from "expo-image";
 import { ArrowLeft, ChevronDown } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { getCmsPageBySlug } from "@/features/cms/services/cmsService";
 import type { CmsPageResponse, CmsSection } from "@/features/cms/types";
 import { htmlToText, parseCmsSections } from "@/features/cms/utils/content";
@@ -59,27 +60,27 @@ export default function FaqDetailScreen({ onBack, slug }: { onBack: () => void; 
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text numberOfLines={1} style={styles.topBarTitle}>
+        <AppText display numberOfLines={1} style={styles.topBarTitle}>
           {page?.title || "Hỏi và trả lời"}
-        </Text>
+        </AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {page === undefined ? (
           <View style={styles.card}>
-            <Text style={styles.muted}>Đang tải nội dung...</Text>
+            <AppText style={styles.muted}>Đang tải nội dung...</AppText>
           </View>
         ) : error ? (
           <View style={styles.card}>
-            <Text style={styles.error}>{error}</Text>
+            <AppText style={styles.error}>{error}</AppText>
             <Pressable accessibilityRole="button" onPress={() => { void load(); }} style={styles.retryButton}>
-              <Text style={styles.retryText}>Thử lại</Text>
+              <AppText style={styles.retryText}>Thử lại</AppText>
             </Pressable>
           </View>
         ) : page === null ? (
           <View style={styles.card}>
-            <Text style={styles.muted}>Không tìm thấy nội dung.</Text>
+            <AppText style={styles.muted}>Không tìm thấy nội dung.</AppText>
           </View>
         ) : (
           <>
@@ -89,10 +90,10 @@ export default function FaqDetailScreen({ onBack, slug }: { onBack: () => void; 
               source={bannerSource}
               title={page.title}
             />
-            {page.description ? <Text style={styles.description}>{page.description}</Text> : null}
+            {page.description ? <AppText style={styles.description}>{page.description}</AppText> : null}
             {sections.length === 0 ? (
               <View style={styles.card}>
-                <Text style={styles.muted}>Nội dung đang được cập nhật.</Text>
+                <AppText style={styles.muted}>Nội dung đang được cập nhật.</AppText>
               </View>
             ) : (
               sections.map((section) => (
@@ -132,7 +133,7 @@ function FaqSectionBlock({
   if (section.kind === "accordion") {
     return (
       <View style={styles.card}>
-        {section.title ? <Text style={styles.sectionTitle}>{section.title}</Text> : null}
+        {section.title ? <AppText display style={styles.sectionTitle}>{section.title}</AppText> : null}
         {section.items.map((item, index) => {
           const expanded = expandedId === item.id;
           return (
@@ -142,7 +143,7 @@ function FaqSectionBlock({
                 onPress={() => setExpandedId(expanded ? null : item.id)}
                 style={styles.faqRow}
               >
-                <Text style={styles.faqQuestion}>{item.title || `Câu hỏi ${index + 1}`}</Text>
+                <AppText style={styles.faqQuestion}>{item.title || `Câu hỏi ${index + 1}`}</AppText>
                 <ChevronDown
                   color={theme.muted}
                   size={18}
@@ -166,7 +167,7 @@ function FaqSectionBlock({
   if (!text && !hasImage) return null;
   return (
     <View style={styles.card}>
-      {section.title ? <Text style={styles.sectionTitle}>{section.title}</Text> : null}
+      {section.title ? <AppText display style={styles.sectionTitle}>{section.title}</AppText> : null}
       <CmsHtmlView html={section.html} onImagePress={onImagePress} />
     </View>
   );

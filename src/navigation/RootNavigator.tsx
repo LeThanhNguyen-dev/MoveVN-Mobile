@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DarkTheme, DefaultTheme, NavigationContainer, type Theme as NavTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/AppText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthNavigator from "./AuthNavigator";
 import CustomerNavigator from "./CustomerNavigator";
@@ -83,8 +84,8 @@ function Startup({ label, onRetry }: { label: string; onRetry?: () => void }) {
   const styles = createStyles(theme);
   return <SafeAreaView style={styles.safe}><View style={styles.content}>
     {!onRetry && <ActivityIndicator color={theme.brand} size="large" />}
-    <Text accessibilityRole={onRetry ? "alert" : undefined} style={styles.label}>{label}</Text>
-    {onRetry && <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><Text style={styles.retryLabel}>Thử lại</Text></Pressable>}
+    <AppText accessibilityRole={onRetry ? "alert" : undefined} style={styles.label}>{label}</AppText>
+    {onRetry && <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><AppText style={styles.retryLabel}>Thử lại</AppText></Pressable>}
   </View></SafeAreaView>;
 }
 

@@ -1,6 +1,7 @@
 import { AlertCircle, Sparkles } from "lucide-react-native";
 import { useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 
 import { toApiError } from "@/features/auth/services/authService";
 import { generateVehicleDescription } from "@/features/vehicles/services/vehicleService";
@@ -52,7 +53,7 @@ export default function VehicleDescriptionField({ value, onChange, request, onFo
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.label}>Mô tả thêm</Text>
+        <AppText style={styles.label}>Mô tả thêm</AppText>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={buttonLabel}
@@ -70,9 +71,9 @@ export default function VehicleDescriptionField({ value, onChange, request, onFo
           ) : (
             <Sparkles color={request ? theme.brand : theme.faint} size={15} />
           )}
-          <Text style={[styles.generateText, !request && styles.generateTextDisabled]}>
+          <AppText style={[styles.generateText, !request && styles.generateTextDisabled]}>
             {generating ? "Đang tạo..." : buttonLabel}
-          </Text>
+          </AppText>
         </Pressable>
       </View>
 
@@ -102,7 +103,7 @@ export default function VehicleDescriptionField({ value, onChange, request, onFo
       {error ? (
         <View accessibilityLiveRegion="polite" style={styles.errorRow}>
           <AlertCircle color={theme.danger} size={15} />
-          <Text style={styles.errorText}>{error}</Text>
+          <AppText style={styles.errorText}>{error}</AppText>
         </View>
       ) : null}
     </View>

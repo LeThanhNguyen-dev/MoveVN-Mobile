@@ -1,7 +1,8 @@
 import { Image } from "expo-image";
 import { Bike, Car, MapPin } from "lucide-react-native";
 import { memo, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Pressable, StyleSheet, Switch, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { VehicleListItemResponse } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -56,14 +57,14 @@ function MyVehicleCard({ vehicle, onOpen, toggling = false, onToggleStatus }: My
         ) : (
           <View style={styles.imageFallback}>
             <VehicleIcon color={theme.faint} size={42} />
-            <Text style={styles.fallbackText}>Chưa có hình ảnh</Text>
+            <AppText style={styles.fallbackText}>Chưa có hình ảnh</AppText>
           </View>
         )}
         <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
           <View style={[styles.dot, { backgroundColor: status.dot }]} />
-          <Text style={[styles.statusText, { color: status.text }]}>
+          <AppText style={[styles.statusText, { color: status.text }]}>
             {getOwnerStatusLabel(vehicle.status)}
-          </Text>
+          </AppText>
         </View>
         {showToggle ? (
           <View style={styles.toggleWrap}>
@@ -79,31 +80,31 @@ function MyVehicleCard({ vehicle, onOpen, toggling = false, onToggleStatus }: My
       </View>
 
       <View style={styles.info}>
-        <Text numberOfLines={1} style={styles.brandLine}>
+        <AppText numberOfLines={1} style={styles.brandLine}>
           {vehicle.brandName} {vehicle.modelName}
           {vehicle.variantName ? ` · ${vehicle.variantName}` : ""}
-        </Text>
+        </AppText>
         <View style={styles.plateRow}>
-          <Text numberOfLines={1} style={styles.plate}>
+          <AppText numberOfLines={1} style={styles.plate}>
             {vehicle.licensePlate}
-          </Text>
-          <Text style={styles.year}>
+          </AppText>
+          <AppText style={styles.year}>
             {vehicleTypeLabel(vehicle.vehicleType)} · {vehicle.year}
-          </Text>
+          </AppText>
         </View>
         {vehicle.areaName ? (
           <View style={styles.metaRow}>
             <MapPin color={theme.muted} size={13} />
-            <Text numberOfLines={1} style={styles.area}>
+            <AppText numberOfLines={1} style={styles.area}>
               {vehicle.areaName}
-            </Text>
+            </AppText>
           </View>
         ) : null}
         <View style={styles.priceRow}>
-          <Text style={styles.price}>{formatOwnerVehiclePrice(vehicle)}</Text>
+          <AppText style={styles.price}>{formatOwnerVehiclePrice(vehicle)}</AppText>
           {vehicle.pricingMode === "Auto" ? (
             <View style={styles.autoTag}>
-              <Text style={styles.autoTagText}>Giá tự động</Text>
+              <AppText style={styles.autoTagText}>Giá tự động</AppText>
             </View>
           ) : null}
         </View>

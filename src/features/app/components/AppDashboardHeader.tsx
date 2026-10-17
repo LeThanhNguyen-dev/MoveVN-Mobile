@@ -1,7 +1,8 @@
 import { ArrowLeftRight, Heart, UserRound } from "lucide-react-native";
 import NotificationBell from "@/features/notifications/components/NotificationBell";
 import { useMemo } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { AuthUser, UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
@@ -47,10 +48,10 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
           )}
         </Pressable>
         <View style={styles.nameBlock}>
-          <Text style={styles.greeting}>Xin chào</Text>
-          <Text numberOfLines={1} style={styles.name}>
+          <AppText style={styles.greeting}>Xin chào</AppText>
+          <AppText numberOfLines={1} style={styles.name}>
             {user.fullName}
-          </Text>
+          </AppText>
         </View>
       </View>
 

@@ -1,5 +1,6 @@
 import { useMemo, type ComponentType } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { Check, CheckCheck, Clock, TriangleAlert, X } from "lucide-react-native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -55,21 +56,21 @@ export default function WithdrawalRow({
         <Icon color={look.color} size={19} strokeWidth={2.4} />
       </View>
       <View style={styles.mid}>
-        <Text style={styles.amount}>{formatMoney(w.amount)}</Text>
-        <Text style={[styles.status, { color: look.color }]}>
+        <AppText style={styles.amount}>{formatMoney(w.amount)}</AppText>
+        <AppText style={[styles.status, { color: look.color }]}>
           {withdrawalStatusLabel(w.status)}
-        </Text>
-        <Text style={styles.muted} numberOfLines={1}>
+        </AppText>
+        <AppText style={styles.muted} numberOfLines={1}>
           {w.bankName} · {w.bankAccountNumber}
-        </Text>
+        </AppText>
         {w.processNote ? (
-          <Text style={styles.muted} numberOfLines={2}>{w.processNote}</Text>
+          <AppText style={styles.muted} numberOfLines={2}>{w.processNote}</AppText>
         ) : null}
-        <Text style={styles.time}>{formatDateTime(w.createdAt)}</Text>
+        <AppText style={styles.time}>{formatDateTime(w.createdAt)}</AppText>
       </View>
       {isCancellable(w) && (
         <Pressable onPress={() => onCancel(w.id)} style={styles.cancelButton}>
-          <Text style={styles.cancelText}>Hủy</Text>
+          <AppText style={styles.cancelText}>Hủy</AppText>
         </Pressable>
       )}
     </View>

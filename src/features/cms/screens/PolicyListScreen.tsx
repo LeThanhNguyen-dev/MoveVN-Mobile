@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 import { ArrowLeft, BookOpen, ChevronRight, Scale, Search, X } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
 import PolicyDetailScreen from "@/features/cms/screens/PolicyDetailScreen";
 import PolicyDocsScreen from "@/features/cms/screens/PolicyDocsScreen";
 import { getCmsPageNavigation } from "@/features/cms/services/cmsService";
@@ -87,7 +88,7 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text style={styles.topBarTitle}>Điều khoản & Chính sách</Text>
+        <AppText display style={styles.topBarTitle}>Điều khoản & Chính sách</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
@@ -96,9 +97,9 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heroDescription}>
+        <AppText style={styles.heroDescription}>
           Tài liệu điều khoản, chính sách và hướng dẫn sử dụng MoveVN.
-        </Text>
+        </AppText>
 
         <View style={[styles.searchBox, searchFocused && styles.searchBoxFocused]}>
           <Search color={theme.faint} size={19} strokeWidth={2.3} />
@@ -130,38 +131,38 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
             <View style={styles.skeletonLine} />
             <View style={styles.skeletonLine} />
             <View style={[styles.skeletonLine, styles.skeletonShort]} />
-            <Text style={styles.muted}>Đang tải danh sách...</Text>
+            <AppText style={styles.muted}>Đang tải danh sách...</AppText>
           </View>
         ) : error ? (
           <View style={styles.stateCard}>
-            <Text style={styles.error}>{error}</Text>
+            <AppText style={styles.error}>{error}</AppText>
             <Pressable accessibilityRole="button" onPress={() => { void load(); }} style={styles.retryButton}>
-              <Text style={styles.retryText}>Thử lại</Text>
+              <AppText style={styles.retryText}>Thử lại</AppText>
             </Pressable>
           </View>
         ) : (
           <>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Nhóm tài liệu</Text>
+              <AppText display style={styles.sectionTitle}>Nhóm tài liệu</AppText>
               {groups.length > 0 ? (
-                <Text style={styles.sectionCount}>
+                <AppText style={styles.sectionCount}>
                   {searching
                     ? `${groups.reduce((total, group) => total + group.items.length, 0)} kết quả`
                     : `${groups.length} nhóm`}
-                </Text>
+                </AppText>
               ) : null}
             </View>
 
             {groups.length === 0 ? (
               <View style={styles.stateCard}>
-                <Text style={styles.stateTitle}>
+                <AppText display style={styles.stateTitle}>
                   {searching ? "Không tìm thấy tài liệu phù hợp" : "Chưa có nội dung điều khoản"}
-                </Text>
-                <Text style={styles.muted}>
+                </AppText>
+                <AppText style={styles.muted}>
                   {searching
                     ? "Thử từ khóa khác."
                     : "Danh mục này đang được cập nhật. Vui lòng quay lại sau."}
-                </Text>
+                </AppText>
               </View>
             ) : (
               <View style={styles.groupList}>
@@ -178,8 +179,8 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
                         <Icon color={theme.brand} size={22} strokeWidth={2.3} />
                       </View>
                       <View style={styles.groupInfo}>
-                        <Text style={styles.groupTitle}>{group.title}</Text>
-                        <Text style={styles.groupMeta}>{`${group.items.length} văn bản`}</Text>
+                        <AppText display style={styles.groupTitle}>{group.title}</AppText>
+                        <AppText style={styles.groupMeta}>{`${group.items.length} văn bản`}</AppText>
                       </View>
                       <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
                     </Pressable>

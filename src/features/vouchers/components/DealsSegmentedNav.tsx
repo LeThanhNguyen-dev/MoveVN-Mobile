@@ -2,7 +2,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { memo, useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { DealsStackParamList } from "@/navigation/types";
@@ -48,15 +49,15 @@ function DealsSegmentedNav() {
                 end={{ x: 1, y: 0 }}
                 style={styles.segActive}
               >
-                <Text style={styles.segActiveText}>
+                <AppText style={styles.segActiveText}>
                   {seg.emoji} {seg.label}
-                </Text>
+                </AppText>
               </LinearGradient>
             ) : (
               <View style={styles.segIdle}>
-                <Text style={styles.segIdleText}>
+                <AppText style={styles.segIdleText}>
                   {seg.emoji} {seg.label}
-                </Text>
+                </AppText>
               </View>
             )}
           </Pressable>

@@ -2,7 +2,8 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowRight, CalendarDays, Car, Check, TicketPercent, X } from "lucide-react-native";
 import { memo, useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { CTA_GRADIENT, formatDiscountLong, formatEndDate, formatVehicleLabel } from "@/features/vouchers/voucherFormat";
@@ -99,32 +100,32 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
                 accessibilityLabel={slide.title}
               />
             )}
-            <Text style={styles.title}>{slide.popupTitle || slide.title}</Text>
+            <AppText display style={styles.title}>{slide.popupTitle || slide.title}</AppText>
             <View style={styles.divider} />
-            {!!slide.popupDescription && <Text style={styles.desc}>{slide.popupDescription}</Text>}
+            {!!slide.popupDescription && <AppText style={styles.desc}>{slide.popupDescription}</AppText>}
 
             <View style={styles.chipRow}>
               {!!code && (
                 <View style={styles.chip}>
                   <TicketPercent color={theme.brand} size={13} />
-                  <Text style={[styles.chipText, styles.chipMono]}>{code}</Text>
+                  <AppText style={[styles.chipText, styles.chipMono]}>{code}</AppText>
                 </View>
               )}
               {!!discount && (
                 <View style={styles.chip}>
-                  <Text style={styles.chipText}>{discount}</Text>
+                  <AppText style={styles.chipText}>{discount}</AppText>
                 </View>
               )}
               {!!vehicleLabel && (
                 <View style={styles.chip}>
                   <Car color={theme.brand} size={13} />
-                  <Text style={styles.chipText}>{vehicleLabel}</Text>
+                  <AppText style={styles.chipText}>{vehicleLabel}</AppText>
                 </View>
               )}
               {!!endLabel && (
                 <View style={styles.chip}>
                   <CalendarDays color={theme.brand} size={13} />
-                  <Text style={styles.chipText}>HSD: {endLabel}</Text>
+                  <AppText style={styles.chipText}>HSD: {endLabel}</AppText>
                 </View>
               )}
             </View>
@@ -150,10 +151,10 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
                   style={styles.ctaBg}
                 >
                   {claimed ? (
-                    <Text style={styles.ctaText}>Đang mở săn voucher... ✓</Text>
+                    <AppText style={styles.ctaText}>Đang mở săn voucher... ✓</AppText>
                   ) : (
                     <>
-                      <Text style={styles.ctaText}>{slide.popupCtaLabel || "Nhận voucher"}</Text>
+                      <AppText style={styles.ctaText}>{slide.popupCtaLabel || "Nhận voucher"}</AppText>
                       <ArrowRight color="#FFFFFF" size={16} />
                     </>
                   )}

@@ -2,7 +2,8 @@ import { Image } from "expo-image";
 import { Bike, Car, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react-native";
 import FavoriteVehicleButton from "@/features/favorites/components/FavoriteVehicleButton";
 import { memo, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { VehicleListItemResponse } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -72,13 +73,13 @@ function VehicleListCard({
         ) : (
           <View style={styles.imageFallback}>
             <VehicleIcon color={theme.faint} size={44} />
-            <Text style={styles.fallbackText}>Chưa có hình ảnh</Text>
+            <AppText style={styles.fallbackText}>Chưa có hình ảnh</AppText>
           </View>
         )}
         {statusLabel ? (
           <View style={styles.badge}>
             <Sparkles color="#D97706" size={12} />
-            <Text style={styles.badgeText}>{statusLabel}</Text>
+            <AppText style={styles.badgeText}>{statusLabel}</AppText>
           </View>
         ) : null}
         <FavoriteVehicleButton vehicleId={vehicle.id} style={styles.heart} overlay />
@@ -88,55 +89,63 @@ function VehicleListCard({
         {!vehicle.securityRequiresDeposit ? (
           <View style={styles.freePill}>
             <ShieldCheck color={theme.success} size={13} />
-            <Text style={styles.freePillText}>Miễn thế chấp</Text>
+            <AppText style={styles.freePillText}>Miễn thế chấp</AppText>
           </View>
         ) : null}
 
-        <Text numberOfLines={1} style={styles.title}>
+        <AppText display numberOfLines={1} style={styles.title}>
           {title}
-        </Text>
+        </AppText>
 
         <View style={styles.metaRow}>
           <VehicleIcon color={theme.brand} size={14} />
-          <Text numberOfLines={1} style={styles.metaText}>
+          <AppText numberOfLines={1} style={styles.metaText}>
             {vehicle.variantName || (vehicle.vehicleType === "Car" ? "Ô tô" : "Xe máy")}
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.metaRow}>
           <MapPin color={theme.muted} size={14} />
-          <Text numberOfLines={1} style={styles.area}>
+          <AppText numberOfLines={1} style={styles.area}>
             {distanceLabel ? `${distanceLabel} · ` : ""}
             {vehicle.areaName || "Chưa cập nhật khu vực"}
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.divider} />
 
         <View style={styles.priceRow}>
-          <View>
+          <View style={styles.ratingCol}>
             {hasRating ? (
               <View style={styles.ratingWrap}>
                 <Star color="#F59E0B" size={15} fill="#F59E0B" />
-                <Text style={styles.rating}>{vehicle.averageRating.toFixed(1)}</Text>
-                <Text style={styles.ratingCount}>({vehicle.reviewCount} đánh giá)</Text>
+                <AppText style={styles.rating} numberOfLines={1}>
+                  {vehicle.averageRating.toFixed(1)}
+                </AppText>
+                <AppText style={styles.ratingCount} numberOfLines={1}>
+                  ({vehicle.reviewCount} đánh giá)
+                </AppText>
               </View>
             ) : (
-              <Text style={styles.noRating}>Chưa có đánh giá</Text>
+              <AppText style={styles.noRating} numberOfLines={1}>
+                Chưa có đánh giá
+              </AppText>
             )}
           </View>
           <View style={styles.priceWrap}>
-            <Text style={styles.price}>{formatVehicleCurrency(totalPrice)}</Text>
+            <AppText style={styles.price} numberOfLines={1}>
+              {formatVehicleCurrency(totalPrice)}
+            </AppText>
             {totalPrice > 0 ? (
-              <Text style={styles.perDay}>
+              <AppText style={styles.perDay} numberOfLines={1}>
                 {days} ngày · TB {formatVehicleCurrency(avgPrice)}/ngày
-              </Text>
+              </AppText>
             ) : null}
           </View>
         </View>
 
         <Pressable accessibilityRole="button" accessibilityLabel={`Đặt xe ${title}`} onPress={() => onBook(vehicle.id)} style={styles.bookButton}>
-          <Text style={styles.bookText}>Đặt ngay</Text>
+          <AppText style={styles.bookText}>Đặt ngay</AppText>
         </Pressable>
       </View>
     </Pressable>
@@ -204,14 +213,15 @@ const createStyles = (theme: Theme) =>
     metaText: { color: theme.muted, fontSize: 12, fontWeight: "600", flexShrink: 1 },
     area: { color: theme.muted, fontSize: 13, fontWeight: "500", flexShrink: 1 },
     divider: { height: 1, backgroundColor: theme.divider, marginVertical: 3 },
-    priceRow: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" },
-    ratingWrap: { flexDirection: "row", alignItems: "center", gap: 4 },
-    rating: { color: theme.text, fontSize: 14, fontWeight: "800" },
-    ratingCount: { color: theme.muted, fontSize: 12 },
-    noRating: { color: theme.faint, fontSize: 12 },
-    priceWrap: { alignItems: "flex-end" },
+    priceRow: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: 8 },
+    ratingCol: { flexShrink: 1, minWidth: 0 },
+    ratingWrap: { flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 1 },
+    rating: { color: theme.text, fontSize: 14, fontWeight: "800", flexShrink: 0 },
+    ratingCount: { color: theme.muted, fontSize: 12, flexShrink: 1 },
+    noRating: { color: theme.faint, fontSize: 12, fontStyle: "italic" },
+    priceWrap: { alignItems: "flex-end", flexShrink: 1, minWidth: 0 },
     price: { color: theme.brand, fontSize: 16, fontWeight: "800" },
-    perDay: { color: theme.muted, fontSize: 11 },
+    perDay: { color: theme.muted, fontSize: 11, marginTop: 2 },
     bookButton: {
       height: 42,
       borderRadius: 12,

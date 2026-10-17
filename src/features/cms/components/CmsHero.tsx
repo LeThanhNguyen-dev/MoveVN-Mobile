@@ -1,7 +1,8 @@
 import { Image, type ImageSource } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 
 /**
  * Shared fallback banner, mirroring web `FALLBACK_BANNER = "/images/123.png"`.
@@ -50,13 +51,13 @@ export default function CmsHero({
           style={styles.overlay}
         />
         <View style={styles.textBlock}>
-          <Text numberOfLines={3} style={styles.title}>
+          <AppText display numberOfLines={3} style={styles.title}>
             {title}
-          </Text>
+          </AppText>
           {meta ? (
-            <Text numberOfLines={1} style={styles.meta}>
+            <AppText numberOfLines={1} style={styles.meta}>
               {meta}
-            </Text>
+            </AppText>
           ) : null}
         </View>
       </View>

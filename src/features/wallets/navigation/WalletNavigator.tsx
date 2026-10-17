@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import {
   Banknote,
   Clock3,
@@ -54,9 +55,9 @@ export default function WalletNavigator({ onBack }: { onBack: () => void }) {
           onPress={onBack}
           style={styles.backButton}
         >
-          <Text style={styles.backText}>‹</Text>
+          <AppText style={styles.backText}>‹</AppText>
         </Pressable>
-        <Text style={styles.headerTitle}>Ví của tôi</Text>
+        <AppText display style={styles.headerTitle}>Ví của tôi</AppText>
         <View style={styles.backButtonPlaceholder} />
       </View>
 

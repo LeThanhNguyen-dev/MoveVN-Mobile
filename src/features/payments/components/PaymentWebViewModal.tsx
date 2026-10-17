@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Modal, Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { X } from "lucide-react-native";
 import { WebView } from "react-native-webview";
 import type { Theme } from "@/theme/tokens";
@@ -42,7 +43,7 @@ export default function PaymentWebViewModal({
     >
       <View style={styles.screen}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Thanh toán PayOS</Text>
+          <AppText display style={styles.headerTitle}>Thanh toán PayOS</AppText>
           <Pressable onPress={onClose} style={styles.closeButton} accessibilityLabel="Đóng thanh toán">
             <X color={theme.text} size={20} />
           </Pressable>
@@ -77,12 +78,12 @@ export default function PaymentWebViewModal({
         )}
         {failed && (
           <View style={styles.failed}>
-            <Text style={styles.failedText}>Không tải được trang thanh toán.</Text>
+            <AppText style={styles.failedText}>Không tải được trang thanh toán.</AppText>
             <Pressable onPress={openInBrowser} style={styles.browserButton}>
-              <Text style={styles.browserText}>Mở bằng trình duyệt</Text>
+              <AppText style={styles.browserText}>Mở bằng trình duyệt</AppText>
             </Pressable>
             <Pressable onPress={onClose} style={styles.ghostButton}>
-              <Text style={styles.ghostText}>Đóng</Text>
+              <AppText style={styles.ghostText}>Đóng</AppText>
             </Pressable>
           </View>
         )}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Lock, ShieldCheck } from "lucide-react-native";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import PinDigitInputs from "@/features/pin/components/PinDigitInputs";
 import type { VerifyPinResult } from "@/features/pin/hooks/usePinReveal";
 import {
@@ -112,23 +113,23 @@ export default function PinVerifyModal({
               <View style={styles.lockIcon}>
                 <Lock color={theme.danger} size={22} strokeWidth={2.3} />
               </View>
-              <Text style={styles.title}>Mã PIN đã bị khóa</Text>
-              <Text style={styles.description}>Mã PIN đã bị khóa tạm thời do nhập sai nhiều lần.</Text>
-              <Text style={styles.countdownLabel}>Thử lại sau</Text>
-              <Text style={styles.countdown}>{formatCountdown(lockoutSeconds ?? 0)}</Text>
+              <AppText display style={styles.title}>Mã PIN đã bị khóa</AppText>
+              <AppText style={styles.description}>Mã PIN đã bị khóa tạm thời do nhập sai nhiều lần.</AppText>
+              <AppText style={styles.countdownLabel}>Thử lại sau</AppText>
+              <AppText style={styles.countdown}>{formatCountdown(lockoutSeconds ?? 0)}</AppText>
               <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                <Text style={styles.secondaryText}>Đóng</Text>
+                <AppText style={styles.secondaryText}>Đóng</AppText>
               </Pressable>
             </View>
           ) : (
             <View style={styles.stack}>
               <View style={styles.heading}>
                 <ShieldCheck color={theme.brand} size={22} strokeWidth={2.3} />
-                <Text style={styles.title}>Nhập mã PIN</Text>
+                <AppText display style={styles.title}>Nhập mã PIN</AppText>
               </View>
-              <Text style={styles.description}>
+              <AppText style={styles.description}>
                 {purposeDescription ?? `Mã PIN dùng để hiển thị chi tiết giấy tờ ${documentLabel} của bạn.`}
-              </Text>
+              </AppText>
 
               <PinDigitInputs
                 autoFocus={visible}
@@ -138,29 +139,29 @@ export default function PinVerifyModal({
                 onChange={handlePinChange}
                 value={pin}
               />
-              <Text style={styles.counter}>
+              <AppText style={styles.counter}>
                 {pin.length} / {PIN_DIGIT_COUNT}
-              </Text>
+              </AppText>
 
               {errorMessage !== null ? (
-                <Text accessibilityRole="alert" style={styles.error}>
+                <AppText accessibilityRole="alert" style={styles.error}>
                   {errorMessage}
-                </Text>
+                </AppText>
               ) : null}
 
               {attemptsLeft !== null && attemptsLeft > 0 && errorMessage === null ? (
-                <Text style={styles.muted}>Còn {attemptsLeft} lần thử.</Text>
+                <AppText style={styles.muted}>Còn {attemptsLeft} lần thử.</AppText>
               ) : null}
 
               {onForgotPin !== undefined ? (
                 <Pressable accessibilityRole="button" onPress={onForgotPin} style={styles.linkWrap}>
-                  <Text style={styles.link}>Quên mã PIN?</Text>
+                  <AppText style={styles.link}>Quên mã PIN?</AppText>
                 </Pressable>
               ) : null}
 
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <Text style={styles.secondaryText}>Hủy</Text>
+                  <AppText style={styles.secondaryText}>Hủy</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -168,7 +169,7 @@ export default function PinVerifyModal({
                   onPress={() => { void handleSubmit(); }}
                   style={[styles.primaryButton, (pin.length !== PIN_DIGIT_COUNT || isSubmitting) && styles.disabled]}
                 >
-                  <Text style={styles.primaryText}>{isSubmitting ? "Đang kiểm tra..." : "Xác nhận"}</Text>
+                  <AppText style={styles.primaryText}>{isSubmitting ? "Đang kiểm tra..." : "Xác nhận"}</AppText>
                 </Pressable>
               </View>
             </View>

@@ -19,8 +19,10 @@ export default function ExploreNavigator({
   onAvatarPress,
   onRouteChange,
   onBookingCreated,
+<<<<<<< HEAD
   quickBook,
   onConsumedQuickBook,
+  onGoDeals,
 }: {
   user: AuthUser;
   onAvatarPress: () => void;
@@ -28,6 +30,7 @@ export default function ExploreNavigator({
   onBookingCreated?: (bookingId: number) => void;
   quickBook?: QuickBookParams | null;
   onConsumedQuickBook?: () => void;
+  onGoDeals?: () => void;
 }) {
   const { theme } = useTheme();
   // Giữ navigation của stack để điều hướng đặt xe nhanh từ chatbot
@@ -75,6 +78,7 @@ export default function ExploreNavigator({
               onAvatarPress={onAvatarPress}
               onSearch={(params) => navigation.navigate("VehicleList", params)}
               onVehiclePress={(params) => navigation.navigate("VehicleDetail", params)}
+              onPromoSeeAll={onGoDeals}
             />
           );
         }}
