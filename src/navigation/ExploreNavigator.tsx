@@ -19,9 +19,7 @@ export default function ExploreNavigator({
   onAvatarPress,
   onRouteChange,
   onBookingCreated,
-<<<<<<< HEAD
-  quickBook,
-  onConsumedQuickBook,
+  quickBook,  onConsumedQuickBook,
   onGoDeals,
 }: {
   user: AuthUser;
