@@ -4,6 +4,7 @@ import type { UploadFile } from "@/types/upload";
 import { MAX_INSPECTION_PHOTO_BYTES } from "./bookingDisplay";
 
 export type CapturedInspectionPhoto = {
+  source?: "camera" | "library";
   id: string;
   uri: string;
   capturedAt: string;

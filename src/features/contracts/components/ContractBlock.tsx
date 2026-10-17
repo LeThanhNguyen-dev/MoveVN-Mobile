@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { BookingButton, BookingField } from "@/features/booking/components/BookingControls";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  AppState,
   ActivityIndicator,
   Alert,
   Modal,
@@ -14,6 +16,7 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import {
   getContractsByBooking,
+  createContract, extendContract, downloadContractPdf, getContractAudit, type ContractAuditLogItem,
   requestSignOtp,
   sendForSigning,
   tryViewWithGrant,
@@ -43,11 +46,13 @@ function isParty(contract: ContractSummary, userId: number): boolean {
 
 export default function ContractBlock({
   bookingId,
+  bookingStatus,
   userId,
   canManage,
   onChanged,
 }: {
   bookingId: number;
+  bookingStatus?: string;
   userId: number;
   canManage: boolean;
   onChanged?: () => void;
@@ -63,13 +68,23 @@ export default function ContractBlock({
   const [otpBusy, setOtpBusy] = useState(false);
   const [content, setContent] = useState<ContractContent | null>(null);
   const [pinContract, setPinContract] = useState<ContractSummary | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [fileBusy, setFileBusy] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [extendTarget, setExtendTarget] = useState<ContractSummary | null>(null);
+  const [days, setDays] = useState("1");
+  const [extending, setExtending] = useState(false);
+  const [pinPurpose, setPinPurpose] = useState<"view" | "download">("view");
+  const [audit, setAudit] = useState<ContractAuditLogItem[]>([]);
+  const actionLock = useRef(false);
   const userEmail = useAuthStore((s) => s.user?.email ?? "");
 
   const load = useCallback(async () => {
     try {
-      setContracts(await getContractsByBooking(bookingId));
-    } catch {
-      setContracts([]);
+      setContracts(await getContractsByBooking(bookingId)); setLoadError("");
+    } catch (error) {
+      setLoadError(getApiErrorMessage(error, "Không tải được hợp đồng. Vui lòng thử lại."));
     } finally {
       setLoading(false);
     }
@@ -77,6 +92,12 @@ export default function ContractBlock({
 
   useEffect(() => {
     void load();
+  }, [load, bookingStatus]);
+
+  useEffect(() => {
+    const timer = setInterval(() => { if (!actionLock.current) void load(); }, 30000);
+    const sub = AppState.addEventListener("change", state => { if (state === "active" && !actionLock.current) void load(); });
+    return () => { clearInterval(timer); sub.remove(); };
   }, [load]);
 
   async function handleSend(contract: ContractSummary) {
@@ -101,7 +122,7 @@ export default function ContractBlock({
       setContent(await tryViewWithGrant(contract.id));
       void load();
     } catch {
-      setPinContract(contract);
+      setPinPurpose("view"); setPinContract(contract);
     }
   }
 
@@ -144,11 +165,51 @@ export default function ContractBlock({
     }
   }
 
+  async function handleCreate() {
+    if (actionLock.current) return;
+    actionLock.current = true; setCreating(true); setActionError("");
+    try { await createContract(bookingId); await load(); onChanged?.(); }
+    catch (e) { setActionError(getApiErrorMessage(e, "Không tạo được hợp đồng.")); }
+    finally { actionLock.current = false; setCreating(false); }
+  }
+  async function handleExtend() {
+    if (!extendTarget || actionLock.current) return;
+    const count = Number(days);
+    if (!/^\d+$/.test(days.trim()) || !Number.isInteger(count) || count < 1 || count > 90) { setActionError("Số ngày gia hạn phải từ 1 đến 90."); return; }
+    actionLock.current = true; setExtending(true); setActionError("");
+    try {
+      const updated = await extendContract(extendTarget.id, count);
+      setExtendTarget(null); await load(); onChanged?.();
+      Alert.alert("Đã gia hạn", `Đã tạo hợp đồng v${updated.version}. Hai bên cần ký lại bằng OTP và thanh toán cọc bổ sung nếu có.`);
+    } catch (e) { setActionError(getApiErrorMessage(e, "Không thể gia hạn. Vui lòng kiểm tra lịch xe và trạng thái hợp đồng.")); }
+    finally { actionLock.current = false; setExtending(false); }
+  }
+  async function handleDownload(contract: ContractSummary, verified = false) {
+    if (actionLock.current) return;
+    actionLock.current = true; setFileBusy(true); setActionError("");
+    try { await downloadContractPdf(contract); }
+    catch (e) {
+      if (!verified) { setPinPurpose("download"); setPinContract(contract); }
+      else setActionError(getApiErrorMessage(e, "Không tải được PDF. Vui lòng thử lại."));
+    } finally { actionLock.current = false; setFileBusy(false); }
+  }
+  useEffect(() => {
+    let active = true;
+    setAudit([]);
+    if (content) void getContractAudit(content.id).then(items => { if (active) setAudit(items); }).catch(() => {});
+    return () => { active = false; };
+  }, [content]);
+  const hasLive = contracts.some(c => ["Draft", "PendingSigning", "Overdue", "Active"].includes(c.status));
+  const canCreate = canManage && ["Approved", "DepositPaid", "Confirmed"].includes(bookingStatus ?? "") && !hasLive && !loadError;
+
   const contentContract = content ? contracts.find((c) => c.id === content.id) ?? null : null;
 
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Hợp đồng ({contracts.length})</Text>
+      {loadError ? <Text accessibilityRole="alert" style={{ color: theme.danger }}>{loadError}</Text> : null}
+      {actionError && !extendTarget ? <Text accessibilityRole="alert" style={{ color: theme.danger }}>{actionError}</Text> : null}
+      {canCreate ? <BookingButton title="Tạo hợp đồng" busy={creating} onPress={() => void handleCreate()} /> : null}
       {loading ? (
         <ActivityIndicator color={theme.brand} />
       ) : contracts.length === 0 ? (
@@ -179,6 +240,9 @@ export default function ContractBlock({
                     <Text style={styles.smallText}>Xem</Text>
                   </Pressable>
                 )}
+                <Pressable accessibilityRole="button" accessibilityLabel={`Tải PDF hợp đồng v${c.version}`} onPress={() => void handleDownload(c)} disabled={fileBusy} style={styles.smallButton}><Text style={styles.smallText}>Tải PDF</Text></Pressable>
+                {canManage && c.id === contracts[contracts.length - 1]?.id && ["Active", "Overdue"].includes(c.status) ?
+                  <Pressable accessibilityRole="button" accessibilityLabel="Gia hạn hợp đồng" onPress={() => { setActionError(""); setDays("1"); setExtendTarget(c); }} style={styles.smallButton}><Text style={styles.smallText}>Gia hạn</Text></Pressable> : null}
                 {signable && (
                   <Pressable
                     onPress={() => handleSign(c)}
@@ -211,6 +275,16 @@ export default function ContractBlock({
         })
       )}
 
+      <Modal visible={extendTarget !== null} transparent animationType="fade" onRequestClose={() => { if (!extending) setExtendTarget(null); }}>
+        <View style={styles.backdrop}><View style={styles.modal}>
+          <Text style={styles.cardTitle}>Gia hạn hợp đồng</Text>
+          <Text style={styles.muted}>Tạo phiên bản mới với ngày trả xe được kéo dài. Hai bên phải ký lại bằng OTP; cọc bổ sung được tính theo hợp đồng mới. Hợp đồng cũ tiếp tục hiệu lực nếu yêu cầu hết hạn.</Text>
+          <BookingField label="Số ngày gia hạn" numeric value={days} onChangeText={setDays} editable={!extending} />
+          {actionError ? <Text accessibilityRole="alert" style={{ color: theme.danger }}>{actionError}</Text> : null}
+          <BookingButton title="Xác nhận gia hạn" busy={extending} onPress={() => void handleExtend()} />
+          <BookingButton secondary title="Đóng gia hạn" disabled={extending} onPress={() => setExtendTarget(null)} />
+        </View></View>
+      </Modal>
       <Modal visible={otpModal !== null} transparent animationType="fade" onRequestClose={() => setOtpModal(null)}>
         <View style={styles.backdrop}>
           <View style={styles.modal}>
@@ -247,8 +321,10 @@ export default function ContractBlock({
           userEmail={userEmail}
           onClose={() => setPinContract(null)}
           onVerified={(detail) => {
-            setContent(detail);
+            const target = pinContract;
             setPinContract(null);
+            if (pinPurpose === "download") void handleDownload(target, true);
+            else setContent(detail);
             void load();
           }}
         />
@@ -267,8 +343,10 @@ export default function ContractBlock({
           </Text>
           <ScrollView style={styles.contractDocumentScroll} contentContainerStyle={styles.contractDocumentContent}>
               {content ? <ContractDocument content={content} /> : null}
-          </ScrollView>
-          <View style={styles.modalActions}>
+              {audit.length ? <View style={{ gap: 6 }}><Text style={styles.cardTitle}>Lịch sử hợp đồng</Text>{audit.map((entry, i) => <Text key={i} style={styles.muted}>{formatDateTime(entry.timestamp)} · {entry.actorName || entry.actorRole || "Hệ thống"} · {entry.action}{entry.note ? ` · ${entry.note}` : ""}</Text>)}</View> : null}
+            </ScrollView>
+            <View style={styles.modalActions}>
+              {contentContract ? <Pressable accessibilityRole="button" onPress={() => void handleDownload(contentContract)} disabled={fileBusy} style={styles.ghostButton}><Text style={styles.ghostText}>Tải PDF</Text></Pressable> : null}
               {contentContract && canSignContract(contentContract, userId) ? (
                 <Pressable
                   onPress={() => {
@@ -318,23 +396,24 @@ const createStyles = (theme: Theme) =>
     cardTitle: { color: theme.text, fontSize: 15, fontWeight: "800", marginBottom: 4 },
     muted: { color: theme.muted, fontSize: 13 },
     row: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
+      flexDirection: "column",
+      alignItems: "stretch",
       gap: 8,
       paddingVertical: 6,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.border,
     },
-    info: { flex: 1, gap: 2 },
+    info: { gap: 2 },
     version: { color: theme.text, fontSize: 14, fontWeight: "700" },
-    actions: { flexDirection: "row", gap: 8 },
+    actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     smallButton: {
       borderRadius: 8,
       backgroundColor: theme.surfaceAlt,
       paddingHorizontal: 12,
       paddingVertical: 7,
       minWidth: 48,
+      minHeight: 44,
+      justifyContent: "center",
       alignItems: "center",
     },
     smallText: { color: theme.text, fontSize: 12, fontWeight: "800" },

@@ -81,7 +81,7 @@ export async function createOwnerCheckInReport(
   const res = await apiClient.post<ApiResponse<InspectionReportResponse>>(
     endpoints.bookings.checkIn(id),
     buildInspectionForm(input),
-    { headers: { "Content-Type": "multipart/form-data" } },
+    { headers: { "Content-Type": "multipart/form-data" }, timeout: 120000 },
   );
   return res.data.data!;
 }
@@ -93,7 +93,7 @@ export async function createOwnerCheckOutReport(
   const res = await apiClient.post<ApiResponse<InspectionReportResponse>>(
     endpoints.bookings.checkOut(id),
     buildInspectionForm(input),
-    { headers: { "Content-Type": "multipart/form-data" } },
+    { headers: { "Content-Type": "multipart/form-data" }, timeout: 120000 },
   );
   return res.data.data!;
 }

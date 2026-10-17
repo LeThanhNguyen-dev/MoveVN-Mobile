@@ -62,6 +62,9 @@ export interface ContractSurchargeTerm {
   calculationMethod?: string | null;
   unitPrice?: number | null;
   lateDayThresholdHours?: number | null;
+  includedKm?: number | null;
+  allowanceScope?: string | null;
+  maxAmount?: number | null;
 }
 
 export interface ContractContent {

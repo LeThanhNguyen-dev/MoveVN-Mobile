@@ -7,7 +7,7 @@ vi.mock("@/services/apiClient", () => ({ apiClient: { post: mocks.post } }));
 import { createInspectionForm } from "@/features/booking/inspectionForm";
 import { createCheckInReport, createCheckOutReport } from "@/features/booking/bookingService";
 
-const booking = { id: 42, status: "DepositPaid", startDate: "2026-10-04T02:00:00" } as BookingResponse;
+const booking = { canCheckInNow: true, id: 42, status: "DepositPaid", startDate: "2026-10-04T02:00:00" } as BookingResponse;
 const report = { id: 7, type: "CheckIn", isCustomerConfirmed: false } as InspectionReportResponse;
 const beforePickup = Date.parse("2026-10-04T01:59:59Z");
 const afterPickup = Date.parse("2026-10-04T02:00:00Z");
@@ -22,7 +22,7 @@ describe("Inspection workflow permissions and timing", () => {
     expect(inspectionAvailability(busy, "Customer", "CheckIn", [report], beforePickup).canConfirm).toBe(false);
   });
   it("lets only the owner create check-in after deposit and pickup time", () => {
-    expect(inspectionAvailability(booking, "Owner", "CheckIn", [], beforePickup).canCreate).toBe(false);
+    expect(inspectionAvailability({ ...booking, canCheckInNow: false }, "Owner", "CheckIn", [], beforePickup).canCreate).toBe(false);
     expect(inspectionAvailability(booking, "Owner", "CheckIn", [], afterPickup).canCreate).toBe(true);
     expect(inspectionAvailability(booking, "Customer", "CheckIn", [], afterPickup).canCreate).toBe(false);
     for (const status of ["Pending", "Approved", "Confirmed", "Cancelled", "Completed", "InProgress"]) {
@@ -32,7 +32,7 @@ describe("Inspection workflow permissions and timing", () => {
   it("prevents duplicate reports and requires a report before customer confirmation", () => {
     expect(inspectionAvailability(booking, "Owner", "CheckIn", [report], afterPickup).canCreate).toBe(false);
     expect(inspectionAvailability(booking, "Customer", "CheckIn", [], afterPickup).canConfirm).toBe(false);
-    expect(inspectionAvailability(booking, "Customer", "CheckIn", [report], beforePickup).canConfirm).toBe(false);
+    expect(inspectionAvailability({ ...booking, canCheckInNow: false }, "Customer", "CheckIn", [report], beforePickup).canConfirm).toBe(false);
     expect(inspectionAvailability(booking, "Customer", "CheckIn", [report], afterPickup).canConfirm).toBe(true);
     expect(inspectionAvailability(booking, "Owner", "CheckIn", [report], afterPickup).canConfirm).toBe(false);
     expect(inspectionAvailability(booking, "Customer", "CheckIn", [{ ...report, isCustomerConfirmed: true }], afterPickup).canConfirm).toBe(false);

@@ -64,8 +64,18 @@ export async function confirmCheckIn(id: number): Promise<BookingResponse> {
   return res.data.data!;
 }
 
-export async function confirmCheckOut(id: number, expectedVersion = 1): Promise<BookingResponse> {
-  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.confirmCheckOut(id), { expectedVersion });
+export async function confirmCheckOut(id: number, expectedVersion = 1, paymentMethod?: import("./types").CheckoutPaymentMethod): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.confirmCheckOut(id), { expectedVersion, ...(paymentMethod ? { paymentMethod } : {}) });
+  return res.data.data!;
+}
+
+export async function amendCheckout(id: number, request: {
+  additionalSurcharges?: import("./types").CheckoutSurchargeSelection[];
+  applyCurrentLateReturnPolicy?: boolean;
+  expectedVersion: number; reason: string; actualReturnAt: string;
+  odometerKm?: number; fuelLevel?: string; damageNoted: boolean; damageDescription?: string;
+}): Promise<InspectionReportResponse> {
+  const res = await apiClient.patch<ApiResponse<InspectionReportResponse>>(`/api/bookings/${id}/check-out`, request);
   return res.data.data!;
 }
 
@@ -109,5 +119,10 @@ export async function reportReturn(id: number): Promise<BookingResponse> {
 
 export async function reportNoShow(id: number): Promise<BookingResponse> {
   const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.reportNoShow(id));
+  return res.data.data!;
+}
+
+export async function settleCheckoutSurcharges(id: number, request: { action: "Wallet" | "External" | "ConfirmExternal"; expectedVersion: number; note?: string }): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(`/api/bookings/${id}/surcharges/payment`, request);
   return res.data.data!;
 }

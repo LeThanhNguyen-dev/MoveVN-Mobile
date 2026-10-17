@@ -13,10 +13,11 @@ vi.stubGlobal("cancelAnimationFrame", (id: number) => animationFrames.delete(id)
 const mocks = vi.hoisted(() => ({
   takePicture: vi.fn(), requestPermission: vi.fn(), captureRef: vi.fn(), resize: vi.fn(), stamped: vi.fn(), delete: vi.fn(),
   captured: vi.fn(), close: vi.fn(), serverTime: vi.fn(), permission: { granted: true, canAskAgain: true },
+  platform: "android",
 }));
 vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator", Image: "Image", Modal: "Modal", Pressable: "Pressable", Text: "Text", View: "View",
-  Platform: { OS: "android" }, StyleSheet: { create: (styles: unknown) => styles }, Linking: { openSettings: vi.fn() },
+  Platform: { get OS() { return mocks.platform; } }, StyleSheet: { create: (styles: unknown) => styles }, Linking: { openSettings: vi.fn() },
   PixelRatio: { get: () => 3 },
   AppState: { currentState: "active", addEventListener: () => ({ remove: vi.fn() }) },
 }));
@@ -40,6 +41,7 @@ let tree: ReactTestRenderer | undefined;
 const stamped = { id: "1", uri: "file:///stamped.jpg", capturedAt: "2026-10-04T02:00:00Z", file: { uri: "file:///stamped.jpg", name: "inspection.jpg", type: "image/jpeg" } };
 beforeEach(() => {
   animationFrames.clear();
+  mocks.platform = "android";
   vi.clearAllMocks(); mocks.permission.granted = true;
   mocks.takePicture.mockResolvedValue({ uri: "file:///raw.jpg", width: 3000, height: 4000 });
   mocks.resize.mockResolvedValue({ uri: "file:///resized.jpg", width: 1200, height: 1600 });
@@ -47,8 +49,8 @@ beforeEach(() => {
   mocks.serverTime.mockResolvedValue("2026-10-04T02:00:00Z");
 });
 afterEach(async () => { if (tree) await act(async () => tree!.unmount()); tree = undefined; });
-async function mount() {
-  await act(async () => { tree = create(React.createElement(InspectionCameraModal, { bookingCode: "MVN-42", type: "CheckIn", onCaptured: mocks.captured, onClose: mocks.close }), { createNodeMock: () => ({}) }); });
+async function mount(sourcePhoto?: { uri: string; width: number; height: number; capturedAt: string }) {
+  await act(async () => { tree = create(React.createElement(InspectionCameraModal, { bookingCode: "MVN-42", type: "CheckIn", sourcePhoto, onCaptured: mocks.captured, onClose: mocks.close }), { createNodeMock: () => ({}) }); });
 }
 function host(type: string) { return tree!.root.findAll((node) => (node.type as unknown) === type); }
 function button(title: string) {
@@ -105,9 +107,37 @@ it("never accepts an unstamped photo if image composition fails", async () => {
   expect(mocks.delete).toHaveBeenCalledWith("file:///raw.jpg");
 });
 
-it("shows permission guidance without offering a gallery fallback", async () => {
+it("captures iOS at the composition bounds so Retina scaling cannot leave a blank canvas", async () => {
+  mocks.platform = "ios";
+  await mount(); await takePhoto();
+  const composition = host("View").find(node => node.props.onLayout)!;
+  // A 1200x1600 pixel photo is composed in points on a 3x Retina screen.
+  expect(composition.props.style.width).toBe(400);
+  expect(composition.props.style.height).toBeCloseTo(1600 / 3);
+  await finishStamp();
+  const options = mocks.captureRef.mock.calls[0]![1];
+  expect(options.useRenderInContext).toBe(true);
+  expect(options).not.toHaveProperty("width");
+  expect(options).not.toHaveProperty("height");
+  expect(button("Dùng ảnh này").props.disabled).toBe(false);
+});
+
+it("shows permission guidance with the library alternative", async () => {
   mocks.permission.granted = false; await mount();
   expect(host("CameraView")).toHaveLength(0);
-  expect(JSON.stringify(tree!.toJSON())).toContain("Ảnh từ thư viện không được sử dụng");
+  expect(JSON.stringify(tree!.toJSON())).toContain("chọn ảnh từ thư viện");
   expect(mocks.takePicture).not.toHaveBeenCalled();
+});
+
+
+it("burns a watermark onto an imported photo without requiring camera permission", async () => {
+  mocks.platform = "ios"; mocks.permission.granted = false;
+  await mount({ uri: "file:///library.jpg", width: 1200, height: 1600, capturedAt: "2026-10-17T15:00:00Z" });
+  expect(host("CameraView")).toHaveLength(0);
+  expect(mocks.takePicture).not.toHaveBeenCalled();
+  expect(JSON.stringify(tree!.toJSON())).toContain("THÊM ẢNH:");
+  expect(button("Dùng ảnh này").props.disabled).toBe(true);
+  await finishStamp();
+  await act(async () => button("Dùng ảnh này").props.onPress());
+  expect(mocks.captured).toHaveBeenCalledWith({ ...stamped, source: "library" });
 });

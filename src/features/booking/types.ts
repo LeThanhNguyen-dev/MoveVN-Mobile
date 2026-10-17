@@ -1,4 +1,8 @@
+export type CheckoutPaymentMethod = "Wallet" | "External";
+
 export interface BookingResponse {
+  externalPendingSurchargeAmount?: number;
+  externalPaidSurchargeAmount?: number;
   id: number;
   bookingCode: string;
   customerId: number;
@@ -51,39 +55,8 @@ export interface BookingResponse {
   createdAt: string;
   updatedAt: string;
   statusHistory: BookingStatusHistoryDto[];
-  pricingDetails?: BookingPricingDetailResponse[];
   surchargeTerms?: BookingSurchargeTermResponse[];
-}
-
-export interface BookingPricingDetailResponse {
-  rentalDate: string;
-  basePrice: number;
-  dateAdjustment: number;
-  demandRate: number;
-  demandAdjustment: number;
-  idleDays: number;
-  idleAdjustment: number;
-  totalAdjustment: number;
-  finalMultiplier: number;
-  finalDailyPrice: number;
-  appliedRuleNames: string[];
-}
-
-export interface BookingSurchargeTermResponse {
-  id: number;
-  feeType: string;
-  name: string;
-  description?: string;
-  calculationMethod: string;
-  unitPrice: number;
-  includedKm?: number;
-  allowanceScope?: string;
-  lateGraceHours?: number;
-  lateDayThresholdHours?: number;
-  lateDailyRate?: number;
-  maxAmount?: number;
-  createdAt: string;
-  vehicleSurchargePolicyId?: number;
+  pricingDetails?: BookingPricingDetailResponse[];
 }
 
 export interface BookingStatusHistoryDto {
@@ -160,6 +133,10 @@ export interface InspectionReportRevision {
 }
 
 export interface InspectionReportResponse {
+  externalPendingSurchargeAmount?: number;
+  externalPaidSurchargeAmount?: number;
+  initialOdometerKm?: number;
+  additionalSurcharges?: CheckoutSurchargeItem[];
   id: number;
   bookingId: number;
   type: string;
@@ -167,6 +144,17 @@ export interface InspectionReportResponse {
   version?: number;
   actualReturnAt?: string | null;
   lateReturnFee?: number | null;
+  lateReturnHours?: number;
+  lateReturnFeeStatus?: string;
+  lateReturnFeeNote?: string;
+  proposedLateReturnFee?: number;
+  excessMileageFee?: number;
+  travelledKm?: number;
+  includedKm?: number;
+  excessKm?: number;
+  pendingSurchargeAmount?: number;
+  paidSurchargeAmount?: number;
+  outstandingSurchargeAmount?: number;
   revisions?: InspectionReportRevision[];
   odometerKm?: number;
   fuelLevel?: string;
@@ -178,3 +166,37 @@ export interface InspectionReportResponse {
   createdAt: string;
   images: CheckInOutImageResponse[];
 }
+
+export interface BookingSurchargeTermResponse {
+  id: number;
+  feeType: string;
+  name: string;
+  description?: string;
+  calculationMethod: string;
+  unitPrice: number;
+  includedKm?: number;
+  allowanceScope?: string;
+  lateGraceHours?: number;
+  lateDayThresholdHours?: number;
+  lateDailyRate?: number;
+  maxAmount?: number;
+  createdAt: string;
+  vehicleSurchargePolicyId?: number;
+}
+
+export interface BookingPricingDetailResponse {
+  rentalDate: string;
+  basePrice: number;
+  dateAdjustment: number;
+  demandRate: number;
+  demandAdjustment: number;
+  idleDays: number;
+  idleAdjustment: number;
+  totalAdjustment: number;
+  finalMultiplier: number;
+  finalDailyPrice: number;
+  appliedRuleNames: string[];
+}
+
+export interface CheckoutSurchargeSelection { termId: number; quantity: number; note: string }
+export interface CheckoutSurchargeItem extends CheckoutSurchargeSelection { name: string; unitPrice: number; amount: number }

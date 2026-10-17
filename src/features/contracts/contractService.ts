@@ -38,3 +38,27 @@ export async function requestSignOtp(contractId: number): Promise<void> {
 export async function verifySignOtp(contractId: number, otp: string): Promise<void> {
   await apiClient.post<ApiResponse<object>>(endpoints.contracts.verifySignOtp(contractId), { otp });
 }
+
+export async function createContract(bookingId: number): Promise<ContractSummary> {
+  const res = await apiClient.post<ApiResponse<ContractSummary>>(endpoints.contracts.base, { bookingId });
+  return res.data.data!;
+}
+
+export async function extendContract(contractId: number, additionalDays: number): Promise<ContractSummary> {
+  if (!Number.isInteger(additionalDays) || additionalDays < 1 || additionalDays > 90) throw new Error("Số ngày gia hạn phải từ 1 đến 90.");
+  const res = await apiClient.post<ApiResponse<ContractSummary>>(endpoints.contracts.extend(contractId), { additionalDays });
+  return res.data.data!;
+}
+
+export interface ContractAuditLogItem {
+  contractId: number; actorName?: string | null; actorRole?: string | null; action: string; note?: string | null; timestamp: string;
+}
+export async function getContractAudit(contractId: number): Promise<ContractAuditLogItem[]> {
+  const res = await apiClient.get<ApiResponse<ContractAuditLogItem[]>>(endpoints.contracts.audit(contractId));
+  return res.data.data ?? [];
+}
+
+export async function downloadContractPdf(contract: ContractSummary): Promise<void> {
+  const { downloadPdf } = await import("@/utils/pdfDownload");
+  await downloadPdf(endpoints.contracts.pdfByGrant(contract.id), `hop-dong-${contract.id}-v${contract.version}.pdf`, "post");
+}

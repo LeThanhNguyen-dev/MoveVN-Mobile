@@ -144,6 +144,9 @@ export const endpoints = {
   },
   contracts: {
     base: "/api/contracts",
+    extend: (id: number) => `/api/contracts/${id}/extend`,
+    pdfByGrant: (id: number) => `/api/contracts/${id}/pdf/grant`,
+    audit: (id: number) => `/api/contracts/${id}/audit`,
     byBooking: (bookingId: number) => `/api/contracts/by-booking/${bookingId}`,
     sendForSigning: (id: number) => `/api/contracts/${id}/send-for-signing`,
     requestViewOtp: (id: number) => `/api/contracts/${id}/request-view-otp`,

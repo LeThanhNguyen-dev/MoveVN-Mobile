@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import priceCases from "./fixtures/booking-pricing.json";
 
 import {
   calcDeliveryPreview,
@@ -8,9 +9,16 @@ import {
   haversineKm,
   isPeriodOverlapping,
 } from "@/features/booking/utils/bookingPricing";
-import type { BusyPeriod } from "@/features/vehicles/types";
+import type { BusyPeriod, PricingQuoteResponse } from "@/features/vehicles/types";
 
 describe("bookingPricing", () => {
+  it("matches the shared web/mobile pricing scenarios", () => {
+    for (const c of priceCases) {
+      const { promoAmt, ...actual } = calcPricePreview(c.vehicle, c.days, c.quote as PricingQuoteResponse | null, c.promo, c.delivery)!;
+      expect(promoAmt).toBe(c.promo);
+      expect(actual, c.name).toEqual(c.expected);
+    }
+  });
   it("applies the same long-rental discount tiers as web", () => {
     expect(getDiscountPercent(1)).toBe(0);
     expect(getDiscountPercent(3)).toBe(5);

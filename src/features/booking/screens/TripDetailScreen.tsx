@@ -1,3 +1,12 @@
+import { goBackOrFallback } from "@/navigation/goBackOrFallback";
+import { checkoutStartDate } from "../bookingDisplay";
+import InspectionReportCard from "../components/InspectionReportCard";
+import { useFocusEffect } from "@react-navigation/native";
+import CheckoutSummary, { OutstandingSurcharge } from "../components/CheckoutSummary";
+import CheckoutConfirmation from "../components/CheckoutConfirmation";
+import { BookingButton } from "../components/BookingControls";
+import { CHECKOUT_CONSENT } from "../checkoutRules";
+import { canReportNoShow, isDepositExpired, parseServerDate } from "../bookingDisplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -70,7 +79,14 @@ export default function TripDetailScreen({
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId } = route.params;
+  const handleBack = () => goBackOrFallback(navigation, () => navigation.replace("TripList"));
 
+  const [now, setNow] = useState(Date.now());
+  const [checkoutToConfirm, setCheckoutToConfirm] = useState<InspectionReportResponse | null>(null);
+  const actionLock = useRef(false);
+  const loadId = useRef(0);
+  const [dataReady, setDataReady] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [booking, setBooking] = useState<BookingResponse | null>(null);
   const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,9 +113,9 @@ export default function TripDetailScreen({
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
+    const request = ++loadId.current;
     try {
       const data = await getBookingById(bookingId);
-      setBooking(data);
       setVehiclePhoto(data.vehicleImage || null);
       if (!data.vehicleImage) {
         void getPublicVehicleImages(data.vehicleId).then((images) => {
@@ -111,8 +127,10 @@ export default function TripDetailScreen({
         hasReviewed(bookingId).catch(() => true),
         getBookingReviews(bookingId).catch(() => [] as ReviewResponse[]),
         getPendingTopUp(bookingId).catch(() => null),
-        getInspectionReports(bookingId).catch(() => [] as InspectionReportResponse[]),
+        getInspectionReports(bookingId),
       ]);
+      if (request !== loadId.current) return;
+      setBooking(data); setDataReady(true);
       setAlreadyReviewed(reviewed);
       setBookingReviews(reviewList);
       setPendingTopUp(topUp);
@@ -128,14 +146,19 @@ export default function TripDetailScreen({
           .catch(() => setAutoCancelHours(24));
       }
     } catch (err) {
+      if (request !== loadId.current) return;
+      setDataReady(false);
       Alert.alert("Lỗi", getApiErrorMessage(err, "Không tải được chi tiết chuyến đi."));
     } finally {
-      setLoading(false);
+      if (request === loadId.current) setLoading(false);
     }
   }, [bookingId]);
 
+  useFocusEffect(useCallback(() => { void load(); return () => { loadId.current++; }; }, [load]));
   useEffect(() => {
-    void load();
+    const timer = setInterval(() => { setNow(Date.now()); if (!actionLock.current) void load(); }, 30000);
+    const sub = AppState.addEventListener("change", state => { if (state === "active" && !actionLock.current) void load(); });
+    return () => { clearInterval(timer); sub.remove(); };
   }, [load]);
 
   useEffect(() => {
@@ -185,17 +208,23 @@ export default function TripDetailScreen({
   }, [pendingOrderCode]);
 
   async function runAction(key: string, fn: () => Promise<void>, successMessage?: string): Promise<boolean> {
-    if (actionBusy) return false;
+    if (actionLock.current || !dataReady) return false;
+    actionLock.current = true;
     setActionBusy(key);
+    setActionError("");
     try {
       await fn();
       await load();
       if (successMessage) Alert.alert("Thành công", successMessage);
       return true;
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Vui lòng thử lại sau."));
+      const message = getApiErrorMessage(err, "Vui lòng thử lại sau.");
+      setActionError(key === "checkout" ? `${message} Hãy kiểm tra lại biên bản và phụ phí trước khi xác nhận.` : message);
+      Alert.alert("Thất bại", message);
+      if (key === "checkout") await load();
       return false;
     } finally {
+      actionLock.current = false;
       setActionBusy(null);
     }
   }
@@ -210,7 +239,8 @@ export default function TripDetailScreen({
     actionKey: string,
     makeLink: (returnUrl: string) => Promise<{ checkoutUrl: string; orderCode: number }>,
   ) {
-    if (actionBusy) return;
+    if (actionLock.current || !dataReady) return;
+    actionLock.current = true;
     setActionBusy(actionKey);
     try {
       // Mở thanh toán ngay trong app (WebView); PayOS redirect về scheme movevn://
@@ -222,6 +252,7 @@ export default function TripDetailScreen({
     } catch (err) {
       Alert.alert("Thất bại", getApiErrorMessage(err, "Không tạo được link thanh toán."));
     } finally {
+      actionLock.current = false;
       setActionBusy(null);
     }
   }
@@ -259,7 +290,7 @@ export default function TripDetailScreen({
       setCancelQuote(null);
       setCancelReason("");
       Alert.alert("Thành công", "Đã hủy chuyến đi.", [
-        { text: "Về danh sách", onPress: () => navigation.goBack() },
+        { text: "Về danh sách", onPress: handleBack },
       ]);
     }
   }
@@ -277,7 +308,7 @@ export default function TripDetailScreen({
             void runAction("noshow", () => reportNoShow(bookingId).then(() => undefined)).then((ok) => {
               if (ok) {
                 Alert.alert("Thành công", "Đã ghi nhận. Tiền cọc hoàn vào ví.", [
-                  { text: "Về danh sách", onPress: () => navigation.goBack() },
+                  { text: "Về danh sách", onPress: handleBack },
                 ]);
               }
             });
@@ -327,7 +358,7 @@ export default function TripDetailScreen({
     return (
       <View style={styles.screen}>
         <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Pressable onPress={handleBack} style={styles.backButton}>
             <ArrowLeft color={theme.text} size={20} />
           </Pressable>
           <Text style={styles.headerTitle}>Chi tiết chuyến đi</Text>
@@ -341,11 +372,11 @@ export default function TripDetailScreen({
   }
 
   const status = booking.status;
-  const pickupReached = new Date(booking.startDate).getTime() <= Date.now();
-  const checkInReport = reports.find((r) => r.type === "CheckIn");
-  const checkOutReport = reports.find((r) => r.type === "CheckOut");
-  const canCancel = ["Pending", "Approved", "DepositPaid", "Confirmed"].includes(status) && new Date(booking.startDate).getTime() > Date.now();
-  const depositExpired = status === "Approved" && (!booking.paymentDueAt || new Date(booking.paymentDueAt).getTime() <= Date.now() || new Date(booking.startDate).getTime() <= Date.now());
+  const checkInReport = reports.find(r => r.type === "CheckIn");
+  const checkOutReport = reports.find(r => r.type === "CheckOut");
+  const pickupReached = parseServerDate(checkoutStartDate(booking)).getTime() <= now;
+  const depositExpired = isDepositExpired(booking, now);
+  const canCancel = ["Pending", "Approved", "DepositPaid", "Confirmed"].includes(status) && !pickupReached;
   const progress = status === "InProgress" || status === "Returning"
     ? rentalProgress(booking.startDate, booking.endDate)
     : null;
@@ -353,7 +384,7 @@ export default function TripDetailScreen({
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Pressable onPress={handleBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={20} />
         </Pressable>
         <Text numberOfLines={1} style={styles.headerTitle}>
@@ -370,6 +401,9 @@ export default function TripDetailScreen({
             <Text style={styles.muted}>Ngày yêu cầu: {formatDateTime(booking.createdAt)}</Text>
           </View>
         </View>
+        {actionError ? <Text accessibilityRole="alert" style={{ color: theme.danger }}>{actionError}</Text> : null}
+        {!dataReady ? <Text accessibilityRole="alert" style={styles.muted}>Không tải được dữ liệu mới. Quay lại màn hoặc tải lại trước khi thao tác.</Text> : null}
+        <BookingButton secondary title="Tải lại đơn thuê" disabled={actionBusy !== null} onPress={() => void load()} />
         <View style={styles.statusRow}>
           <Text style={styles.status}>{bookingStatusLabel(status)}</Text>
           {booking.escrowStatus === "Held" && <Text style={styles.escrow}>Giữ cọc {formatMoney(booking.escrowAmount)}</Text>}
@@ -459,7 +493,7 @@ export default function TripDetailScreen({
               theme={theme}
               label={actionBusy === "topup" ? "Đang tạo link..." : "Trả cọc bổ sung qua PayOS"}
               onPress={handlePayTopUp}
-              disabled={actionBusy !== null}
+              disabled={!dataReady || actionBusy !== null}
             />
           </View>
         )}
@@ -476,13 +510,13 @@ export default function TripDetailScreen({
                   theme={theme}
                   label={actionBusy === "wallet" ? "Đang trừ ví..." : `Trả bằng ví${walletBalance != null ? ` (${formatMoney(walletBalance)})` : ""}`}
                   onPress={handlePayWithWallet}
-                  disabled={actionBusy !== null}
+                  disabled={!dataReady || actionBusy !== null}
                 />
                 <ActionButton
                   theme={theme}
                   label={actionBusy === "payos" ? "Đang tạo link..." : "Trả qua PayOS"}
                   onPress={handlePayWithPayOs}
-                  disabled={actionBusy !== null}
+                  disabled={!dataReady || actionBusy !== null}
                   secondary
                 />
                 {pendingOrderCode != null && (
@@ -498,33 +532,27 @@ export default function TripDetailScreen({
             theme={theme}
             label="Hủy chuyến đi"
             onPress={handleCancel}
-            disabled={actionBusy !== null}
+            disabled={!dataReady || actionBusy !== null}
             danger
           />
         )}
 
         {(status === "DepositPaid" || status === "Confirmed") && (
           <>
-            {checkInReport && pickupReached ? (
-              <ActionButton
-                theme={theme}
-                label="Xác nhận đã nhận xe"
-                onPress={() => runAction("checkin", () => confirmCheckIn(bookingId).then(() => undefined), "Đã xác nhận nhận xe. Chúc bạn đi tốt!")}
-                disabled={actionBusy !== null}
-              />
-            ) : null}
-            {!pickupReached ? (
-              <Text style={styles.muted}>Chưa đến ngày nhận xe ({formatDate(booking.startDate)}). Nút xác nhận sẽ mở sau thời điểm nhận xe.</Text>
-            ) : null}
-            {status === "DepositPaid" && pickupReached && !checkInReport ? (
-              <ActionButton
-                theme={theme}
-                label="Chủ xe không giao xe"
-                onPress={handleNoShow}
-                disabled={actionBusy !== null}
-                secondary
-              />
-            ) : null}
+            {status === "DepositPaid" && booking.canCheckInNow === true && !pickupReached ? <Text style={styles.muted}>Xe trống: có thể nhận sớm tối đa 2 tiếng. Chủ xe lập biên bản, khách kiểm tra rồi xác nhận nhận xe. Giờ trả và giá thuê giữ theo booking.</Text> : null}
+            {checkInReport && !checkInReport.isCustomerConfirmed && booking.canCheckInNow === true ? <ActionButton
+              theme={theme}
+              label="Xác nhận đã nhận xe"
+              onPress={() => runAction("checkin", () => confirmCheckIn(bookingId).then(() => undefined), "Đã xác nhận nhận xe. Chúc bạn đi tốt!")}
+              disabled={!dataReady || actionBusy !== null}
+            /> : <Text style={styles.muted}>{booking.checkInUnavailableReason || "Chờ biên bản nhận xe và kiểm tra khả năng check-in."}</Text>}
+            {canReportNoShow(booking, reports, now) ? <ActionButton
+              theme={theme}
+              label="Chủ xe không giao xe"
+              onPress={handleNoShow}
+              disabled={!dataReady || actionBusy !== null}
+              secondary
+            /> : null}
           </>
         )}
 
@@ -533,17 +561,17 @@ export default function TripDetailScreen({
             theme={theme}
             label="Báo đã trả xe"
             onPress={() => runAction("report", () => reportReturn(bookingId).then(() => undefined), "Đã báo trả xe. Chờ chủ xe lập biên bản.")}
-            disabled={actionBusy !== null}
+            disabled={!dataReady || actionBusy !== null}
           />
         )}
 
-        {(status === "Returning" || status === "InProgress") && checkOutReport && pickupReached && (
-          <ActionButton
+        {["Returning", "InProgress"].includes(status) && pickupReached && checkOutReport && !checkOutReport.isCustomerConfirmed && (
+          <View><Text style={styles.muted}>{CHECKOUT_CONSENT}</Text><ActionButton
             theme={theme}
-            label="Xác nhận biên bản trả xe"
-            onPress={() => runAction("checkout", () => confirmCheckOut(bookingId, checkOutReport.version ?? 1).then(() => undefined), "Đã xác nhận hoàn tất.")}
-            disabled={actionBusy !== null}
-          />
+            label="Đồng ý biên bản và phụ phí"
+            onPress={() => setCheckoutToConfirm(checkOutReport)}
+            disabled={!dataReady || actionBusy !== null}
+          /></View>
         )}
         {status === "Returning" && checkOutReport && pickupReached && (
           <ActionButton
@@ -558,67 +586,10 @@ export default function TripDetailScreen({
           />
         )}
 
-        {reports.length > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Biên bản bàn giao ({reports.length})</Text>
-            {reports.map((r) => (
-              <View key={r.id} style={styles.reportBlock}>
-                <Text style={styles.reportTitle}>
-                  {r.type === "CheckIn" ? "Nhận xe" : "Trả xe"} · {formatDateTime(r.createdAt)}
-                  {r.isCustomerConfirmed ? " · bạn đã xác nhận" : " · chờ bạn xác nhận"}
-                </Text>
-                {r.odometerKm != null && <Text style={styles.muted}>Odo: {r.odometerKm} km</Text>}
-                {r.fuelLevel ? <Text style={styles.muted}>Nhiên liệu: {r.fuelLevel}</Text> : null}
-                {r.damageNoted ? (
-                  <Text style={styles.damage}>Hư hỏng: {r.damageDescription || "có ghi nhận"}</Text>
-                ) : (
-                  <Text style={styles.muted}>Không ghi nhận hư hỏng</Text>
-                )}
-                {r.type === "CheckOut" && r.actualReturnAt ? (
-                  <Text style={styles.muted}>Giờ bàn giao: {formatDateTime(r.actualReturnAt)}</Text>
-                ) : null}
-                {r.type === "CheckOut" && r.lateReturnFee != null && r.lateReturnFee > 0 ? (
-                  <Text style={styles.damage}>Phụ phí trả trễ: {formatMoney(r.lateReturnFee)}</Text>
-                ) : null}
-                {r.type === "CheckOut" && r.revisions && r.revisions.length > 0 ? (
-                  <View>
-                    <Text style={styles.muted}>Lịch sử sửa ({r.revisions.length})</Text>
-                    {r.revisions.map((rev) => {
-                      let snap: { ActualReturnAt?: string; OdometerKm?: number; LateReturnFee?: number; actualReturnAt?: string; odometerKm?: number; lateReturnFee?: number } = {};
-                      try {
-                        snap = rev.snapshotJson ? (JSON.parse(rev.snapshotJson) as typeof snap) : {};
-                      } catch {
-                        snap = {};
-                      }
-                      const at = snap.ActualReturnAt ?? snap.actualReturnAt;
-                      const odo = snap.OdometerKm ?? snap.odometerKm;
-                      const fee = snap.LateReturnFee ?? snap.lateReturnFee;
-                      return (
-                        <Text key={rev.id} style={styles.muted}>
-                          v{rev.version} · {rev.reason || "sửa biên bản"} · {formatDateTime(rev.createdAt)}
-                          {at ? ` · bàn giao ${formatDateTime(at)}` : ""}
-                          {odo != null ? ` · odo ${odo}` : ""}
-                          {fee != null ? ` · phí ${formatMoney(fee)}` : ""}
-                        </Text>
-                      );
-                    })}
-                  </View>
-                ) : null}
-                {r.images.length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbs}>
-                    {r.images.map((img) => (
-                      <Pressable key={img.id} onPress={() => setViewingImage(img.imageUrl)}>
-                        <Image source={{ uri: img.imageUrl }} style={styles.thumb} />
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
-            ))}
-          </View>
-        )}
+        <OutstandingSurcharge booking={booking} report={checkOutReport} role={"Customer"} onUpdated={load} />
+        {reports.map(report => <InspectionReportCard key={report.id} booking={booking} report={report} />)}
 
-        <ContractBlock bookingId={booking.id} userId={userId} canManage={false} onChanged={() => load()} />
+        <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage={false} onChanged={() => load()} />
 
         {(status === "Cancelled" || status === "Rejected") && booking.cancelReason ? (
           <View style={styles.card}>
@@ -639,7 +610,7 @@ export default function TripDetailScreen({
               <RatingInput label="Chính xác mô tả (không bắt buộc)" value={accuracy} onChange={setAccuracy} styles={styles} />
               <RatingInput label="Hỗ trợ (không bắt buộc)" value={support} onChange={setSupport} styles={styles} />
               <TextInput value={comment} onChangeText={setComment} placeholder="Chia sẻ trải nghiệm của bạn..." placeholderTextColor={theme.placeholder} multiline style={[styles.input, styles.multiline]} />
-              <ActionButton theme={theme} label="Gửi đánh giá" onPress={handleReview} disabled={actionBusy !== null || rating === 0} />
+              <ActionButton theme={theme} label="Gửi đánh giá" onPress={handleReview} disabled={!dataReady || actionBusy !== null || rating === 0} />
             </> : null}
             {bookingReviews.filter((review) => review.reviewType === "Customer").map((review) => (
               <View key={review.id} style={styles.reviewItem}>
@@ -656,6 +627,9 @@ export default function TripDetailScreen({
         )}
       </ScrollView>
 
+      <CheckoutConfirmation booking={booking} report={checkoutToConfirm} busy={actionBusy !== null} onClose={() => setCheckoutToConfirm(null)} onConfirm={(report, paymentMethod) => {
+        void runAction("checkout", () => confirmCheckOut(bookingId, report.version ?? 1, paymentMethod).then(() => undefined), "Đã xác nhận trả xe. Chờ chủ xe xác nhận nhận lại xe.").then(() => setCheckoutToConfirm(null));
+      }} />
       <Modal visible={viewingImage !== null} transparent animationType="fade" onRequestClose={() => setViewingImage(null)}>
         <Pressable style={styles.fullBackdrop} onPress={() => setViewingImage(null)}>
           {viewingImage ? (

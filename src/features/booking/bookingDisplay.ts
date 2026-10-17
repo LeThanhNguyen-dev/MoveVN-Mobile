@@ -6,16 +6,9 @@ export const MAX_INSPECTION_PHOTOS = 12;
 export const MAX_INSPECTION_PHOTO_BYTES = 5 * 1024 * 1024;
 
 export const BOOKING_STATUS_LABELS: Record<string, string> = {
-  Pending: "Chờ duyệt",
-  Approved: "Đã duyệt",
-  Rejected: "Đã từ chối",
-  Cancelled: "Đã hủy",
-  DepositPaid: "Đã đặt cọc",
-  Confirmed: "Đã xác nhận",
-  InProgress: "Đang nhận xe",
-  Returning: "Đang trả xe",
-  Returned: "Đã trả xe, chờ nhận",
-  Completed: "Hoàn thành",
+  Pending: "Chờ duyệt", Approved: "Chờ đặt cọc", DepositPaid: "Đã đặt cọc",
+  Confirmed: "Đã xác nhận", InProgress: "Đang thuê", Returning: "Đang trả xe", Returned: "Chờ chủ xe nhận lại", Completed: "Hoàn thành",
+  Rejected: "Đã từ chối", Cancelled: "Đã hủy",
 };
 
 export function parseServerDate(value: string): Date {
@@ -51,9 +44,9 @@ export function inspectionAvailability(
   reports: InspectionReportResponse[], now = Date.now(),
 ) {
   const report = reports.find((item) => item.type === type);
-  const statusAllowed = booking.status === (type === "CheckIn" ? "DepositPaid" : "InProgress");
-  const pickupReached = parseServerDate(booking.startDate).getTime() <= now;
-  const timeAllowed = type === "CheckIn" ? (booking.canCheckInNow ?? pickupReached) : pickupReached;
+  const statusAllowed = type === "CheckIn" ? booking.status === "DepositPaid" : ["InProgress", "Returning"].includes(booking.status);
+  const pickupReached = parseServerDate(checkoutStartDate(booking)).getTime() <= now;
+  const timeAllowed = type === "CheckIn" ? booking.canCheckInNow === true : pickupReached;
   return {
     report, pickupReached,
     canCreate: role === "Owner" && statusAllowed && timeAllowed && !report,
@@ -68,4 +61,24 @@ export function validateInspectionFields(odometer: string, damageNoted: boolean,
   }
   if (damageNoted && !description.trim()) return "Vui lòng mô tả hư hại của xe.";
   return null;
+}
+
+export function canReportNoShow(booking: BookingResponse, reports: InspectionReportResponse[], now = Date.now()): boolean {
+  return booking.status === "DepositPaid" && parseServerDate(booking.startDate).getTime() <= now && !reports.some(r => r.type === "CheckIn");
+}
+
+export function canOwnerCancel(booking: BookingResponse, now = Date.now()): boolean {
+  return ["Approved", "DepositPaid"].includes(booking.status) && parseServerDate(booking.startDate).getTime() > now;
+}
+
+export function isDepositExpired(booking: BookingResponse, now = Date.now()): boolean {
+  return !booking.paymentDueAt || parseServerDate(booking.paymentDueAt).getTime() <= now || parseServerDate(booking.startDate).getTime() <= now;
+}
+
+// A successful early check-in makes checkout available immediately.
+export function checkoutStartDate(booking: Pick<BookingResponse, "startDate" | "statusHistory">): string {
+  const values = [booking.startDate, ...(booking.statusHistory ?? [])
+    .filter(h => h.toStatus === "InProgress").map(h => h.createdAt)];
+  const first = values.reduce((first, value) => parseServerDate(value).getTime() < parseServerDate(first).getTime() ? value : first);
+  return new Date(Math.floor(parseServerDate(first).getTime() / 60000) * 60000).toISOString();
 }
