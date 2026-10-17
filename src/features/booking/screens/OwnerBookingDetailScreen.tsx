@@ -42,7 +42,8 @@ import RiskScoreBadge from "@/features/booking/components/RiskScoreBadge";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
 import BookingTimeline from "@/features/booking/components/BookingTimeline";
-import { createOwnerReview, hasReviewed } from "@/features/review/reviewService";
+import BookingPricingDetails from "@/features/booking/components/BookingPricingDetails";
+import { createOwnerReview, getBookingReviews, hasReviewed, type ReviewResponse } from "@/features/review/reviewService";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { pickAndStampPhotosWeb } from "@/features/booking/utils/stampWebPhoto";
@@ -51,6 +52,7 @@ import { inspectionWatermark } from "@/features/booking/bookingDisplay";
 import { deleteInspectionPhoto, stampedInspectionPhoto } from "@/features/booking/inspectionPhoto";
 import { getServerTimeISO } from "@/features/booking/utils/serverTime";
 import { getPendingAutoCancelHours } from "@/features/systemConfig/configService";
+import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
 
 type DetailRoute = RouteProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
 type DetailNav = NativeStackNavigationProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
@@ -90,9 +92,11 @@ export default function OwnerBookingDetailScreen({
   const userId = useAuthStore((s) => s.user?.userId ?? 0);
 
   const [booking, setBooking] = useState<BookingResponse | null>(null);
+  const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [reports, setReports] = useState<InspectionReportResponse[]>([]);
+  const [bookingReviews, setBookingReviews] = useState<ReviewResponse[]>([]);
   const [alreadyReviewed, setAlreadyReviewed] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -124,12 +128,21 @@ export default function OwnerBookingDetailScreen({
     try {
       const data = await getBookingById(bookingId);
       setBooking(data);
-      const [list, reviewed] = await Promise.all([
+      setVehiclePhoto(data.vehicleImage || null);
+      if (!data.vehicleImage) {
+        void getPublicVehicleImages(data.vehicleId).then((images) => {
+          const photo = [...images].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.sortOrder - b.sortOrder)[0];
+          if (photo?.imageUrl) setVehiclePhoto(photo.imageUrl);
+        }).catch(() => undefined);
+      }
+      const [list, reviewed, reviewList] = await Promise.all([
         getInspectionReports(bookingId).catch(() => [] as InspectionReportResponse[]),
         hasReviewed(bookingId).catch(() => true),
+        getBookingReviews(bookingId).catch(() => [] as ReviewResponse[]),
       ]);
       setReports(list);
       setAlreadyReviewed(reviewed);
+      setBookingReviews(reviewList);
       if (data.status === "Pending") {
         getPendingAutoCancelHours()
           .then((h) => setAutoCancelHours(h))
@@ -277,6 +290,7 @@ export default function OwnerBookingDetailScreen({
             height: outHeight,
             useRenderInContext: Platform.OS === "ios",
           });
+          if (!uri) throw new Error("Không lưu được ảnh biên bản.");
           const photo = stampedInspectionPhoto(uri, stampingItem.capturedAt);
           uri = null;
           if (cancelled) {
@@ -500,6 +514,14 @@ export default function OwnerBookingDetailScreen({
         <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với khách thuê" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.backButton}><MessageSquare color={theme.brand} size={22} /></Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
+        <View style={styles.vehicleCard}>
+          {vehiclePhoto ? <Image source={{ uri: vehiclePhoto }} style={styles.vehiclePhoto} resizeMode="cover" /> : <View style={styles.vehiclePhotoPlaceholder}><Text style={styles.vehiclePhotoPlaceholderText}>Xe MoveVN</Text></View>}
+          <View style={styles.vehicleInfo}>
+            <Text style={styles.vehicleName}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text>
+            <Text style={styles.muted}>Khách thuê: {booking.customerName || `#${booking.customerId}`}</Text>
+            <Text style={styles.muted}>Ngày yêu cầu: {formatDateTime(booking.createdAt)}</Text>
+          </View>
+        </View>
         <View style={styles.statusRow}>
           <Text style={styles.status}>{bookingStatusLabel(status)}</Text>
           {booking.escrowStatus === "Held" && <Text style={styles.escrow}>Giữ cọc {formatMoney(booking.escrowAmount)}</Text>}
@@ -534,9 +556,14 @@ export default function OwnerBookingDetailScreen({
           <Text style={styles.cardTitle}>Lịch trình & địa điểm</Text>
           <Row label="Nhận xe" value={formatDateTime(booking.startDate)} />
           <Text style={styles.address}>{booking.pickupAddress}</Text>
+          {booking.deliveryDistanceKm != null ? (
+            <Text style={styles.muted}>
+              Cách vị trí xe {booking.deliveryDistanceKm} km{booking.deliveryFee > 0 ? ` · Phí giao xe ${formatMoney(booking.deliveryFee)}` : " · Miễn phí giao xe"}
+            </Text>
+          ) : null}
           <Row label="Trả xe" value={formatDateTime(booking.endDate)} />
           <Text style={styles.address}>{booking.returnAddress || booking.pickupAddress}</Text>
-          <Row label="Khách thuê" value={`#${booking.customerId}`} />
+          <Row label="Khách thuê" value={booking.customerName || `#${booking.customerId}`} />
           {booking.customerNote ? <Text style={styles.note}>Ghi chú khách: {booking.customerNote}</Text> : null}
         </View>
 
@@ -562,6 +589,22 @@ export default function OwnerBookingDetailScreen({
           <Row label="Phí nền tảng" value={formatMoney(booking.platformFee)} />
           <Row label="Tổng cộng" value={formatMoney(booking.totalAmount)} strong />
           <Row label="Tiền cọc giữ" value={formatMoney(booking.depositAmount)} />
+        </View>
+        <BookingPricingDetails booking={booking} />
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Lịch thanh toán</Text>
+          <Row
+            label={(["DepositPaid", "Confirmed", "InProgress", "Completed"].includes(status)) ? "Đã chuyển tiền cọc" : "Cần chuyển tiền cọc"}
+            value={formatMoney(booking.depositAmount)}
+          />
+          {booking.totalAmount > booking.depositAmount ? (
+            <Row label="Khách trả khi nhận xe" value={formatMoney(booking.totalAmount - booking.depositAmount)} />
+          ) : null}
+          {booking.paymentDueAt && status === "Approved" ? <Text style={styles.muted}>Hạn thanh toán cọc: {formatDateTime(booking.paymentDueAt)}</Text> : null}
+          {booking.securityDepositAmount > 0 ? (
+            <Row label="Tiền thế chấp hoàn lại khi trả xe" value={formatMoney(booking.securityDepositAmount)} />
+          ) : null}
         </View>
 
         {status === "Pending" && autoCancelHours != null && booking.createdAt ? (
@@ -710,9 +753,10 @@ export default function OwnerBookingDetailScreen({
         {status === "Completed" && !alreadyReviewed && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Đánh giá khách thuê</Text>
+            <Text style={styles.muted}>Chọn số sao tổng quan (bắt buộc)</Text>
             <View style={styles.stars}>
               {[1, 2, 3, 4, 5].map((s) => (
-                <Pressable key={s} onPress={() => setRating(s)} style={styles.star}>
+                <Pressable key={s} accessibilityRole="button" accessibilityLabel={`${s} sao`} onPress={() => setRating(s)} style={styles.star}>
                   <Text style={[styles.starText, s <= rating && styles.starActive]}>★</Text>
                 </Pressable>
               ))}
@@ -728,13 +772,28 @@ export default function OwnerBookingDetailScreen({
             <ActionButton
               theme={theme}
               label="Gửi đánh giá"
-              onPress={() =>
-                rating < 1
-                  ? Alert.alert("Thiếu đánh giá", "Vui lòng chọn từ 1 đến 5 sao.")
-                  : runAction("review", () => createOwnerReview({ bookingId, rating, comment: comment.trim() || undefined }).then(() => undefined), "Cảm ơn đánh giá của bạn.")
-              }
-              disabled={busy !== null}
+              onPress={() => void runAction("review", () => createOwnerReview({ bookingId, rating, comment: comment.trim() || undefined }).then(() => undefined), "Cảm ơn đánh giá của bạn.")}
+              disabled={busy !== null || rating === 0}
             />
+          </View>
+        )}
+        {status === "Completed" && alreadyReviewed && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Đánh giá khách thuê</Text>
+            {bookingReviews.filter((review) => review.reviewType === "Owner").map((review) => (
+              <View key={review.id} style={styles.reviewItem}>
+                <View style={styles.reviewHeader}>
+                  {review.reviewerAvatar ? <Image source={{ uri: review.reviewerAvatar }} style={styles.reviewAvatar} /> : <View style={styles.reviewAvatarFallback}><Text style={styles.reviewAvatarText}>{(review.reviewerName || "C").slice(0, 1).toUpperCase()}</Text></View>}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.reviewName}>{review.reviewerName || "Chủ xe"}</Text>
+                    <Text style={styles.reviewStars}>{"★".repeat(review.rating)}{"☆".repeat(Math.max(0, 5 - review.rating))}</Text>
+                  </View>
+                  <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString("vi-VN")}</Text>
+                </View>
+                {review.comment ? <Text style={styles.reviewComment}>{review.comment}</Text> : null}
+              </View>
+            ))}
+            {bookingReviews.filter((review) => review.reviewType === "Owner").length === 0 ? <Text style={styles.muted}>Bạn đã gửi đánh giá cho booking này.</Text> : null}
           </View>
         )}
       </ScrollView>
@@ -1031,6 +1090,21 @@ const createStyles = (theme: Theme) =>
     headerTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
     body: { padding: 16, gap: 12, paddingBottom: 32 },
+    vehicleCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: theme.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, borderRadius: 12, padding: 12 },
+    vehiclePhoto: { width: 120, height: 92, borderRadius: 9, backgroundColor: theme.surfaceAlt },
+    vehiclePhotoPlaceholder: { width: 120, height: 92, borderRadius: 9, backgroundColor: theme.brandSoft, alignItems: "center", justifyContent: "center" },
+    vehiclePhotoPlaceholderText: { color: theme.brand, fontSize: 12, fontWeight: "800" },
+    vehicleInfo: { flex: 1, gap: 4 },
+    vehicleName: { color: theme.text, fontSize: 16, fontWeight: "800" },
+    reviewItem: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border, paddingVertical: 8, gap: 6 },
+    reviewHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+    reviewAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.surfaceAlt },
+    reviewAvatarFallback: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.brandSoft, alignItems: "center", justifyContent: "center" },
+    reviewAvatarText: { color: theme.brand, fontWeight: "800" },
+    reviewName: { color: theme.text, fontSize: 13, fontWeight: "700" },
+    reviewStars: { color: "#f59e0b", fontSize: 14 },
+    reviewDate: { color: theme.muted, fontSize: 11 },
+    reviewComment: { color: theme.text, fontSize: 13, marginLeft: 42 },
     statusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     disputeLink: { color: "#DC2626", fontSize: 13, fontWeight: "700" },
     status: { color: theme.brand, fontSize: 18, fontWeight: "800" },
@@ -1091,7 +1165,7 @@ const createStyles = (theme: Theme) =>
     photoButtonText: { color: theme.brand, fontSize: 13, fontWeight: "700" },
     formError: { color: theme.danger, fontSize: 13, fontWeight: "600" },
     thumbs: { flexDirection: "row", marginTop: 8 },
-    thumb: { width: 72, height: 72, borderRadius: 8, backgroundColor: theme.surfaceAlt },
+    thumb: { width: 92, height: 92, borderRadius: 8, backgroundColor: theme.surfaceAlt },
     thumbRemove: {
       position: "absolute",
       right: 2,

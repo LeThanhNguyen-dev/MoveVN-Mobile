@@ -254,16 +254,21 @@ export default function ContractBlock({
         />
       )}
 
-      <Modal visible={content !== null} transparent animationType="fade" onRequestClose={() => setContent(null)}>
-        <View style={styles.backdrop}>
-          <View style={[styles.modal, styles.contentModal]}>
-            <Text style={styles.cardTitle}>
+      <Modal visible={content !== null} animationType="slide" onRequestClose={() => setContent(null)}>
+        <View style={styles.contractPage}>
+          <View style={styles.contractPageHeader}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Đóng hợp đồng" onPress={() => setContent(null)} style={styles.ghostButton}>
+              <Text style={styles.ghostText}>‹ Quay lại</Text>
+            </Pressable>
+            <Text numberOfLines={1} style={[styles.cardTitle, { flex: 1, marginBottom: 0 }]}>Hợp đồng</Text>
+          </View>
+          <Text style={styles.contractNumber}>
               Hợp đồng {content?.contractNumber} · v{content?.version}
-            </Text>
-            <ScrollView style={styles.contentScroll}>
+          </Text>
+          <ScrollView style={styles.contractDocumentScroll} contentContainerStyle={styles.contractDocumentContent}>
               {content ? <ContractDocument content={content} /> : null}
-            </ScrollView>
-            <View style={styles.modalActions}>
+          </ScrollView>
+          <View style={styles.modalActions}>
               {contentContract && canSignContract(contentContract, userId) ? (
                 <Pressable
                   onPress={() => {
@@ -278,7 +283,6 @@ export default function ContractBlock({
               <Pressable onPress={() => setContent(null)} style={styles.ghostButton}>
                 <Text style={styles.ghostText}>Đóng</Text>
               </Pressable>
-            </View>
           </View>
         </View>
       </Modal>
@@ -347,6 +351,11 @@ const createStyles = (theme: Theme) =>
     modal: { width: "100%", backgroundColor: theme.surface, borderRadius: 14, padding: 18, gap: 10 },
     contentModal: { maxHeight: "85%" },
     contentScroll: { maxHeight: 420 },
+    contractPage: { flex: 1, backgroundColor: theme.background, paddingTop: 18, paddingHorizontal: 16, paddingBottom: 20 },
+    contractPageHeader: { minHeight: 48, flexDirection: "row", alignItems: "center", gap: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border },
+    contractNumber: { color: theme.text, fontSize: 16, fontWeight: "800", paddingVertical: 14 },
+    contractDocumentScroll: { flex: 1, backgroundColor: theme.surface, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border },
+    contractDocumentContent: { padding: 16 },
     input: {
       backgroundColor: theme.input,
       borderWidth: StyleSheet.hairlineWidth,

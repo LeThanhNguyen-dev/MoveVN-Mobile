@@ -42,13 +42,15 @@ import { getMyWallet } from "@/features/wallets/services/walletService";
 import { getPendingAutoCancelHours } from "@/features/systemConfig/configService";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
 import BookingTimeline from "@/features/booking/components/BookingTimeline";
+import BookingPricingDetails from "@/features/booking/components/BookingPricingDetails";
 import PaymentWebViewModal, { payOsReturnUrl } from "@/features/payments/components/PaymentWebViewModal";
 import RiskScoreBadge from "@/features/booking/components/RiskScoreBadge";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
-import { createCustomerReview, hasReviewed } from "@/features/review/reviewService";
+import { createCustomerReview, getBookingReviews, hasReviewed, type ReviewResponse } from "@/features/review/reviewService";
 import { createDispute } from "@/features/disputes/disputeService";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
+import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
 
 type DetailRoute = RouteProp<TripsStackParamList, "TripDetail">;
 type DetailNav = NativeStackNavigationProp<TripsStackParamList, "TripDetail">;
@@ -70,10 +72,12 @@ export default function TripDetailScreen({
   const { bookingId } = route.params;
 
   const [booking, setBooking] = useState<BookingResponse | null>(null);
+  const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [alreadyReviewed, setAlreadyReviewed] = useState(false);
+  const [bookingReviews, setBookingReviews] = useState<ReviewResponse[]>([]);
   const [pendingTopUp, setPendingTopUp] = useState<BookingTopUpPendingResponse | null>(null);
   const [reports, setReports] = useState<InspectionReportResponse[]>([]);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
@@ -96,12 +100,21 @@ export default function TripDetailScreen({
     try {
       const data = await getBookingById(bookingId);
       setBooking(data);
-      const [reviewed, topUp, inspectionList] = await Promise.all([
+      setVehiclePhoto(data.vehicleImage || null);
+      if (!data.vehicleImage) {
+        void getPublicVehicleImages(data.vehicleId).then((images) => {
+          const photo = [...images].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.sortOrder - b.sortOrder)[0];
+          if (photo?.imageUrl) setVehiclePhoto(photo.imageUrl);
+        }).catch(() => undefined);
+      }
+      const [reviewed, reviewList, topUp, inspectionList] = await Promise.all([
         hasReviewed(bookingId).catch(() => true),
+        getBookingReviews(bookingId).catch(() => [] as ReviewResponse[]),
         getPendingTopUp(bookingId).catch(() => null),
         getInspectionReports(bookingId).catch(() => [] as InspectionReportResponse[]),
       ]);
       setAlreadyReviewed(reviewed);
+      setBookingReviews(reviewList);
       setPendingTopUp(topUp);
       setReports(inspectionList);
       if (data.status === "Approved") {
@@ -292,9 +305,8 @@ export default function TripDetailScreen({
   }
 
   async function handleReview() {
-    const scores = [rating, cleanliness, accuracy, support];
-    if (scores.some((s) => s < 1 || s > 5)) {
-      Alert.alert("Thiếu đánh giá", "Vui lòng chấm đủ 4 mục, mỗi mục từ 1 đến 5 sao.");
+    if (rating < 1 || rating > 5) {
+      Alert.alert("Thiếu đánh giá", "Vui lòng chọn số sao đánh giá tổng quan.");
       return;
     }
     await runAction(
@@ -302,9 +314,9 @@ export default function TripDetailScreen({
       () => createCustomerReview({
         bookingId,
         rating,
-        cleanlinessScore: cleanliness,
-        accuracyScore: accuracy,
-        supportScore: support,
+        cleanlinessScore: cleanliness || undefined,
+        accuracyScore: accuracy || undefined,
+        supportScore: support || undefined,
         comment: comment.trim() || undefined,
       }).then(() => undefined),
       "Cảm ơn đánh giá của bạn.",
@@ -350,6 +362,14 @@ export default function TripDetailScreen({
         <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với chủ xe" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.backButton}><MessageSquare color={theme.brand} size={22} /></Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
+        <View style={styles.vehicleCard}>
+          {vehiclePhoto ? <Image source={{ uri: vehiclePhoto }} style={styles.bookingVehicleImage} resizeMode="cover" /> : <View style={[styles.bookingVehicleImage, styles.bookingVehiclePlaceholder]}><Text style={styles.bookingVehiclePlaceholderText}>MoveVN</Text></View>}
+          <View style={styles.vehicleInfo}>
+            <Text style={styles.vehicleName}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text>
+            <Text style={styles.muted}>Chủ xe: {booking.ownerName || `#${booking.ownerId}`}</Text>
+            <Text style={styles.muted}>Ngày yêu cầu: {formatDateTime(booking.createdAt)}</Text>
+          </View>
+        </View>
         <View style={styles.statusRow}>
           <Text style={styles.status}>{bookingStatusLabel(status)}</Text>
           {booking.escrowStatus === "Held" && <Text style={styles.escrow}>Giữ cọc {formatMoney(booking.escrowAmount)}</Text>}
@@ -409,6 +429,7 @@ export default function TripDetailScreen({
           ) : null}
           <Row label="Phí nền tảng (đã gồm trong tổng)" value={formatMoney(booking.platformFee)} />
           <Row label="Tổng cộng" value={formatMoney(booking.totalAmount)} strong />
+          {booking.securityDepositAmount > 0 ? <Row label="Tiền thế chấp (hoàn lại khi trả xe)" value={formatMoney(booking.securityDepositAmount)} /> : null}
         </View>
 
         <View style={styles.card}>
@@ -418,6 +439,7 @@ export default function TripDetailScreen({
             <Row label="Trả khi nhận xe" value={formatMoney(booking.totalAmount - booking.depositAmount)} />
           ) : null}
         </View>
+        <BookingPricingDetails booking={booking} />
 
         {(booking.outstandingSurchargeAmount ?? 0) > 0 ? (
           <View style={styles.card}>
@@ -607,27 +629,29 @@ export default function TripDetailScreen({
 
         <BookingTimeline history={booking.statusHistory} />
 
-        {status === "Completed" && !alreadyReviewed && (
+        {status === "Completed" && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Đánh giá chuyến đi</Text>
-            <RatingInput label="Tổng quan" value={rating} onChange={setRating} styles={styles} />
-            <RatingInput label="Sạch sẽ" value={cleanliness} onChange={setCleanliness} styles={styles} />
-            <RatingInput label="Đúng mô tả" value={accuracy} onChange={setAccuracy} styles={styles} />
-            <RatingInput label="Hỗ trợ" value={support} onChange={setSupport} styles={styles} />
-            <TextInput
-              value={comment}
-              onChangeText={setComment}
-              placeholder="Nhận xét về xe và chủ xe..."
-              placeholderTextColor={theme.placeholder}
-              multiline
-              style={[styles.input, styles.multiline]}
-            />
-            <ActionButton
-              theme={theme}
-              label="Gửi đánh giá"
-              onPress={handleReview}
-              disabled={actionBusy !== null}
-            />
+            {!alreadyReviewed ? <>
+              <Text style={styles.muted}>Đánh giá xe và chủ xe</Text>
+              <RatingInput label="Đánh giá tổng quan (bắt buộc)" value={rating} onChange={setRating} styles={styles} />
+              <RatingInput label="Vệ sinh (không bắt buộc)" value={cleanliness} onChange={setCleanliness} styles={styles} />
+              <RatingInput label="Chính xác mô tả (không bắt buộc)" value={accuracy} onChange={setAccuracy} styles={styles} />
+              <RatingInput label="Hỗ trợ (không bắt buộc)" value={support} onChange={setSupport} styles={styles} />
+              <TextInput value={comment} onChangeText={setComment} placeholder="Chia sẻ trải nghiệm của bạn..." placeholderTextColor={theme.placeholder} multiline style={[styles.input, styles.multiline]} />
+              <ActionButton theme={theme} label="Gửi đánh giá" onPress={handleReview} disabled={actionBusy !== null || rating === 0} />
+            </> : null}
+            {bookingReviews.filter((review) => review.reviewType === "Customer").map((review) => (
+              <View key={review.id} style={styles.reviewItem}>
+                <View style={styles.reviewHeader}>
+                  {review.reviewerAvatar ? <Image source={{ uri: review.reviewerAvatar }} style={styles.reviewAvatar} /> : <View style={styles.reviewAvatarFallback}><Text style={styles.reviewAvatarText}>{(review.reviewerName || "K").slice(0, 1).toUpperCase()}</Text></View>}
+                  <View style={{ flex: 1 }}><Text style={styles.reviewName}>{review.reviewerName || "Khách thuê"}</Text><Text style={styles.reviewStars}>{"★".repeat(review.rating)}{"☆".repeat(Math.max(0, 5 - review.rating))}</Text></View>
+                  <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString("vi-VN")}</Text>
+                </View>
+                {review.comment ? <Text style={styles.reviewComment}>{review.comment}</Text> : null}
+              </View>
+            ))}
+            {alreadyReviewed && bookingReviews.filter((review) => review.reviewType === "Customer").length === 0 ? <Text style={styles.muted}>Bạn đã gửi đánh giá cho chuyến đi này.</Text> : null}
           </View>
         )}
       </ScrollView>
@@ -861,6 +885,21 @@ const createStyles = (theme: Theme) =>
       gap: 4,
     },
     cardTitle: { color: theme.text, fontSize: 15, fontWeight: "800", marginBottom: 4 },
+    bookingVehicleImage: { width: "100%", height: 210, borderRadius: 16, backgroundColor: theme.surfaceAlt },
+    vehicleCard: { backgroundColor: theme.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, borderRadius: 12, padding: 12, gap: 10 },
+    bookingVehiclePlaceholder: { alignItems: "center", justifyContent: "center" },
+    bookingVehiclePlaceholderText: { color: theme.brand, fontWeight: "800" },
+    vehicleInfo: { gap: 3 },
+    vehicleName: { color: theme.text, fontSize: 17, fontWeight: "800" },
+    reviewItem: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border, paddingVertical: 8, gap: 6 },
+    reviewHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+    reviewAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.surfaceAlt },
+    reviewAvatarFallback: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.brandSoft, alignItems: "center", justifyContent: "center" },
+    reviewAvatarText: { color: theme.brand, fontWeight: "800" },
+    reviewName: { color: theme.text, fontSize: 13, fontWeight: "700" },
+    reviewStars: { color: "#f59e0b", fontSize: 14 },
+    reviewDate: { color: theme.muted, fontSize: 11 },
+    reviewComment: { color: theme.text, fontSize: 13, marginLeft: 42 },
     muted: { color: theme.muted, fontSize: 13 },
     address: { color: theme.text, fontSize: 13, marginBottom: 4 },
     note: { color: theme.muted, fontSize: 13, fontStyle: "italic" },
