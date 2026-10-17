@@ -503,7 +503,7 @@ export default function TripDetailScreen({
             <Text style={styles.cardTitle}>Đặt cọc giữ xe</Text>
             {booking.paymentDueAt ? <Text style={styles.muted}>Hạn cọc: {formatDateTime(booking.paymentDueAt)}. Quá hạn booking sẽ tự hủy.</Text> : null}
             {depositExpired ? (
-              <Text style={styles.damage}>Booking không còn hiệu lực nhận cọc (đã hết hạn thanh toán hoặc đã đến giờ nhận xe). Hệ thống sẽ tự hủy booking này.</Text>
+              <Text style={styles.damage}>Booking không còn hiệu lực nhận cọc vì đã hết hạn thanh toán. Hệ thống sẽ tự hủy booking này.</Text>
             ) : (
               <>
                 <ActionButton
