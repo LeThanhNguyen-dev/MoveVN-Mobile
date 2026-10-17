@@ -8,11 +8,11 @@ import { inspectionLabel, inspectionWatermark, type InspectionType } from "../bo
 import { deleteInspectionPhoto, resizeCameraPhoto, stampedInspectionPhoto, type CapturedInspectionPhoto } from "../inspectionPhoto";
 import { getServerTimeISO } from "../utils/serverTime";
 
-type RawPhoto = { uri: string; width: number; height: number; capturedAt: string };
+export type RawPhoto = { uri: string; width: number; height: number; capturedAt: string };
 
 // No image picker or library entry point is used in this capture flow.
-export default function InspectionCameraModal({ bookingCode, type, onCaptured, onClose }: {
-  bookingCode: string; type: InspectionType; onCaptured: (photo: CapturedInspectionPhoto) => void; onClose: () => void;
+export default function InspectionCameraModal({ bookingCode, type, sourcePhoto, onCaptured, onClose }: {
+  bookingCode: string; type: InspectionType; sourcePhoto?: RawPhoto; onCaptured: (photo: CapturedInspectionPhoto) => void; onClose: () => void;
 }) {
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
@@ -22,15 +22,16 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
   const temporaryFiles = useRef(new Set<string>());
   const [active, setActive] = useState(AppState.currentState == null || AppState.currentState === "active");
   const [ready, setReady] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(Boolean(sourcePhoto));
   const [error, setError] = useState("");
-  const [raw, setRaw] = useState<RawPhoto | null>(null);
+  const [raw, setRaw] = useState<RawPhoto | null>(sourcePhoto ?? null);
   const [loaded, setLoaded] = useState(false);
   const [laidOut, setLaidOut] = useState(false);
   const [stamped, setStamped] = useState<CapturedInspectionPhoto | null>(null);
 
   useEffect(() => {
     alive.current = true;
+    if (sourcePhoto) temporaryFiles.current.add(sourcePhoto.uri);
     const subscription = AppState.addEventListener("change", (state) => { setActive(state === "active"); setReady(false); });
     return () => {
       alive.current = false;
@@ -71,9 +72,15 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
       requestAnimationFrame(async () => {
         if (cancelled || !alive.current) return;
         try {
-          const uri = await captureRef(stampView, { format: "jpg", quality: 0.9, result: "tmpfile", width: raw.width, height: raw.height, useRenderInContext: Platform.OS === "ios" });
+          // iOS renderInContext draws the layer at its point-sized bounds and
+          // already applies the device pixel scale. Passing pixel dimensions
+          // allocates a canvas 2-3 times too large without scaling its content,
+          // leaving the photo in the corner of an otherwise blank JPEG.
+          const size = Platform.OS === "ios" ? {} : { width: raw.width, height: raw.height };
+          const uri = await captureRef(stampView, { format: "jpg", quality: 0.9, result: "tmpfile", ...size, useRenderInContext: Platform.OS === "ios" });
           if (!track(uri)) return;
-          const photo = stampedInspectionPhoto(uri, raw.capturedAt);
+          const stampedPhoto = stampedInspectionPhoto(uri, raw.capturedAt);
+          const photo = sourcePhoto ? { ...stampedPhoto, source: "library" as const } : stampedPhoto;
           if (!cancelled) setStamped(photo);
         } catch {
           if (!cancelled && alive.current) setError("Không thể gắn watermark vào ảnh. Vui lòng chụp lại.");
@@ -101,6 +108,7 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
   }
 
   const watermark = raw ? inspectionWatermark(bookingCode, type, raw.capturedAt) : [];
+  if (sourcePhoto && watermark[1]) watermark[1] = `THÊM ẢNH: ${watermark[1]}`;
   const pixelRatio = Math.max(1, PixelRatio.get());
   const exportWidth = raw ? raw.width / pixelRatio : 0;
   const exportHeight = raw ? raw.height / pixelRatio : 0;
@@ -112,10 +120,10 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
         <Pressable accessibilityRole="button" accessibilityLabel="Đóng camera" disabled={busy} onPress={onClose} style={styles.close}><X color="#fff" size={24} /></Pressable>
       </View>
       {Platform.OS === "web" ? <View style={styles.center}><Text style={styles.copy}>Hãy dùng app Android/iOS để chụp ảnh bàn giao xe.</Text></View>
-        : !permission ? <View style={styles.center}><ActivityIndicator color="#fff" /></View>
-        : !permission.granted ? <View style={styles.center}>
-          <Text style={styles.copy}>Cần quyền camera để chụp ảnh xe. Ảnh từ thư viện không được sử dụng.</Text>
-          <Pressable style={styles.action} onPress={() => { void (permission.canAskAgain ? requestPermission() : Linking.openSettings()).catch(() => setError("Không thể mở quyền camera.")); }}><Text style={styles.actionText}>{permission.canAskAgain ? "Cho phép camera" : "Mở cài đặt"}</Text></Pressable>
+        : !raw && !permission ? <View style={styles.center}><ActivityIndicator color="#fff" /></View>
+        : !raw && !permission?.granted ? <View style={styles.center}>
+          <Text style={styles.copy}>Cần quyền camera để chụp ảnh xe. Bạn cũng có thể đóng camera và chọn ảnh từ thư viện.</Text>
+          <Pressable style={styles.action} onPress={() => { void (permission?.canAskAgain ? requestPermission() : Linking.openSettings()).catch(() => setError("Không thể mở quyền camera.")); }}><Text style={styles.actionText}>{permission?.canAskAgain ? "Cho phép camera" : "Mở cài đặt"}</Text></Pressable>
         </View>
         : raw ? <View style={styles.preview}>
           <Image accessibilityLabel={stamped ? "Ảnh đã gắn watermark" : "Ảnh đang xử lý"} source={{ uri: stamped?.uri ?? raw.uri }} style={styles.previewImage} resizeMode="contain" />
@@ -133,9 +141,9 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
           onMountError={() => { setError("Không thể mở camera trên thiết bị này."); setReady(false); }} /> : <View style={styles.center}><Text style={styles.copy}>Camera tạm dừng.</Text></View>}
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       <View style={styles.footer}>
-        <Text style={styles.copy}>Chỉ chụp ảnh trực tiếp · Watermark ngày giờ Việt Nam (UTC+07:00)</Text>
+        <Text style={styles.copy}>{sourcePhoto ? "Ảnh thư viện · Ngày giờ thêm ảnh (UTC+07:00)" : "Ảnh chụp camera · Watermark ngày giờ Việt Nam (UTC+07:00)"}</Text>
         {raw ? <View style={styles.buttons}>
-          <Pressable accessibilityRole="button" disabled={busy} style={styles.action} onPress={retake}><Text style={styles.actionText}>Chụp lại</Text></Pressable>
+          <Pressable accessibilityRole="button" disabled={busy} style={styles.action} onPress={sourcePhoto ? onClose : retake}><Text style={styles.actionText}>{sourcePhoto ? "Chọn ảnh khác" : "Chụp lại"}</Text></Pressable>
           <Pressable accessibilityRole="button" disabled={!stamped || busy} style={[styles.action, (!stamped || busy) && styles.disabled]} onPress={() => {
             if (!stamped) return;
             temporaryFiles.current.delete(stamped.uri); onCaptured(stamped); onClose();

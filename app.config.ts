@@ -12,6 +12,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...(config.plugins ?? []),
       "expo-font",
       "expo-secure-store",
+      "expo-sharing",
       ["expo-camera", {
         cameraPermission: "MoveVN cần camera để chụp ảnh check-in/check-out xe.",
         recordAudioAndroid: false,

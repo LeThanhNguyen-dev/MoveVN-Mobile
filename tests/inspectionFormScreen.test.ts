@@ -6,7 +6,7 @@ import { themes } from "@/theme/tokens";
 
 vi.stubGlobal("React", React);
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
-const mocks = vi.hoisted(() => ({ checkIn: vi.fn(), checkOut: vi.fn(), delete: vi.fn(), saved: vi.fn(), back: vi.fn() }));
+const mocks = vi.hoisted(() => ({ checkIn: vi.fn(), checkOut: vi.fn(), delete: vi.fn(), saved: vi.fn(), back: vi.fn(), resize: vi.fn(), library: vi.fn() }));
 vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator", Image: "Image", KeyboardAvoidingView: "KeyboardAvoidingView", Pressable: "Pressable", ScrollView: "ScrollView", Switch: "Switch", Text: "Text", TextInput: "TextInput", View: "View",
   Platform: { OS: "android" }, StyleSheet: { create: (styles: unknown) => styles },
@@ -16,7 +16,8 @@ vi.mock("lucide-react-native", () => ({ ArrowLeft: "ArrowLeft" }));
 vi.mock("@/theme/useTheme", () => ({ useTheme: () => ({ theme: themes.light }) }));
 vi.mock("@/services/apiClient", () => ({ getApiErrorMessage: (_error: unknown, fallback: string) => fallback }));
 vi.mock("@/features/booking/bookingService", () => ({ createCheckInReport: mocks.checkIn, createCheckOutReport: mocks.checkOut }));
-vi.mock("@/features/booking/inspectionPhoto", () => ({ deleteInspectionPhoto: mocks.delete }));
+vi.mock("@/features/booking/inspectionPhoto", () => ({ deleteInspectionPhoto: mocks.delete, resizeCameraPhoto: mocks.resize }));
+vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: mocks.library }));
 vi.mock("@/features/booking/components/InspectionCameraModal", () => ({ default: (props: object) => React.createElement("CameraCapture", props) }));
 import InspectionFormScreen from "@/features/booking/screens/InspectionFormScreen";
 
@@ -26,9 +27,9 @@ const photo = { id: "1", uri: "file:///stamped.jpg", capturedAt: "2026-10-04T02:
 beforeEach(() => vi.clearAllMocks());
 afterEach(async () => { if (tree) await act(async () => tree!.unmount()); tree = undefined; });
 function button(title: string) { return tree!.root.findAll((node) => (node.type as unknown) === "Pressable" && node.findAll((child) => (child.type as unknown) === "Text" && child.children.includes(title)).length > 0)[0]!; }
-async function mount(type: "CheckIn" | "CheckOut" = "CheckIn") {
+async function mount(type: "CheckIn" | "CheckOut" = "CheckIn", overrides: Partial<BookingResponse> = {}) {
   await act(async () => { tree = create(React.createElement(InspectionFormScreen, {
-    booking: { id: 42, bookingCode: "MVN-42", vehicleId: 3 } as BookingResponse, type, onBack: mocks.back, onSaved: mocks.saved,
+    booking: { startDate: "2020-01-01T00:00:00Z", id: 42, bookingCode: "MVN-42", vehicleId: 3, ...overrides } as BookingResponse, type, onBack: mocks.back, onSaved: mocks.saved,
   })); });
 }
 async function addPhoto() {
@@ -52,6 +53,8 @@ it("keeps watermarked photos after upload failure so the owner can retry without
 
 it("blocks duplicate submissions and posts checkout to the checkout service", async () => {
   await mount("CheckOut"); await addPhoto();
+  const time = tree!.root.findAll(node => (node.type as unknown) === "TextInput")[0]!;
+  await act(async () => time.props.onChangeText("2021-01-01 10:00"));
   let complete!: (value: unknown) => void;
   mocks.checkOut.mockImplementationOnce(() => new Promise((resolve) => { complete = resolve; }));
   await act(async () => {
@@ -73,4 +76,65 @@ it("deletes removed photos and refuses to send a report without a photo", async 
   // Even a programmatic call cannot bypass validation.
   await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
   expect(mocks.checkIn).not.toHaveBeenCalled();
+});
+
+
+it("posts selected checkout fees and requires a reason before uploading", async () => {
+  await mount("CheckOut", { surchargeTerms: [{ id: 201, feeType: "Cleaning", name: "Vệ sinh xe", calculationMethod: "Fixed", unitPrice: 100000, createdAt: "2020-01-01T00:00:00Z" }] });
+  await addPhoto();
+  await act(async () => tree!.root.findAll(n => (n.type as unknown) === "TextInput")[0]!.props.onChangeText("2021-01-01 10:00"));
+  await act(async () => tree!.root.find(n => (n.type as unknown) === "Switch" && n.props.accessibilityLabel === "Vệ sinh xe").props.onValueChange(true));
+  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
+  expect(mocks.checkOut).not.toHaveBeenCalled();
+  const field = tree!.root.findAll(n => (n.type as unknown) === "TextInput" && n.props.multiline)[0]!;
+  await act(async () => field.props.onChangeText("Bùn đất trong xe"));
+  mocks.checkOut.mockResolvedValueOnce({ id: 9, type: "CheckOut" });
+  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
+  expect(mocks.checkOut).toHaveBeenCalledTimes(1);
+  const data = mocks.checkOut.mock.calls[0]![1] as FormData;
+  expect(data.get("additionalSurcharges[0].termId")).toBe("201");
+  expect(data.get("additionalSurcharges[0].quantity")).toBe("1");
+  expect(data.get("additionalSurcharges[0].note")).toBe("Bùn đất trong xe");
+});
+
+
+it("allows selecting an existing photo without opening the camera", async () => {
+  await mount();
+  mocks.library.mockResolvedValueOnce({ canceled: false, assets: [{ uri: "file:///library.jpg", width: 1200, height: 1600 }] });
+  mocks.resize.mockResolvedValueOnce({ uri: "file:///library-resized.jpg", width: 1200, height: 1600 });
+  await act(async () => button("Chọn ảnh từ thư viện").props.onPress());
+  expect(mocks.library).toHaveBeenCalledOnce();
+  const stamp = tree!.root.find(n => (n.type as unknown) === "CameraCapture");
+  expect(stamp.props.sourcePhoto.uri).toBe("file:///library-resized.jpg");
+  await act(async () => { stamp.props.onCaptured({ ...photo, source: "library", uri: "file:///library-stamped.jpg" }); stamp.props.onClose(); });
+  expect(tree!.root.findAll(n => (n.type as unknown) === "Image" && n.props.source.uri === "file:///library-stamped.jpg")).toHaveLength(1);
+  mocks.checkIn.mockResolvedValueOnce({ id: 12, type: "CheckIn" });
+  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
+  expect(mocks.saved).toHaveBeenCalledWith({ id: 12, type: "CheckIn" });
+});
+
+it("selects multiple library photos, stamps each and appends them to existing photos", async () => {
+  await mount(); await addPhoto();
+  mocks.library.mockResolvedValueOnce({ canceled: false, assets: [
+    { uri: "file:///one.jpg", width: 1200, height: 1600 },
+    { uri: "file:///two.jpg", width: 1600, height: 1200 },
+  ] });
+  mocks.resize.mockImplementation(async (uri, width, height) => ({ uri: uri.replace(".jpg", "-resized.jpg"), width, height }));
+  await act(async () => button("Chọn ảnh từ thư viện").props.onPress());
+  expect(mocks.library).toHaveBeenCalledWith(expect.objectContaining({ allowsMultipleSelection: true, selectionLimit: 11 }));
+  for (const name of ["one", "two"]) {
+    const stamp = tree!.root.find(n => (n.type as unknown) === "CameraCapture");
+    expect(stamp.props.sourcePhoto.uri).toBe(`file:///${name}-resized.jpg`);
+    await act(async () => {
+      stamp.props.onCaptured({ ...photo, id: name, source: "library", uri: `file:///${name}-stamped.jpg` });
+      stamp.props.onClose();
+    });
+  }
+  expect(tree!.root.findAll(n => (n.type as unknown) === "CameraCapture")).toHaveLength(0);
+  expect(tree!.root.findAll(n => (n.type as unknown) === "Image")).toHaveLength(3);
+  mocks.checkIn.mockResolvedValueOnce({ id: 13 });
+  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
+  const data = mocks.checkIn.mock.calls[0]![1] as FormData;
+  expect(data.getAll("images")).toHaveLength(3);
+  expect(data.getAll("capturedAts")).toHaveLength(3);
 });

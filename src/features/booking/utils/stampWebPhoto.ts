@@ -73,7 +73,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  */
 export async function stampWebPhoto(source: Blob, lines: string[]): Promise<WebStampedPhoto> {
   const capturedAt = await getServerTimeISO();
-  const timeLine = `${formatVietnamDateTime(capturedAt)} (UTC+07:00)`;
+  const timeLine = `THÊM ẢNH: ${formatVietnamDateTime(capturedAt)} (UTC+07:00)`;
   const url = URL.createObjectURL(source);
   try {
     const img = await loadImage(url);

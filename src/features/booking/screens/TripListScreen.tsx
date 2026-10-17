@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import BookingSearchFilters, { EMPTY_SEARCH } from "../components/BookingSearchFilters";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -30,6 +32,9 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [items, setItems] = useState<BookingResponse[]>([]);
   const [status, setStatus] = useState("");
+  const [search, setSearch] = useState(EMPTY_SEARCH);
+  const requestId = useRef(0);
+  const fetching = useRef(false);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -42,7 +47,11 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
 
   const fetchPage = useCallback(
     async (targetPage: number, targetStatus: string, replace: boolean) => {
+      if (!replace && fetching.current) return;
+      fetching.current = true;
+      const request = ++requestId.current;
       if (replace) {
+        setItems([]); setPage(1);
         setLoading(true);
         setError("");
       } else {
@@ -50,27 +59,34 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
       }
       try {
         const res = await getMyBookings({
+          ...search,
           status: targetStatus || undefined,
           page: targetPage,
           pageSize: BOOKING_PAGE_SIZE,
         });
+        if (request !== requestId.current) return;
         setItems((prev) => (replace ? res.items : [...prev, ...res.items]));
         setTotalCount(res.totalCount);
         setPage(res.page);
       } catch (err) {
+        if (request !== requestId.current) return;
         if (replace) setError(getApiErrorMessage(err, "Không tải được danh sách chuyến đi."));
       } finally {
-        setLoading(false);
-        setLoadingMore(false);
-        setRefreshing(false);
+        if (request === requestId.current) {
+          fetching.current = false;
+          setLoading(false);
+          setLoadingMore(false);
+          setRefreshing(false);
+        }
       }
     },
-    [],
+    [search],
   );
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     void fetchPage(1, status, true);
-  }, [fetchPage, status]);
+    return () => { requestId.current++; fetching.current = false; };
+  }, [fetchPage, status]));
 
   function handleRefresh() {
     setRefreshing(true);
@@ -104,6 +120,7 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
         </View>
       </View>
 
+      <BookingSearchFilters onApply={setSearch} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

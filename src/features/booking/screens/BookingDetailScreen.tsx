@@ -1,3 +1,6 @@
+import CheckoutConfirmation from "../components/CheckoutConfirmation";
+import CheckoutEditor from "../components/CheckoutEditor";
+import { OutstandingSurcharge } from "../components/CheckoutSummary";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, AppState, BackHandler, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
@@ -5,7 +8,7 @@ import { getApiErrorMessage } from "@/services/apiClient";
 import { checkPaymentStatus, createPaymentLink } from "@/features/payments/services/paymentService";
 import { approveBooking, cancelBooking, confirmCheckIn, confirmCheckOut, getBookingById, getBookingCancellationQuote, getInspectionReports, rejectBooking } from "../bookingService";
 import type { BookingResponse, InspectionReportResponse } from "../types";
-import { BOOKING_STATUS_LABELS, formatMoney, formatVietnamDateTime, inspectionAvailability, inspectionLabel, parseServerDate, type BookingRole, type InspectionType } from "../bookingDisplay";
+import { BOOKING_STATUS_LABELS, isDepositExpired, formatMoney, formatVietnamDateTime, inspectionAvailability, inspectionLabel, type BookingRole, type InspectionType } from "../bookingDisplay";
 import { BookingButton, BookingCard, BookingField, BookingHeader } from "../components/BookingControls";
 import InspectionReportCard from "../components/InspectionReportCard";
 import InspectionFormScreen from "./InspectionFormScreen";
@@ -26,6 +29,7 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
   const [rejectReason, setRejectReason] = useState("");
   const [paymentOrder, setPaymentOrder] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
+  const [checkoutToConfirm, setCheckoutToConfirm] = useState<InspectionReportResponse | null>(null);
 
   const load = useCallback(async () => {
     const request = ++requestId.current;
@@ -62,15 +66,16 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
       const updated = await operation();
       if (mounted.current) { setBooking(updated); setMessage(success); setRejecting(false); await load(); }
     } catch (err) {
-      if (mounted.current) setError(getApiErrorMessage(err, "Không thể thực hiện thao tác. Vui lòng thử lại."));
+      if (mounted.current) { await load(); setError(getApiErrorMessage(err, "Không thể thực hiện thao tác. Vui lòng thử lại.")); }
     } finally { lock.current = false; if (mounted.current) setBusy(false); }
   }
 
   function confirmReport(type: InspectionType) {
-    Alert.alert(type === "CheckIn" ? "Xác nhận nhận xe?" : "Xác nhận trả xe?",
+    if (type === "CheckOut") { setCheckoutToConfirm(reports.find(r => r.type === "CheckOut") ?? null); return; }
+    Alert.alert("Xác nhận nhận xe?",
       "Chỉ xác nhận khi bạn đã xem toàn bộ ảnh và đồng ý với số km, nhiên liệu, hư hại trong biên bản.", [
         { text: "Xem lại", style: "cancel" },
-        { text: "Đồng ý và xác nhận", onPress: () => void action(() => (type === "CheckIn" ? confirmCheckIn : confirmCheckOut)(bookingId), type === "CheckIn" ? "Đã xác nhận nhận xe." : "Đã xác nhận trả xe và hoàn thành chuyến đi.") },
+        { text: "Đồng ý và xác nhận", onPress: () => void action(() => confirmCheckIn(bookingId), "Đã xác nhận nhận xe.") },
       ]);
   }
 
@@ -113,7 +118,7 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
     finally { lock.current = false; if (mounted.current) setBusy(false); }
   }
 
-  if (form && booking) return <InspectionFormScreen booking={booking} type={form} onBack={() => setForm(null)} onSaved={(report) => {
+  if (form && booking) return <InspectionFormScreen booking={booking} reports={reports} type={form} onBack={() => setForm(null)} onSaved={(report) => {
     setReports((items) => [...items.filter((item) => item.type !== report.type), report]); setForm(null);
     setMessage("Đã gửi biên bản. Đang chờ khách xác nhận."); void load();
   }} />;
@@ -152,14 +157,16 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
           </BookingCard> : null}
           {role === "Customer" && booking.status === "Approved" ? <BookingCard>
             <Text style={{ color: theme.text }}>Chủ xe đã duyệt. Vui lòng thanh toán đặt cọc trước khi nhận xe.</Text>
-            <BookingButton title="Thanh toán đặt cọc" busy={busy} disabled={loading || !!error || (!!booking.paymentDueAt && parseServerDate(booking.paymentDueAt).getTime() <= now)} onPress={() => void payDeposit()} />
+            <BookingButton title="Thanh toán đặt cọc" busy={busy} disabled={loading || !!error || isDepositExpired(booking, now)} onPress={() => void payDeposit()} />
             {paymentOrder ? <BookingButton secondary title="Kiểm tra thanh toán" busy={busy} onPress={() => void verifyPayment()} /> : null}
           </BookingCard> : null}
+          <OutstandingSurcharge booking={booking} report={reports.find(r => r.type === "CheckOut")} role={role} onUpdated={load} />
           {(["CheckIn", "CheckOut"] as const).map((type) => {
             const state = inspectionAvailability(booking, role, type, reports, now);
             return <View key={type} style={styles.section}>
               <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 19, fontWeight: "800" }}>{inspectionLabel(type)}</Text>
-              {state.report ? <InspectionReportCard report={state.report} /> : <Text style={{ color: theme.muted }}>Chưa có biên bản {type === "CheckIn" ? "nhận xe" : "trả xe"}.</Text>}
+              {state.report ? <InspectionReportCard booking={booking} report={state.report} /> : <Text style={{ color: theme.muted }}>Chưa có biên bản {type === "CheckIn" ? "nhận xe" : "trả xe"}.</Text>}
+              {role === "Owner" && type === "CheckOut" && state.report ? <CheckoutEditor booking={booking} report={state.report} initialKm={reports.find(r => r.type === "CheckIn")?.odometerKm} onSaved={load} /> : null}
               {state.canCreate ? <BookingButton title={`Lập biên bản ${type === "CheckIn" ? "check-in" : "check-out"}`} disabled={busy || loading || !!error} onPress={() => setForm(type)} /> : null}
               {state.canConfirm ? <>
                 {type === "CheckIn" ? <Text style={{ color: theme.muted, lineHeight: 21 }}>Cả chủ xe và khách cần ký hợp đồng để hợp đồng có hiệu lực trước khi xác nhận nhận xe. Bạn có thể ký trên web nếu chưa hoàn tất.</Text> : null}
@@ -184,6 +191,9 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
           </BookingCard> : null}
         </> : null}
       </ScrollView>}
+    <CheckoutConfirmation booking={booking} report={checkoutToConfirm} busy={busy} onClose={() => setCheckoutToConfirm(null)} onConfirm={(report, paymentMethod) => {
+      void action(() => confirmCheckOut(bookingId, report.version ?? 1, paymentMethod), "Đã xác nhận trả xe. Chờ chủ xe xác nhận nhận lại xe.").then(() => setCheckoutToConfirm(null));
+    }} />
   </View>;
 }
 
