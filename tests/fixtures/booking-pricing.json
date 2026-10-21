@@ -1,0 +1,105 @@
+[
+  {
+    "name": "one day minimum deposit",
+    "days": 1,
+    "vehicle": {
+      "pricePerDay": 500000,
+      "depositPercent": 15,
+      "platformFeeType": "Percent",
+      "platformFeeValue": 10
+    },
+    "quote": null,
+    "promo": 0,
+    "delivery": 0,
+    "expected": {
+      "base": 500000,
+      "discPct": 0,
+      "discAmt": 0,
+      "fee": 50000,
+      "deposit": 100000,
+      "depositPercent": 20,
+      "remaining": 400000,
+      "total": 500000,
+      "deliveryFee": 0
+    }
+  },
+  {
+    "name": "dynamic price promo delivery capped fee",
+    "days": 3,
+    "vehicle": {
+      "pricePerDay": 500000,
+      "depositPercent": 20,
+      "platformFeeType": "Percent",
+      "platformFeeValue": 10,
+      "platformFeeMinFee": 30000,
+      "platformFeeMaxFee": 100000
+    },
+    "quote": {
+      "totalDynamicPrice": 2000000
+    },
+    "promo": 50000,
+    "delivery": 20000,
+    "expected": {
+      "base": 2000000,
+      "discPct": 5,
+      "discAmt": 100000,
+      "fee": 100000,
+      "deposit": 374000,
+      "depositPercent": 20,
+      "remaining": 1496000,
+      "total": 1870000,
+      "deliveryFee": 20000
+    }
+  },
+  {
+    "name": "weekly fixed fee",
+    "days": 7,
+    "vehicle": {
+      "pricePerDay": 500000,
+      "depositPercent": 30,
+      "platformFeeType": "Fixed",
+      "platformFeeValue": 60000
+    },
+    "quote": null,
+    "promo": 0,
+    "delivery": 0,
+    "expected": {
+      "base": 3500000,
+      "discPct": 15,
+      "discAmt": 525000,
+      "fee": 60000,
+      "deposit": 892500,
+      "depositPercent": 30,
+      "remaining": 2082500,
+      "total": 2975000,
+      "deliveryFee": 0
+    }
+  },
+  {
+    "name": "monthly dynamic quote",
+    "days": 30,
+    "vehicle": {
+      "pricePerDay": 500000,
+      "depositPercent": 50,
+      "platformFeeType": "Percent",
+      "platformFeeValue": 10,
+      "platformFeeMaxFee": 100000
+    },
+    "quote": {
+      "totalDynamicPrice": 30000000
+    },
+    "promo": 100000,
+    "delivery": 50000,
+    "expected": {
+      "base": 30000000,
+      "discPct": 25,
+      "discAmt": 7500000,
+      "fee": 100000,
+      "deposit": 11225000,
+      "depositPercent": 50,
+      "remaining": 11225000,
+      "total": 22450000,
+      "deliveryFee": 50000
+    }
+  }
+]

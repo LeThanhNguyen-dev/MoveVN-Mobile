@@ -1,14 +1,21 @@
-import { useEffect, useState } from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { DarkTheme, DefaultTheme, NavigationContainer, type Theme as NavTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/AppText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthNavigator from "./AuthNavigator";
 import CustomerNavigator from "./CustomerNavigator";
 import OwnerNavigator from "./OwnerNavigator";
-import RoleHomeScreen from "@/features/app/screens/RoleHomeScreen";
+import RoleNotSupportedScreen from "@/features/app/screens/RoleNotSupportedScreen";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { restoreSession } from "@/features/auth/services/authSession";
+import { usePresenceConnection } from "@/features/presence/usePresenceConnection";
+import { useNotificationConnection } from "@/features/notifications/useNotificationConnection";
+import { useChatConnection } from "@/features/chat/useChatConnection";
+import { useFavoriteSession } from "@/features/favorites/useFavoriteSession";
+import ToastHost from "@/features/notifications/components/ToastHost";
+import NotificationCenter from "@/features/notifications/components/NotificationCenter";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { initializeTheme } from "@/theme/useThemeStore";
@@ -23,39 +30,71 @@ function getActiveLandingRole(roles: UserRole[], activeRole: UserRole | null): U
 }
 
 export default function RootNavigator() {
+  usePresenceConnection();
+  useNotificationConnection();
+  useChatConnection();
+  useFavoriteSession();
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const activeRole = useAuthStore((state) => state.activeRole);
   const hydrated = useAuthStore((state) => state.isHydrated);
   const [startupError, setStartupError] = useState("");
-  const { mode } = useTheme();
+  const { mode, theme } = useTheme();
+
+  const navTheme: NavTheme = useMemo(() => {
+    const base = mode === "dark" ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: theme.brand,
+        background: theme.background,
+        card: theme.surface,
+        text: theme.text,
+        border: theme.border,
+      },
+    };
+  }, [mode, theme]);
+
+  const retryStartup = useCallback(() => {
+    setStartupError("");
+    void restoreSession().catch(() => setStartupError("Chưa thể kiểm tra phiên đăng nhập. Hãy kiểm tra kết nối và thử lại."));
+  }, []);
 
   useEffect(() => {
     void initializeTheme();
-    void restoreSession().catch(() => setStartupError("Chưa thể kiểm tra phiên đăng nhập."));
-  }, []);
+    retryStartup();
+  }, [retryStartup]);
 
+  if (startupError) return <Startup label={startupError} onRetry={retryStartup} />;
   if (!hydrated) return <Startup label="Đang mở MoveVN..." />;
-  if (startupError && token) return <Startup label={startupError} />;
 
   const role = user ? getActiveLandingRole(user.roles, activeRole) : null;
-  return <NavigationContainer>
+  return <NavigationContainer theme={navTheme}>
     <StatusBar style={mode === "dark" ? "light" : "dark"} />
     {!token || !user ? <AuthNavigator />
-      : role === "Customer" ? <CustomerNavigator user={user} />
-        : role === "Owner" ? <OwnerNavigator user={user} />
-          : <RoleHomeScreen role={role} user={user} />}
+      : role === "Customer" ? <CustomerNavigator key={`customer-${user.userId}`} user={user} />
+        : role === "Owner" ? <OwnerNavigator key={`owner-${user.userId}`} user={user} />
+          : <RoleNotSupportedScreen role={role ?? "Staff"} />}
+    {token && user ? <NotificationCenter key={user.userId} userId={user.userId} /> : null}
+    <ToastHost />
   </NavigationContainer>;
 }
 
-function Startup({ label }: { label: string }) {
+function Startup({ label, onRetry }: { label: string; onRetry?: () => void }) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  return <SafeAreaView style={styles.safe}><View style={styles.content}><ActivityIndicator color={theme.brand} size="large" /><Text style={styles.label}>{label}</Text></View></SafeAreaView>;
+  return <SafeAreaView style={styles.safe}><View style={styles.content}>
+    {!onRetry && <ActivityIndicator color={theme.brand} size="large" />}
+    <AppText accessibilityRole={onRetry ? "alert" : undefined} style={styles.label}>{label}</AppText>
+    {onRetry && <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><AppText style={styles.retryLabel}>Thử lại</AppText></Pressable>}
+  </View></SafeAreaView>;
 }
 
 const createStyles = (theme: Theme) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.background },
   content: { flex: 1, justifyContent: "center", alignItems: "center", gap: 16 },
   label: { color: theme.muted, fontSize: 15, fontWeight: "600" },
+  retry: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, backgroundColor: theme.brand },
+  retryLabel: { color: theme.surface, fontSize: 15, fontWeight: "600" },
 });

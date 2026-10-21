@@ -1,10 +1,13 @@
-import { ArrowLeftRight, Bell, Heart, UserRound } from "lucide-react-native";
+import { ArrowLeftRight, Heart, UserRound } from "lucide-react-native";
+import NotificationBell from "@/features/notifications/components/NotificationBell";
 import { useMemo } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { AuthUser, UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
+import { openFavoriteVehicles } from "@/features/favorites/favoriteActions";
 
 const roleLabels: Record<UserRole, string> = {
   Admin: "quản trị",
@@ -45,10 +48,10 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
           )}
         </Pressable>
         <View style={styles.nameBlock}>
-          <Text style={styles.greeting}>Xin chào</Text>
-          <Text numberOfLines={1} style={styles.name}>
+          <AppText style={styles.greeting}>Xin chào</AppText>
+          <AppText numberOfLines={1} style={styles.name}>
             {user.fullName}
-          </Text>
+          </AppText>
         </View>
       </View>
 
@@ -66,14 +69,15 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
             <View style={styles.divider} />
           </>
         ) : null}
-        <Pressable accessibilityLabel="Xe yêu thích" accessibilityRole="button" style={styles.iconButton}>
-          <Heart color={theme.text} size={21} strokeWidth={2.3} />
-        </Pressable>
-        <View style={styles.divider} />
-        <Pressable accessibilityLabel="Thông báo" accessibilityRole="button" style={styles.iconButton}>
-          <Bell color={theme.text} size={21} strokeWidth={2.3} />
-          <View style={styles.notificationDot} />
-        </Pressable>
+        {activeRole === "Customer" && user.roles.includes("Customer") ? (
+          <>
+            <Pressable accessibilityLabel="Xe yêu thích" accessibilityRole="button" onPress={openFavoriteVehicles} hitSlop={6} style={styles.iconButton}>
+              <Heart color={theme.text} size={21} strokeWidth={2.3} />
+            </Pressable>
+            <View style={styles.divider} />
+          </>
+        ) : null}
+        <NotificationBell />
       </View>
     </View>
   );
@@ -119,12 +123,12 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   },
   name: {
     color: theme.text,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "800",
     marginTop: 2,
   },
   actions: {
-    height: 40,
+    height: 44,
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
@@ -139,16 +143,5 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     width: 1,
     height: 20,
     backgroundColor: theme.border,
-  },
-  notificationDot: {
-    position: "absolute",
-    right: 8,
-    top: 8,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: theme.danger,
-    borderColor: theme.onBrand,
-    borderWidth: 1,
   },
 });

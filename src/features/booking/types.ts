@@ -1,11 +1,17 @@
+export type CheckoutPaymentMethod = "Wallet" | "External";
+
 export interface BookingResponse {
+  externalPendingSurchargeAmount?: number;
+  externalPaidSurchargeAmount?: number;
   id: number;
   bookingCode: string;
   customerId: number;
+  customerName?: string;
   vehicleId: number;
   vehicleName?: string;
   vehicleImage?: string;
   ownerId: number;
+  ownerName?: string;
   startDate: string;
   endDate: string;
   totalDays: number;
@@ -17,15 +23,20 @@ export interface BookingResponse {
   platformFeeValue?: number;
   depositAmount: number;
   totalAmount: number;
+  outstandingSurchargeAmount?: number;
   escrowAmount: number;
   escrowStatus: string;
   escrowHeldAt?: string;
   escrowSettledAt?: string;
+  completedAt?: string | null;
   paymentDueAt?: string;
   pickupAddress: string;
   returnAddress?: string;
   customerNote?: string;
   status: string;
+  canCheckInNow?: boolean;
+  checkInOpensAt?: string;
+  checkInUnavailableReason?: string;
   riskScore?: number;
   riskLevel?: string;
   riskFactors?: string[];
@@ -39,9 +50,13 @@ export interface BookingResponse {
   promotionId?: number;
   promotionCode?: string;
   promotionDiscount: number;
+  deliveryDistanceKm?: number | null;
+  deliveryFee: number;
   createdAt: string;
   updatedAt: string;
   statusHistory: BookingStatusHistoryDto[];
+  surchargeTerms?: BookingSurchargeTermResponse[];
+  pricingDetails?: BookingPricingDetailResponse[];
 }
 
 export interface BookingStatusHistoryDto {
@@ -65,11 +80,16 @@ export interface BookingCancellationQuote {
 }
 
 export interface CreateBookingRequest {
+  quoteId?: string;
   vehicleId: number;
   startDate: string;
   endDate: string;
   pickupAddress: string;
+  pickupLatitude?: number;
+  pickupLongitude?: number;
   returnAddress?: string;
+  returnLatitude?: number;
+  returnLongitude?: number;
   customerNote?: string;
   promotionCode?: string;
 }
@@ -102,11 +122,42 @@ export interface CheckInOutImageResponse {
   createdAt: string;
 }
 
+export interface InspectionReportRevision {
+  id: number;
+  inspectionReportId: number;
+  version: number;
+  changedBy: number;
+  reason: string;
+  snapshotJson?: string | null;
+  createdAt: string;
+}
+
 export interface InspectionReportResponse {
+  requiresRevision?: boolean;
+  revisionReason?: string;
+  externalPendingSurchargeAmount?: number;
+  externalPaidSurchargeAmount?: number;
+  initialOdometerKm?: number;
+  additionalSurcharges?: CheckoutSurchargeItem[];
   id: number;
   bookingId: number;
   type: string;
   createdByUserId: number;
+  version?: number;
+  actualReturnAt?: string | null;
+  lateReturnFee?: number | null;
+  lateReturnHours?: number;
+  lateReturnFeeStatus?: string;
+  lateReturnFeeNote?: string;
+  proposedLateReturnFee?: number;
+  excessMileageFee?: number;
+  travelledKm?: number;
+  includedKm?: number;
+  excessKm?: number;
+  pendingSurchargeAmount?: number;
+  paidSurchargeAmount?: number;
+  outstandingSurchargeAmount?: number;
+  revisions?: InspectionReportRevision[];
   odometerKm?: number;
   fuelLevel?: string;
   damageNoted: boolean;
@@ -117,3 +168,37 @@ export interface InspectionReportResponse {
   createdAt: string;
   images: CheckInOutImageResponse[];
 }
+
+export interface BookingSurchargeTermResponse {
+  id: number;
+  feeType: string;
+  name: string;
+  description?: string;
+  calculationMethod: string;
+  unitPrice: number;
+  includedKm?: number;
+  allowanceScope?: string;
+  lateGraceHours?: number;
+  lateDayThresholdHours?: number;
+  lateDailyRate?: number;
+  maxAmount?: number;
+  createdAt: string;
+  vehicleSurchargePolicyId?: number;
+}
+
+export interface BookingPricingDetailResponse {
+  rentalDate: string;
+  basePrice: number;
+  dateAdjustment: number;
+  demandRate: number;
+  demandAdjustment: number;
+  idleDays: number;
+  idleAdjustment: number;
+  totalAdjustment: number;
+  finalMultiplier: number;
+  finalDailyPrice: number;
+  appliedRuleNames: string[];
+}
+
+export interface CheckoutSurchargeSelection { termId: number; quantity: number; note: string }
+export interface CheckoutSurchargeItem extends CheckoutSurchargeSelection { name: string; unitPrice: number; amount: number }

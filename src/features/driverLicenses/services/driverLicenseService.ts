@@ -2,12 +2,14 @@ import { apiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
 import { AxiosError } from "axios";
 import type { ApiErrorPayload, ApiResponse } from "@/features/auth/types";
+import { appendUploadFile, type UploadFileInput } from "@/types/upload";
 import type {
   DriverLicenseApproveRequest,
   DriverLicenseStatusResponse,
   DriverLicenseSubmitResponse,
   DriverLicenseVerificationListItem,
   DriverLicenseVerificationRequestDto,
+  DriverLicenseVehicleType,
   PagedResult,
 } from "@/features/driverLicenses/types";
 
@@ -44,6 +46,16 @@ export async function submitDriverLicense(formData: FormData): Promise<DriverLic
   } catch (error) {
     throw normalizeApiError(error);
   }
+}
+
+export async function submitDriverLicenseVerification(
+  frontImage: UploadFileInput,
+  requestedVehicleType: DriverLicenseVehicleType,
+): Promise<DriverLicenseSubmitResponse> {
+  const formData = new FormData();
+  appendUploadFile(formData, "frontImage", frontImage);
+  formData.append("requestedVehicleType", requestedVehicleType);
+  return submitDriverLicense(formData);
 }
 
 export async function getDriverLicenseVerifications(

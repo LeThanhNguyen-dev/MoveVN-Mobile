@@ -1,0 +1,884 @@
+import { Image } from "expo-image";
+import { ArrowLeft, CalendarDays, Check, ChevronDown, List, Map as MapIcon, MapPin, SlidersHorizontal, X } from "lucide-react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native"
+import AppText from "@/components/AppText";
+import type { RouteProp } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { ExploreStackParamList } from "@/navigation/types";
+import type { Theme } from "@/theme/tokens";
+import { useTheme } from "@/theme/useTheme";
+import VehicleListCard, { formatVehicleCurrency } from "@/features/vehicles/components/VehicleListCard";
+import VehicleCardSkeleton from "@/features/vehicles/components/VehicleCardSkeleton";
+import VehicleSearchMap from "@/features/vehicles/components/VehicleSearchMap";
+import VehicleFilterSheet, {
+  EMPTY_FILTERS,
+  getFuelLabel,
+  getTransmissionLabel,
+  type VehicleListFilters,
+} from "@/features/vehicles/components/VehicleFilterSheet";
+import AreaPickerSheet from "@/features/vehicles/components/AreaPickerSheet";
+import RentalPeriodSheet from "@/features/vehicles/components/RentalPeriodSheet";
+import { saveSearchPrefs } from "@/features/vehicles/utils/searchPrefs";
+import { aiFilterSearchPublicVehicles, getPublicVehicles } from "@/features/vehicles/services/publicVehicleService";
+import { useRefreshFavoritesOnFocus } from "@/features/favorites/useFavoriteSession";
+import {
+  calculateRentalDays,
+  formatPeriodSummary,
+} from "@/features/vehicles/utils/rentalPeriod";
+import type { VehicleListItemResponse } from "@/features/vehicles/types";
+
+const PAGE_SIZE = 12;
+
+const SORT_OPTIONS = [
+  { value: "", label: "Mới nhất" },
+  { value: "price_asc", label: "Giá thấp đến cao" },
+  { value: "price_desc", label: "Giá cao đến thấp" },
+  { value: "rating_desc", label: "Đánh giá tốt nhất" },
+];
+
+type VehicleListRoute = RouteProp<ExploreStackParamList, "VehicleList">;
+type VehicleListNav = NativeStackNavigationProp<ExploreStackParamList, "VehicleList">;
+
+type Chip = { key: string; label: string; clear: () => void };
+
+export default function VehicleListScreen({
+  route,
+  navigation,
+}: {
+  route: VehicleListRoute;
+  navigation: VehicleListNav;
+}) {
+  const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const base = route.params;
+
+  const [filters, setFilters] = useState<VehicleListFilters>(() => ({
+    ...EMPTY_FILTERS,
+    type: base.type,
+  }));
+  const [sortBy, setSortBy] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [sortVisible, setSortVisible] = useState(false);
+  const [areaVisible, setAreaVisible] = useState(false);
+  const [periodVisible, setPeriodVisible] = useState(false);
+
+  // Địa điểm + thời gian đổi được ngay trong list, không cần thoát ra.
+  const [province, setProvince] = useState(base.province);
+  const [district, setDistrict] = useState(base.district);
+  const [areaId, setAreaId] = useState<number | undefined>(base.areaId);
+  const [startDate, setStartDate] = useState(base.startDate);
+  const [endDate, setEndDate] = useState(base.endDate);
+
+  const [items, setItems] = useState<VehicleListItemResponse[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState("");
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiSearching, setAiSearching] = useState(false);
+  const [aiActiveQuery, setAiActiveQuery] = useState("");
+  const [aiSemanticQuery, setAiSemanticQuery] = useState("");
+  const [aiMatched, setAiMatched] = useState<boolean | null>(null);
+  const [aiSearchVersion, setAiSearchVersion] = useState(() => Date.now());
+  const [aiResultSignature, setAiResultSignature] = useState("");
+  const aiSearchingWasRef = useRef(false);
+  const aiSearchHasResultRef = useRef(false);
+  const [aiElapsed, setAiElapsed] = useState(0);
+  const aiTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const skipNextFetchRef = useRef(false);
+
+  useRefreshFavoritesOnFocus();
+
+  const rentalDays = calculateRentalDays(startDate, endDate);
+  const areaText = province ? `${province}${district ? ` · ${district}` : ""}` : "Toàn quốc";
+
+  const fetchPage = useCallback(
+    async (
+      pageNum: number,
+      replace: boolean,
+      active: VehicleListFilters,
+      sort: string,
+      loc: { areaId?: number; province: string; district: string; startDate: string; endDate: string },
+    ) => {
+      if (replace) {
+        setLoading(true);
+        setError("");
+      } else {
+        setLoadingMore(true);
+      }
+      try {
+        const result = await getPublicVehicles({
+          page: pageNum,
+          pageSize: PAGE_SIZE,
+          sortBy: sort || undefined,
+          type: active.type || undefined,
+          brandId: active.brandId || undefined,
+          modelId: active.modelId || undefined,
+          seatCount: active.seatCount || undefined,
+          minPrice: active.minPrice || undefined,
+          maxPrice: active.maxPrice || undefined,
+          fuelType: active.fuelType || undefined,
+          transmission: active.transmission || undefined,
+          bodyType: active.bodyType || undefined,
+          bikeType: active.bikeType || undefined,
+          pickupAddress: active.customerLat && active.customerLng ? active.pickupAddress : undefined,
+          customerLat: active.customerLat && active.customerLng ? active.customerLat : undefined,
+          customerLng: active.customerLat && active.customerLng ? active.customerLng : undefined,
+          radiusKm: active.customerLat && active.customerLng ? active.radiusKm : undefined,
+          areaId: loc.areaId,
+          province: loc.province || undefined,
+          district: loc.district || undefined,
+          startDate: loc.startDate || undefined,
+          endDate: loc.endDate || undefined,
+        });
+        setItems((prev) => (replace ? result.items : [...prev, ...result.items]));
+        setPage(result.page);
+        setTotalPages(result.totalPages);
+        setTotalCount(result.totalCount);
+        const urls = result.items.map((item) => item.featuredImage).filter((u): u is string => !!u);
+        if (urls.length > 0) {
+          Image.prefetch(urls).then(
+            () => undefined,
+            () => undefined,
+          );
+        }
+      } catch {
+        if (replace) setError("Không tải được danh sách xe. Kéo xuống để thử lại.");
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [],
+  );
+
+  const currentLoc = { areaId, province, district, startDate, endDate };
+
+  useEffect(() => {
+    if (skipNextFetchRef.current) {
+      skipNextFetchRef.current = false;
+      return;
+    }
+    setAiActiveQuery("");
+    setAiQuery("");
+    setAiSemanticQuery("");
+    setAiMatched(null);
+    setAiResultSignature("");
+    void fetchPage(1, true, filters, sortBy, currentLoc);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, sortBy, areaId, province, district, startDate, endDate]);
+
+  function handleLoadMore() {
+    if (loading || loadingMore || page >= totalPages) return;
+    if (aiActiveQuery) {
+      void runAiSearch(page + 1, false, aiActiveQuery);
+      return;
+    }
+    void fetchPage(page + 1, false, filters, sortBy, currentLoc);
+  }
+
+  function startAiTimer() {
+    if (aiTimerRef.current) clearInterval(aiTimerRef.current);
+    const startedAt = Date.now();
+    setAiElapsed(0);
+    aiTimerRef.current = setInterval(() => {
+      setAiElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 500);
+  }
+
+  function stopAiTimer() {
+    if (aiTimerRef.current) {
+      clearInterval(aiTimerRef.current);
+      aiTimerRef.current = null;
+    }
+  }
+
+  useEffect(() => () => stopAiTimer(), []);
+
+  async function runAiSearch(pageNum = 1, replace = true, queryOverride?: string, filtersOverride?: VehicleListFilters) {
+    const query = (queryOverride ?? aiQuery).trim();
+    if (!query || aiSearching) return;
+    const activeFilters = filtersOverride ?? filters;
+    aiSearchHasResultRef.current = false;
+    setAiResultSignature("");
+    if (replace) {
+      setLoading(true);
+      setError("");
+      startAiTimer();
+    } else {
+      setLoadingMore(true);
+    }
+    setAiSearching(true);
+    try {
+      const response = await aiFilterSearchPublicVehicles({
+        query,
+        sortBy: sortBy || undefined,
+        page: pageNum,
+        pageSize: PAGE_SIZE,
+        currentFilters: {
+          type: activeFilters.type || null,
+          brandId: activeFilters.brandId ? Number(activeFilters.brandId) : null,
+          modelId: activeFilters.modelId ? Number(activeFilters.modelId) : null,
+          fuelType: activeFilters.fuelType || null,
+          seatCount: activeFilters.seatCount || null,
+          transmission: activeFilters.transmission || null,
+          bodyType: activeFilters.bodyType || null,
+          bikeType: activeFilters.bikeType || null,
+          priceFrom: activeFilters.minPrice ? Number(activeFilters.minPrice) : null,
+          priceTo: activeFilters.maxPrice ? Number(activeFilters.maxPrice) : null,
+          startDate: startDate || null,
+          endDate: endDate || null,
+          areaId,
+          province: province || null,
+          district: district || null,
+          customerLat: activeFilters.customerLat ? Number(activeFilters.customerLat) : null,
+          customerLng: activeFilters.customerLng ? Number(activeFilters.customerLng) : null,
+          radiusKm: activeFilters.radiusKm ? Number(activeFilters.radiusKm) : null,
+        },
+      });
+      if (!response) throw new Error("Missing AI search response.");
+
+      const applied = response.appliedFilters;
+      skipNextFetchRef.current = true;
+      setFilters((prev) => ({
+        ...prev,
+        type: (applied.type ?? prev.type ?? "") as VehicleListFilters["type"],
+        fuelType: applied.fuelType ?? prev.fuelType,
+        seatCount: applied.seatCount ?? prev.seatCount,
+        transmission: applied.transmission ?? prev.transmission,
+        bodyType: applied.bodyType ?? prev.bodyType,
+        bikeType: applied.bikeType ?? prev.bikeType,
+        minPrice: applied.priceFrom != null ? String(applied.priceFrom) : prev.minPrice,
+        maxPrice: applied.priceTo != null ? String(applied.priceTo) : prev.maxPrice,
+        customerLat: applied.customerLat != null ? String(applied.customerLat) : prev.customerLat,
+        customerLng: applied.customerLng != null ? String(applied.customerLng) : prev.customerLng,
+        radiusKm: applied.radiusKm != null ? String(applied.radiusKm) : prev.radiusKm,
+      }));
+      if (applied.province != null) setProvince(applied.province || "");
+      if (applied.district != null) setDistrict(applied.district || "");
+      if (applied.areaId !== undefined) setAreaId(applied.areaId ?? undefined);
+      if (applied.province != null || applied.district != null || applied.areaId !== undefined) {
+        void saveSearchPrefs({
+          province: applied.province ?? province,
+          district: applied.district ?? district,
+          areaId: applied.areaId ?? undefined,
+        });
+      }
+      if (applied.startDate) setStartDate(applied.startDate);
+      if (applied.endDate) setEndDate(applied.endDate);
+
+      const result = response.result;
+      setItems((prev) => (replace ? result.items : [...prev, ...result.items]));
+      setPage(result.page);
+      setTotalPages(result.totalPages);
+      setTotalCount(result.totalCount);
+      setAiActiveQuery(query);
+      setAiSemanticQuery(response.semanticQuery);
+      setAiMatched(response.aiMatched);
+      if (replace) setAiSearchVersion((version) => version + 1);
+      aiSearchHasResultRef.current = true;
+    } catch {
+      setAiResultSignature("failed");
+      if (replace) setError("Không xử lý được tìm kiếm thông minh. Thử lại hoặc dùng bộ lọc thường.");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      setAiSearching(false);
+      stopAiTimer();
+    }
+  }
+
+  function openDetail(vehicleId: number) {
+    navigation.navigate("VehicleDetail", {
+      vehicleId,
+      startDate,
+      endDate,
+    });
+  }
+
+  const handleOpenCard = useCallback(
+    (vehicleId: number) => {
+      openDetail(vehicleId);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [navigation, startDate, endDate],
+  );
+
+  const renderCard = useCallback(
+    ({ item }: { item: VehicleListItemResponse }) => (
+      <VehicleListCard
+        vehicle={item}
+        onOpen={handleOpenCard}
+        onBook={handleOpenCard}
+      />
+    ),
+    [handleOpenCard],
+  );
+
+  const chips: Chip[] = useMemo(() => {
+    const list: Chip[] = [];
+    if (filters.type) {
+      list.push({
+        key: "type",
+        label: filters.type === "Car" ? "Ô tô" : "Xe máy",
+        clear: () => setFilters((p) => ({ ...p, type: "" })),
+      });
+    }
+    if (filters.brandName) {
+      list.push({
+        key: "brand",
+        label: filters.brandName,
+        clear: () =>
+          setFilters((p) => ({ ...p, brandId: "", brandName: "", modelId: "", modelName: "" })),
+      });
+    }
+    if (filters.modelName) {
+      list.push({
+        key: "model",
+        label: filters.modelName,
+        clear: () => setFilters((p) => ({ ...p, modelId: "", modelName: "" })),
+      });
+    }
+    if (filters.seatCount) {
+      list.push({
+        key: "seat",
+        label: `${filters.seatCount} chỗ`,
+        clear: () => setFilters((p) => ({ ...p, seatCount: "" })),
+      });
+    }
+    if (filters.minPrice || filters.maxPrice) {
+      const min = filters.minPrice ? formatVehicleCurrency(Number(filters.minPrice)) : "0đ";
+      const max = filters.maxPrice ? formatVehicleCurrency(Number(filters.maxPrice)) : "∞";
+      list.push({
+        key: "price",
+        label: `${min} - ${max}`,
+        clear: () => setFilters((p) => ({ ...p, minPrice: "", maxPrice: "" })),
+      });
+    }
+    if (filters.fuelType) {
+      list.push({
+        key: "fuel",
+        label: getFuelLabel(filters.fuelType),
+        clear: () => setFilters((p) => ({ ...p, fuelType: "" })),
+      });
+    }
+    if (filters.transmission) {
+      list.push({
+        key: "transmission",
+        label: getTransmissionLabel(filters.transmission),
+        clear: () => setFilters((p) => ({ ...p, transmission: "" })),
+      });
+    }
+    if (filters.bodyType) {
+      list.push({
+        key: "body",
+        label: filters.bodyType,
+        clear: () => setFilters((p) => ({ ...p, bodyType: "" })),
+      });
+    }
+    if (filters.bikeType) {
+      list.push({
+        key: "bike",
+        label: filters.bikeType,
+        clear: () => setFilters((p) => ({ ...p, bikeType: "" })),
+      });
+    }
+    if (filters.customerLat && filters.customerLng) {
+      list.push({
+        key: "nearby",
+        label: `Quanh đây ${filters.radiusKm || "10"}km`,
+        clear: () =>
+          setFilters((p) => ({
+            ...p,
+            pickupAddress: "",
+            customerLat: "",
+            customerLng: "",
+            radiusKm: "10",
+          })),
+      });
+    }
+    return list;
+  }, [filters]);
+
+  const activeFilterCount =
+    (filters.brandId ? 1 : 0) +
+    (filters.modelId ? 1 : 0) +
+    (filters.seatCount ? 1 : 0) +
+    (filters.minPrice || filters.maxPrice ? 1 : 0) +
+    (aiQuery ? 1 : 0) +
+    (filters.fuelType ? 1 : 0) +
+    (filters.transmission ? 1 : 0) +
+    (filters.bodyType ? 1 : 0) +
+    (filters.bikeType ? 1 : 0) +
+    (filters.customerLat && filters.customerLng ? 1 : 0);
+
+  const sortLabel = SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Mới nhất";
+  const mapParams = useMemo(() => ({
+    page: 1,
+    pageSize: 300,
+    sortBy: sortBy || undefined,
+    type: filters.type || undefined,
+    brandId: filters.brandId || undefined,
+    modelId: filters.modelId || undefined,
+    seatCount: filters.seatCount || undefined,
+    minPrice: filters.minPrice || undefined,
+    maxPrice: filters.maxPrice || undefined,
+    fuelType: filters.fuelType || undefined,
+    transmission: filters.transmission || undefined,
+    bodyType: filters.bodyType || undefined,
+    bikeType: filters.bikeType || undefined,
+    customerLat: filters.customerLat && filters.customerLng ? filters.customerLat : undefined,
+    customerLng: filters.customerLat && filters.customerLng ? filters.customerLng : undefined,
+    radiusKm: filters.customerLat && filters.customerLng ? filters.radiusKm : undefined,
+    areaId,
+    province: province || undefined,
+    district: district || undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  }), [filters, sortBy, areaId, province, district, startDate, endDate]);
+  const mapAiFilters = useMemo(() => ({
+    type: filters.type || null,
+    brandId: filters.brandId ? Number(filters.brandId) : null,
+    modelId: filters.modelId ? Number(filters.modelId) : null,
+    fuelType: filters.fuelType || null,
+    seatCount: filters.seatCount || null,
+    transmission: filters.transmission || null,
+    bodyType: filters.bodyType || null,
+    bikeType: filters.bikeType || null,
+    priceFrom: filters.minPrice ? Number(filters.minPrice) : null,
+    priceTo: filters.maxPrice ? Number(filters.maxPrice) : null,
+    startDate: startDate || null,
+    endDate: endDate || null,
+    areaId,
+    province: province || null,
+    district: district || null,
+    customerLat: filters.customerLat ? Number(filters.customerLat) : null,
+    customerLng: filters.customerLng ? Number(filters.customerLng) : null,
+    radiusKm: filters.radiusKm ? Number(filters.radiusKm) : null,
+  }), [filters, startDate, endDate, areaId, province, district]);
+  const aiMapSignature = useMemo(() => JSON.stringify(["ai", aiActiveQuery, mapAiFilters, sortBy, aiSearchVersion]),
+    [aiActiveQuery, mapAiFilters, sortBy, aiSearchVersion]);
+  const aiMapPreview = useMemo(() => aiActiveQuery && aiResultSignature === aiMapSignature
+    ? { items, totalCount } : null, [aiActiveQuery, aiResultSignature, aiMapSignature, items, totalCount]);
+  const activeMapAiQuery = aiActiveQuery && aiResultSignature === aiMapSignature ? aiActiveQuery : "";
+  const pickupCenter = useMemo(() => {
+    if (!filters.customerLat || !filters.customerLng) return null;
+    const latitude = Number(filters.customerLat);
+    const longitude = Number(filters.customerLng);
+    return Number.isFinite(latitude) && Number.isFinite(longitude) ? { latitude, longitude } : null;
+  }, [filters.customerLat, filters.customerLng]);
+
+  useEffect(() => {
+    if (aiSearching) {
+      aiSearchingWasRef.current = true;
+      return;
+    }
+    if (aiSearchingWasRef.current && aiSearchHasResultRef.current && aiActiveQuery) {
+      setAiResultSignature(aiMapSignature);
+    }
+    aiSearchingWasRef.current = false;
+  }, [aiSearching, aiActiveQuery, aiMapSignature]);
+
+  function applyFiltersFromSheet(next: VehicleListFilters, query: string) {
+    const sameFilters = JSON.stringify(next) === JSON.stringify(filters);
+    if (sameFilters && ((!query && !aiActiveQuery)
+      || (query === aiActiveQuery && aiResultSignature && aiResultSignature !== "failed"))) return;
+    setAiQuery(query);
+    if (query) {
+      skipNextFetchRef.current = true;
+      setFilters({ ...next });
+      void runAiSearch(1, true, query, next);
+    } else {
+      setAiActiveQuery("");
+      setAiSemanticQuery("");
+      setAiMatched(null);
+      setAiResultSignature("");
+      setFilters({ ...next });
+    }
+  }
+
+  return (
+    <View style={styles.screen}>
+      <View style={styles.header}>
+        <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+          <ArrowLeft color={theme.text} size={20} />
+        </Pressable>
+        <View style={styles.headerText}>
+          <Pressable onPress={() => setAreaVisible(true)} style={styles.headerRow}>
+            <MapPin color={theme.brand} size={14} />
+            <AppText display numberOfLines={1} style={styles.headerArea}>
+              {areaText}
+            </AppText>
+          </Pressable>
+          <Pressable onPress={() => setPeriodVisible(true)} style={styles.headerRow}>
+            <CalendarDays color={theme.brand} size={14} />
+            <AppText display numberOfLines={1} style={styles.headerTime}>
+              {formatPeriodSummary(startDate, endDate)}
+            </AppText>
+          </Pressable>
+        </View>
+        <Pressable onPress={() => setFilterVisible(true)} style={styles.filterButton}>
+          <SlidersHorizontal color={theme.brand} size={18} />
+          {activeFilterCount > 0 ? (
+            <View style={styles.badge}>
+              <AppText style={styles.badgeText}>{activeFilterCount}</AppText>
+            </View>
+          ) : null}
+        </Pressable>
+      </View>
+
+      <View style={styles.viewSwitchWrap}>
+        <View style={styles.viewSwitch}>
+          <Pressable onPress={() => setViewMode("list")}
+            accessibilityRole="button" accessibilityState={{ selected: viewMode === "list" }}
+            style={[styles.viewSwitchButton, viewMode === "list" && styles.viewSwitchActive]}>
+            <List size={16} color={viewMode === "list" ? theme.onBrand : theme.muted} />
+            <AppText style={[styles.viewSwitchText, viewMode === "list" && styles.viewSwitchTextActive]}>Danh sách</AppText>
+          </Pressable>
+          <Pressable onPress={() => setViewMode("map")}
+            accessibilityRole="button" accessibilityState={{ selected: viewMode === "map" }}
+            style={[styles.viewSwitchButton, viewMode === "map" && styles.viewSwitchActive]}>
+            <MapIcon size={16} color={viewMode === "map" ? theme.onBrand : theme.muted} />
+            <AppText style={[styles.viewSwitchText, viewMode === "map" && styles.viewSwitchTextActive]}>Bản đồ</AppText>
+          </Pressable>
+        </View>
+      </View>
+
+      {viewMode === "list" ? <FlatList
+        data={items}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={renderCard}
+        windowSize={7}
+        maxToRenderPerBatch={6}
+        initialNumToRender={6}
+        removeClippedSubviews
+        contentContainerStyle={[styles.list, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            {aiSearching && loading ? (
+              <View style={styles.aiSearchingRow}>
+                <ActivityIndicator size="small" color={theme.brand} />
+                <AppText numberOfLines={2} style={styles.aiSummary}>
+                  AI đang tìm kiếm... {aiElapsed}s
+                </AppText>
+              </View>
+            ) : aiActiveQuery ? (
+              <AppText numberOfLines={2} style={[styles.aiSummary, aiMatched === false && styles.aiNoMatch]}>
+                {aiMatched === false
+                  ? "Khong co ket qua AI phu hop, dang hien thi danh sach theo bo loc hien tai."
+                  : `AI: ${aiSemanticQuery || aiActiveQuery}`}
+              </AppText>
+            ) : null}
+            {chips.length > 0 ? (
+              <View style={styles.chips}>
+                {chips.map((chip) => (
+                  <Pressable key={chip.key} onPress={chip.clear} style={styles.chip}>
+                    <AppText numberOfLines={1} style={styles.chipText}>
+                      {chip.label}
+                    </AppText>
+                    <X color={theme.brand} size={13} />
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+            <View style={styles.countRow}>
+              <AppText style={styles.countText}>
+                {loading && items.length === 0
+                  ? "Đang tìm xe..."
+                  : `Tìm thấy ${totalCount} xe${rentalDays > 0 ? ` · ${rentalDays} ngày` : ""}`}
+              </AppText>
+              {loading && items.length > 0 ? (
+                <ActivityIndicator size="small" color={theme.brand} />
+              ) : null}
+              <Pressable onPress={() => setSortVisible(true)} style={styles.sortButton}>
+                <AppText numberOfLines={1} style={styles.sortText}>
+                  {sortLabel}
+                </AppText>
+                <ChevronDown color={theme.muted} size={15} />
+              </Pressable>
+            </View>
+            {error ? <AppText style={styles.error}>{error}</AppText> : null}
+          </View>
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={styles.skeletons}>
+              <VehicleCardSkeleton />
+              <VehicleCardSkeleton />
+              <VehicleCardSkeleton />
+              <VehicleCardSkeleton />
+            </View>
+          ) : (
+            <View style={styles.center}>
+              <AppText display style={styles.emptyTitle}>Chưa có xe phù hợp</AppText>
+              <AppText style={styles.muted}>Thử đổi địa điểm, thời gian hoặc bộ lọc.</AppText>
+              <Pressable
+                onPress={() => {
+                  setFilters({ ...EMPTY_FILTERS, type: base.type });
+                  setSortBy("");
+                }}
+                style={styles.resetButton}
+              >
+                <AppText style={styles.resetText}>Đặt lại bộ lọc</AppText>
+              </Pressable>
+            </View>
+          )
+        }
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator color={theme.brand} style={styles.moreLoader} />
+          ) : null
+        }
+      /> : (
+        <View style={styles.mapScreen}>
+          <View style={styles.mapControls}>
+            {aiSearching ? (
+              <AppText style={styles.mapStatus}>AI đang tìm kiếm... {aiElapsed}s</AppText>
+            ) : aiActiveQuery ? (
+              <AppText numberOfLines={1} style={styles.mapStatus}>AI: {aiSemanticQuery || aiActiveQuery}</AppText>
+            ) : null}
+            <View style={styles.mapSortRow}>
+              <Pressable onPress={() => setSortVisible(true)} style={styles.sortButton}>
+                <AppText numberOfLines={1} style={styles.sortText}>{sortLabel}</AppText>
+                <ChevronDown color={theme.muted} size={15} />
+              </Pressable>
+            </View>
+          </View>
+          <VehicleSearchMap
+            params={mapParams}
+            aiQuery={activeMapAiQuery}
+            aiFilters={mapAiFilters}
+            aiSearching={aiSearching || Boolean(aiActiveQuery && !aiResultSignature)}
+            aiSearchVersion={aiSearchVersion}
+            aiPreview={aiMapPreview}
+            center={pickupCenter}
+            radiusKm={Number(filters.radiusKm) || 10}
+            onOpenVehicle={handleOpenCard}
+          />
+        </View>
+      )}
+
+      <VehicleFilterSheet
+        visible={filterVisible}
+        initial={filters}
+        initialAiQuery={aiQuery}
+        searching={aiSearching}
+        resultCount={totalCount}
+        onApply={applyFiltersFromSheet}
+        onClose={() => setFilterVisible(false)}
+      />
+
+      <AreaPickerSheet
+        visible={areaVisible}
+        province={province}
+        district={district}
+        onApply={(p, d, id) => {
+          setProvince(p);
+          setDistrict(d);
+          setAreaId(id);
+          void saveSearchPrefs({ province: p, district: d, areaId: id });
+        }}
+        onClose={() => setAreaVisible(false)}
+      />
+
+      <RentalPeriodSheet
+        visible={periodVisible}
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        onClose={() => setPeriodVisible(false)}
+      />
+
+      <Modal
+        visible={sortVisible}
+        transparent
+        statusBarTranslucent
+        navigationBarTranslucent
+        animationType="fade"
+        onRequestClose={() => setSortVisible(false)}
+      >
+        <View style={styles.sortOverlay}>
+          <Pressable style={styles.sortBackdrop} onPress={() => setSortVisible(false)} />
+          <View style={[styles.sortSheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+            <AppText display style={styles.sortTitle}>Sắp xếp</AppText>
+            {SORT_OPTIONS.map((o) => {
+              const active = sortBy === o.value;
+              return (
+                <Pressable
+                  key={o.label}
+                  onPress={() => {
+                    setSortBy(o.value);
+                    setSortVisible(false);
+                  }}
+                  style={styles.sortOption}
+                >
+                  <AppText style={[styles.sortOptionText, active && styles.sortOptionActive]}>
+                    {o.label}
+                  </AppText>
+                  {active ? <Check color={theme.brand} size={17} /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: theme.background },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+    },
+    backButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: "transparent",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerText: { flex: 1, gap: 2 },
+    headerRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+    headerArea: { color: theme.text, fontSize: 14, fontWeight: "800", flexShrink: 1 },
+    headerTime: { color: theme.muted, fontSize: 12, fontWeight: "600", flexShrink: 1 },
+    filterButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.brandBorder,
+      backgroundColor: theme.brandSoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    badge: {
+      position: "absolute",
+      right: -5,
+      top: -5,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: theme.brand,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 4,
+    },
+    badgeText: { color: theme.onBrand, fontSize: 10, fontWeight: "800" },
+    viewSwitchWrap: { paddingHorizontal: 16, paddingVertical: 7, backgroundColor: theme.background },
+    viewSwitch: { flexDirection: "row", padding: 3, borderRadius: 11, backgroundColor: theme.brandSoft },
+    viewSwitchButton: { flex: 1, height: 33, borderRadius: 8, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
+    viewSwitchActive: { backgroundColor: theme.brand },
+    viewSwitchText: { color: theme.muted, fontSize: 12, fontWeight: "800" },
+    viewSwitchTextActive: { color: theme.onBrand },
+    mapScreen: { flex: 1, minHeight: 0 },
+    mapControls: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 7, gap: 6, backgroundColor: theme.background },
+    mapStatus: { color: theme.muted, fontSize: 11, fontWeight: "600" },
+    mapSortRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 8 },
+    list: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 32, gap: 12 },
+    listHeader: { gap: 10, marginBottom: 2 },
+    aiSummary: {
+      color: theme.muted,
+      fontSize: 12,
+      fontWeight: "600",
+      flexShrink: 1,
+    },
+    aiSearchingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    aiNoMatch: {
+      color: theme.error,
+    },
+    chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    chip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      maxWidth: "100%",
+      borderRadius: 999,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.brandBorder,
+      backgroundColor: theme.brandSoft,
+      paddingHorizontal: 11,
+      paddingVertical: 6,
+    },
+    chipText: { color: theme.brand, fontSize: 12, fontWeight: "700", flexShrink: 1 },
+    countRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+    countText: { color: theme.text, fontSize: 13, fontWeight: "700", flex: 1 },
+    sortButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      maxWidth: 180,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      borderRadius: 999,
+      paddingHorizontal: 11,
+      paddingVertical: 6,
+    },
+    sortText: { color: theme.muted, fontSize: 12, fontWeight: "700", flexShrink: 1 },
+    error: { color: theme.danger, fontSize: 12, fontWeight: "600" },
+    center: { alignItems: "center", paddingVertical: 48, gap: 8 },
+    skeletons: { gap: 12 },
+    muted: { color: theme.muted, fontSize: 13 },
+    emptyTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
+    resetButton: {
+      marginTop: 8,
+      height: 40,
+      paddingHorizontal: 18,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.brandBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    resetText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
+    moreLoader: { marginVertical: 12 },
+    sortOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: theme.overlay },
+    sortBackdrop: { ...StyleSheet.absoluteFill },
+    sortSheet: {
+      backgroundColor: theme.surface,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 28,
+    },
+    sortTitle: { color: theme.text, fontSize: 15, fontWeight: "800", marginBottom: 6 },
+    sortOption: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 13,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.divider,
+    },
+    sortOptionText: { color: theme.text, fontSize: 14, fontWeight: "600" },
+    sortOptionActive: { color: theme.brand, fontWeight: "800" },
+  });

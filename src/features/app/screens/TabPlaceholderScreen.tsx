@@ -1,7 +1,8 @@
 import type { ComponentType } from "react";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
@@ -25,8 +26,8 @@ export default function TabPlaceholderScreen({
       <View style={styles.iconWrap}>
         <Icon color={theme.brand} size={30} strokeWidth={2.4} />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
+      <AppText display style={styles.title}>{title}</AppText>
+      <AppText style={styles.description}>{description}</AppText>
       {footer ? <View style={styles.footer}>{footer}</View> : null}
     </View>
   );

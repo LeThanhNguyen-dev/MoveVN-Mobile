@@ -9,6 +9,9 @@ export function restoreSession() {
   if (restoring) return restoring;
   restoring = (async () => {
     await initializeAuthSession();
+    // Đọc storage xong là hydrated: lỗi mạng sau đó vẫn giữ session và cho app chạy tiếp.
+    // Chỉ khi storage lỗi mới giữ isHydrated=false để boot flow retry được.
+    useAuthStore.setState({ isHydrated: true });
     const token = useAuthStore.getState().token;
     const expected = getSessionGeneration();
     if (token) {
@@ -23,7 +26,6 @@ export function restoreSession() {
         else if (useAuthStore.getState().token) throw error;
       }
     }
-    useAuthStore.setState({ isHydrated: true });
   })().finally(() => { restoring = null; });
   return restoring;
 }

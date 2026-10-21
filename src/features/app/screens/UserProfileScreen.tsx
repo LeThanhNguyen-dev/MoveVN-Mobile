@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import {
   ArrowLeft,
@@ -13,7 +13,9 @@ import {
   UserRound,
   X,
 } from "lucide-react-native";
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
+import AppText from "@/components/AppText";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { toApiError, updateProfile, uploadAvatar } from "@/features/auth/services/authService";
 import type { AuthUser, UserRole } from "@/features/auth/types";
@@ -22,6 +24,7 @@ import { getMyDriverLicense } from "@/features/driverLicenses/services/driverLic
 import type { DriverLicenseStatusResponse } from "@/features/driverLicenses/types";
 import { getMyApplication } from "@/features/owner/services/ownerService";
 import type { OwnerApplicationDto } from "@/features/owner/types";
+import MaskedDocumentValue from "@/features/pin/components/MaskedDocumentValue";
 import type { UploadFileInput } from "@/types/upload";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -59,6 +62,7 @@ function maskAccountNumber(value?: string | null) {
 }
 
 export default function UserProfileScreen({ onBack, user }: { onBack: () => void; user: AuthUser }) {
+  const insets = useSafeAreaInsets();
   const updateUser = useAuthStore((state) => state.updateUser);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [fullName, setFullName] = useState(user.fullName);
@@ -70,6 +74,8 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
   const [expandedKey, setExpandedKey] = useState<ExpandedKey>(null);
   const [driverLicense, setDriverLicense] = useState<DriverLicenseStatusResponse | null>(null);
   const [ownerApp, setOwnerApp] = useState<OwnerApplicationDto | null>(null);
+  const sheetScrollRef = useRef<ScrollView>(null);
+  const phoneInputRef = useRef<TextInput>(null);
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -173,7 +179,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
         <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <Text style={styles.topBarTitle}>Thông tin tài khoản</Text>
+        <AppText display style={styles.topBarTitle}>Thông tin tài khoản</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
@@ -197,13 +203,13 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               )}
             </View>
             <View style={styles.profileInfo}>
-              <Text numberOfLines={2} style={styles.name}>
+              <AppText numberOfLines={2} style={styles.name}>
                 {user.fullName}
-              </Text>
+              </AppText>
               <View style={styles.roleRow}>
                 {user.roles.map((role) => (
                   <View key={role} style={[styles.roleBadge, { backgroundColor: roleBadgeStyles[role].backgroundColor }]}>
-                    <Text style={[styles.roleBadgeText, { color: roleBadgeStyles[role].color }]}>{roleLabels[role]}</Text>
+                    <AppText style={[styles.roleBadgeText, { color: roleBadgeStyles[role].color }]}>{roleLabels[role]}</AppText>
                   </View>
                 ))}
               </View>
@@ -212,17 +218,17 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
         </View>
 
         <View style={styles.infoCard}>
-          <Text style={styles.cardTitle}>Thông tin tài khoản</Text>
+          <AppText display style={styles.cardTitle}>Thông tin tài khoản</AppText>
 
           <View style={styles.row}>
             <View style={[styles.rowIcon, styles.rowIconStatic]}>
               <Mail color={theme.brand} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>Email</Text>
-              <Text numberOfLines={1} style={styles.rowValue}>
+              <AppText style={styles.rowLabel}>Email</AppText>
+              <AppText numberOfLines={1} style={styles.rowValue}>
                 {user.email}
-              </Text>
+              </AppText>
             </View>
           </View>
 
@@ -233,8 +239,8 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <Phone color={theme.brand} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>Số điện thoại</Text>
-              <Text style={styles.rowValue}>{user.phone || "Chưa cập nhật"}</Text>
+              <AppText style={styles.rowLabel}>Số điện thoại</AppText>
+              <AppText style={styles.rowValue}>{user.phone || "Chưa cập nhật"}</AppText>
             </View>
           </View>
 
@@ -245,7 +251,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <IdCard color={cccdVerified ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>CCCD</Text>
+              <AppText style={styles.rowLabel}>CCCD</AppText>
               <VerifyBadge verified={cccdVerified} />
             </View>
             <ChevronDown
@@ -259,7 +265,15 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
             <View style={styles.detailBox}>
               {ownerApp ? (
                 <>
-                  <DetailLine label="Số CCCD" value={ownerApp.nationalIdNumber || "-"} />
+                  <View style={styles.detailLine}>
+                    <AppText style={styles.detailLabel}>Số CCCD</AppText>
+                    <MaskedDocumentValue
+                      canReveal={cccdVerified}
+                      documentType="CCCD"
+                      maskedValue={ownerApp.nationalIdNumber ?? null}
+                      revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                    />
+                  </View>
                   <DetailLine label="Họ tên trên CCCD" value={ownerApp.fullName || "-"} />
                   <DetailLine
                     label="Trạng thái"
@@ -267,7 +281,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   />
                 </>
               ) : (
-                <Text style={styles.detailEmpty}>Bạn chưa xác minh CCCD.</Text>
+                <AppText style={styles.detailEmpty}>Bạn chưa xác minh CCCD.</AppText>
               )}
             </View>
           ) : null}
@@ -279,7 +293,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <FileBadge color={gplxVerified ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>GPLX</Text>
+              <AppText style={styles.rowLabel}>GPLX</AppText>
               <VerifyBadge verified={gplxVerified} />
             </View>
             <ChevronDown
@@ -294,7 +308,15 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               {driverLicense ? (
                 <>
                   <DetailLine label="Hạng GPLX" value={driverLicense.licenseClass || "-"} />
-                  <DetailLine label="Số GPLX" value={driverLicense.driverLicenseNumber || "-"} />
+                  <View style={styles.detailLine}>
+                    <AppText style={styles.detailLabel}>Số GPLX</AppText>
+                    <MaskedDocumentValue
+                      canReveal={gplxVerified}
+                      documentType="GPLX"
+                      maskedValue={driverLicense.driverLicenseNumber ?? null}
+                      revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                    />
+                  </View>
                   <DetailLine label="Xác minh lúc" value={formatDate(driverLicense.verifiedAt)} />
                   <DetailLine
                     label="Loại xe"
@@ -305,7 +327,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   ) : null}
                 </>
               ) : (
-                <Text style={styles.detailEmpty}>Chưa có thông tin GPLX.</Text>
+                <AppText style={styles.detailEmpty}>Chưa có thông tin GPLX.</AppText>
               )}
             </View>
           ) : null}
@@ -317,7 +339,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <Landmark color={bankCompleted ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>Ngân hàng</Text>
+              <AppText style={styles.rowLabel}>Ngân hàng</AppText>
               <VerifyBadge completed={bankCompleted} verified={bankCompleted} />
             </View>
             <ChevronDown
@@ -336,38 +358,61 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   <DetailLine label="Chủ tài khoản" value={ownerApp.bankAccountHolderName || "-"} />
                 </>
               ) : (
-                <Text style={styles.detailEmpty}>Chưa cập nhật thông tin ngân hàng.</Text>
+                <AppText style={styles.detailEmpty}>Chưa cập nhật thông tin ngân hàng.</AppText>
               )}
             </View>
           ) : null}
         </View>
       </ScrollView>
 
-      <Modal animationType="slide" onRequestClose={handleCloseSheet} transparent visible={sheetVisible}>
-        <View style={styles.sheetOverlay}>
-          <Pressable
-            accessibilityLabel="Đóng"
-            accessibilityRole="button"
-            disabled={isSaving}
-            onPress={handleCloseSheet}
-            style={styles.sheetBackdrop}
-          />
-          <View style={styles.sheet}>
-            <View style={styles.sheetHeader}>
-              <Pressable
-                accessibilityLabel="Đóng chỉnh sửa"
-                accessibilityRole="button"
-                disabled={isSaving}
-                onPress={handleCloseSheet}
-                style={styles.sheetCloseButton}
-              >
-                <X color={theme.text} size={22} strokeWidth={2.3} />
-              </Pressable>
-              <Text style={styles.sheetTitle}>Chỉnh sửa thông tin</Text>
-              <View style={styles.sheetHeaderSpacer} />
-            </View>
+      <Modal
+        animationType="slide"
+        onRequestClose={handleCloseSheet}
+        transparent
+        statusBarTranslucent
+        navigationBarTranslucent
+        visible={sheetVisible}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+          style={styles.sheetAvoid}
+        >
+          <View style={styles.sheetOverlay}>
+            <Pressable
+              accessibilityLabel="Đóng"
+              accessibilityRole="button"
+              disabled={isSaving}
+              onPress={handleCloseSheet}
+              style={styles.sheetBackdrop}
+            />
+            <View style={styles.sheet}>
+              <View style={styles.sheetHeader}>
+                <Pressable
+                  accessibilityLabel="Đóng chỉnh sửa"
+                  accessibilityRole="button"
+                  disabled={isSaving}
+                  onPress={handleCloseSheet}
+                  style={styles.sheetCloseButton}
+                >
+                  <X color={theme.text} size={22} strokeWidth={2.3} />
+                </Pressable>
+                <AppText display style={styles.sheetTitle}>Chỉnh sửa thông tin</AppText>
+                <View style={styles.sheetHeaderSpacer} />
+              </View>
 
-            <ScrollView contentContainerStyle={styles.sheetBody} showsVerticalScrollIndicator={false}>
+              <ScrollView
+                ref={sheetScrollRef}
+                contentContainerStyle={[
+                  styles.sheetBody,
+                  { paddingBottom: Math.max(insets.bottom, 20) },
+                ]}
+                keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
+                keyboardShouldPersistTaps="handled"
+                automaticallyAdjustKeyboardInsets
+                showsVerticalScrollIndicator={false}
+                scrollEnabled
+              >
               <View style={styles.sheetAvatarWrap}>
                 <Pressable
                   accessibilityLabel="Đổi ảnh đại diện"
@@ -390,7 +435,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Họ và tên</Text>
+                <AppText style={styles.fieldLabel}>Họ và tên</AppText>
                 <TextInput
                   autoCapitalize="words"
                   editable={!isSaving}
@@ -399,12 +444,16 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   style={styles.fieldInput}
                   value={fullName}
                   onChangeText={setFullName}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => phoneInputRef.current?.focus()}
                 />
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Số điện thoại</Text>
+                <AppText style={styles.fieldLabel}>Số điện thoại</AppText>
                 <TextInput
+                  ref={phoneInputRef}
                   editable={!isSaving}
                   keyboardType="phone-pad"
                   placeholder="Nhập số điện thoại"
@@ -412,15 +461,16 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                   style={styles.fieldInput}
                   value={phone}
                   onChangeText={setPhone}
+                  returnKeyType="done"
                 />
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Email</Text>
-                <Text style={styles.fieldReadonly}>{user.email}</Text>
+                <AppText style={styles.fieldLabel}>Email</AppText>
+                <AppText style={styles.fieldReadonly}>{user.email}</AppText>
               </View>
 
-              {editError ? <Text style={styles.sheetError}>{editError}</Text> : null}
+              {editError ? <AppText style={styles.sheetError}>{editError}</AppText> : null}
 
               <Pressable
                 accessibilityRole="button"
@@ -430,11 +480,12 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                 }}
                 style={[styles.sheetSaveButton, isSaving ? styles.saveButtonDisabled : null]}
               >
-                <Text style={styles.saveText}>{isSaving ? "Đang lưu..." : "Lưu thay đổi"}</Text>
+                <AppText style={styles.saveText}>{isSaving ? "Đang lưu..." : "Lưu thay đổi"}</AppText>
               </Pressable>
             </ScrollView>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -446,13 +497,13 @@ function VerifyBadge({ completed, verified }: { completed?: boolean; verified: b
   if (verified) {
     return (
       <View style={[styles.badge, styles.badgeVerified]}>
-        <Text style={[styles.badgeText, styles.badgeTextVerified]}>{completed ? "Đã hoàn thành" : "Đã xác minh"}</Text>
+        <AppText style={[styles.badgeText, styles.badgeTextVerified]}>{completed ? "Đã hoàn thành" : "Đã xác minh"}</AppText>
       </View>
     );
   }
   return (
     <View style={[styles.badge, styles.badgeUnverified]}>
-      <Text style={[styles.badgeText, styles.badgeTextUnverified]}>Chưa xác minh</Text>
+      <AppText style={[styles.badgeText, styles.badgeTextUnverified]}>Chưa xác minh</AppText>
     </View>
   );
 }
@@ -462,8 +513,8 @@ function DetailLine({ label, value }: { label: string; value: string }) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.detailLine}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
+      <AppText style={styles.detailLabel}>{label}</AppText>
+      <AppText style={styles.detailValue}>{value}</AppText>
     </View>
   );
 }
@@ -702,6 +753,9 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   sheetOverlay: {
     flex: 1,
     justifyContent: "flex-end",
+  },
+  sheetAvoid: {
+    flex: 1,
   },
   sheetBackdrop: {
     ...StyleSheet.absoluteFill,

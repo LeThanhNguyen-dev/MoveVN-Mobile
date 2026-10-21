@@ -1,4 +1,5 @@
 import type { UserRole } from "@/features/auth/types";
+import type { VehicleSurchargePolicy } from "@/features/vehicles/types";
 import type { UploadFileInput } from "@/types/upload";
 
 export type AdminUserListItem = {
@@ -251,6 +252,7 @@ export type CreateAdminVehicleRequest = {
   featuredImageIndex?: number | null;
   documentFileUrl?: string | null;
   useOcr?: boolean;
+  surchargePolicies?: VehicleSurchargePolicy[];
 };
 
 export type AdminVehicleOcrPreviewResponse = {
@@ -292,4 +294,5 @@ export type UpdateAdminVehicleRequest = {
   featureIds: number[];
   documentFileUrl?: string | null;
   useOcr: boolean;
+  surchargePolicies?: VehicleSurchargePolicy[];
 };

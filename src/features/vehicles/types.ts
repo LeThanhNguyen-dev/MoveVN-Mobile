@@ -8,16 +8,81 @@ export type VehicleListItemResponse = {
   licensePlate: string;
   pricePerDay: number;
   depositPercent: number;
+  deliveryFreeRadiusKm?: number | null;
+  deliveryFeePerKm?: number | null;
+  deliveryMaxRadiusKm?: number | null;
+
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   areaName: string | null;
   pricingMode: "Fixed" | "Auto" | null;
+  fixedPricePerDay: number | null;
+  autoMinPrice: number | null;
+  autoMaxPrice: number | null;
+  currentPricePerDay: number | null;
   status: string;
   featuredImage: string | null;
   averageRating: number;
   reviewCount: number;
+  distanceKm: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  totalDynamicPrice: number | null;
+  rentalDays: number | null;
+  averageDailyPrice: number | null;
   nextAvailableDate: string | null;
   createdAt: string;
+};
+
+export type PublicVehicleAiSearchFilters = {
+  type?: "" | "Car" | "Motorbike" | null;
+  brandId?: number | null;
+  modelId?: number | null;
+  fuelType?: string | null;
+  seatCount?: string | null;
+  transmission?: string | null;
+  bodyType?: string | null;
+  bikeType?: string | null;
+  priceFrom?: number | null;
+  priceTo?: number | null;
+  featureIds?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  brandIds?: string | null;
+  transmissions?: string | null;
+  fuelTypes?: string | null;
+  bodyTypes?: string | null;
+  bikeTypes?: string | null;
+  areaId?: number | null;
+  province?: string | null;
+  district?: string | null;
+  customerLat?: number | null;
+  customerLng?: number | null;
+  radiusKm?: number | null;
+};
+
+export type PublicVehicleAiSearchRequest = {
+  query: string;
+  currentFilters: PublicVehicleAiSearchFilters;
+  sortBy?: string | null;
+  page?: number;
+  pageSize?: number;
+};
+
+export type PublicVehicleAiSearchResponse = {
+  appliedFilters: PublicVehicleAiSearchFilters;
+  semanticQuery: string;
+  parsedFilters: Record<string, unknown>;
+  aiMatched: boolean;
+  aiCandidateCount: number;
+  fallbackReason?: string | null;
+  result: {
+    items: VehicleListItemResponse[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
 };
 
 export type VehicleImageResponse = {
@@ -30,6 +95,29 @@ export type VehicleImageResponse = {
 export type VehicleFeatureResponse = {
   id: number;
   name: string;
+};
+
+export type VehicleSurchargePolicy = {
+  id?: number | null;
+  vehicleId?: number;
+  feeType: "ExcessMileage" | "LateReturn" | "Cleaning" | "Deodorization" | "Custom";
+  name: string;
+  description?: string | null;
+  calculationMethod: "PerKm" | "PerHour" | "PerDay" | "Fixed";
+  unitPrice: number;
+  includedKm?: number | null;
+  allowanceScope?: "PerBooking" | "PerDay" | null;
+  lateGraceHours?: number | null;
+  lateDayThresholdHours?: number | null;
+  /** @deprecated Chỉ giữ để đọc dữ liệu cũ (phút). Luôn dùng giờ khi ghi mới. */
+  lateGraceMinutes?: number | null;
+  /** @deprecated Chỉ giữ để đọc dữ liệu cũ (phút). Luôn dùng giờ khi ghi mới. */
+  lateDayThresholdMinutes?: number | null;
+  lateDailyRate?: number | null;
+  maxAmount?: number | null;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type VehicleDocumentResponse = {
@@ -52,6 +140,18 @@ export type VehicleDocumentResponse = {
   createdAt: string | null;
 };
 
+export type PricingQuoteResponse = {
+  quoteId: string;
+  vehicleId: number;
+  startDateTime: string;
+  endDateTime: string;
+  dailyPrices: { rentalDate: string; finalDailyPrice: number }[];
+  totalDynamicPrice: number;
+  rentalDays: number;
+  averageDailyPrice: number;
+  expiresAt: string;
+};
+
 export type VehicleResponse = {
   id: number;
   ownerId: number;
@@ -71,11 +171,15 @@ export type VehicleResponse = {
   areaId: number | null;
   latitude: number | null;
   longitude: number | null;
+  deliveryFreeRadiusKm?: number | null;
+  deliveryFeePerKm?: number | null;
+  deliveryMaxRadiusKm?: number | null;
   areaName: string | null;
   pricingRegionId: number | null;
   pricingRegionCode: string | null;
   pricePerDay: number;
   depositPercent: number;
+
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   pricingMode: "Fixed" | "Auto" | null;
@@ -95,6 +199,7 @@ export type VehicleResponse = {
   featuredImage: string | null;
   images: VehicleImageResponse[];
   features: VehicleFeatureResponse[];
+  surchargePolicies: VehicleSurchargePolicy[];
   documents: VehicleDocumentResponse[];
   busyPeriods: BusyPeriod[];
   createdAt: string;
@@ -115,6 +220,10 @@ export type CreateVehicleRequest = {
   longitude?: number | null;
   pricePerDay: number;
   depositPercent: number;
+  deliveryFreeRadiusKm?: number | null;
+  deliveryFeePerKm?: number | null;
+  deliveryMaxRadiusKm?: number | null;
+
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   pricingMode?: "Fixed" | "Auto" | null;
@@ -125,6 +234,7 @@ export type CreateVehicleRequest = {
   imageUrls: string[];
   featuredImageIndex: number;
   documentFileUrl?: string | null;
+  surchargePolicies?: VehicleSurchargePolicy[];
 };
 
 export type UpdateVehicleRequest = {
@@ -138,9 +248,30 @@ export type UpdateVehicleRequest = {
   longitude?: number | null;
   pricePerDay: number;
   depositPercent: number;
+  deliveryFreeRadiusKm?: number | null;
+  deliveryFeePerKm?: number | null;
+  deliveryMaxRadiusKm?: number | null;
+
   securityRequiresDeposit: boolean;
   securityDepositAmount: number;
   featureIds: number[];
+  imageUrls?: string[] | null;
+  featuredImageIndex?: number | null;
+  surchargePolicies?: VehicleSurchargePolicy[];
+};
+
+export type VehicleDescriptionSuggestionRequest = {
+  brandId: number;
+  modelId: number;
+  variantId?: number | null;
+  vehicleType: string;
+  year: number;
+  featureIds: number[];
+  existingDescription?: string | null;
+};
+
+export type VehicleDescriptionSuggestionResponse = {
+  description: string;
 };
 
 export type CatalogBrand = {

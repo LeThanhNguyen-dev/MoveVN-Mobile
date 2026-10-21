@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "@/services/deviceStorage";
 import { create } from "zustand";
 import type { ThemeMode } from "./tokens";
 

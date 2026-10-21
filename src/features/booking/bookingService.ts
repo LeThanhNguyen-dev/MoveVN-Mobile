@@ -46,6 +46,7 @@ export async function ownerCompleteBooking(id: number): Promise<BookingResponse>
 export async function createCheckInReport(id: number, data: FormData): Promise<InspectionReportResponse> {
   const res = await apiClient.post<ApiResponse<InspectionReportResponse>>(endpoints.bookings.checkIn(id), data, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: 120000,
   });
   return res.data.data!;
 }
@@ -53,17 +54,28 @@ export async function createCheckInReport(id: number, data: FormData): Promise<I
 export async function createCheckOutReport(id: number, data: FormData): Promise<InspectionReportResponse> {
   const res = await apiClient.post<ApiResponse<InspectionReportResponse>>(endpoints.bookings.checkOut(id), data, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: 120000,
   });
   return res.data.data!;
 }
 
-export async function confirmCheckIn(id: number): Promise<BookingResponse> {
-  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.confirmCheckIn(id));
+export async function confirmCheckIn(id: number, expectedVersion = 1): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>("/api/bookings/" + id + "/check-in/confirm-version", { expectedVersion });
   return res.data.data!;
 }
 
-export async function confirmCheckOut(id: number): Promise<BookingResponse> {
-  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.confirmCheckOut(id));
+export async function confirmCheckOut(id: number, expectedVersion = 1, paymentMethod?: import("./types").CheckoutPaymentMethod): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.confirmCheckOut(id), { expectedVersion, ...(paymentMethod ? { paymentMethod } : {}) });
+  return res.data.data!;
+}
+
+export async function amendCheckout(id: number, request: {
+  additionalSurcharges?: import("./types").CheckoutSurchargeSelection[];
+  applyCurrentLateReturnPolicy?: boolean;
+  expectedVersion: number; reason: string; actualReturnAt: string;
+  odometerKm?: number; fuelLevel?: string; damageNoted: boolean; damageDescription?: string;
+}): Promise<InspectionReportResponse> {
+  const res = await apiClient.patch<ApiResponse<InspectionReportResponse>>(`/api/bookings/${id}/check-out`, request);
   return res.data.data!;
 }
 
@@ -79,5 +91,43 @@ export async function getBookingCancellationQuote(id: number): Promise<BookingCa
 
 export async function cancelBooking(id: number, reason?: string): Promise<BookingResponse> {
   const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.cancel(id), { reason });
+  return res.data.data!;
+}
+
+export async function cancelBookingByOwner(id: number, reason?: string): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.ownerCancel(id), { reason });
+  return res.data.data!;
+}
+
+export async function confirmReceipt(
+  id: number,
+  body?: { hasDamages?: boolean; damageNote?: string },
+): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.confirmReceipt(id), body ?? {});
+  return res.data.data!;
+}
+
+export async function requestSettlement(id: number): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.settlement(id));
+  return res.data.data!;
+}
+
+export async function reportReturn(id: number): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.reportReturn(id));
+  return res.data.data!;
+}
+
+export async function reportNoShow(id: number): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.reportNoShow(id));
+  return res.data.data!;
+}
+
+export async function settleCheckoutSurcharges(id: number, request: { action: "Wallet" | "External" | "ConfirmExternal"; expectedVersion: number; note?: string }): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(`/api/bookings/${id}/surcharges/payment`, request);
+  return res.data.data!;
+}
+
+export async function requestCheckInRevision(id: number, expectedVersion: number, reason: string): Promise<InspectionReportResponse> {
+  const res = await apiClient.post<ApiResponse<InspectionReportResponse>>("/api/bookings/" + id + "/check-in/revision-request", { expectedVersion, reason });
   return res.data.data!;
 }

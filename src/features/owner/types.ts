@@ -1,6 +1,6 @@
-import type { UploadFileInput } from "@/types/upload";
-
 export type OwnerApplicationStatus =
+  | "Draft"
+  | "WaitingEmailVerification"
   | "WaitingCccdVerification"
   | "WaitingBankInfo"
   | "ReadyToSubmit"
@@ -56,16 +56,12 @@ export interface OwnerApplicationDto {
   createdAt: string;
 }
 
-export interface NationalIdUploadRequest {
-  frontImage: UploadFileInput;
-  backImage: UploadFileInput;
-}
-
 export interface NationalIdOcrResult {
-  fullName: string;
-  nationalIdNumber: string;
-  frontImageUrl: string;
-  backImageUrl: string;
+  status: string;
+  nationalIdVerified: boolean;
+  ownerApplicationStatus: string;
+  nextStep: string;
+  message?: string | null;
 }
 
 export interface BankInfoRequest {

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LockKeyhole, Mail, Phone, ShieldCheck, UserRound } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native"
+import AppText from "@/components/AppText";
 import { AuthButton, AuthField, AuthNotice } from "../components/AuthControls";
 import { AuthScreenHeader } from "../components/AuthScreenHeader";
 import { AuthScreenLayout } from "../components/AuthScreenLayout";
@@ -42,10 +43,11 @@ export default function RegistrationScreen({ navigation, route }: Props) {
     <AuthField editable={!busy} icon={<Phone color={theme.muted} size={19} />} keyboardType="phone-pad" label="Số điện thoại" maxLength={10} onChangeText={(value) => update("phone", value)} placeholder="0912345678" value={fields.phone} />
     <AuthField editable={!busy} icon={<LockKeyhole color={theme.muted} size={19} />} label="Mật khẩu" onChangeText={(value) => update("password", value)} password value={fields.password} />
     <AuthField editable={!busy} icon={<ShieldCheck color={theme.muted} size={19} />} label="Xác nhận mật khẩu" onChangeText={(value) => update("confirmPassword", value)} password value={fields.confirmPassword} />
-    {!isOwner ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} onPress={() => setAccepted((value) => !value)} style={styles.terms}><View style={[styles.box, accepted && styles.boxSelected]}><Text style={styles.check}>{accepted ? "✓" : ""}</Text></View><Text style={styles.termsText}>Tôi đồng ý với chính sách bảo mật và điều khoản sử dụng.</Text></Pressable> : null}
+    {!isOwner ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} onPress={() => setAccepted((value) => !value)} style={styles.terms}><View style={[styles.box, accepted && styles.boxSelected]}><AppText style={styles.check}>{accepted ? "✓" : ""}</AppText></View><AppText style={styles.termsText}>Tôi đồng ý với chính sách bảo mật và điều khoản sử dụng.</AppText></Pressable> : null}
+    {!isOwner ? <View style={styles.policyLinks}><Pressable onPress={() => navigation.navigate("Policies", { slug: "privacy-policy" })}><AppText style={styles.link}>Chính sách bảo mật</AppText></Pressable><AppText style={styles.policyDot}>•</AppText><Pressable onPress={() => navigation.navigate("Policies", { slug: "terms-of-service" })}><AppText style={styles.link}>Điều khoản sử dụng</AppText></Pressable></View> : null}
     <AuthButton busy={busy} onPress={() => { void submit(); }} title={isOwner ? "Đăng ký chủ xe" : "Tạo tài khoản"} />
-    <Pressable onPress={() => navigation.navigate("Login")}><Text style={styles.login}>Đã có tài khoản? <Text style={styles.link}>Đăng nhập</Text></Text></Pressable>
+    <Pressable onPress={() => navigation.navigate("Login")}><AppText style={styles.login}>Đã có tài khoản? <AppText style={styles.link}>Đăng nhập</AppText></AppText></Pressable>
   </View></AuthScreenLayout>;
 }
 
-const createStyles = (theme: Theme) => StyleSheet.create({ stack: { gap: 16 }, terms: { flexDirection: "row", alignItems: "flex-start", gap: 9 }, box: { width: 19, height: 19, borderRadius: 5, borderWidth: 1, borderColor: theme.border, alignItems: "center", justifyContent: "center" }, boxSelected: { borderColor: theme.brand, backgroundColor: theme.brand }, check: { color: theme.surface, fontSize: 13, fontWeight: "800" }, termsText: { flex: 1, color: theme.muted, fontSize: 13, lineHeight: 20 }, login: { color: theme.muted, textAlign: "center", fontSize: 14 }, link: { color: theme.brand, fontWeight: "700" } });
+const createStyles = (theme: Theme) => StyleSheet.create({ stack: { gap: 16 }, terms: { flexDirection: "row", alignItems: "flex-start", gap: 9 }, box: { width: 19, height: 19, borderRadius: 5, borderWidth: 1, borderColor: theme.border, alignItems: "center", justifyContent: "center" }, boxSelected: { borderColor: theme.brand, backgroundColor: theme.brand }, check: { color: theme.surface, fontSize: 13, fontWeight: "800" }, termsText: { flex: 1, color: theme.muted, fontSize: 13, lineHeight: 20 }, policyLinks: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }, policyDot: { color: theme.faint, fontSize: 12 }, login: { color: theme.muted, textAlign: "center", fontSize: 14 }, link: { color: theme.brand, fontWeight: "700" } });
