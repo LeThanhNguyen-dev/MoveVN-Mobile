@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
-import { ArrowLeft, MessageSquare } from "lucide-react-native";
+import { ArrowLeft, ChevronRight, MessageSquare } from "lucide-react-native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TripsStackParamList } from "@/navigation/types";
@@ -55,9 +55,11 @@ const POLL_MS = 3000;
 export default function TripDetailScreen({
   route,
   navigation,
+  onOpenUserProfile,
 }: {
   route: DetailRoute;
   navigation: DetailNav;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -314,9 +316,34 @@ export default function TripDetailScreen({
         )}
 
         <View style={styles.card}>
+          <AppText display style={styles.cardTitle}>Chủ xe</AppText>
+          {onOpenUserProfile && booking.ownerId ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Xem hồ sơ chủ xe ${booking.ownerName || ""}`}
+              onPress={() => onOpenUserProfile(booking.ownerId)}
+              style={styles.personRow}
+            >
+              <View style={styles.personAvatar}>
+                <AppText style={styles.personAvatarText}>
+                  {(booking.ownerName || "C").charAt(0).toUpperCase()}
+                </AppText>
+              </View>
+              <AppText style={styles.personName} numberOfLines={1}>
+                {booking.ownerName?.trim() || `Chủ xe #${booking.ownerId}`}
+              </AppText>
+              <ChevronRight color={theme.muted} size={16} />
+            </Pressable>
+          ) : (
+            <AppText style={styles.muted}>
+              {booking.ownerName?.trim() || `Chủ xe #${booking.ownerId}`}
+            </AppText>
+          )}
+        </View>
+
+        <View style={styles.card}>
           <AppText display style={styles.cardTitle}>Lịch trình & địa điểm</AppText>
-          <Row label="Nhận xe" value={formatDateTime(booking.startDate)} />
-          <AppText style={styles.address}>{booking.pickupAddress}</AppText>
+          <Row label="Nhận xe" value={formatDateTime(booking.startDate)} />          <AppText style={styles.address}>{booking.pickupAddress}</AppText>
           {booking.deliveryDistanceKm != null ? (
             <AppText style={styles.muted}>
               Cách vị trí xe {booking.deliveryDistanceKm} km
@@ -650,6 +677,22 @@ const createStyles = (theme: Theme) =>
     },
     cardTitle: { color: theme.text, fontSize: 15, fontWeight: "800", marginBottom: 4 },
     muted: { color: theme.muted, fontSize: 13 },
+    personRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingVertical: 4,
+    },
+    personAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.brandSoft,
+    },
+    personAvatarText: { color: theme.brand, fontSize: 13, fontWeight: "900" },
+    personName: { flex: 1, color: theme.brand, fontSize: 13, fontWeight: "700" },
     address: { color: theme.text, fontSize: 13, marginBottom: 4 },
     note: { color: theme.muted, fontSize: 13, fontStyle: "italic" },
     contractRow: {

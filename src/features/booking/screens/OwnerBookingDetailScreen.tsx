@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
-import { ArrowLeft, MessageSquare } from "lucide-react-native";
+import { ArrowLeft, ChevronRight, MessageSquare } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -50,9 +50,11 @@ const MAX_PHOTOS = 12;
 export default function OwnerBookingDetailScreen({
   route,
   navigation,
+  onOpenUserProfile,
 }: {
   route: DetailRoute;
   navigation: DetailNav;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -274,7 +276,29 @@ export default function OwnerBookingDetailScreen({
           <AppText style={styles.address}>{booking.pickupAddress}</AppText>
           <Row label="Trả xe" value={formatDateTime(booking.endDate)} />
           <AppText style={styles.address}>{booking.returnAddress || booking.pickupAddress}</AppText>
-          <Row label="Khách thuê" value={`#${booking.customerId}`} />
+          {onOpenUserProfile && booking.customerId ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Xem hồ sơ khách thuê ${booking.customerName || ""}`}
+              onPress={() => onOpenUserProfile(booking.customerId)}
+              style={styles.personRow}
+            >
+              <View style={styles.personAvatar}>
+                <AppText style={styles.personAvatarText}>
+                  {(booking.customerName || "K").charAt(0).toUpperCase()}
+                </AppText>
+              </View>
+              <View style={styles.personText}>
+                <AppText style={styles.personLabel}>Khách thuê</AppText>
+                <AppText style={styles.personName} numberOfLines={1}>
+                  {booking.customerName?.trim() || `Khách hàng #${booking.customerId}`}
+                </AppText>
+              </View>
+              <ChevronRight color={theme.muted} size={16} />
+            </Pressable>
+          ) : (
+            <Row label="Khách thuê" value={booking.customerName?.trim() || `#${booking.customerId}`} />
+          )}
           {booking.customerNote ? <AppText style={styles.note}>Ghi chú khách: {booking.customerNote}</AppText> : null}
         </View>
 
@@ -669,6 +693,25 @@ const createStyles = (theme: Theme) =>
     },
     cardTitle: { color: theme.text, fontSize: 15, fontWeight: "800", marginBottom: 4 },
     muted: { color: theme.muted, fontSize: 13 },
+    personRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingVertical: 6,
+      marginTop: 4,
+    },
+    personAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.brandSoft,
+    },
+    personAvatarText: { color: theme.brand, fontSize: 13, fontWeight: "900" },
+    personText: { flex: 1, minWidth: 0, gap: 1 },
+    personLabel: { color: theme.muted, fontSize: 11 },
+    personName: { color: theme.brand, fontSize: 13, fontWeight: "700" },
     address: { color: theme.text, fontSize: 13, marginBottom: 4 },
     note: { color: theme.muted, fontSize: 13, fontStyle: "italic" },
     actionRow: { flexDirection: "row", gap: 10 },

@@ -17,12 +17,14 @@ export default function ExploreNavigator({
   onRouteChange,
   onBookingCreated,
   onGoDeals,
+  onOpenUserProfile,
 }: {
   user: AuthUser;
   onAvatarPress: () => void;
   onRouteChange?: (routeName: string) => void;
   onBookingCreated?: (bookingId: number) => void;
   onGoDeals?: () => void;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   useEffect(() => {
@@ -54,7 +56,13 @@ export default function ExploreNavigator({
       </Stack.Screen>
       <Stack.Screen name="VehicleList" component={VehicleListScreen} />
       <Stack.Screen name="VehicleDetail">
-        {(props) => <VehicleDetailScreen {...props} onBookPress={(p) => props.navigation.navigate("CreateBooking", p)} />}
+        {(props) => (
+          <VehicleDetailScreen
+            {...props}
+            onBookPress={(p) => props.navigation.navigate("CreateBooking", p)}
+            onOpenUserProfile={onOpenUserProfile}
+          />
+        )}
       </Stack.Screen>
       <Stack.Screen name="CreateBooking">
         {(props) => <CreateBookingScreen {...props} onCreated={(bookingId) => onBookingCreated?.(bookingId)} />}

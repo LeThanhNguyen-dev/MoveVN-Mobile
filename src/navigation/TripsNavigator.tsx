@@ -12,10 +12,12 @@ export default function TripsNavigator({
   pendingBookingId,
   onConsumedPending,
   onRouteChange,
+  onOpenUserProfile,
 }: {
   pendingBookingId: number | null;
   onConsumedPending: () => void;
   onRouteChange?: (route: string) => void;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   const consumedRef = useRef(false);
@@ -39,10 +41,11 @@ export default function TripsNavigator({
       <Stack.Screen name="TripList" component={TripListScreen} />
       <Stack.Screen
         name="TripDetail"
-        component={TripDetailScreen}
         initialParams={hasPending ? { bookingId: pendingBookingId! } : undefined}
-      />
-      <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} />}</Stack.Screen>
+      >
+        {(props) => <TripDetailScreen {...props} onOpenUserProfile={onOpenUserProfile} />}
+      </Stack.Screen>
+      <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} onOpenUserProfile={onOpenUserProfile} />}</Stack.Screen>
     </Stack.Navigator>
   );
 }

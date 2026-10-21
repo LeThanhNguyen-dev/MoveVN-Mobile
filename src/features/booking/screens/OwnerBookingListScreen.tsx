@@ -24,7 +24,7 @@ import { getApiErrorMessage } from "@/services/apiClient";
 
 type ListNav = NativeStackNavigationProp<OwnerBookingsStackParamList, "OwnerBookingList">;
 
-export default function OwnerBookingListScreen({ navigation }: { navigation: ListNav }) {
+export default function OwnerBookingListScreen({ navigation, onOpenUserProfile }: { navigation: ListNav; onOpenUserProfile?: (userId: number) => void }) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -88,9 +88,10 @@ export default function OwnerBookingListScreen({ navigation }: { navigation: Lis
         booking={item}
         variant="owner"
         onPress={() => navigation.navigate("OwnerBookingDetail", { bookingId: item.id })}
+        onOpenUserProfile={onOpenUserProfile}
       />
     ),
-    [navigation],
+    [navigation, onOpenUserProfile],
   );
 
   return (

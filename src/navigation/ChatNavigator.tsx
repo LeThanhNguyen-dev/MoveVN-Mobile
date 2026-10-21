@@ -15,9 +15,11 @@ const Stack = createNativeStackNavigator<ChatStack>();
 export default function ChatNavigator({
   owner = false,
   onRouteChange,
+  onOpenUserProfile,
 }: {
   owner?: boolean;
   onRouteChange: (route: string) => void;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   return (
@@ -45,17 +47,19 @@ export default function ChatNavigator({
             onBookingPress={(bookingId) =>
               navigation.navigate("ChatBooking", { bookingId })
             }
+            onOpenUserProfile={onOpenUserProfile}
           />
         )}
       </Stack.Screen>
       <Stack.Screen name="ChatBooking">
         {({ route }) =>
           owner ? (
-            <OwnerBookingsNavigator pendingBookingId={route.params.bookingId} />
+            <OwnerBookingsNavigator pendingBookingId={route.params.bookingId} onOpenUserProfile={onOpenUserProfile} />
           ) : (
             <TripsNavigator
               pendingBookingId={route.params.bookingId}
               onConsumedPending={() => undefined}
+              onOpenUserProfile={onOpenUserProfile}
             />
           )
         }

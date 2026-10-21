@@ -13,6 +13,8 @@ type BookingCardProps = {
   booking: BookingResponse;
   variant: "customer" | "owner";
   onPress: () => void;
+  /** Mở hồ sơ công khai của khách (danh sách đơn của chủ xe). */
+  onOpenUserProfile?: (userId: number) => void;
 };
 
 function actionHint(booking: BookingResponse, variant: "customer" | "owner"): string | null {
@@ -32,7 +34,7 @@ function actionHint(booking: BookingResponse, variant: "customer" | "owner"): st
   }
 }
 
-function BookingCard({ booking, variant, onPress }: BookingCardProps) {
+function BookingCard({ booking, variant, onPress, onOpenUserProfile }: BookingCardProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [imageFailed, setImageFailed] = useState(false);
@@ -81,9 +83,23 @@ function BookingCard({ booking, variant, onPress }: BookingCardProps) {
             {booking.vehicleName ?? `Xe #${booking.vehicleId}`}
           </AppText>
           {variant === "owner" ? (
-            <AppText numberOfLines={1} style={styles.sub}>
-              {booking.customerName ? `Khách: ${booking.customerName}` : `Khách #${booking.customerId}`}
-            </AppText>
+            onOpenUserProfile && booking.customerId ? (
+              <Pressable
+                onPress={() => onOpenUserProfile(booking.customerId)}
+                accessibilityRole="link"
+                accessibilityLabel={`Xem hồ sơ ${booking.customerName || `khách #${booking.customerId}`}`}
+                style={styles.customerRow}
+              >
+                <AppText numberOfLines={1} style={[styles.sub, styles.customerName]}>
+                  {booking.customerName ? `Khách: ${booking.customerName}` : `Khách #${booking.customerId}`}
+                </AppText>
+                <ChevronRight color={theme.brand} size={14} />
+              </Pressable>
+            ) : (
+              <AppText numberOfLines={1} style={styles.sub}>
+                {booking.customerName ? `Khách: ${booking.customerName}` : `Khách #${booking.customerId}`}
+              </AppText>
+            )
           ) : null}
 
           <View style={styles.metaRow}>
@@ -177,6 +193,8 @@ const createStyles = (theme: Theme) =>
     },
     vehicle: { color: theme.text, fontSize: 16, fontWeight: "800" },
     sub: { color: theme.muted, fontSize: 12, fontWeight: "600" },
+    customerRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+    customerName: { color: theme.brand, flexShrink: 1 },
     metaRow: { flexDirection: "row", alignItems: "center", gap: 6 },
     meta: { color: theme.muted, fontSize: 13, fontWeight: "500", flex: 1 },
     metaLabel: { color: theme.text, fontSize: 13, fontWeight: "700" },

@@ -14,7 +14,7 @@ const Stack = createNativeStackNavigator<DealsStackParamList>();
  * Tab Bottom Bar giữ active vì CustomerNavigator không đổi activeTab khi
  * đi sâu trong stack này (mirror web active cả 3 route promotions/hunt/wallet).
  */
-export default function DealsNavigator() {
+export default function DealsNavigator({ onGoExplore }: { onGoExplore?: () => void }) {
   const { theme } = useTheme();
 
   return (
@@ -24,7 +24,9 @@ export default function DealsNavigator() {
       >
         <Stack.Screen name="Promotions" component={CustomerPromotionsScreen} />
         <Stack.Screen name="VoucherHunt" component={VoucherHuntScreen} />
-        <Stack.Screen name="VoucherWallet" component={VoucherWalletScreen} />
+        <Stack.Screen name="VoucherWallet">
+          {() => <VoucherWalletScreen onUseNow={onGoExplore} />}
+        </Stack.Screen>
       </Stack.Navigator>
       <ToastHost />
     </View>

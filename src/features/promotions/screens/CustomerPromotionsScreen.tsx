@@ -2,14 +2,13 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { CalendarDays, Car, Search, TicketPercent } from "lucide-react-native";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowRight, Sparkles } from "lucide-react-native";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
   useWindowDimensions,
 } from "react-native"
@@ -21,15 +20,19 @@ import type { HomepageBanner } from "@/features/banners/types";
 import { getHomepageBanners } from "@/features/banners/services/bannerService";
 import type { Promotion } from "@/features/promotions/types";
 import { getActivePromotions } from "@/features/promotions/services/promotionService";
+import DealsFilterBar from "@/features/vouchers/components/DealsFilterBar";
 import DealsSegmentedNav from "@/features/vouchers/components/DealsSegmentedNav";
 import PromotionDetailSheet, {
   type PromotionDetailSlide,
 } from "@/features/vouchers/components/PromotionDetailSheet";
-import VoucherTicketStub from "@/features/vouchers/components/VoucherTicketStub";
-import { formatEndDate, formatVehicleLabel, isExpiringSoon } from "@/features/vouchers/voucherFormat";
+import VoucherTicketCard, {
+  type VoucherCardData,
+} from "@/features/vouchers/components/VoucherTicketCard";
+import { isExpiringSoon } from "@/features/vouchers/voucherFormat";
 
 type DealsNav = NativeStackNavigationProp<DealsStackParamList>;
 type VehicleFilter = "All" | "Car" | "Motorbike";
+type SortOrder = "latest" | "ending";
 
 const VEHICLE_FILTERS: { value: VehicleFilter; label: string }[] = [
   { value: "All", label: "Tất cả" },
@@ -37,11 +40,17 @@ const VEHICLE_FILTERS: { value: VehicleFilter; label: string }[] = [
   { value: "Motorbike", label: "Xe máy" },
 ];
 
+const SORT_OPTIONS = [
+  { value: "latest", label: "Mới nhất" },
+  { value: "ending", label: "Hạn gần nhất" },
+];
+
 function toDetailSlide(p: Promotion): PromotionDetailSlide {
   return {
     id: p.id,
     promotionId: p.id,
     title: p.name,
+    caption: p.description,
     code: p.code,
     popupTitle: p.name,
     popupDescription: p.description ?? null,
@@ -50,67 +59,34 @@ function toDetailSlide(p: Promotion): PromotionDetailSlide {
     discountType: p.discountType,
     discountValue: p.discountValue,
     vehicleType: p.vehicleType,
+    startAt: p.startAt,
     endAt: p.endAt,
+    minOrderAmount: p.minOrderAmount,
+    maxDiscountAmount: p.maxDiscountAmount,
+    usageCount: p.usageCount,
+    maxUsageCount: p.maxUsageCount,
   };
 }
 
-function PromotionTicketCard({ item, onOpen }: { item: Promotion; onOpen: (p: Promotion) => void }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  const endLabel = formatEndDate(item.endAt);
-  const expiringSoon = isExpiringSoon(item.endAt);
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={item.name}
-      onPress={() => onOpen(item)}
-      style={styles.ticket}
-    >
-      <VoucherTicketStub discountType={item.discountType} discountValue={item.discountValue} />
-      <View style={styles.ticketDivider} />
-
-      <View style={styles.ticketBody}>
-        <View style={styles.badgeRow}>
-          <View style={styles.liveBadge}>
-            <AppText style={styles.liveBadgeText}>🔴 Đang diễn ra</AppText>
-          </View>
-          {expiringSoon ? (
-            <View style={styles.soonBadge}>
-              <AppText style={styles.soonBadgeText}>⏰ Sắp hết hạn</AppText>
-            </View>
-          ) : null}
-        </View>
-
-        <AppText style={styles.ticketName} numberOfLines={1}>
-          {item.name}
-        </AppText>
-        {!!item.description && (
-          <AppText style={styles.ticketDesc} numberOfLines={2}>
-            {item.description}
-          </AppText>
-        )}
-
-        <View style={styles.ticketMetaRow}>
-          <View style={styles.metaItem}>
-            <Car color={theme.mode === "dark" ? "#A1A1AA" : "#94A3B8"} size={13} />
-            <AppText style={styles.metaText}>{formatVehicleLabel(item.vehicleType)}</AppText>
-          </View>
-          {!!endLabel && (
-            <View style={styles.metaItem}>
-              <CalendarDays color={theme.mode === "dark" ? "#A1A1AA" : "#94A3B8"} size={13} />
-              <AppText style={styles.metaText}>📅 HSD: {endLabel}</AppText>
-            </View>
-          )}
-        </View>
-
-        <AppText style={styles.ticketLink}>Xem ưu đãi →</AppText>
-      </View>
-    </Pressable>
-  );
+function toCardData(p: Promotion): VoucherCardData {
+  const startsLater = new Date(p.startAt).getTime() > Date.now();
+  const ended = Boolean(p.endAt && new Date(p.endAt).getTime() < Date.now());
+  return {
+    key: String(p.id),
+    code: p.code,
+    name: p.name,
+    description: p.description,
+    discountType: p.discountType,
+    discountValue: p.discountValue,
+    maxDiscountAmount: p.maxDiscountAmount,
+    minOrderAmount: p.minOrderAmount,
+    vehicleType: p.vehicleType,
+    endAt: p.endAt,
+    usageCount: p.usageCount,
+    maxUsageCount: p.maxUsageCount,
+    status: ended ? "ended" : startsLater ? "upcoming" : "active",
+  };
 }
-
-const MemoTicketCard = memo(PromotionTicketCard);
 
 function HeroCarousel({
   slides,
@@ -151,21 +127,29 @@ function HeroCarousel({
             accessibilityRole="button"
             accessibilityLabel={s.title}
           >
-            {!!s.image && (
+            {!!s.image ? (
               <Image
                 source={{ uri: s.image }}
                 style={StyleSheet.absoluteFill}
                 contentFit="cover"
                 transition={250}
               />
-            )}
+            ) : null}
             <LinearGradient
-              colors={["transparent", "rgba(0,0,0,0.6)"]}
+              colors={["transparent", "rgba(0,0,0,0.65)"]}
               style={styles.heroShade}
             />
+            <View style={styles.heroBadge}>
+              <Sparkles color="#FCD34D" size={11} />
+              <AppText style={styles.heroBadgeText}>ƯU ĐÃI NỔI BẬT</AppText>
+            </View>
             <AppText display style={styles.heroTitle} numberOfLines={1}>
               {s.title}
             </AppText>
+            <View style={styles.heroCta}>
+              <AppText style={styles.heroCtaText}>Xem ưu đãi</AppText>
+              <ArrowRight color="#6B21A8" size={14} />
+            </View>
           </Pressable>
         ))}
       </ScrollView>
@@ -191,6 +175,8 @@ export default function CustomerPromotionsScreen() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [vehicleFilter, setVehicleFilter] = useState<VehicleFilter>("All");
+  const [expiringOnly, setExpiringOnly] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("latest");
   const [selected, setSelected] = useState<PromotionDetailSlide | null>(null);
 
   useEffect(() => {
@@ -198,7 +184,7 @@ export default function CustomerPromotionsScreen() {
     setLoading(true);
     setError("");
     Promise.all([
-      getActivePromotions().catch(() => [] as Promotion[]),
+      getActivePromotions(),
       getHomepageBanners().catch(() => [] as HomepageBanner[]),
     ])
       .then(([promos, bannerList]) => {
@@ -217,11 +203,25 @@ export default function CustomerPromotionsScreen() {
     };
   }, []);
 
+  const carCount = useMemo(
+    () => items.filter((p) => p.vehicleType === "Car" || p.vehicleType === "All").length,
+    [items],
+  );
+  const motorbikeCount = useMemo(
+    () => items.filter((p) => p.vehicleType === "Motorbike" || p.vehicleType === "All").length,
+    [items],
+  );
+  const expiringCount = useMemo(
+    () => items.filter((p) => isExpiringSoon(p.endAt)).length,
+    [items],
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return items.filter((p) => {
+    const result = items.filter((p) => {
       if (vehicleFilter !== "All" && p.vehicleType !== "All" && p.vehicleType !== vehicleFilter)
         return false;
+      if (expiringOnly && !isExpiringSoon(p.endAt)) return false;
       if (!q) return true;
       return (
         p.name.toLowerCase().includes(q) ||
@@ -229,7 +229,16 @@ export default function CustomerPromotionsScreen() {
         (p.description ?? "").toLowerCase().includes(q)
       );
     });
-  }, [items, search, vehicleFilter]);
+
+    return result.sort((first, second) => {
+      if (sortOrder === "ending") {
+        const firstEnd = first.endAt ? new Date(first.endAt).getTime() : Number.MAX_SAFE_INTEGER;
+        const secondEnd = second.endAt ? new Date(second.endAt).getTime() : Number.MAX_SAFE_INTEGER;
+        return firstEnd - secondEnd;
+      }
+      return new Date(second.startAt).getTime() - new Date(first.startAt).getTime();
+    });
+  }, [items, search, vehicleFilter, expiringOnly, sortOrder]);
 
   // Hero từ Banner API (ảnh campaign thật), join promotion để mở sheet (mirror web).
   const heroSlides = useMemo<PromotionDetailSlide[]>(() => {
@@ -240,7 +249,7 @@ export default function CustomerPromotionsScreen() {
         id: `banner-${b.id}`,
         image: b.imageUrl,
         title: b.title,
-        promotionId: b.promotionId ?? promo?.id ?? null,
+        promotionId: promo?.id ?? null,
         code: b.promotionCode ?? promo?.code ?? undefined,
         popupTitle: b.popupTitle,
         popupDescription: b.popupDescription,
@@ -250,6 +259,10 @@ export default function CustomerPromotionsScreen() {
         discountValue: b.discountValue ?? promo?.discountValue ?? null,
         vehicleType: b.vehicleType ?? promo?.vehicleType ?? null,
         endAt: b.endAt ?? promo?.endAt ?? null,
+        minOrderAmount: promo?.minOrderAmount,
+        maxDiscountAmount: promo?.maxDiscountAmount,
+        usageCount: promo?.usageCount,
+        maxUsageCount: promo?.maxUsageCount,
       } as PromotionDetailSlide;
     });
   }, [banners, items]);
@@ -262,6 +275,33 @@ export default function CustomerPromotionsScreen() {
     [navigation],
   );
 
+  const filters = useMemo(
+    () => [
+      { value: "All", label: "Tất cả", count: items.length },
+      { value: "Car", label: "Ô tô", count: carCount },
+      { value: "Motorbike", label: "Xe máy", count: motorbikeCount },
+      { value: "expiring", label: "Sắp hết hạn", count: expiringCount, tone: "amber" as const },
+    ],
+    [items.length, carCount, motorbikeCount, expiringCount],
+  );
+
+  const activeFilter = expiringOnly ? "expiring" : vehicleFilter;
+
+  const handleFilterChange = useCallback((value: string) => {
+    if (value === "expiring") {
+      setExpiringOnly(true);
+      setVehicleFilter("All");
+      return;
+    }
+    setVehicleFilter(value as VehicleFilter);
+    setExpiringOnly(false);
+  }, []);
+
+  const sectionTitle = useMemo(() => {
+    if (expiringOnly) return "Đang lọc ưu đãi sắp hết hạn";
+    return "Các ưu đãi đang diễn ra";
+  }, [expiringOnly]);
+
   return (
     <View style={styles.root}>
       <ScrollView
@@ -269,41 +309,27 @@ export default function CustomerPromotionsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <AppText display style={styles.pageTitle}>Khuyến mãi</AppText>
-        <AppText style={styles.pageDesc}>
-          Khám phá các ưu đãi mới nhất từ MoveVN.
-          {!loading && !error && items.length > 0 ? ` Hiện có ${items.length} chương trình đang diễn ra.` : ""}
+        <AppText display style={styles.pageTitle}>
+          Khuyến mãi
         </AppText>
 
         <DealsSegmentedNav />
 
-        <View style={styles.searchRow}>
-          <Search color={theme.mode === "dark" ? "#71717A" : "#94A3B8"} size={16} />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Tìm tên, mã hoặc mô tả khuyến mãi..."
-            placeholderTextColor={theme.placeholder}
-            style={styles.searchInput}
-          />
-        </View>
+        {!loading && !error && heroSlides.length > 0 ? (
+          <HeroCarousel slides={heroSlides} onOpen={setSelected} />
+        ) : null}
 
-        <View style={styles.filterRow}>
-          {VEHICLE_FILTERS.map((f) => {
-            const active = vehicleFilter === f.value;
-            return (
-              <Pressable
-                key={f.value}
-                onPress={() => setVehicleFilter(f.value)}
-                style={[styles.filterPill, active && styles.filterPillActive]}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-              >
-                <AppText style={[styles.filterText, active && styles.filterTextActive]}>{f.label}</AppText>
-              </Pressable>
-            );
-          })}
-        </View>
+        <DealsFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Tìm ưu đãi, mã voucher..."
+          filters={filters}
+          activeFilter={activeFilter}
+          onFilterChange={handleFilterChange}
+          sortValue={sortOrder}
+          sortOptions={SORT_OPTIONS}
+          onSortChange={(value) => setSortOrder(value as SortOrder)}
+        />
 
         {loading ? (
           <View style={styles.centerBox}>
@@ -315,98 +341,142 @@ export default function CustomerPromotionsScreen() {
           </View>
         ) : items.length === 0 ? (
           <View style={styles.emptyBox}>
-            <TicketPercent color={theme.faint} size={44} />
-            <AppText display style={styles.emptyTitle}>Chưa có ưu đãi</AppText>
-            <AppText style={styles.emptyDesc}>Hiện tại chưa có chương trình nào đang diễn ra.</AppText>
+            <View style={styles.emptyIcon}>
+              <Sparkles color={theme.brand} size={26} />
+            </View>
+            <AppText display style={styles.emptyTitle}>
+              Chưa có ưu đãi đang diễn ra
+            </AppText>
+            <AppText style={styles.emptyDesc}>
+              Các chương trình mới sẽ xuất hiện tại đây. Bạn có thể xem những voucher hiện đang chờ nhận.
+            </AppText>
             <Pressable
               onPress={() => navigation.navigate("VoucherHunt")}
               style={styles.emptyLinkTouch}
             >
-              <AppText style={styles.emptyLink}>Săn voucher ngay →</AppText>
+              <AppText style={styles.emptyLink}>Khám phá voucher →</AppText>
             </Pressable>
           </View>
         ) : (
           <>
-            {heroSlides.length > 0 ? (
-              <HeroCarousel slides={heroSlides} onOpen={setSelected} />
-            ) : null}
+            <View style={styles.sectionHead}>
+              <View style={styles.sectionTitleRow}>
+                <AppText display style={styles.sectionTitle}>
+                  {sectionTitle}
+                </AppText>
+                <View style={styles.countBadge}>
+                  <AppText style={styles.countBadgeText}>{filtered.length}</AppText>
+                </View>
+              </View>
+              <AppText style={styles.sectionDesc}>
+                Chọn một voucher để xem điều kiện và cách nhận.
+              </AppText>
+            </View>
 
             {filtered.length === 0 ? (
               <View style={styles.emptyBox}>
-                <AppText display style={styles.emptyTitle}>Không tìm thấy ưu đãi phù hợp</AppText>
-                <AppText style={styles.emptyDesc}>Thử thay đổi từ khóa hoặc bộ lọc.</AppText>
+                <AppText display style={styles.emptyTitle}>
+                  Không tìm thấy ưu đãi phù hợp
+                </AppText>
+                <AppText style={styles.emptyDesc}>
+                  Thử đổi từ khóa hoặc chọn bộ lọc khác.
+                </AppText>
               </View>
             ) : (
-              <>
-                <AppText display style={styles.listTitle}>Các ưu đãi đang diễn ra</AppText>
-                <View style={styles.ticketList}>
-                  {filtered.map((p) => (
-                    <MemoTicketCard key={p.id} item={p} onOpen={(item) => setSelected(toDetailSlide(item))} />
-                  ))}
-                </View>
-              </>
+              <View style={styles.ticketList}>
+                {filtered.map((p) => (
+                  <MemoTicketCard
+                    key={p.id}
+                    item={p}
+                    onOpen={() => setSelected(toDetailSlide(p))}
+                  />
+                ))}
+              </View>
             )}
           </>
         )}
       </ScrollView>
 
-      <PromotionDetailSheet slide={selected} onClose={() => setSelected(null)} onCta={handleSheetCta} />
+      <PromotionDetailSheet
+        slide={selected}
+        onClose={() => setSelected(null)}
+        onCta={handleSheetCta}
+      />
     </View>
   );
 }
+
+type TicketCardProps = {
+  item: Promotion;
+  onOpen: () => void;
+};
+
+function TicketCard({ item, onOpen }: TicketCardProps) {
+  return (
+    <VoucherTicketCard
+      data={toCardData(item)}
+      onOpenDetail={onOpen}
+    />
+  );
+}
+
+const MemoTicketCard = memo(TicketCard);
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: theme.background },
     scroll: { flex: 1 },
-    scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 96, gap: 12 },
-    pageTitle: { color: theme.text, fontSize: 22, fontWeight: "800" },
-    pageDesc: { color: theme.muted, fontSize: 13, lineHeight: 18, marginTop: -8 },
-
-    searchRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      height: 44,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: theme.border,
-      backgroundColor: theme.surface,
-      paddingHorizontal: 12,
+    scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 96, gap: 14 },
+    pageTitle: { color: theme.text, fontSize: 21, fontWeight: "900", letterSpacing: -0.4 },
+    sectionHead: { gap: 4 },
+    sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    sectionTitle: { color: theme.text, fontSize: 17, fontWeight: "900", flexShrink: 1 },
+    countBadge: {
+      borderRadius: 999,
+      backgroundColor: theme.brandSoft,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
     },
-    searchInput: { flex: 1, color: theme.text, fontSize: 14, height: "100%" },
-
-    filterRow: { flexDirection: "row", gap: 8 },
-    filterPill: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      height: 38,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: "#E2E8F0",
-      backgroundColor: theme.mode === "dark" ? theme.surface : "#FFFFFF",
-    },
-    filterPillActive: { backgroundColor: "#7C3AED", borderColor: "#7C3AED" },
-    filterText: { color: theme.muted, fontSize: 13, fontWeight: "700" },
-    filterTextActive: { color: "#FFFFFF" },
-
+    countBadgeText: { color: theme.brand, fontSize: 11, fontWeight: "900" },
+    sectionDesc: { color: theme.muted, fontSize: 12 },
     heroCard: {
-      aspectRatio: 16 / 9,
-      borderRadius: 16,
+      aspectRatio: 16 / 8,
+      borderRadius: 18,
       overflow: "hidden",
       backgroundColor: theme.surfaceAlt,
+      justifyContent: "flex-end",
+      padding: 12,
     },
-    heroShade: { position: "absolute", left: 0, right: 0, bottom: 0, height: "55%" },
-    heroTitle: {
+    heroShade: { position: "absolute", left: 0, right: 0, bottom: 0, height: "70%" },
+    heroBadge: {
       position: "absolute",
-      left: 14,
-      right: 14,
-      bottom: 12,
-      color: "#FFFFFF",
-      fontSize: 14,
-      fontWeight: "800",
+      left: 12,
+      top: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.25)",
+      backgroundColor: "rgba(255,255,255,0.18)",
+      paddingHorizontal: 8,
+      paddingVertical: 4,
     },
+    heroBadgeText: { color: "#FFFFFF", fontSize: 9, fontWeight: "900", letterSpacing: 1 },
+    heroTitle: { color: "#FFFFFF", fontSize: 15, fontWeight: "900", paddingRight: 90 },
+    heroCta: {
+      position: "absolute",
+      right: 12,
+      bottom: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      borderRadius: 10,
+      backgroundColor: "#FFFFFF",
+      paddingHorizontal: 10,
+      paddingVertical: 7,
+    },
+    heroCtaText: { color: "#6B21A8", fontSize: 11, fontWeight: "900" },
     dotsRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 10 },
     dot: {
       width: 6,
@@ -415,55 +485,7 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.mode === "dark" ? theme.border : "#DDD6FE",
     },
     dotActive: { width: 24, height: 6, borderRadius: 3, backgroundColor: "#7C3AED" },
-
-    listTitle: { color: theme.text, fontSize: 16, fontWeight: "800", marginTop: 4 },
     ticketList: { gap: 14 },
-    ticket: {
-      flexDirection: "row",
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.mode === "dark" ? theme.border : "#EDE9FE",
-      backgroundColor: theme.surface,
-      overflow: "hidden",
-    },
-    ticketDivider: {
-      width: 0,
-      borderLeftWidth: 2,
-      borderStyle: "dashed",
-      borderColor: theme.mode === "dark" ? "#3F3F46" : "#DDD6FE",
-      marginVertical: 10,
-    },
-    ticketBody: { flex: 1, minWidth: 0, padding: 14, gap: 6 },
-    badgeRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-    liveBadge: {
-      borderRadius: 999,
-      backgroundColor: theme.mode === "dark" ? "rgba(244,63,94,0.15)" : "#FFF1F2",
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-    },
-    liveBadgeText: {
-      color: theme.mode === "dark" ? "#FB7185" : "#E11D48",
-      fontSize: 11,
-      fontWeight: "700",
-    },
-    soonBadge: {
-      borderRadius: 999,
-      backgroundColor: theme.mode === "dark" ? "rgba(245,158,11,0.15)" : "#FFFBEB",
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-    },
-    soonBadgeText: {
-      color: theme.mode === "dark" ? "#FBBF24" : "#D97706",
-      fontSize: 11,
-      fontWeight: "700",
-    },
-    ticketName: { color: theme.text, fontSize: 14, fontWeight: "800", marginTop: 2 },
-    ticketDesc: { color: theme.muted, fontSize: 12, lineHeight: 17 },
-    ticketMetaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-    metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-    metaText: { color: theme.muted, fontSize: 12 },
-    ticketLink: { color: theme.brand, fontSize: 12, fontWeight: "700", marginTop: 2 },
-
     centerBox: { paddingVertical: 64, alignItems: "center" },
     errorBox: {
       borderRadius: 14,
@@ -473,9 +495,27 @@ const createStyles = (theme: Theme) =>
       padding: 14,
     },
     errorText: { color: theme.danger, fontSize: 13 },
-    emptyBox: { alignItems: "center", paddingVertical: 40, gap: 6 },
-    emptyTitle: { color: theme.text, fontSize: 15, fontWeight: "800", marginTop: 8 },
-    emptyDesc: { color: theme.muted, fontSize: 13, textAlign: "center" },
+    emptyBox: {
+      alignItems: "center",
+      paddingVertical: 40,
+      paddingHorizontal: 16,
+      gap: 6,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+    },
+    emptyIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.brandSoft,
+    },
+    emptyTitle: { color: theme.text, fontSize: 15, fontWeight: "900", marginTop: 8, textAlign: "center" },
+    emptyDesc: { color: theme.muted, fontSize: 13, textAlign: "center", lineHeight: 19 },
     emptyLinkTouch: { marginTop: 6, padding: 6 },
     emptyLink: { color: theme.brand, fontSize: 13, fontWeight: "800" },
   });

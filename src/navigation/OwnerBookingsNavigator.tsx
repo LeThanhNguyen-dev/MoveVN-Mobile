@@ -14,7 +14,15 @@ export type OwnerBookingsStackParamList = {
 
 const Stack = createNativeStackNavigator<OwnerBookingsStackParamList>();
 
-export default function OwnerBookingsNavigator({ pendingBookingId, onRouteChange }: { pendingBookingId?: number; onRouteChange?: (route: string) => void } = {}) {
+export default function OwnerBookingsNavigator({
+  pendingBookingId,
+  onRouteChange,
+  onOpenUserProfile,
+}: {
+  pendingBookingId?: number;
+  onRouteChange?: (route: string) => void;
+  onOpenUserProfile?: (userId: number) => void;
+} = {}) {
   const { theme } = useTheme();
   return (
     <Stack.Navigator
@@ -22,9 +30,16 @@ export default function OwnerBookingsNavigator({ pendingBookingId, onRouteChange
       screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}
       screenListeners={({ route }) => ({ focus: () => onRouteChange?.(route.name) })}
     >
-      <Stack.Screen name="OwnerBookingList" component={OwnerBookingListScreen} />
-      <Stack.Screen name="OwnerBookingDetail" component={OwnerBookingDetailScreen} initialParams={pendingBookingId != null ? { bookingId: pendingBookingId } : undefined} />
-      <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} />}</Stack.Screen>
+      <Stack.Screen name="OwnerBookingList">
+        {(props) => <OwnerBookingListScreen {...props} onOpenUserProfile={onOpenUserProfile} />}
+      </Stack.Screen>
+      <Stack.Screen
+        name="OwnerBookingDetail"
+        initialParams={pendingBookingId != null ? { bookingId: pendingBookingId } : undefined}
+      >
+        {(props) => <OwnerBookingDetailScreen {...props} onOpenUserProfile={onOpenUserProfile} />}
+      </Stack.Screen>
+      <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} onOpenUserProfile={onOpenUserProfile} />}</Stack.Screen>
     </Stack.Navigator>
   );
 }
