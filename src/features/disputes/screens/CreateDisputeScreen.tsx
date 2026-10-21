@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
@@ -56,6 +56,7 @@ export default function CreateDisputeScreen({
   const [evidence, setEvidence] = useState<EvidenceAsset[]>([]);
   const [bookings, setBookings] = useState<BookingResponse[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(true);
+  const submitLock = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   // Booking được ghim khi mở form từ chi tiết booking (deep-link).
@@ -93,10 +94,12 @@ export default function CreateDisputeScreen({
         const loaded: BookingResponse[] = [];
         for (const status of statuses) {
           let page = 1;
-          for (let guard = 0; guard < 3; guard += 1) {
+          let statusLoaded = 0;
+          while (true) {
             const result = await (role === "Owner" ? getOwnerBookings : getMyBookings)({ status: status as never, page, pageSize: 50 });
             loaded.push(...result.items);
-            if (result.items.length === 0 || loaded.length >= result.totalCount) break;
+            statusLoaded += result.items.length;
+            if (result.items.length === 0 || statusLoaded >= result.totalCount) break;
             page += 1;
           }
         }
@@ -186,6 +189,8 @@ export default function CreateDisputeScreen({
   }
 
   async function doCreate() {
+    if (submitLock.current) return;
+    submitLock.current = true;
     setSubmitting(true);
     setError("");
     try {
@@ -208,6 +213,7 @@ export default function CreateDisputeScreen({
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể tạo tranh chấp."));
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   }
@@ -236,7 +242,7 @@ export default function CreateDisputeScreen({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Quay lại danh sách"
-          onPress={onBack}
+          disabled={submitting} onPress={onBack}
           style={styles.backButton}
         >
           <Text style={styles.backText}>‹</Text>
@@ -266,7 +272,7 @@ export default function CreateDisputeScreen({
       ) : (
         <Text style={styles.muted}>Chưa chọn booking. Bấm nút bên dưới để chọn.</Text>
       )}
-      <Pressable onPress={() => setPicking(true)} style={styles.pickButton}>
+      <Pressable disabled={submitting} onPress={() => setPicking(true)} style={styles.pickButton}>
         <Text style={styles.pickText}>
           {selectedBooking ? "Đổi booking khác" : "Chọn booking"}
         </Text>
@@ -277,7 +283,7 @@ export default function CreateDisputeScreen({
         {REPORT_TYPES.map((type) => (
           <Pressable
             key={type}
-            onPress={() => setReportType(type)}
+            disabled={submitting} onPress={() => setReportType(type)}
             style={[styles.chip, reportType === type && styles.chipActive]}
           >
             <Text style={[styles.chipText, reportType === type && styles.chipTextActive]}>{problemLabels[type] ?? type}</Text>
@@ -318,7 +324,7 @@ export default function CreateDisputeScreen({
       />
 
       <Text style={styles.label}>Ảnh bằng chứng ({evidence.length}/{MAX_EVIDENCE_IMAGES})</Text>
-      <Pressable onPress={() => void pickImages("evidence")} style={styles.pickButton}>
+      <Pressable disabled={submitting} onPress={() => void pickImages("evidence")} style={styles.pickButton}>
         <Text style={styles.pickText}>Chọn ảnh từ thư viện</Text>
       </Pressable>
       {evidence.map((item) => (
@@ -334,7 +340,7 @@ export default function CreateDisputeScreen({
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.actions}>
-        <Pressable onPress={onBack} style={styles.ghostButton}>
+        <Pressable disabled={submitting} onPress={onBack} style={styles.ghostButton}>
           <Text style={styles.ghostText}>Hủy</Text>
         </Pressable>
         <Pressable

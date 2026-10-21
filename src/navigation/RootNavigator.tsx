@@ -14,6 +14,7 @@ import { usePresenceConnection } from "@/features/presence/usePresenceConnection
 import { useNotificationConnection } from "@/features/notifications/useNotificationConnection";
 import { useChatConnection } from "@/features/chat/useChatConnection";
 import { useFavoriteSession } from "@/features/favorites/useFavoriteSession";
+import ToastHost from "@/features/notifications/components/ToastHost";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
@@ -76,6 +77,7 @@ export default function RootNavigator() {
         : role === "Owner" ? <OwnerNavigator key={`owner-${user.userId}`} user={user} />
           : <RoleNotSupportedScreen role={role ?? "Staff"} />}
     {token && user ? <NotificationCenter key={user.userId} userId={user.userId} /> : null}
+    <ToastHost />
   </NavigationContainer>;
 }
 

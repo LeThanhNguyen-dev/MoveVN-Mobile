@@ -49,3 +49,10 @@ it("hides the pending payment card after the latest report records full payment"
   })); });
   expect(tree.toJSON()).toBeNull();
 });
+
+it("does not expose payment or cash receipt controls before customer confirms return", async () => {
+  await act(async () => { tree = create(React.createElement(OutstandingSurchargePayment, { booking: { ...booking, status: "Returning" }, report, role: "Owner" })); });
+  expect(tree.toJSON()).toBeNull();
+  await act(async () => { tree.update(React.createElement(OutstandingSurchargePayment, { booking: { ...booking, status: "Returning" }, report, role: "Customer" })); });
+  expect(tree.toJSON()).toBeNull();
+});

@@ -49,8 +49,8 @@ export function inspectionAvailability(
   const timeAllowed = type === "CheckIn" ? booking.canCheckInNow === true : pickupReached;
   return {
     report, pickupReached,
-    canCreate: role === "Owner" && statusAllowed && timeAllowed && !report,
-    canConfirm: role === "Customer" && statusAllowed && timeAllowed && !!report && !report.isCustomerConfirmed,
+    canCreate: role === "Owner" && statusAllowed && timeAllowed && (!report || (type === "CheckIn" && report.requiresRevision === true)),
+    canConfirm: role === "Customer" && statusAllowed && timeAllowed && !!report && !report.requiresRevision && !report.isCustomerConfirmed,
   };
 }
 

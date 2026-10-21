@@ -1,3 +1,4 @@
+import { receiveNotification } from "./notificationDelivery";
 import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import { getAuthUser, getSessionGeneration, getToken } from "@/features/auth/hooks/useAuth";
 import { getHubAccessToken, startHubWithAuthRecovery } from "@/services/hubStart";
@@ -46,7 +47,7 @@ export async function startNotificationConnection() {
       const current = () => connection === created && getAuthUser()?.userId === userId
         && useNotificationStore.getState().userId === userId && generation === getSessionGeneration();
       created.on("notification.created", (payload: NotificationCreatedPayload) => {
-        if (current()) useNotificationStore.getState().prependNotification(payload.notification, payload.unreadCount);
+        if (current()) receiveNotification(payload.notification, payload.unreadCount);
       });
       created.on("notification.unreadCountChanged", (payload: NotificationUnreadCountPayload) => {
         if (!current()) return;

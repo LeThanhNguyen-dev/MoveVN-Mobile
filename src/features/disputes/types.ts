@@ -24,7 +24,7 @@ export type CreateDisputeRequest = {
 };
 
 export type ResolveDisputeRequest = {
-  checkoutAdjustment?: { expectedVersion: number; finalLateReturnFee: number; actualReturnAt?: string };
+  checkoutAdjustment?: { expectedVersion: number; finalLateReturnFee: number; finalExcessMileageFee?: number; additionalSurchargeAdjustments?: { termId: number; finalAmount: number }[]; refundExternalPaymentsToWallet?: boolean; actualReturnAt?: string };
   paymentAdjustmentNote?: string | null;
   resolution: string;
   compensationDirection: CompensationDirection;
@@ -121,6 +121,9 @@ export type DisputeAuditLogItem = {
 };
 
 export type DisputeDetailResponse = DisputeListItem & {
+  followUpDueAt?: string | null;
+  followUpStage?: string | null;
+  followUpOverdue?: boolean;
   trafficFine?: TrafficFineResponse | null;
   checkoutAdjustmentJson?: string | null;
   checkoutAdjustmentAppliedAt?: string | null;

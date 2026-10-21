@@ -29,7 +29,6 @@ import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { HomepageBanner } from "@/features/banners/types";
 import { getHomepageBanners } from "@/features/banners/services/bannerService";
 import { showToast } from "@/features/notifications/toastStore";
-import ToastHost from "@/features/notifications/components/ToastHost";
 import OwnerVerificationScreen from "@/features/owner/screens/OwnerVerificationScreen";
 import VehicleListCard from "@/features/vehicles/components/VehicleListCard";
 import VehicleCardSkeleton from "@/features/vehicles/components/VehicleCardSkeleton";
@@ -1000,8 +999,6 @@ export default function CustomerExploreScreen({
           <OwnerVerificationScreen onBack={() => setShowOwnerVerify(false)} />
         </View>
       ) : null}
-
-      <ToastHost />
 
       <BannerDetailSheet
         banner={selectedBanner}

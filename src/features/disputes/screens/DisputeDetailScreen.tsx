@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef, type ReactNode } from "react";
 import {
   ActivityIndicator,
+  AppState,
   Image,
   Modal,
   Pressable,
@@ -10,6 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useNotificationStore } from "@/features/notifications/useNotifications";
 import * as ImagePicker from "expo-image-picker";
 
 import type { Theme } from "@/theme/tokens";
@@ -32,6 +34,8 @@ import {
   formatAuditRole,
   parseAuditDetailEntries,
 } from "@/features/admin/auditLogLabels";
+import BookingAssistance from "@/features/booking/components/BookingAssistance";
+import CheckoutDecisionSummary from "@/features/disputes/components/CheckoutDecisionSummary";
 import TrafficFinePanel from "@/features/disputes/components/TrafficFinePanel";
 import {
   acceptDisputeResolution,
@@ -58,6 +62,8 @@ export default function DisputeDetailScreen({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const userId = useAuthStore((state) => state.user?.userId);
 
+  const requestId = useRef(0);
+  const actionLock = useRef(false);
   const [detail, setDetail] = useState<DisputeDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -70,21 +76,35 @@ export default function DisputeDetailScreen({
   const [escalationReason, setEscalationReason] = useState("");
   const [viewingImage, setViewingImage] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const load = useCallback(async (silent = false) => {
+    const current = ++requestId.current;
+    if (!silent) { setLoading(true); setError(""); }
     try {
-      setDetail(await getDisputeById(disputeId));
+      const result = await getDisputeById(disputeId);
+      if (current === requestId.current) setDetail(result);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể tải chi tiết tranh chấp."));
+      if (current === requestId.current && !silent) setError(getApiErrorMessage(err, "Không thể tải chi tiết tranh chấp."));
+      await load(true);
     } finally {
-      setLoading(false);
+      if (current === requestId.current) setLoading(false);
     }
   }, [disputeId]);
 
   useEffect(() => {
     void load();
-  }, [load]);
+    const sync = () => { if (AppState.currentState === "active" && !actionLock.current) void load(true); };
+    const interval = setInterval(sync, 15000);
+    const appState = AppState.addEventListener("change", state => { if (state === "active") sync(); });
+    const unsubscribe = useNotificationStore.subscribe((state, previous) => {
+      if (state.revision === previous.revision) return;
+      const relevant = Object.values(state.updates).some(update => {
+        if (update.revision <= previous.revision || previous.updates[update.item.id]) return false;
+        try { return JSON.parse(update.item.dataJson ?? "{}").disputeId === disputeId; } catch { return false; }
+      });
+      if (relevant) sync();
+    });
+    return () => { requestId.current++; clearInterval(interval); appState.remove(); unsubscribe(); };
+  }, [load, disputeId]);
 
   function toggleSection(id: string) {
     setOpenSections((prev) => {
@@ -97,30 +117,43 @@ export default function DisputeDetailScreen({
 
   async function acceptResult() {
     if (!detail) return;
+    if (actionLock.current) return;
+    actionLock.current = true; requestId.current++;
+    setError("");
     setBusy(true);
     try {
       setDetail(await acceptDisputeResolution(detail.id, detail.updatedAt));
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể xác nhận kết quả."));
+      await load(true);
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
 
   async function confirmExternal() {
     if (!detail) return;
+    if (actionLock.current) return;
+    actionLock.current = true; requestId.current++;
+    setError("");
     setBusy(true);
     try {
       setDetail(await confirmExternalSettlement(detail.id, detail.updatedAt));
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể xác nhận thanh toán."));
+      await load(true);
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
 
   async function submitEscalate() {
     if (!detail || !escalationReason.trim()) return;
+    if (actionLock.current) return;
+    actionLock.current = true; requestId.current++;
+    setError("");
     setBusy(true);
     try {
       setDetail(
@@ -134,7 +167,9 @@ export default function DisputeDetailScreen({
       setEscalationReason("");
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể chuyển Admin."));
+      await load(true);
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
@@ -164,6 +199,9 @@ export default function DisputeDetailScreen({
 
   async function submitEvidence() {
     if (!detail || (!evidenceMessage.trim() && evidenceFiles.length === 0)) return;
+    if (actionLock.current) return;
+    actionLock.current = true; requestId.current++;
+    setError("");
     setBusy(true);
     try {
       const uploaded =
@@ -182,7 +220,9 @@ export default function DisputeDetailScreen({
       setEvidenceMessage("");
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể bổ sung bằng chứng."));
+      await load(true);
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
@@ -230,7 +270,7 @@ export default function DisputeDetailScreen({
           <Text style={styles.backText}>‹</Text>
         </Pressable>
         <Text style={styles.headerTitle}>Chi tiết tranh chấp</Text>
-        <View style={styles.backButtonPlaceholder} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Làm mới tranh chấp" disabled={busy} onPress={() => void load(true)}><Text style={styles.link}>Làm mới</Text></Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.scrollBody}>
       <View style={styles.headerCard}>
@@ -267,6 +307,8 @@ export default function DisputeDetailScreen({
         </View>
         <StatusStepper status={detail.status} />
       </View>
+      {detail.followUpDueAt ? <Text style={detail.followUpOverdue ? styles.error : styles.muted}>Hạn phản hồi/theo dõi: {formatDisputeDateTime(detail.followUpDueAt)}{detail.followUpOverdue ? " · Quá hạn, cần nhân viên/Admin xử lý; không tự ghi nhận đã thanh toán." : ""}</Text> : null}
+      <BookingAssistance key={detail.bookingId} bookingId={detail.bookingId} bookingCode={detail.bookingCode} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Collapsible
@@ -327,7 +369,7 @@ export default function DisputeDetailScreen({
       ) : null}
 
       {detail.reportType === "TrafficFine" ? (
-        <TrafficFinePanel dispute={detail} onChange={setDetail} />
+        <TrafficFinePanel dispute={detail} onChange={updated => { requestId.current++; setDetail(updated); }} />
       ) : null}
 
       {detail.resolution ? (
@@ -341,6 +383,7 @@ export default function DisputeDetailScreen({
           <View style={styles.resultBox}>
             <Text style={styles.body}>{detail.resolution}</Text>
           </View>
+          <CheckoutDecisionSummary json={detail.checkoutAdjustmentJson} appliedAt={detail.checkoutAdjustmentAppliedAt} report={detail.inspectionReports.find(r => r.type === "CheckOut")} />
           {detail.reportType === "Payment" && detail.paymentAdjustmentNote ? (
             <Text style={styles.body}>Ghi chú đề xuất điều chỉnh thanh toán: {detail.paymentAdjustmentNote}</Text>
           ) : null}
@@ -348,7 +391,9 @@ export default function DisputeDetailScreen({
             <>
               <Text style={styles.body}>{compensationDirectionLabels[detail.compensationDirection]}</Text>
               <Text style={styles.value}>Số tiền bồi thường tham khảo: {formatDisputeMoney(detail.finalCompensationAmount)}</Text>
-              <Text style={styles.muted}>Hai bên tự quyết toán trực tiếp ngoài nền tảng.</Text>
+              <Text style={styles.muted}>{settlementMethodLabels[detail.settlementMethod]}</Text>
+              <Text style={styles.body}>{detail.platformSettlementCompletedAt ? "Đã thanh toán qua ví" : "Dự kiến thanh toán qua ví"}: {formatDisputeMoney(detail.platformSettledAmount)}</Text>
+              <Text style={styles.body}>Quyết toán trực tiếp: {formatDisputeMoney(detail.externalSettlementAmount)}</Text>
             </>
           ) : null}
         </Collapsible>

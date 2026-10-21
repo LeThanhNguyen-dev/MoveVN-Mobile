@@ -1,4 +1,5 @@
 export interface SupportTicketListRequest {
+  bookingId?: number;
   category?: string;
   keyword?: string;
   page?: number;
@@ -8,6 +9,7 @@ export interface SupportTicketListRequest {
 }
 
 export interface CreateSupportTicketRequest {
+  bookingId?: number;
   category: string;
   subject: string;
   message: string;
@@ -25,6 +27,7 @@ export interface UpdateSupportTicketStatusRequest {
 }
 
 export interface SupportTicketListItem {
+  bookingId?: number | null;
   id: number;
   userId: number;
   customerName: string;

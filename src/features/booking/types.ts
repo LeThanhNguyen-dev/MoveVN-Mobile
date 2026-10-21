@@ -133,6 +133,8 @@ export interface InspectionReportRevision {
 }
 
 export interface InspectionReportResponse {
+  requiresRevision?: boolean;
+  revisionReason?: string;
   externalPendingSurchargeAmount?: number;
   externalPaidSurchargeAmount?: number;
   initialOdometerKm?: number;

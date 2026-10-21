@@ -59,8 +59,8 @@ export async function createCheckOutReport(id: number, data: FormData): Promise<
   return res.data.data!;
 }
 
-export async function confirmCheckIn(id: number): Promise<BookingResponse> {
-  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.confirmCheckIn(id));
+export async function confirmCheckIn(id: number, expectedVersion = 1): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>("/api/bookings/" + id + "/check-in/confirm-version", { expectedVersion });
   return res.data.data!;
 }
 
@@ -124,5 +124,10 @@ export async function reportNoShow(id: number): Promise<BookingResponse> {
 
 export async function settleCheckoutSurcharges(id: number, request: { action: "Wallet" | "External" | "ConfirmExternal"; expectedVersion: number; note?: string }): Promise<BookingResponse> {
   const res = await apiClient.post<ApiResponse<BookingResponse>>(`/api/bookings/${id}/surcharges/payment`, request);
+  return res.data.data!;
+}
+
+export async function requestCheckInRevision(id: number, expectedVersion: number, reason: string): Promise<InspectionReportResponse> {
+  const res = await apiClient.post<ApiResponse<InspectionReportResponse>>("/api/bookings/" + id + "/check-in/revision-request", { expectedVersion, reason });
   return res.data.data!;
 }
