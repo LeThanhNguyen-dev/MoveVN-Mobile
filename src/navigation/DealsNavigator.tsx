@@ -1,6 +1,5 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
-import ToastHost from "@/features/notifications/components/ToastHost";
 import CustomerPromotionsScreen from "@/features/promotions/screens/CustomerPromotionsScreen";
 import VoucherHuntScreen from "@/features/voucherClaims/screens/VoucherHuntScreen";
 import VoucherWalletScreen from "@/features/voucherClaims/screens/VoucherWalletScreen";
@@ -26,7 +25,6 @@ export default function DealsNavigator() {
         <Stack.Screen name="VoucherHunt" component={VoucherHuntScreen} />
         <Stack.Screen name="VoucherWallet" component={VoucherWalletScreen} />
       </Stack.Navigator>
-      <ToastHost />
     </View>
   );
 }

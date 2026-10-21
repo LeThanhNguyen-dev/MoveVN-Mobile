@@ -6,7 +6,7 @@ import { ActivityIndicator, Alert, AppState, BackHandler, Image, Linking, Refres
 import { useTheme } from "@/theme/useTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { checkPaymentStatus, createPaymentLink } from "@/features/payments/services/paymentService";
-import { approveBooking, cancelBooking, confirmCheckIn, confirmCheckOut, getBookingById, getBookingCancellationQuote, getInspectionReports, rejectBooking } from "../bookingService";
+import { approveBooking, cancelBooking, confirmCheckIn, confirmCheckOut, getBookingById, getBookingCancellationQuote, getInspectionReports, rejectBooking, requestCheckInRevision } from "../bookingService";
 import type { BookingResponse, InspectionReportResponse } from "../types";
 import { BOOKING_STATUS_LABELS, isDepositExpired, formatMoney, formatVietnamDateTime, inspectionAvailability, inspectionLabel, type BookingRole, type InspectionType } from "../bookingDisplay";
 import { BookingButton, BookingCard, BookingField, BookingHeader } from "../components/BookingControls";
@@ -27,6 +27,8 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
   const [form, setForm] = useState<InspectionType | null>(null);
   const [rejecting, setRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [revisionReport, setRevisionReport] = useState<InspectionReportResponse | null>(null);
+  const [revisionReason, setRevisionReason] = useState("");
   const [paymentOrder, setPaymentOrder] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const [checkoutToConfirm, setCheckoutToConfirm] = useState<InspectionReportResponse | null>(null);
@@ -72,11 +74,24 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
 
   function confirmReport(type: InspectionType) {
     if (type === "CheckOut") { setCheckoutToConfirm(reports.find(r => r.type === "CheckOut") ?? null); return; }
+    const report = reports.find(r => r.type === "CheckIn");
+    if (!report || report.requiresRevision) return;
     Alert.alert("Xác nhận nhận xe?",
       "Chỉ xác nhận khi bạn đã xem toàn bộ ảnh và đồng ý với số km, nhiên liệu, hư hại trong biên bản.", [
         { text: "Xem lại", style: "cancel" },
-        { text: "Đồng ý và xác nhận", onPress: () => void action(() => confirmCheckIn(bookingId), "Đã xác nhận nhận xe.") },
+        { text: "Đồng ý và xác nhận", onPress: () => void action(() => confirmCheckIn(bookingId, report.version ?? 1), "Đã xác nhận nhận xe.") },
       ]);
+  }
+
+  async function requestRevision() {
+    if (lock.current || !revisionReport || !revisionReason.trim()) return;
+    lock.current = true; requestId.current++; setBusy(true); setError(""); setMessage("");
+    try {
+      await requestCheckInRevision(bookingId, revisionReport.version ?? 1, revisionReason.trim());
+      if (mounted.current) { setRevisionReport(null); setMessage("Đã yêu cầu lập lại biên bản. Chờ chủ xe gửi bản mới."); await load(); }
+    } catch (err) {
+      if (mounted.current) { await load(); setError(getApiErrorMessage(err, "Không thể gửi yêu cầu lập lại biên bản.")); }
+    } finally { lock.current = false; if (mounted.current) setBusy(false); }
   }
 
   async function payDeposit() {
@@ -171,7 +186,16 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
               {state.canConfirm ? <>
                 {type === "CheckIn" ? <Text style={{ color: theme.muted, lineHeight: 21 }}>Cả chủ xe và khách cần ký hợp đồng để hợp đồng có hiệu lực trước khi xác nhận nhận xe. Bạn có thể ký trên web nếu chưa hoàn tất.</Text> : null}
                 <BookingButton title={type === "CheckIn" ? "Đồng ý biên bản và nhận xe" : "Đồng ý biên bản và trả xe"} busy={busy} disabled={loading || !!error} onPress={() => confirmReport(type)} />
-                <Text style={{ color: theme.muted, lineHeight: 21 }}>Nếu không đồng ý, hãy trao đổi với chủ xe hoặc liên hệ hỗ trợ trước khi xác nhận.</Text>
+                {type === "CheckOut" ? <Text style={{ color: theme.muted, lineHeight: 21 }}>Nếu không đồng ý, hãy trao đổi với chủ xe hoặc liên hệ hỗ trợ trước khi xác nhận.</Text> : null}
+              </> : null}
+              {type === "CheckIn" && role === "Customer" && booking.status === "DepositPaid" && state.report && !state.report.isCustomerConfirmed && !state.report.requiresRevision ? <>
+                <BookingButton secondary title="Không đồng ý biên bản / Yêu cầu lập lại" disabled={busy || loading || !!error} onPress={() => { setRevisionReport(state.report!); setRevisionReason(""); }} />
+                {revisionReport ? <>
+                  <Text style={{ color: theme.muted }}>Ghi rõ nội dung cần sửa. Chuyến chỉ bắt đầu khi bạn đồng ý biên bản mới.</Text>
+                  <BookingField label="Lý do không đồng ý" value={revisionReason} onChangeText={value => setRevisionReason(value.slice(0, 1000))} multiline editable={!busy} />
+                  <BookingButton title="Gửi yêu cầu lập lại" busy={busy} disabled={!revisionReason.trim() || loading || !!error} onPress={() => void requestRevision()} />
+                  <BookingButton secondary title="Đóng" disabled={busy} onPress={() => setRevisionReport(null)} />
+                </> : null}
               </> : null}
               {type === "CheckIn" && !state.pickupReached && booking.status === "DepositPaid" ? <Text style={{ color: theme.muted }}>
                 {booking.canCheckInNow ? "Xe trống: có thể check-in sớm tối đa 2 giờ. Giờ trả và giá thuê theo đơn đã đặt." : booking.checkInUnavailableReason || "Có thể check-in sớm tối đa 2 giờ nếu xe trống. Tải lại đơn để kiểm tra."}

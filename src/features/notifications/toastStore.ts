@@ -7,6 +7,7 @@ export type ToastPayload = {
   type: ToastType;
   title: string;
   message?: string;
+  onPress?: () => void;
 };
 
 type ToastItem = ToastPayload & { id: number };
@@ -14,6 +15,7 @@ type ToastItem = ToastPayload & { id: number };
 type ToastState = {
   toasts: ToastItem[];
   dismissToast: (id: number) => void;
+  clearToasts: () => void;
   showToast: (payload: ToastPayload) => void;
 };
 
@@ -23,6 +25,7 @@ const AUTO_DISMISS_MS = 4200;
 
 export const useToastStore = create<ToastState>((set, get) => ({
   toasts: [],
+  clearToasts: () => set({ toasts: [] }),
   dismissToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
   showToast: (payload) => {
     const id = ++toastSeq;

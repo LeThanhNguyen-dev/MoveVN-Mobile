@@ -25,10 +25,11 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
   const [additionalSurcharges, setAdditionalSurcharges] = useState<CheckoutSurchargeSelection[]>([]);
   const [actualReturnAt, setActualReturnAt] = useState(() => type === "CheckOut" ? vietnamInput() : "");
   const [timeEdited, setTimeEdited] = useState(false);
-  const [odometer, setOdometer] = useState("");
-  const [fuelLevel, setFuelLevel] = useState("");
-  const [damageNoted, setDamageNoted] = useState(false);
-  const [damageDescription, setDamageDescription] = useState("");
+  const previous = type === "CheckIn" ? reports.find(r => r.type === "CheckIn") : undefined;
+  const [odometer, setOdometer] = useState(previous?.odometerKm?.toString() ?? "");
+  const [fuelLevel, setFuelLevel] = useState(previous?.fuelLevel ?? "");
+  const [damageNoted, setDamageNoted] = useState(previous?.damageNoted ?? false);
+  const [damageDescription, setDamageDescription] = useState(previous?.damageDescription ?? "");
   const [photos, setPhotos] = useState<CapturedInspectionPhoto[]>([]);
   const photoFiles = useRef<CapturedInspectionPhoto[]>([]);
   const libraryQueue = useRef<RawPhoto[]>([]);
@@ -149,6 +150,7 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
       const at = type === "CheckOut" ? returnTimeISO(actualReturnAt, checkoutStartDate(booking)) : undefined;
       if (type === "CheckOut") validateSurchargeSelection(booking, additionalSurcharges);
       const data = createInspectionForm({ actualReturnAt: at, odometer, fuelLevel, damageNoted, damageDescription, photos });
+      if (type === "CheckIn") data.append("expectedVersion", String(previous?.version ?? 1));
       if (type === "CheckOut") appendSurcharges(data, additionalSurcharges);
       const report = await (type === "CheckIn" ? createCheckInReport : createCheckOutReport)(booking.id, data);
       if (alive.current) onSaved(report);

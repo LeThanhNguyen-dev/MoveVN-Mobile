@@ -1,5 +1,8 @@
 import { goBackOrFallback } from "@/navigation/goBackOrFallback";
 import { checkoutStartDate } from "../bookingDisplay";
+import { useBookingNotificationRefresh } from "../useBookingNotificationRefresh";
+import BookingAssistance from "../components/BookingAssistance";
+import ReturnProgress from "../components/ReturnProgress";
 import InspectionReportCard from "../components/InspectionReportCard";
 import { useFocusEffect } from "@react-navigation/native";
 import CheckoutSummary, { OutstandingSurcharge } from "../components/CheckoutSummary";
@@ -30,6 +33,7 @@ import { useTheme } from "@/theme/useTheme";
 import {
   cancelBooking,
   confirmCheckIn,
+  requestCheckInRevision,
   confirmCheckOut,
   getBookingById,
   getBookingCancellationQuote,
@@ -56,7 +60,8 @@ import PaymentWebViewModal, { payOsReturnUrl } from "@/features/payments/compone
 import RiskScoreBadge from "@/features/booking/components/RiskScoreBadge";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import { createCustomerReview, getBookingReviews, hasReviewed, type ReviewResponse } from "@/features/review/reviewService";
-import { createDispute } from "@/features/disputes/disputeService";
+import CreateDisputeScreen from "@/features/disputes/screens/CreateDisputeScreen";
+import DisputeDetailScreen from "@/features/disputes/screens/DisputeDetailScreen";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
@@ -108,8 +113,10 @@ export default function TripDetailScreen({
   const [cancelQuote, setCancelQuote] = useState<BookingCancellationQuote | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [autoCancelHours, setAutoCancelHours] = useState<number | null>(null);
+  const [revisionOpen, setRevisionOpen] = useState(false);
+  const [revisionReason, setRevisionReason] = useState("");
   const [disputeOpen, setDisputeOpen] = useState(false);
-  const [disputeDesc, setDisputeDesc] = useState("");
+  const [createdDisputeId, setCreatedDisputeId] = useState<number | null>(null);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
@@ -154,6 +161,7 @@ export default function TripDetailScreen({
     }
   }, [bookingId]);
 
+  useBookingNotificationRefresh(bookingId, useCallback(() => { if (!actionLock.current) void load(); }, [load]));
   useFocusEffect(useCallback(() => { void load(); return () => { loadId.current++; }; }, [load]));
   useEffect(() => {
     const timer = setInterval(() => { setNow(Date.now()); if (!actionLock.current) void load(); }, 30000);
@@ -318,23 +326,6 @@ export default function TripDetailScreen({
     );
   }
 
-  async function submitDispute() {
-    if (!disputeDesc.trim()) {
-      Alert.alert("Thiếu mô tả", "Vui lòng mô tả điểm chưa đồng ý trong biên bản.");
-      return;
-    }
-    const ok = await runAction("dispute", () => createDispute({
-      bookingId,
-      reportType: "Damage",
-      description: disputeDesc.trim(),
-    }).then(() => undefined));
-    if (ok) {
-      setDisputeOpen(false);
-      setDisputeDesc("");
-      Alert.alert("Thành công", "Đã gửi tranh chấp. Đội hỗ trợ sẽ kiểm tra và phản hồi.");
-    }
-  }
-
   async function handleReview() {
     if (rating < 1 || rating > 5) {
       Alert.alert("Thiếu đánh giá", "Vui lòng chọn số sao đánh giá tổng quan.");
@@ -370,6 +361,10 @@ export default function TripDetailScreen({
       </View>
     );
   }
+
+  if (disputeOpen) return createdDisputeId
+    ? <DisputeDetailScreen disputeId={createdDisputeId} onBack={() => { setDisputeOpen(false); setCreatedDisputeId(null); void load(); }} />
+    : <CreateDisputeScreen role="Customer" initial={{ bookingId, reportType: "Other", description: "Tôi không đồng ý với biên bản trả xe: " }} onBack={() => setDisputeOpen(false)} onCreated={id => { setCreatedDisputeId(id); void load(); }} />;
 
   const status = booking.status;
   const checkInReport = reports.find(r => r.type === "CheckIn");
@@ -540,12 +535,16 @@ export default function TripDetailScreen({
         {(status === "DepositPaid" || status === "Confirmed") && (
           <>
             {status === "DepositPaid" && booking.canCheckInNow === true && !pickupReached ? <Text style={styles.muted}>Xe trống: có thể nhận sớm tối đa 2 tiếng. Chủ xe lập biên bản, khách kiểm tra rồi xác nhận nhận xe. Giờ trả và giá thuê giữ theo booking.</Text> : null}
-            {checkInReport && !checkInReport.isCustomerConfirmed && booking.canCheckInNow === true ? <ActionButton
+            {checkInReport && !checkInReport.requiresRevision && !checkInReport.isCustomerConfirmed && booking.canCheckInNow === true ? <ActionButton
               theme={theme}
               label="Xác nhận đã nhận xe"
-              onPress={() => runAction("checkin", () => confirmCheckIn(bookingId).then(() => undefined), "Đã xác nhận nhận xe. Chúc bạn đi tốt!")}
+              onPress={() => runAction("checkin", () => confirmCheckIn(bookingId, checkInReport.version ?? 1).then(() => undefined), "Đã xác nhận nhận xe. Chúc bạn đi tốt!")}
               disabled={!dataReady || actionBusy !== null}
             /> : <Text style={styles.muted}>{booking.checkInUnavailableReason || "Chờ biên bản nhận xe và kiểm tra khả năng check-in."}</Text>}
+            {checkInReport && !checkInReport.isCustomerConfirmed ? checkInReport.requiresRevision
+              ? <Text style={styles.muted}>Đã yêu cầu lập lại: {checkInReport.revisionReason}. Chờ chủ xe gửi biên bản mới rồi kiểm tra lại.</Text>
+              : <ActionButton theme={theme} label="Không đồng ý / Yêu cầu lập lại" secondary disabled={!dataReady || actionBusy !== null} onPress={() => { setRevisionReason(""); setRevisionOpen(true); }} />
+              : null}
             {canReportNoShow(booking, reports, now) ? <ActionButton
               theme={theme}
               label="Chủ xe không giao xe"
@@ -559,7 +558,7 @@ export default function TripDetailScreen({
         {status === "InProgress" && !checkOutReport && pickupReached && (
           <ActionButton
             theme={theme}
-            label="Báo đã trả xe"
+            label="Báo xe đã được bàn giao lại"
             onPress={() => runAction("report", () => reportReturn(bookingId).then(() => undefined), "Đã báo trả xe. Chờ chủ xe lập biên bản.")}
             disabled={!dataReady || actionBusy !== null}
           />
@@ -568,17 +567,17 @@ export default function TripDetailScreen({
         {["Returning", "InProgress"].includes(status) && pickupReached && checkOutReport && !checkOutReport.isCustomerConfirmed && (
           <View><Text style={styles.muted}>{CHECKOUT_CONSENT}</Text><ActionButton
             theme={theme}
-            label="Đồng ý biên bản và phụ phí"
+            label="Kiểm tra biên bản và xác nhận trả xe"
             onPress={() => setCheckoutToConfirm(checkOutReport)}
             disabled={!dataReady || actionBusy !== null}
           /></View>
         )}
-        {status === "Returning" && checkOutReport && pickupReached && (
+        {status === "Returning" && checkOutReport && !checkOutReport.isCustomerConfirmed && pickupReached && (
           <ActionButton
             theme={theme}
-            label="Có sai sót / Mở tranh chấp"
+            label="Không đồng ý / Mở tranh chấp"
             onPress={() => {
-              setDisputeDesc("Tôi không đồng ý với biên bản check-out và yêu cầu kiểm tra lại.");
+              setCreatedDisputeId(null);
               setDisputeOpen(true);
             }}
             disabled={actionBusy !== null}
@@ -586,6 +585,7 @@ export default function TripDetailScreen({
           />
         )}
 
+        <ReturnProgress booking={booking} report={checkOutReport} role="Customer" />
         <OutstandingSurcharge booking={booking} report={checkOutReport} role={"Customer"} onUpdated={load} />
         {reports.map(report => <InspectionReportCard key={report.id} booking={booking} report={report} />)}
 
@@ -598,6 +598,7 @@ export default function TripDetailScreen({
           </View>
         ) : null}
 
+        <BookingAssistance key={booking.id} bookingId={booking.id} bookingCode={booking.bookingCode} />
         <BookingTimeline history={booking.statusHistory} />
 
         {status === "Completed" && (
@@ -628,7 +629,7 @@ export default function TripDetailScreen({
       </ScrollView>
 
       <CheckoutConfirmation booking={booking} report={checkoutToConfirm} busy={actionBusy !== null} onClose={() => setCheckoutToConfirm(null)} onConfirm={(report, paymentMethod) => {
-        void runAction("checkout", () => confirmCheckOut(bookingId, report.version ?? 1, paymentMethod).then(() => undefined), "Đã xác nhận trả xe. Chờ chủ xe xác nhận nhận lại xe.").then(() => setCheckoutToConfirm(null));
+        void runAction("checkout", () => confirmCheckOut(bookingId, report.version ?? 1, paymentMethod).then(() => undefined), "Đã xác nhận trả xe và ghi nhận phương thức thanh toán. Chủ xe cần xác nhận nhận lại xe để hoàn tất chuyến.").then(ok => { if (ok) setCheckoutToConfirm(null); });
       }} />
       <Modal visible={viewingImage !== null} transparent animationType="fade" onRequestClose={() => setViewingImage(null)}>
         <Pressable style={styles.fullBackdrop} onPress={() => setViewingImage(null)}>
@@ -677,35 +678,18 @@ export default function TripDetailScreen({
         </View>
       </Modal>
 
-      <Modal visible={disputeOpen} transparent animationType="fade" onRequestClose={() => setDisputeOpen(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modal}>
-            <Text style={styles.cardTitle}>Mở tranh chấp hư hỏng</Text>
-            <Text style={styles.muted}>Mô tả điểm chưa đồng ý trong biên bản trả xe. Đội hỗ trợ sẽ kiểm tra lại.</Text>
-            <TextInput
-              value={disputeDesc}
-              onChangeText={setDisputeDesc}
-              placeholder="Mô tả sai sót..."
-              placeholderTextColor={theme.placeholder}
-              multiline
-              style={[styles.input, styles.multiline]}
-            />
-            <View style={styles.modalActions}>
-              <Pressable onPress={() => setDisputeOpen(false)} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Đóng</Text>
-              </Pressable>
-              <Pressable onPress={submitDispute} disabled={actionBusy !== null} style={[styles.primaryButton, actionBusy !== null && styles.disabled]}>
-                {actionBusy === "dispute" ? (
-                  <ActivityIndicator color={theme.onBrand} />
-                ) : (
-                  <Text style={styles.primaryText}>Gửi tranh chấp</Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </View>
+      <Modal visible={revisionOpen} transparent animationType="fade" onRequestClose={() => { if (!actionBusy) setRevisionOpen(false); }}>
+        <View style={styles.modalBackdrop}><View style={styles.modal}>
+          <Text style={styles.cardTitle}>Yêu cầu lập lại biên bản nhận xe</Text>
+          <Text style={styles.muted}>Ghi rõ số km, nhiên liệu, ảnh hoặc tình trạng xe cần sửa. Chuyến chưa bắt đầu cho đến khi bạn đồng ý biên bản mới.</Text>
+          <TextInput accessibilityLabel="Lý do yêu cầu lập lại" value={revisionReason} onChangeText={setRevisionReason} maxLength={1000} editable={!actionBusy} placeholder="Nội dung cần điều chỉnh..." placeholderTextColor={theme.placeholder} multiline style={[styles.input, styles.multiline]} />
+          <ActionButton theme={theme} label="Gửi yêu cầu lập lại" disabled={!revisionReason.trim() || !dataReady || actionBusy !== null} onPress={() => {
+            if (!checkInReport) return;
+            void runAction("revision", () => requestCheckInRevision(bookingId, checkInReport.version ?? 1, revisionReason.trim()).then(() => undefined), "Đã gửi yêu cầu cho chủ xe.").then(ok => { if (ok) setRevisionOpen(false); });
+          }} />
+          <ActionButton theme={theme} label="Đóng" secondary disabled={actionBusy !== null} onPress={() => setRevisionOpen(false)} />
+        </View></View>
       </Modal>
-
       <PaymentWebViewModal
         checkoutUrl={paySheet?.checkoutUrl ?? null}
         onClose={() => {

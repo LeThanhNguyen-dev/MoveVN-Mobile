@@ -2,6 +2,9 @@ import { goBackOrFallback } from "@/navigation/goBackOrFallback";
 import { checkoutStartDate } from "../bookingDisplay";
 import { getPendingTopUp, type BookingTopUpPendingResponse } from "@/features/payments/services/paymentService";
 import InspectionFormScreen from "./InspectionFormScreen";
+import { useBookingNotificationRefresh } from "../useBookingNotificationRefresh";
+import BookingAssistance from "../components/BookingAssistance";
+import ReturnProgress from "../components/ReturnProgress";
 import InspectionReportCard from "../components/InspectionReportCard";
 import CheckoutEditor from "../components/CheckoutEditor";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -127,6 +130,7 @@ export default function OwnerBookingDetailScreen({
     }
   }, [bookingId]);
 
+  useBookingNotificationRefresh(bookingId, useCallback(() => { if (!actionLock.current && !form) void load(); }, [load, form]));
   useFocusEffect(useCallback(() => { void load(); return () => { loadId.current++; }; }, [load]));
   useEffect(() => {
     const timer = setInterval(() => { setNow(Date.now()); if (!actionLock.current && !form) void load(); }, 30000);
@@ -230,6 +234,7 @@ export default function OwnerBookingDetailScreen({
           <Text style={styles.status}>{bookingStatusLabel(status)}</Text>
           {booking.escrowStatus === "Held" && <Text style={styles.escrow}>Giữ cọc {formatMoney(booking.escrowAmount)}</Text>}
         </View>
+        <ReturnProgress booking={booking} report={checkOutReport} role="Owner" />
         <OutstandingSurcharge booking={booking} report={checkOutReport} role="Owner" onUpdated={load} />
         {progress && (
           <View style={[styles.progressStrip, progress.overdue && styles.progressOverdue]}>
@@ -341,8 +346,8 @@ export default function OwnerBookingDetailScreen({
           <ActionButton theme={theme} label="Hủy booking (hoàn 100% cọc)" onPress={() => { setReason(""); setReasonModal({ mode: "cancel" }); }} disabled={!dataReady || busy !== null} danger />
         )}
 
-        {status === "DepositPaid" && !checkInReport && booking.canCheckInNow === true && (
-          <ActionButton theme={theme} label="Lập biên bản nhận xe" onPress={() => setForm("CheckIn")} disabled={!dataReady || busy !== null} />
+        {status === "DepositPaid" && (!checkInReport || checkInReport.requiresRevision) && booking.canCheckInNow === true && (
+          <ActionButton theme={theme} label={checkInReport?.requiresRevision ? "Lập lại và gửi biên bản nhận xe" : "Lập biên bản nhận xe"} onPress={() => setForm("CheckIn")} disabled={!dataReady || busy !== null} />
         )}
         {status === "DepositPaid" && !checkInReport && !pickupReached && booking.canCheckInNow === true ? (
           <Text style={styles.muted}>Xe trống: có thể nhận sớm tối đa 2 tiếng. Bạn có thể lập biên bản nhận xe ngay. Giờ trả và giá thuê giữ theo booking.</Text>
@@ -379,6 +384,7 @@ export default function OwnerBookingDetailScreen({
           </View>
         ) : null}
 
+        <BookingAssistance key={booking.id} bookingId={booking.id} bookingCode={booking.bookingCode} />
         <BookingTimeline history={booking.statusHistory} />
 
         {status === "Completed" && !alreadyReviewed && (
