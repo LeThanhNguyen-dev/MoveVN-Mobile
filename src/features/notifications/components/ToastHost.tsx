@@ -1,13 +1,21 @@
 import { CircleCheck, CircleX, Info, X } from "lucide-react-native";
-import { memo, useMemo } from "react";
-import { Pressable, StyleSheet, View } from "react-native"
+import { memo, useMemo, useRef, useEffect } from "react";
+import { Animated, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { useToastStore, type ToastType } from "@/features/notifications/toastStore";
 
-/** Mirror web ToastViewport: chồng toast góc trên-phải, card sáng viền màu + nút X. */
+function DropCard({ children, style }: { children: React.ReactNode; style: StyleProp<ViewStyle> }) {
+  const offset = useRef(new Animated.Value(-60)).current;
+  useEffect(() => {
+    const animation = Animated.timing(offset, { toValue: 0, duration: 240, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [offset]);
+  return <Animated.View accessibilityLiveRegion="polite" style={[style, { transform: [{ translateY: offset }] }]}>{children}</Animated.View>;
+}
 function ToastHost() {
   const toasts = useToastStore((state) => state.toasts);
   const dismissToast = useToastStore((state) => state.dismissToast);
@@ -23,12 +31,12 @@ function ToastHost() {
         const Icon = toast.type === "success" ? CircleCheck : toast.type === "error" ? CircleX : Info;
         const accent = accentFor(theme, toast.type);
         return (
-          <View key={toast.id} style={[styles.card, { borderColor: accent.border }]}>
+          <DropCard key={toast.id} style={[styles.card, { borderColor: accent.border }]}>
             <Icon color={accent.icon} size={20} />
-            <View style={styles.textWrap}>
+            <Pressable style={styles.textWrap} disabled={!toast.onPress} accessibilityRole={toast.onPress ? "button" : undefined} onPress={() => { toast.onPress?.(); dismissToast(toast.id); }}>
               <AppText display style={styles.title}>{toast.title}</AppText>
               {!!toast.message && <AppText style={styles.message}>{toast.message}</AppText>}
-            </View>
+            </Pressable>
             <Pressable
               onPress={() => dismissToast(toast.id)}
               style={styles.closeButton}
@@ -38,7 +46,7 @@ function ToastHost() {
             >
               <X color={theme.muted} size={15} />
             </Pressable>
-          </View>
+          </DropCard>
         );
       })}
     </View>
@@ -59,6 +67,8 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     viewport: {
       position: "absolute",
+      zIndex: 10000,
+      elevation: 100,
       left: 16,
       right: 16,
       gap: 12,

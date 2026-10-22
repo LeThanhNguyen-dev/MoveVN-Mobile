@@ -87,3 +87,9 @@ describe("Capture timestamp and inspection payload", () => {
     expect(data.has("odometerKm")).toBe(false);
   });
 });
+
+it("allows owner resubmission and blocks renter confirmation while check-in needs revision", () => {
+  const revision = { ...report, requiresRevision: true };
+  expect(inspectionAvailability(booking, "Owner", "CheckIn", [revision], afterPickup).canCreate).toBe(true);
+  expect(inspectionAvailability(booking, "Customer", "CheckIn", [revision], afterPickup).canConfirm).toBe(false);
+});

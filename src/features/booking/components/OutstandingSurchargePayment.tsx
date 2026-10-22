@@ -25,7 +25,7 @@ export default function OutstandingSurchargePayment({ booking, report, role, onU
     } catch (e) { setError(getApiErrorMessage(e, "Chưa cập nhật được thanh toán. Tải lại để kiểm tra trước khi thử lại.")); }
     finally { lock.current = false; setBusy(false); }
   }
-  if (amount <= 0) return null;
+  if (amount <= 0 || !["Returned", "Completed"].includes(booking.status)) return null;
   return <View accessibilityRole="alert" style={{ padding: 14, backgroundColor: theme.surfaceAlt, borderRadius: 12, gap: 10 }}>
     <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 18, fontWeight: "700" }}>{role === "Owner" && external > 0 ? "Xác nhận nhận tiền phụ thu trực tiếp" : "Thanh toán phụ thu trả xe"}</Text>
     <Text style={{ color: theme.text, fontWeight: "700" }}>Còn phụ phí chưa thanh toán: {formatMoney(amount)}</Text>
@@ -39,6 +39,7 @@ export default function OutstandingSurchargePayment({ booking, report, role, onU
       <BookingField label="Ghi chú nhận tiền trực tiếp" value={note} onChangeText={setNote} multiline editable={!busy} />
       <BookingButton title="Xác nhận đã nhận đủ tiền phụ thu trực tiếp" busy={busy} disabled={!note.trim()} onPress={() => void pay("ConfirmExternal")} />
     </> : null}
+    {booking.status === "Returned" ? <Text style={{ color: theme.muted }}>{role === "Owner" ? "Xác nhận nhận tiền chỉ ghi nhận thanh toán. Sau khi kiểm tra xe, bấm Xác nhận đã nhận xe để hoàn tất chuyến." : "Bạn đã xác nhận trả xe. Sau khi thanh toán phụ thu, chờ chủ xe xác nhận nhận lại xe; bạn không cần xác nhận trả xe lần nữa."}</Text> : null}
     {error ? <Text style={{ color: theme.danger }}>{error}</Text> : null}
   </View>;
 }

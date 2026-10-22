@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
@@ -39,6 +39,7 @@ export default function TrafficFinePanel({
   const [paidAt, setPaidAt] = useState("");
   const [reference, setReference] = useState("");
   const [files, setFiles] = useState<ProofAsset[]>([]);
+  const actionLock = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -80,9 +81,10 @@ export default function TrafficFinePanel({
     action: "respond" | "payment-proof" | "confirm-owner-receipt",
     extra: { acceptResponsibility?: boolean } = {},
   ) {
-    if (busy) return;
+    if (actionLock.current) return;
     const current = fine;
     if (!current) return;
+    actionLock.current = true;
     setBusy(true);
     setError("");
     try {
@@ -122,6 +124,7 @@ export default function TrafficFinePanel({
         // Giữ chi tiết hiện tại khi mất mạng.
       }
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }

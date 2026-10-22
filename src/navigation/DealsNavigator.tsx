@@ -1,6 +1,5 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
-import ToastHost from "@/features/notifications/components/ToastHost";
 import CustomerPromotionsScreen from "@/features/promotions/screens/CustomerPromotionsScreen";
 import VoucherHuntScreen from "@/features/voucherClaims/screens/VoucherHuntScreen";
 import VoucherWalletScreen from "@/features/voucherClaims/screens/VoucherWalletScreen";
@@ -28,7 +27,6 @@ export default function DealsNavigator({ onGoExplore }: { onGoExplore?: () => vo
           {() => <VoucherWalletScreen onUseNow={onGoExplore} />}
         </Stack.Screen>
       </Stack.Navigator>
-      <ToastHost />
     </View>
   );
 }

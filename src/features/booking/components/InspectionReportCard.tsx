@@ -16,7 +16,8 @@ export default function InspectionReportCard({ booking, report }: { booking?: Bo
   const [selected, setSelected] = useState<string | null>(null);
   return <BookingCard>
     <Text style={{ color: theme.muted }}>Lập lúc {formatVietnamDateTime(report.createdAt)} · Giờ Việt Nam</Text>
-    <Text style={{ color: report.isCustomerConfirmed ? theme.success : theme.brand, fontWeight: "700" }}>{report.isCustomerConfirmed ? "Khách đã xác nhận" : "Chờ khách xác nhận"}</Text>
+    <Text style={{ color: report.isCustomerConfirmed ? theme.success : theme.brand, fontWeight: "700" }}>{report.requiresRevision ? "Khách yêu cầu lập lại biên bản" : report.isCustomerConfirmed ? "Khách đã xác nhận" : "Chờ khách xác nhận"}</Text>
+    {report.requiresRevision ? <Text style={{ color: theme.danger }}>Lý do: {report.revisionReason}</Text> : null}
     <CheckoutSummary report={report} />
     {booking ? <InspectionFinancialSummary booking={booking} report={report} /> : null}
     {booking ? <InspectionPdfButton booking={booking} report={report} /> : null}

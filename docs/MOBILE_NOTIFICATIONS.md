@@ -94,3 +94,20 @@ Test mới bao gồm hành vi UI, phân trang và retry, HTTP/SignalR chạy đ�
 đổi tài khoản, phản hồi cũ sau đăng xuất, thất bại đánh dấu đọc, reconnect, metadata lỗi.
 Các test này dùng mock và không gửi thông báo hay thay đổi database chung.
 Checklist Android ở trên là kiểm tra thủ công, không được xem là đã thực hiện chỉ vì unit test đạt.
+
+
+## Banner thông báo trong app (20/10/2026)
+
+- ToastHost được gắn một lần ở RootNavigator cho cả chủ xe và khách thuê. Thông báo mới trượt từ trên xuống; chạm nội dung mở trung tâm thông báo.
+- SignalR và đồng bộ API mỗi 30 giây dùng chung bộ nhận để tránh banner trùng khi reconnect. Lần đồng bộ đầu tạo mốc, không bật lại thông báo cũ khi đăng nhập.
+- Màn chi tiết đơn đang mở tải lại khi nhận thông báo liên quan đến booking; phiên đăng xuất hoặc đổi tài khoản xóa banner.
+- Đây là banner khi dùng app. Push notification khi ứng dụng bị đóng cần hạ tầng push riêng.
+
+## Check-in và trả xe
+
+- Check-in: khách nhập lý do yêu cầu lập lại; chủ xe sửa nội dung, thêm ảnh mới và gửi lại. Giữ lịch sử và ảnh cũ trong snapshot; không cho xác nhận biên bản đang chờ sửa hoặc sai phiên bản.
+- Check-out: khách có thể chọn Không đồng ý / Mở tranh chấp ngay từ biên bản, trước khi đồng ý thu phí.
+- Khách kiểm tra biên bản → xác nhận đã bàn giao xe → chọn ví hoặc trả trực tiếp nếu có phụ thu → gửi xác nhận. Backend ghi nhận xác nhận và phương thức trong cùng một giao dịch; nút tiếp tục ở bước đầu chưa thu tiền.
+- Sau xác nhận, trạng thái Returned chờ chủ xe bấm Xác nhận đã nhận xe để chuyển Completed. Xác nhận đã nhận tiền phụ thu chỉ cập nhật thanh toán, không xác nhận tình trạng xe.
+- Completed thể hiện hoàn tất bàn giao; khoản phụ thu còn thiếu vẫn được hiển thị riêng. Khách không phải xác nhận trả xe lần thứ hai.
+- Backend cần migration AddCheckInRevisionReview trước khi chạy bản mobile này.
