@@ -46,5 +46,9 @@ export type TripsStackParamList = {
   TripDetail: {
     bookingId: number;
   };
+  TripHandover: { bookingId: number; inspectionType: "CheckIn" | "CheckOut" };
+  BookingWallet: undefined;
+  VehicleDetail: { vehicleId: number; startDate?: string; endDate?: string };
+  BookingUserProfile: { userId: number };
   BookingChat: { bookingId: number };
 };

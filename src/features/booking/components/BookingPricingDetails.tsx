@@ -1,3 +1,4 @@
+import BookingDisclosure from "./BookingDisclosure";
 import { StyleSheet, Text, View } from "react-native";
 import type { BookingResponse } from "../types";
 import { formatMoney } from "../utils/format";
@@ -26,8 +27,7 @@ export default function BookingPricingDetails({ booking }: { booking: BookingRes
 
   return <>
     {days.length > 0 ? (
-      <View style={styles.card}>
-        <Text style={styles.title}>Giá thuê theo từng ngày</Text>
+      <BookingDisclosure title="Giá thuê theo từng ngày">
         {days.map((day) => (
           <View key={day.rentalDate} style={styles.day}>
             <View style={styles.dayTop}>
@@ -37,11 +37,10 @@ export default function BookingPricingDetails({ booking }: { booking: BookingRes
             {day.appliedRuleNames.length > 0 ? <Text style={styles.muted}>{day.appliedRuleNames.join(", ")}</Text> : null}
           </View>
         ))}
-      </View>
+      </BookingDisclosure>
     ) : null}
 
-    <View style={styles.card}>
-      <Text style={styles.title}>Quy định phí phụ thu</Text>
+    <BookingDisclosure title="Quy định phí phụ thu">
       <Text style={styles.intro}>Mức phí được chốt tại thời điểm đặt xe. Phí phát sinh thực tế sẽ được đối chiếu với quy định này.</Text>
       {terms.length === 0 ? <Text style={styles.muted}>Không có quy định phí phụ thu cho booking này.</Text> : terms.map((term) => (
         <View key={term.id} style={styles.term}>
@@ -57,6 +56,6 @@ export default function BookingPricingDetails({ booking }: { booking: BookingRes
           {term.description ? <Text style={styles.muted}>{term.description}</Text> : null}
         </View>
       ))}
-    </View>
+    </BookingDisclosure>
   </>;
 }

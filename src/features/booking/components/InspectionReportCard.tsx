@@ -15,6 +15,7 @@ export default function InspectionReportCard({ booking, report }: { booking?: Bo
   const { theme } = useTheme();
   const [selected, setSelected] = useState<string | null>(null);
   return <BookingCard>
+    <Text accessibilityRole="header" style={{ color: theme.text, fontWeight: "700", fontSize: 17 }}>{report.type === "CheckIn" ? "Biên bản nhận xe" : "Biên bản trả xe"} · Phiên bản {report.version ?? 1}</Text>
     <Text style={{ color: theme.muted }}>Lập lúc {formatVietnamDateTime(report.createdAt)} · Giờ Việt Nam</Text>
     <Text style={{ color: report.isCustomerConfirmed ? theme.success : theme.brand, fontWeight: "700" }}>{report.requiresRevision ? "Khách yêu cầu lập lại biên bản" : report.isCustomerConfirmed ? "Khách đã xác nhận" : "Chờ khách xác nhận"}</Text>
     {report.requiresRevision ? <Text style={{ color: theme.danger }}>Lý do: {report.revisionReason}</Text> : null}

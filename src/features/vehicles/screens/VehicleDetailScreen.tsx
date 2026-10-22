@@ -22,7 +22,7 @@ import SurchargePolicySummary from "@/features/vehicles/components/SurchargePoli
 import { BookingButton } from "@/features/booking/components/BookingControls";
 
 type DetailRoute = RouteProp<ExploreStackParamList, "VehicleDetail">;
-type DetailNav = NativeStackNavigationProp<ExploreStackParamList, "VehicleDetail">;
+type DetailNav = Pick<NativeStackNavigationProp<ExploreStackParamList, "VehicleDetail">, "goBack">;
 
 export default function VehicleDetailScreen({
   route,

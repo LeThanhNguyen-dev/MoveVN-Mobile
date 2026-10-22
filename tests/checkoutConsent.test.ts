@@ -16,7 +16,7 @@ it("shows the mileage fee and full due amount before confirming the version view
   const confirm = vi.fn(); let tree!: ReturnType<typeof create>;
   await act(async () => { tree = create(React.createElement(CheckoutConfirmation, { booking, report, busy: false, onClose: vi.fn(), onConfirm: confirm })); });
   const text = JSON.stringify(tree.toJSON());
-  expect(text).toContain("Phụ phí vượt km"); expect(text).toContain("250.000"); expect(text).toContain("1.870.000"); expect(text).toContain("toàn bộ phụ phí đã hiển thị"); expect(text).toContain("Bùn đất trong xe"); expect(text).toContain("Đối chiếu công-tơ-mét");
+  expect(text).toContain("Phụ phí vượt km"); expect(text).toContain("250.000"); expect(text).not.toContain("1.870.000"); expect(text).toContain("1.500.000"); expect(text).toContain("370.000"); expect(text).toContain("toàn bộ phụ phí đã hiển thị"); expect(text).toContain("Bùn đất trong xe"); expect(text).toContain("Đồng hồ km");
   expect(tree.root.findAll(n => (n.type as unknown) === "Text" && n.children.includes("Qua ví MoveVN trên web/app"))).toHaveLength(0);
   expect(confirm).not.toHaveBeenCalled();
   const continueButton = tree.root.findAll(n => (n.type as unknown) === "Pressable" && n.findAll(c => (c.type as unknown) === "Text" && c.children.includes("Tôi đã bàn giao xe · Tiếp tục")).length > 0)[0]!;

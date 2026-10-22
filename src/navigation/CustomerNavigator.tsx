@@ -38,6 +38,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [tripsRoute, setTripsRoute] = useState("TripList");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
   const [chatRoute, setChatRoute] = useState("ChatList");
+  const [pendingVehicleId, setPendingVehicleId] = useState<number | null>(null);
   const [quickBook, setQuickBook] = useState<QuickBookParams | null>(null);
   const [pendingDispute, setPendingDispute] = useState<DisputeCreatePrefill | null>(null);
   const [disputeOrigin, setDisputeOrigin] = useState<{ tab: "trips" } | null>(null);
@@ -120,6 +121,8 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onAvatarPress={() => setShowProfile(true)}
                 onRouteChange={handleExploreRouteChange}
                 onBookingCreated={goToTrip}
+                pendingVehicleId={pendingVehicleId}
+                onConsumedVehicle={() => setPendingVehicleId(null)}
                 quickBook={quickBook}
                 onConsumedQuickBook={consumeQuickBook}
                 onGoDeals={() => setActiveTab("deals")}
@@ -150,8 +153,8 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
           {showBottomBar ? (
             <MobileBottomBar activeKey={activeTab} items={customerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} />
           ) : null}
-          {/* ChatbotAI đặt xe nhanh: mở form đặt xe điền sẵn, xác nhận xong qua chuyến đi */}
-          <AssistantFab onQuickBook={handleQuickBook} onBookingConfirmed={goToTrip} />
+          {/* Giữ xác nhận và thanh toán trong chat; mở chi tiết khi khách chọn. */}
+          {!(activeTab === "trips" && tripsRoute === "TripHandover") && <AssistantFab key={user.userId} onViewVehicle={id => { setPendingVehicleId(id); setActiveTab("explore"); }} onViewBooking={goToTrip} onQuickBook={handleQuickBook} />}
         </>
       )}
     </SafeAreaView>

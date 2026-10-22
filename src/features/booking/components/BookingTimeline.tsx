@@ -1,3 +1,4 @@
+import BookingDisclosure from "./BookingDisclosure";
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { Theme } from "@/theme/tokens";
@@ -11,8 +12,7 @@ export default function BookingTimeline({ history }: { history: BookingStatusHis
   const styles = useMemo(() => createStyles(theme), [theme]);
   if (!history || history.length === 0) return null;
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>Lịch sử giao dịch & Trạng thái</Text>
+    <BookingDisclosure title="Lịch sử giao dịch & Trạng thái">
       {history.map((h, i) => (
         <View key={`${h.createdAt}-${i}`} style={styles.row}>
           <View style={styles.markerColumn}>
@@ -34,7 +34,7 @@ export default function BookingTimeline({ history }: { history: BookingStatusHis
           </View>
         </View>
       ))}
-    </View>
+    </BookingDisclosure>
   );
 }
 

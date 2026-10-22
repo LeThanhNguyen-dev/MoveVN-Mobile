@@ -18,11 +18,15 @@ import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { subscribeAssistant } from "@/features/assistant/assistantConnection";
+import { getAssistantReplies } from "@/features/assistant/assistantPresentation";
+import BookingFunnel from "@/features/assistant/components/BookingFunnel";
+import PolicyDetailScreen from "@/features/cms/screens/PolicyDetailScreen";
+import { Image } from "expo-image";
+import * as SecureStore from "expo-secure-store";
 import { AgentBlocks } from "@/features/assistant/components/AssistantBooking";
 import {
   assistantError,
   createConversation,
-  getConversationState,
   getDraft,
   getHistory,
   getMessage,
@@ -122,12 +126,21 @@ export default function AssistantScreen({
   const [firstPage, setFirstPage] = useState(1);
   const [votes, setVotes] = useState<Record<string, boolean>>({});
 
+  const [funnelOpen, setFunnelOpen] = useState(false);
+  const [policySlug, setPolicySlug] = useState<string | null>(null);
+  const [revision, setRevision] = useState(0);
+  const attempt = useRef<{ conversationId: string; content: string; clientId: string } | null>(null);
   const hydrated = useRef(false);
   const alive = useRef(true);
   const sendLock = useRef(false);
   const listRef = useRef<FlatList>(null);
   const refreshSequence = useRef(0);
   const earliestPage = useRef<number | null>(null);
+  const storageKey = `movevn_assistant_${user?.userId}`;
+
+  useEffect(() => {
+    if (conversation && user) void SecureStore.setItemAsync(storageKey, conversation.id).catch(() => undefined);
+  }, [conversation?.id, storageKey, user]);
 
   const refresh = useCallback(async (selected: Conversation, signal?: AbortSignal) => {
     const sequence = ++refreshSequence.current;
@@ -142,6 +155,7 @@ export default function AssistantScreen({
       rows.push(...page.items);
     }
     if (!alive.current || signal?.aborted || sequence !== refreshSequence.current) return;
+    setRevision(value => value + 1);
     earliestPage.current = startPage;
     setItems((previous) => {
       const byId = new Map(previous.map((item) => [item.id, item]));
@@ -178,7 +192,9 @@ export default function AssistantScreen({
       .then(async (page) => {
         if (abort.signal.aborted) return;
         setConversations(page.items);
-        const selected = page.items.find((item) => item.status !== "Closed") ?? null;
+        const stored = await SecureStore.getItemAsync(storageKey).catch(() => null);
+        if (abort.signal.aborted) return;
+        const selected = page.items.find(item => item.id === stored) ?? page.items.find((item) => item.status !== "Closed") ?? null;
         setConversation(selected);
         if (selected) await refresh(selected, abort.signal);
         hydrated.current = true;
@@ -190,7 +206,7 @@ export default function AssistantScreen({
         if (!abort.signal.aborted) setLoading(false);
       });
     return () => abort.abort();
-  }, [user, refresh]);
+  }, [user, refresh, storageKey]);
 
   // Realtime qua SignalR, fallback polling khi đang chờ.
   useEffect(() => {
@@ -208,6 +224,7 @@ export default function AssistantScreen({
         setProgress(labels[event.status] ?? "MoveVN đang xử lý…");
         if (["Completed", "Failed", "Cancelled", "DraftUpdated", "Finishing"].includes(event.status)) {
           void refresh(conversation, abort.signal).catch(() => undefined);
+          void listConversations(abort.signal).then(page => { const current = page.items.find(item => item.id === conversation.id); if (current && !abort.signal.aborted) setConversation(previous => previous?.status === current.status ? previous : current); }).catch(() => undefined);
         }
       },
       (online) => {
@@ -226,14 +243,20 @@ export default function AssistantScreen({
   useEffect(() => {
     if (!conversation) return;
     if (!pending && conversation.status !== "WaitingForStaff" && conversation.status !== "StaffActive") return;
-    const timer = setTimeout(
-      () => {
-        void refresh(conversation).catch(() => undefined);
-      },
-      connected && conversation.status === "BotActive" ? 15000 : 3000,
-    );
-    return () => clearTimeout(timer);
-  }, [conversation, pending, connected, refresh, items]);
+    const abort = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        await refresh(conversation, abort.signal);
+        const page = await listConversations(abort.signal);
+        const current = page.items.find(item => item.id === conversation.id);
+        if (current && !abort.signal.aborted) setConversation(previous => previous?.status === current.status ? previous : current);
+      } catch { /* Keep polling after a transient connection failure. */ }
+      if (!abort.signal.aborted) timer = setTimeout(poll, connected && conversation.status === "BotActive" ? 15000 : 3000);
+    };
+    timer = setTimeout(poll, 3000);
+    return () => { abort.abort(); clearTimeout(timer); };
+  }, [conversation, pending, connected, refresh]);
 
   useEffect(() => {
     if (items.length > 0) {
@@ -252,7 +275,11 @@ export default function AssistantScreen({
       const current = conversation ?? (await createConversation());
       setConversation(current);
       hydrated.current = true;
-      const result = await sendQuestion(current.id, content.trim(), newClientId());
+      const request = attempt.current?.conversationId === current.id && attempt.current.content === content.trim()
+        ? attempt.current : { conversationId: current.id, content: content.trim(), clientId: newClientId() };
+      attempt.current = request;
+      const result = await sendQuestion(current.id, request.content, request.clientId);
+      attempt.current = null;
       setDraft("");
       setPending(["Queued", "Processing"].includes(result.status));
       await refresh(current);
@@ -265,6 +292,10 @@ export default function AssistantScreen({
   }
 
   function newConversation() {
+    void SecureStore.deleteItemAsync(storageKey).catch(() => undefined);
+    refreshSequence.current++;
+    attempt.current = null;
+    setFirstPage(1);
     earliestPage.current = null;
     setConversation(null);
     setItems([]);
@@ -277,6 +308,10 @@ export default function AssistantScreen({
   }
 
   async function choose(current: Conversation) {
+    refreshSequence.current++;
+    attempt.current = null;
+    setItems([]);
+    setFirstPage(1);
     earliestPage.current = null;
     setConversation(current);
     setError(null);
@@ -364,29 +399,10 @@ export default function AssistantScreen({
       setConversation(current);
       hydrated.current = true;
       if (patch && Object.keys(patch).length > 0) {
-        const existing = await getDraft(current.id).catch(() => null);
-        await patchDraft(current.id, existing?.version ?? 0, patch).catch(() => null);
+        const existing = await getDraft(current.id);
+        await patchDraft(current.id, existing?.version ?? 0, patch);
       }
-      const [draft, state] = await Promise.all([
-        getDraft(current.id).catch(() => null),
-        getConversationState(current.id).catch(() => null),
-      ]);
-      const slots = draft?.slots ?? {};
-      const activeFilters = state?.activeFilters as Record<string, unknown> | undefined;
-      const vehicleId = slots.vehicleId ?? state?.focusVehicleId ?? undefined;
-      if (!vehicleId) {
-        setError("Bạn chọn xe trong đoạn chat trước nhé — mình sẽ điền sẵn vào form đặt xe.");
-        return;
-      }
-      onQuickBook?.({
-        vehicleId,
-        startAt: slots.startAt ?? (activeFilters?.startAt as string | undefined) ?? null,
-        endAt: slots.endAt ?? (activeFilters?.endAt as string | undefined) ?? null,
-        promoCode: slots.promoCode ?? null,
-        pickupAddress: slots.pickupAddress ?? null,
-        returnAddress: slots.returnAddress ?? null,
-        customerNote: slots.customerNote ?? null,
-      });
+      setFunnelOpen(true);
     } catch (err) {
       setError(getApiErrorMessage(err, "Chưa mở được đặt xe nhanh. Bạn thử lại nhé."));
     } finally {
@@ -417,6 +433,16 @@ export default function AssistantScreen({
   const lastQuestion = [...items].reverse().find((item) => item.role === "user")?.content;
   const lastAnswer = [...items].reverse().find((item) => item.answer);
 
+  if (policySlug) return <PolicyDetailScreen slug={policySlug} onBack={() => setPolicySlug(null)} />;
+  if (funnelOpen && conversation) {
+    const byId = new Map<number, ResourceCard>();
+    for (const item of items) for (const group of item.answer?.cards ?? []) {
+      if (group.name.startsWith("vehicles.") && group.name !== "vehicles.reviews")
+        for (const vehicle of group.data.items ?? [group.data]) if (vehicle.id) byId.set(vehicle.id, vehicle);
+    }
+    return <BookingFunnel conversationId={conversation.id} vehicles={[...byId.values()]} revision={revision} onClose={() => setFunnelOpen(false)} onViewBooking={onViewBooking} />;
+  }
+
   return (
     // Tránh bàn phím đè ô nhập trên cả iOS lẫn Android.
     <KeyboardAvoidingView
@@ -430,10 +456,10 @@ export default function AssistantScreen({
           <Text numberOfLines={1} style={styles.headerTitle}>Trợ lý MoveVN</Text>
           <Text numberOfLines={1} style={styles.headerSub}>{statusText[conversation?.status ?? "BotActive"]}</Text>
         </View>
-        <Pressable accessibilityLabel="Lịch sử trò chuyện" onPress={() => void showHistory()} style={styles.iconButton}>
+        <Pressable accessibilityLabel="Lịch sử trò chuyện" disabled={busy || loading} onPress={() => void showHistory()} style={styles.iconButton}>
           <History color={theme.muted} size={18} />
         </Pressable>
-        <Pressable accessibilityLabel="Cuộc trò chuyện mới" onPress={newConversation} style={styles.iconButton}>
+        <Pressable accessibilityLabel="Cuộc trò chuyện mới" disabled={busy || loading} onPress={newConversation} style={styles.iconButton}>
           <Plus color={theme.muted} size={20} />
         </Pressable>
         <Pressable accessibilityLabel="Đóng trợ lý" onPress={onBack} style={styles.iconButton}>
@@ -507,7 +533,7 @@ export default function AssistantScreen({
                   <Text style={styles.title}>Mình có thể giúp gì cho bạn?</Text>
                   <Text style={styles.muted}>Cùng tìm chiếc xe phù hợp hoặc giải đáp về chuyến đi của bạn.</Text>
                   {prompts.map((text) => (
-                    <Pressable key={text} disabled={busy} onPress={() => void send(text)} style={styles.promptChip}>
+                    <Pressable key={text} disabled={busy || pending} onPress={() => void send(text)} style={styles.promptChip}>
                       <Text style={styles.promptText}>{text}</Text>
                     </Pressable>
                   ))}
@@ -527,6 +553,8 @@ export default function AssistantScreen({
                     <AnswerDetails
                       answer={item.answer}
                       conversationId={conversation?.id}
+                      onViewPolicy={setPolicySlug}
+                      onMore={() => void send("Xem thêm xe")}
                       onViewVehicle={onViewVehicle}
                       onViewBooking={onViewBooking}
                       onBookVehicle={isCustomer && onQuickBook ? bookVehicle : undefined}
@@ -613,7 +641,7 @@ export default function AssistantScreen({
             </Pressable>
           ) : (
             <View style={styles.composer}>
-              {!staff && <QuickReplies lastAnswer={lastAnswer?.answer?.quickReplies} onPick={(text) => void send(text)} disabled={busy || pending} />}
+              {!staff && <QuickReplies content={lastAnswer?.content ?? ""} lastAnswer={lastAnswer?.answer?.quickReplies} onPick={(text) => void send(text)} disabled={busy || pending} />}
               <View style={styles.inputRow}>
                 <TextInput
                   value={draft}
@@ -657,12 +685,10 @@ export default function AssistantScreen({
   );
 }
 
-function QuickReplies({ disabled, onPick, lastAnswer }: { disabled: boolean; onPick: (text: string) => void; lastAnswer?: string[] }) {
+function QuickReplies({ disabled, onPick, lastAnswer, content }: { disabled: boolean; onPick: (text: string) => void; lastAnswer?: string[]; content: string }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const chips = lastAnswer?.length
-    ? lastAnswer
-    : ["Tìm xe phù hợp với tôi", "Có mã giảm giá nào không?", "Tôi muốn xem booking của mình"];
+  const chips = getAssistantReplies(content, lastAnswer);
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
       {chips.map((text) => (
@@ -678,6 +704,8 @@ function AnswerDetails({
   answer,
   conversationId,
   onViewVehicle,
+  onViewPolicy,
+  onMore,
   onViewBooking,
   onBookVehicle,
   onUsePromo,
@@ -687,6 +715,8 @@ function AnswerDetails({
 }: {
   answer: AssistantAnswer;
   conversationId?: string;
+  onViewPolicy: (slug: string) => void;
+  onMore: () => void;
   onViewVehicle?: (vehicleId: number) => void;
   onViewBooking?: (bookingId: number) => void;
   onBookVehicle?: (vehicleId: number, startAt?: string | null, endAt?: string | null) => void;
@@ -705,6 +735,7 @@ function AnswerDetails({
           conversationId={conversationId}
           onChanged={() => onDraftChanged?.()}
           onBooked={onBooked}
+          onViewBooking={onViewBooking}
         />
       ) : null}
       {answer.cards.map((group, index) => (
@@ -713,6 +744,10 @@ function AnswerDetails({
           {group.name.startsWith("vehicles.") && group.data.availabilityChecked === false && (
             <Text style={styles.muted}>Giá cơ bản; cần ngày nhận và trả để kiểm tra lịch trống.</Text>
           )}
+          {group.data.availabilityChecked && group.data.startDate && group.data.endDate && <Text style={styles.muted}>Lịch thuê: {new Date(group.data.startDate).toLocaleString("vi-VN")} – {new Date(group.data.endDate).toLocaleString("vi-VN")}</Text>}
+          {group.name === "vehicles.reviews" && group.data.averageRating != null && <Text style={styles.promo}>★ {group.data.averageRating}/5 · {group.data.totalCount ?? group.data.items?.length ?? 0} đánh giá</Text>}
+          {group.name === "vehicles.reviews" && !group.data.items?.length && <Text style={styles.muted}>Xe này chưa có đánh giá công khai.</Text>}
+          {group.name === "promotions.list" && !group.data.items?.length && <Text style={styles.muted}>Hiện chưa có mã giảm giá nào.</Text>}
           {(group.data.items ?? [group.data])
             .filter((card) => card.id)
             .map((card: ResourceCard) => {
@@ -720,13 +755,21 @@ function AnswerDetails({
               const meta = [card.seatCount ? `${card.seatCount} chỗ` : null, card.transmission, card.fuelType, card.areaName]
                 .filter(Boolean)
                 .join(" · ");
-              const isVehicle = group.name.startsWith("vehicles.");
+              const isVehicle = group.name.startsWith("vehicles.") && group.name !== "vehicles.reviews";
               const isBooking = group.name.startsWith("bookings.");
               // Chưa cắm điều hướng thì card chỉ đọc — không hiện link để tránh bấm chết.
               const canOpen = (isVehicle && onViewVehicle) || (isBooking && onViewBooking);
               const body = (
                 <>
-                  <Text style={styles.cardTitle}>{title}</Text>
+                  {(card.featuredImage || card.vehicleImage) && <Image source={card.featuredImage || card.vehicleImage} style={{ width: "100%", height: 100, borderRadius: 8 }} contentFit="cover" />}
+                  {group.name !== "vehicles.reviews" && <Text style={styles.cardTitle}>{title}</Text>}
+                  {card.status && <Text style={styles.muted}>{card.status}</Text>}
+                  {card.quote && <Text style={styles.muted}>Dự kiến hoàn: {money(card.quote.refundAmount)} · {card.quote.policyMessage}</Text>}
+                  {card.rating != null && <Text style={styles.promo}>{"★".repeat(Math.max(0, Math.min(5, Math.round(card.rating))))} · {card.rating}/5</Text>}
+                  {card.description && <Text style={styles.muted}>{card.description}</Text>}
+                  {card.code && card.discountValue != null && <Text style={styles.promo}>{card.discountType === "Percent" ? `Giảm ${card.discountValue}%${card.maxDiscountAmount ? ` (tối đa ${money(card.maxDiscountAmount)})` : ""}` : `Giảm ${money(card.discountValue)}`}</Text>}
+                  {card.minOrderAmount != null && <Text style={styles.muted}>Đơn tối thiểu: {money(card.minOrderAmount)}</Text>}
+                  {card.code && card.endAt && <Text style={styles.muted}>HSD: {new Date(card.endAt).toLocaleDateString("vi-VN")}</Text>}
                   {meta ? <Text style={styles.muted}>{meta}</Text> : null}
                   {card.pricePerDay != null && <Text style={styles.price}>{money(card.pricePerDay)}/ngày</Text>}
                   {card.totalDynamicPrice != null && (
@@ -741,7 +784,10 @@ function AnswerDetails({
                     </Text>
                   ) : null}
                   {card.comment ? <Text style={styles.muted}>{card.comment}</Text> : null}
-                  {canOpen ? <Text style={styles.link}>{isBooking ? "Xem booking" : "Xem chi tiết"}</Text> : null}
+                  {canOpen ? <Pressable accessibilityRole="link" onPress={() => {
+                    if (isVehicle) onViewVehicle?.(card.id);
+                    else if (isBooking) onViewBooking?.(card.id);
+                  }}><Text style={styles.link}>{isBooking ? "Xem booking" : "Xem chi tiết"}</Text></Pressable> : null}
                   {isVehicle && onBookVehicle ? (
                     <Pressable
                       disabled={disabled}
@@ -764,31 +810,22 @@ function AnswerDetails({
                   ) : null}
                 </>
               );
-              return canOpen ? (
-                <Pressable
-                  key={card.id}
-                  onPress={() => {
-                    if (isVehicle) onViewVehicle?.(card.id);
-                    else if (isBooking) onViewBooking?.(card.id);
-                  }}
-                  style={styles.card}
-                >
-                  {body}
-                </Pressable>
-              ) : (
+              return (
                 <View key={card.id} style={styles.card}>
                   {body}
                 </View>
               );
             })}
+          {group.name === "vehicles.reviews" && group.data.id && onViewVehicle && <Pressable onPress={() => onViewVehicle(group.data.id)}><Text style={styles.link}>Xem xe</Text></Pressable>}
+          {group.data.hasMore && <Pressable disabled={disabled} onPress={onMore}><Text style={styles.link}>Xem thêm xe</Text></Pressable>}
         </View>
       ))}
       {answer.sources.length > 0 && (
         <View style={styles.sources}>
-          {answer.sources.map((source) => (
-            <View key={source.id} style={styles.sourceChip}>
+          {answer.sources.filter((source, index, all) => all.findIndex(item => item.id === source.id) === index).map((source) => (
+            <Pressable key={source.id} accessibilityRole="link" onPress={() => onViewPolicy(source.slug)} style={styles.sourceChip}>
               <Text style={styles.sourceText}>{source.title}</Text>
-            </View>
+            </Pressable>
           ))}
         </View>
       )}

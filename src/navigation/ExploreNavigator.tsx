@@ -21,6 +21,8 @@ export default function ExploreNavigator({
   onBookingCreated,
   quickBook,  onConsumedQuickBook,
   onGoDeals,
+  pendingVehicleId,
+  onConsumedVehicle,
 }: {
   user: AuthUser;
   onAvatarPress: () => void;
@@ -29,6 +31,8 @@ export default function ExploreNavigator({
   quickBook?: QuickBookParams | null;
   onConsumedQuickBook?: () => void;
   onGoDeals?: () => void;
+  pendingVehicleId?: number | null;
+  onConsumedVehicle?: () => void;
 }) {
   const { theme } = useTheme();
   // Giữ navigation của stack để điều hướng đặt xe nhanh từ chatbot
@@ -54,6 +58,12 @@ export default function ExploreNavigator({
     }
     onConsumedQuickBook?.();
   }, [quickBook, onConsumedQuickBook]);
+
+  useEffect(() => {
+    if (!pendingVehicleId || !exploreNavRef.current) return;
+    exploreNavRef.current.navigate("VehicleDetail", { vehicleId: pendingVehicleId });
+    onConsumedVehicle?.();
+  }, [pendingVehicleId, onConsumedVehicle]);
 
   return (
     <Stack.Navigator

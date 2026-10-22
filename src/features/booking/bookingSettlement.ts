@@ -4,7 +4,7 @@ export function inspectionBalance(booking: BookingResponse, report: InspectionRe
   const rentalRemaining = Math.max(booking.totalAmount - booking.escrowAmount, 0);
   const pending = report.type === "CheckOut" ? report.pendingSurchargeAmount ?? (report.isCustomerConfirmed ? 0 : (report.lateReturnFee ?? 0) + (report.excessMileageFee ?? 0) + (report.additionalSurcharges ?? []).reduce((sum, fee) => sum + fee.amount, 0)) : 0;
   const outstanding = report.type === "CheckOut" ? report.outstandingSurchargeAmount ?? booking.outstandingSurchargeAmount ?? 0 : 0;
-  return { rentalRemaining, pending, outstanding, totalRemaining: rentalRemaining + pending + outstanding };
+  return { rentalRemaining, pending, outstanding, surchargeRemaining: pending + outstanding };
 }
 
 export function mileagePreview(booking: BookingResponse, initialKm: number | undefined, finalKm: string) {

@@ -1,3 +1,6 @@
+import PublicUserProfileScreen from "@/features/users/screens/PublicUserProfileScreen";
+import VehicleDetailScreen from "@/features/vehicles/screens/VehicleDetailScreen";
+import WalletScreen from "@/features/wallets/screens/WalletScreen";
 import { useEffect, useRef } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import TripDetailScreen from "@/features/booking/screens/TripDetailScreen";
@@ -48,6 +51,10 @@ export default function TripsNavigator({
       >
         {(props) => <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} />}
       </Stack.Screen>
+      <Stack.Screen name="TripHandover">{(props) => <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} />}</Stack.Screen>
+      <Stack.Screen name="BookingWallet">{({ navigation }) => <WalletScreen onBack={() => navigation.goBack()} />}</Stack.Screen>
+      <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} />
+      <Stack.Screen name="BookingUserProfile">{({ route, navigation }) => <PublicUserProfileScreen userId={route.params.userId} onBack={() => navigation.goBack()} onViewVehicle={vehicleId => navigation.navigate("VehicleDetail", { vehicleId })} />}</Stack.Screen>
       <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} />}</Stack.Screen>
     </Stack.Navigator>
   );
