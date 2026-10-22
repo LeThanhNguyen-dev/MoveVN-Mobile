@@ -27,7 +27,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ArrowLeft, MessageSquare } from "lucide-react-native";
+import AppText from "@/components/AppText";
+import { ArrowLeft, ChevronRight, MessageSquare } from "lucide-react-native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TripsStackParamList } from "@/navigation/types";
@@ -79,10 +80,12 @@ export default function TripDetailScreen({
   route,
   navigation,
   onOpenDisputes,
+  onOpenUserProfile,
 }: {
   route: DetailRoute;
   navigation: DetailNav;
   onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -502,6 +505,32 @@ export default function TripDetailScreen({
         ) : null}
 
         <View style={styles.card}>
+          <Text style={styles.cardTitle}>Chủ xe</Text>
+          {onOpenUserProfile && booking.ownerId ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Xem hồ sơ chủ xe ${booking.ownerName || ""}`}
+              onPress={() => onOpenUserProfile(booking.ownerId)}
+              style={styles.personRow}
+            >
+              <View style={styles.personAvatar}>
+                <AppText style={styles.personAvatarText}>
+                  {(booking.ownerName || "C").charAt(0).toUpperCase()}
+                </AppText>
+              </View>
+              <AppText style={styles.personName} numberOfLines={1}>
+                {booking.ownerName?.trim() || `Chủ xe #${booking.ownerId}`}
+              </AppText>
+              <ChevronRight color={theme.muted} size={16} />
+            </Pressable>
+          ) : (
+            <Text style={styles.muted}>
+              {booking.ownerName?.trim() || `Chủ xe #${booking.ownerId}`}
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.card}>
           <Text style={styles.cardTitle}>Lịch trình & địa điểm</Text>
           <Row label="Nhận xe" value={formatDateTime(booking.startDate)} />
           <Text style={styles.address}>{booking.pickupAddress}</Text>
@@ -577,7 +606,7 @@ export default function TripDetailScreen({
             <Text style={styles.cardTitle}>Đặt cọc giữ xe</Text>
             {booking.paymentDueAt ? <Text style={styles.muted}>Hạn cọc: {formatDateTime(booking.paymentDueAt)}. Quá hạn booking sẽ tự hủy.</Text> : null}
             {depositExpired ? (
-              <Text style={styles.damage}>Booking không còn hiệu lực nhận cọc (đã hết hạn thanh toán hoặc đã đến giờ nhận xe). Hệ thống sẽ tự hủy booking này.</Text>
+              <Text style={styles.damage}>Booking không còn hiệu lực nhận cọc vì đã hết hạn thanh toán. Hệ thống sẽ tự hủy booking này.</Text>
             ) : (
               <>
                 <ActionButton
@@ -886,6 +915,22 @@ const createStyles = (theme: Theme) =>
     reviewDate: { color: theme.muted, fontSize: 11 },
     reviewComment: { color: theme.text, fontSize: 13, marginLeft: 42 },
     muted: { color: theme.muted, fontSize: 13 },
+    personRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingVertical: 4,
+    },
+    personAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.brandSoft,
+    },
+    personAvatarText: { color: theme.brand, fontSize: 13, fontWeight: "900" },
+    personName: { flex: 1, color: theme.brand, fontSize: 13, fontWeight: "700" },
     address: { color: theme.text, fontSize: 13, marginBottom: 4 },
     note: { color: theme.muted, fontSize: 13, fontStyle: "italic" },
     contractRow: {

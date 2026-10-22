@@ -81,6 +81,10 @@ export function startChatConnection() {
       created.on("chat.roomUpdated", (room: ChatRoom) => {
         if (current()) store.getState().patchRoom(room);
       });
+      // Assistant screens subscribe to this event on their own hub connection.
+      // The server broadcasts it to every connection in the user's group, so
+      // register a no-op here to avoid SignalR's "No client method" warning.
+      created.on("AssistantUpdated", () => undefined);
       created.onreconnecting(() => {
         if (current()) store.setState({ connectionStatus: "connecting" });
       });

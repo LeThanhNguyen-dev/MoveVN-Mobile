@@ -50,11 +50,13 @@ export default function ChatRoomScreen({
   bookingId,
   onBack,
   onBookingPress,
+  onOpenUserProfile,
 }: {
   roomId?: string;
   bookingId?: number;
   onBack: () => void;
   onBookingPress: (bookingId: number) => void;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   const userId = useAuthStore((auth) => auth.user?.userId ?? 0);
@@ -251,12 +253,28 @@ export default function ChatRoomScreen({
           <ArrowLeft size={23} color={theme.text} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <AppText
-            numberOfLines={1}
-            style={{ color: theme.text, fontSize: 17, fontWeight: "800" }}
-          >
-            {person?.name ?? "Chat booking"}
-          </AppText>
+          {onOpenUserProfile && person?.id ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Xem hồ sơ ${person?.name ?? ""}`}
+              onPress={() => onOpenUserProfile(person!.id)}
+              style={styles.personLink}
+            >
+              <AppText
+                numberOfLines={1}
+                style={{ color: theme.text, fontSize: 17, fontWeight: "800" }}
+              >
+                {person?.name ?? "Chat booking"}
+              </AppText>
+            </Pressable>
+          ) : (
+            <AppText
+              numberOfLines={1}
+              style={{ color: theme.text, fontSize: 17, fontWeight: "800" }}
+            >
+              {person?.name ?? "Chat booking"}
+            </AppText>
+          )}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Xem booking"
@@ -755,6 +773,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  personLink: { alignSelf: "flex-start" },
   composer: { padding: 8, gap: 8, borderTopWidth: StyleSheet.hairlineWidth },
   send: {
     width: 44,

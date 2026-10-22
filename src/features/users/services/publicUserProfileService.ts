@@ -1,3 +1,4 @@
+import axios from "axios";
 import { apiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
 import type { ApiResponse } from "@/features/auth/types";
@@ -24,6 +25,7 @@ export type PublicProfileReview = {
   createdAt: string;
 };
 
+/** Hồ sơ công khai (mirror web PublicUserProfile — không có email/SĐT/giấy tờ). */
 export type PublicUserProfile = {
   userId: number;
   fullName: string;
@@ -32,13 +34,15 @@ export type PublicUserProfile = {
   createdAt: string;
   lastSeenAt: string | null;
 
+  /** true chỉ khi là chủ xe đã duyệt & không bị khoá. */
   isOwner: boolean;
   isVerified: boolean;
-  tier: string | null;
-  totalTrips: number;
+  /** Điểm đánh giá trung bình (1 chữ số thập phân), null khi chưa có đánh giá. */
   averageRating: number | null;
 
-  totalReviews: number;
+  completedTripsAsOwner: number;
+  completedTripsAsCustomer: number;
+  totalReviewsReceived: number;
   totalVehicles: number;
 
   vehicles: PublicProfileVehicle[];
@@ -51,4 +55,9 @@ export async function getPublicUserProfile(userId: number): Promise<PublicUserPr
     throw new Error(res.data.message || "Public user profile not found.");
   }
   return res.data.data;
+}
+
+/** Người dùng không tồn tại / đã bị vô hiệu hoá (HTTP 404). */
+export function isPublicProfileNotFound(error: unknown): boolean {
+  return axios.isAxiosError(error) && error.response?.status === 404;
 }

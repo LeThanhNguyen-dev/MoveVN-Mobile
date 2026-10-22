@@ -32,6 +32,25 @@ import {
 } from "@/features/contracts/types";
 import { formatDateTime, formatMoney } from "@/features/booking/utils/format";
 import { getApiErrorMessage } from "@/services/apiClient";
+import * as DeviceStorage from "@/services/deviceStorage";
+
+const SIGN_OTP_TTL_MS = 10 * 60 * 1000;
+
+function signOtpStorageKey(userId: number, contractId: number) {
+  return `movevn.contract-sign-otp:${userId}:${contractId}`;
+}
+
+async function hasUnexpiredSignOtp(userId: number, contractId: number) {
+  const key = signOtpStorageKey(userId, contractId);
+  try {
+    const sentAt = Number(await DeviceStorage.getItemAsync(key));
+    if (Number.isFinite(sentAt) && sentAt > 0 && Date.now() - sentAt < SIGN_OTP_TTL_MS) return true;
+    await DeviceStorage.deleteItemAsync(key);
+  } catch {
+    // OTP delivery must still work if device storage is unavailable.
+  }
+  return false;
+}
 
 function canSignContract(contract: ContractSummary, userId: number): boolean {
   if (contract.status !== "PendingSigning" && contract.status !== "Draft") return false;
@@ -134,7 +153,14 @@ export default function ContractBlock({
         await sendForSigning(contract.id);
         await load();
       }
-      await requestSignOtp(contract.id);
+      if (!(await hasUnexpiredSignOtp(userId, contract.id))) {
+        await requestSignOtp(contract.id);
+        try {
+          await DeviceStorage.setItemAsync(signOtpStorageKey(userId, contract.id), String(Date.now()));
+        } catch {
+          // The backend still limits duplicate OTP requests if local storage fails.
+        }
+      }
       setOtp("");
       setOtpModal({ contract });
     } catch (err) {
@@ -153,6 +179,11 @@ export default function ContractBlock({
     setOtpBusy(true);
     try {
       await verifySignOtp(otpModal.contract.id, otp.trim());
+      try {
+        await DeviceStorage.deleteItemAsync(signOtpStorageKey(userId, otpModal.contract.id));
+      } catch {
+        // A stale timestamp expires automatically after the OTP validity window.
+      }
       Alert.alert("Thành công", "Bạn đã ký hợp đồng.");
       setOtpModal(null);
       setContent(null);

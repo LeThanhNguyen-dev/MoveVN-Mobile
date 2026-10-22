@@ -750,7 +750,7 @@ function AnswerDetails({
           {group.name === "promotions.list" && !group.data.items?.length && <Text style={styles.muted}>Hiện chưa có mã giảm giá nào.</Text>}
           {(group.data.items ?? [group.data])
             .filter((card) => card.id)
-            .map((card: ResourceCard) => {
+            .map((card: ResourceCard, cardIndex) => {
               const title = card.bookingCode || card.vehicleName || `${card.brandName ?? ""} ${card.modelName ?? ""}`.trim() || `#${card.id}`;
               const meta = [card.seatCount ? `${card.seatCount} chỗ` : null, card.transmission, card.fuelType, card.areaName]
                 .filter(Boolean)
@@ -811,7 +811,7 @@ function AnswerDetails({
                 </>
               );
               return (
-                <View key={card.id} style={styles.card}>
+                <View key={`${group.name}-${index}-${card.id}-${cardIndex}`} style={styles.card}>
                   {body}
                 </View>
               );

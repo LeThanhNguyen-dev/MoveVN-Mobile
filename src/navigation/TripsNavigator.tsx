@@ -17,11 +17,13 @@ export default function TripsNavigator({
   onConsumedPending,
   onRouteChange,
   onOpenDisputes,
+  onOpenUserProfile,
 }: {
   pendingBookingId: number | null;
   onConsumedPending: () => void;
   onRouteChange?: (route: string) => void;
   onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   const consumedRef = useRef(false);
@@ -49,13 +51,15 @@ export default function TripsNavigator({
         name="TripDetail"
         initialParams={hasPending ? { bookingId: pendingBookingId! } : undefined}
       >
-        {(props) => <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} />}
+        {(props) => (
+          <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} onOpenUserProfile={onOpenUserProfile} />
+        )}
       </Stack.Screen>
-      <Stack.Screen name="TripHandover">{(props) => <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} />}</Stack.Screen>
+      <Stack.Screen name="TripHandover">{(props) => <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} onOpenUserProfile={onOpenUserProfile} />}</Stack.Screen>
       <Stack.Screen name="BookingWallet">{({ navigation }) => <WalletScreen onBack={() => navigation.goBack()} />}</Stack.Screen>
       <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} />
-      <Stack.Screen name="BookingUserProfile">{({ route, navigation }) => <PublicUserProfileScreen userId={route.params.userId} onBack={() => navigation.goBack()} onViewVehicle={vehicleId => navigation.navigate("VehicleDetail", { vehicleId })} />}</Stack.Screen>
-      <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} />}</Stack.Screen>
+      <Stack.Screen name="BookingUserProfile">{({ route, navigation }) => <PublicUserProfileScreen userId={route.params.userId} onBack={() => navigation.goBack()} onOpenProfile={userId => navigation.push("BookingUserProfile", { userId })} onViewVehicle={vehicleId => navigation.navigate("VehicleDetail", { vehicleId })} />}</Stack.Screen>
+      <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} onOpenUserProfile={onOpenUserProfile} />}</Stack.Screen>
     </Stack.Navigator>
   );
 }

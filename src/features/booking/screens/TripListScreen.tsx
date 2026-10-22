@@ -121,6 +121,7 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
       </View>
 
       <BookingSearchFilters onApply={setSearch} />
+
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
