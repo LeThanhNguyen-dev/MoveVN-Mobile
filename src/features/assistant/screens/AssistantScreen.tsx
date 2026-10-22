@@ -715,7 +715,7 @@ function AnswerDetails({
           )}
           {(group.data.items ?? [group.data])
             .filter((card) => card.id)
-            .map((card: ResourceCard) => {
+            .map((card: ResourceCard, cardIndex) => {
               const title = card.bookingCode || card.vehicleName || `${card.brandName ?? ""} ${card.modelName ?? ""}`.trim() || `#${card.id}`;
               const meta = [card.seatCount ? `${card.seatCount} chỗ` : null, card.transmission, card.fuelType, card.areaName]
                 .filter(Boolean)
@@ -766,7 +766,7 @@ function AnswerDetails({
               );
               return canOpen ? (
                 <Pressable
-                  key={card.id}
+                  key={`${group.name}-${index}-${card.id}-${cardIndex}`}
                   onPress={() => {
                     if (isVehicle) onViewVehicle?.(card.id);
                     else if (isBooking) onViewBooking?.(card.id);
@@ -776,7 +776,7 @@ function AnswerDetails({
                   {body}
                 </Pressable>
               ) : (
-                <View key={card.id} style={styles.card}>
+                <View key={`${group.name}-${index}-${card.id}-${cardIndex}`} style={styles.card}>
                   {body}
                 </View>
               );
@@ -785,8 +785,8 @@ function AnswerDetails({
       ))}
       {answer.sources.length > 0 && (
         <View style={styles.sources}>
-          {answer.sources.map((source) => (
-            <View key={source.id} style={styles.sourceChip}>
+          {answer.sources.map((source, sourceIndex) => (
+            <View key={`${source.id}-${sourceIndex}`} style={styles.sourceChip}>
               <Text style={styles.sourceText}>{source.title}</Text>
             </View>
           ))}
