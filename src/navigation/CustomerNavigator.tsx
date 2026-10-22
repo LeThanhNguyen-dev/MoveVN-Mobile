@@ -8,6 +8,7 @@ import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import AssistantFab from "@/features/assistant/components/AssistantFab";
 import type { QuickBookParams } from "@/features/assistant/screens/AssistantScreen";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
+import PublicUserProfileScreen from "@/features/users/screens/PublicUserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
 import DealsNavigator from "./DealsNavigator";
 import ExploreNavigator from "./ExploreNavigator";
@@ -33,6 +34,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const showFavorites = useFavoriteStore((state) => state.open && state.userId === user.userId);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
   const [tripsRoute, setTripsRoute] = useState("TripList");
@@ -57,6 +59,11 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
 
   const consumePendingTrip = useCallback(() => {
     setPendingTripId(null);
+  }, []);
+
+  // Mở hồ sơ công khai của người dùng (chủ xe / khách / người đánh giá).
+  const openUserProfile = useCallback((userId: number) => {
+    setProfileUserId(userId);
   }, []);
 
   const handleQuickBook = useCallback((params: QuickBookParams) => {
@@ -105,6 +112,12 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
           onExplore={() => { useFavoriteStore.setState({ open: false }); setActiveTab("explore"); }}
           onBookingCreated={(bookingId) => { useFavoriteStore.setState({ open: false }); goToTrip(bookingId); }}
         />
+      ) : profileUserId != null ? (
+        <PublicUserProfileScreen
+          userId={profileUserId}
+          onBack={() => setProfileUserId(null)}
+          onOpenProfile={openUserProfile}
+        />
       ) : showProfile ? (
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />
       ) : showWallet ? (
@@ -123,6 +136,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 quickBook={quickBook}
                 onConsumedQuickBook={consumeQuickBook}
                 onGoDeals={() => setActiveTab("deals")}
+                onOpenUserProfile={openUserProfile}
               />
             ) : activeTab === "trips" ? (
               <TripsNavigator
@@ -130,11 +144,12 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onConsumedPending={consumePendingTrip}
                 onRouteChange={setTripsRoute}
                 onOpenDisputes={openDisputes}
+                onOpenUserProfile={openUserProfile}
               />
             ) : activeTab === "deals" ? (
-              <DealsNavigator />
+              <DealsNavigator onGoExplore={() => setActiveTab("explore")} />
             ) : activeTab === "messages" ? (
-              <ChatNavigator onRouteChange={setChatRoute} />
+              <ChatNavigator onRouteChange={setChatRoute} onOpenUserProfile={openUserProfile} />
             ) : (
               <AccountTabScreen
                 onProfilePress={() => setShowProfile(true)}

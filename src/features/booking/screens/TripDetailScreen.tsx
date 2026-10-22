@@ -21,7 +21,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ArrowLeft, MessageSquare } from "lucide-react-native";
+import AppText from "@/components/AppText";
+import { ArrowLeft, ChevronRight, MessageSquare } from "lucide-react-native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TripsStackParamList } from "@/navigation/types";
@@ -71,10 +72,12 @@ export default function TripDetailScreen({
   route,
   navigation,
   onOpenDisputes,
+  onOpenUserProfile,
 }: {
   route: DetailRoute;
   navigation: DetailNav;
   onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -426,6 +429,32 @@ export default function TripDetailScreen({
             Chủ xe có {autoCancelHours} giờ để duyệt. Nếu không phản hồi trước {formatDateTime(new Date(new Date(booking.createdAt).getTime() + autoCancelHours * 3600000).toISOString())}, hệ thống sẽ tự động từ chối booking.
           </Text>
         ) : null}
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Chủ xe</Text>
+          {onOpenUserProfile && booking.ownerId ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Xem hồ sơ chủ xe ${booking.ownerName || ""}`}
+              onPress={() => onOpenUserProfile(booking.ownerId)}
+              style={styles.personRow}
+            >
+              <View style={styles.personAvatar}>
+                <AppText style={styles.personAvatarText}>
+                  {(booking.ownerName || "C").charAt(0).toUpperCase()}
+                </AppText>
+              </View>
+              <AppText style={styles.personName} numberOfLines={1}>
+                {booking.ownerName?.trim() || `Chủ xe #${booking.ownerId}`}
+              </AppText>
+              <ChevronRight color={theme.muted} size={16} />
+            </Pressable>
+          ) : (
+            <Text style={styles.muted}>
+              {booking.ownerName?.trim() || `Chủ xe #${booking.ownerId}`}
+            </Text>
+          )}
+        </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Lịch trình & địa điểm</Text>
@@ -875,6 +904,22 @@ const createStyles = (theme: Theme) =>
     reviewDate: { color: theme.muted, fontSize: 11 },
     reviewComment: { color: theme.text, fontSize: 13, marginLeft: 42 },
     muted: { color: theme.muted, fontSize: 13 },
+    personRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingVertical: 4,
+    },
+    personAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.brandSoft,
+    },
+    personAvatarText: { color: theme.brand, fontSize: 13, fontWeight: "900" },
+    personName: { flex: 1, color: theme.brand, fontSize: 13, fontWeight: "700" },
     address: { color: theme.text, fontSize: 13, marginBottom: 4 },
     note: { color: theme.muted, fontSize: 13, fontStyle: "italic" },
     contractRow: {

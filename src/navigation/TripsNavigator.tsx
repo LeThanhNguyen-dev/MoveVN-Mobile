@@ -14,11 +14,13 @@ export default function TripsNavigator({
   onConsumedPending,
   onRouteChange,
   onOpenDisputes,
+  onOpenUserProfile,
 }: {
   pendingBookingId: number | null;
   onConsumedPending: () => void;
   onRouteChange?: (route: string) => void;
   onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   const consumedRef = useRef(false);
@@ -46,9 +48,11 @@ export default function TripsNavigator({
         name="TripDetail"
         initialParams={hasPending ? { bookingId: pendingBookingId! } : undefined}
       >
-        {(props) => <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} />}
+        {(props) => (
+          <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} onOpenUserProfile={onOpenUserProfile} />
+        )}
       </Stack.Screen>
-      <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} />}</Stack.Screen>
+      <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} onOpenUserProfile={onOpenUserProfile} />}</Stack.Screen>
     </Stack.Navigator>
   );
 }
