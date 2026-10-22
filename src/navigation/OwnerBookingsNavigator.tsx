@@ -1,3 +1,5 @@
+import PublicUserProfileScreen from "@/features/users/screens/PublicUserProfileScreen";
+import VehicleDetailScreen from "@/features/vehicles/screens/VehicleDetailScreen";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import OwnerBookingDetailScreen from "@/features/booking/screens/OwnerBookingDetailScreen";
 import OwnerBookingListScreen from "@/features/booking/screens/OwnerBookingListScreen";
@@ -10,6 +12,9 @@ export type OwnerBookingsStackParamList = {
   OwnerBookingDetail: {
     bookingId: number;
   };
+  OwnerBookingHandover: { bookingId: number; inspectionType: "CheckIn" | "CheckOut" };
+  VehicleDetail: { vehicleId: number; startDate?: string; endDate?: string };
+  BookingUserProfile: { userId: number };
   BookingChat: { bookingId: number };
 };
 
@@ -44,6 +49,9 @@ export default function OwnerBookingsNavigator({
           <OwnerBookingDetailScreen {...props} onOpenDisputes={onOpenDisputes} onOpenUserProfile={onOpenUserProfile} />
         )}
       </Stack.Screen>
+      <Stack.Screen name="OwnerBookingHandover">{(props) => <OwnerBookingDetailScreen {...props} onOpenDisputes={onOpenDisputes} onOpenUserProfile={onOpenUserProfile} />}</Stack.Screen>
+      <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} />
+      <Stack.Screen name="BookingUserProfile">{({ route, navigation }) => <PublicUserProfileScreen userId={route.params.userId} onBack={() => navigation.goBack()} onOpenProfile={userId => navigation.push("BookingUserProfile", { userId })} onViewVehicle={vehicleId => navigation.navigate("VehicleDetail", { vehicleId })} />}</Stack.Screen>
       <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} onOpenUserProfile={onOpenUserProfile} />}</Stack.Screen>
     </Stack.Navigator>
   );

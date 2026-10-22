@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 vi.stubGlobal("React", React); vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 const mocks = vi.hoisted(() => ({ create: vi.fn(), upload: vi.fn(), get: vi.fn(), list: vi.fn(), reply: vi.fn(), pick: vi.fn() }));
 vi.mock("react-native", () => ({ ActivityIndicator: "Spinner", Image: "Image", Modal: "Modal", Pressable: "Pressable", ScrollView: "ScrollView", Text: "Text", View: "View" }));
-vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: mocks.pick }));
+vi.mock("expo-image-picker", () => ({ launchCameraAsync: mocks.pick, requestCameraPermissionsAsync: async () => ({ granted: true }) }));
 vi.mock("@/theme/useTheme", () => ({ useTheme: () => ({ theme: {} }) }));
 vi.mock("@/services/apiClient", () => ({ getApiErrorMessage: (e: Error) => e.message }));
 vi.mock("@/features/booking/components/BookingControls", () => ({ BookingButton: "Button", BookingField: "Field" }));
@@ -27,7 +27,7 @@ afterEach(async () => { if (tree) await act(async () => tree.unmount()); });
 it("sends booking-linked evidence then replies in the same thread", async () => {
   await mount();
   mocks.pick.mockResolvedValue({ canceled: false, assets: [{ uri: "file://photo.jpg", fileName: "photo.jpg", mimeType: "image/jpeg", fileSize: 100 }] });
-  await act(async () => { buttons().find(n => n.props.title.startsWith("Đính kèm"))!.props.onPress(); });
+  await act(async () => { buttons().find(n => n.props.title.startsWith("Chụp ảnh bằng chứng"))!.props.onPress(); });
   await act(async () => field().props.onChangeText("Tôi đã trả xe, cần đối chiếu"));
   await act(async () => send().props.onPress());
   expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ bookingId: 42, message: "Tôi đã trả xe, cần đối chiếu", attachmentUrls: "https://img.test/evidence.jpg" }));

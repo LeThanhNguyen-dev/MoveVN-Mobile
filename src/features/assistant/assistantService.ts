@@ -65,6 +65,7 @@ export type AssistantAnswer = {
       startDate?: string;
       endDate?: string;
       observedAt?: string;
+      totalCount?: number;
     };
   }[];
   actions: { type: string; resourceId?: string }[];

@@ -23,7 +23,9 @@ export default function BookingAssistance({ bookingId, bookingCode }: { bookingI
   async function pick() {
     if (lock.current) return;
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: 6 - photos.length, quality: 0.8 });
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) { setError("Cho phép camera để chụp ảnh bằng chứng."); return; }
+      const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 });
       if (result.canceled) return;
       if (result.assets.some(a => (a.fileSize ?? 0) > 5 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(a.mimeType ?? "image/jpeg"))) {
         setError("Chỉ nhận JPG, PNG hoặc WebP, mỗi ảnh tối đa 5MB."); return;
@@ -81,7 +83,7 @@ export default function BookingAssistance({ bookingId, bookingCode }: { bookingI
             </> : <View style={{ gap: 8 }}>{reasons.map(value => <BookingButton key={value} secondary title={(reason === value ? "✓ " : "") + value} disabled={busy} onPress={() => setReason(value)} />)}</View>}
             {!closed ? <>
               <BookingField label="Mô tả sự việc / Nội dung phản hồi" value={message} onChangeText={setMessage} editable={!busy} multiline />
-              <BookingButton secondary title={"Đính kèm ảnh (" + photos.length + "/6)"} disabled={busy || photos.length >= 6} onPress={() => void pick()} />
+              <BookingButton secondary title={"Chụp ảnh bằng chứng (" + photos.length + "/6)"} disabled={busy || photos.length >= 6} onPress={() => void pick()} />
               {photos.map((photo, index) => <Pressable key={photo.uri + index} disabled={busy} onPress={() => setPhotos(current => current.filter((_, i) => i !== index))}><Text style={{ color: theme.danger }}>Xóa ảnh {index + 1}: {photo.name}</Text></Pressable>)}
               <BookingButton title={ticket ? "Gửi phản hồi" : "Gửi yêu cầu hỗ trợ"} busy={busy} disabled={!message.trim()} onPress={() => void send()} />
             </> : <BookingButton secondary title="Gửi yêu cầu mới" onPress={() => { setTicket(null); setMessage(""); setPhotos([]); }} />}

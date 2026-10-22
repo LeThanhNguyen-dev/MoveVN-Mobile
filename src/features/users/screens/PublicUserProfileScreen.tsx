@@ -37,6 +37,7 @@ type PublicUserProfileScreenProps = {
   /** Mở hồ sơ người khác (ví dụ người viết đánh giá). */
   onOpenProfile?: (userId: number) => void;
   userId: number;
+  onViewVehicle?: (vehicleId: number) => void;
 };
 
 type ProfileTab = "vehicles" | "reviews";
@@ -52,12 +53,12 @@ function formatPrice(value: number): string {
 }
 
 /** Card xe nhỏ gọn: ảnh + tên + năm/địa chỉ + giá/ngày. */
-function ProfileVehicleCard({ vehicle }: { vehicle: PublicProfileVehicle }) {
+function ProfileVehicleCard({ vehicle, onViewVehicle }: { vehicle: PublicProfileVehicle; onViewVehicle?: (vehicleId: number) => void }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <View style={styles.vehicleCard}>
+    <Pressable style={styles.vehicleCard} accessibilityRole="link" disabled={!onViewVehicle} onPress={() => onViewVehicle?.(vehicle.id)}>
       <View style={styles.vehicleMedia}>
         {vehicle.primaryImage ? (
           <Image
@@ -98,7 +99,7 @@ function ProfileVehicleCard({ vehicle }: { vehicle: PublicProfileVehicle }) {
           ) : null}
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -158,6 +159,7 @@ const MemoReviewCard = memo(ProfileReviewCard);
 export default function PublicUserProfileScreen({
   onBack,
   onOpenProfile,
+  onViewVehicle,
   userId,
 }: PublicUserProfileScreenProps) {
   const { theme } = useTheme();
@@ -373,7 +375,7 @@ export default function PublicUserProfileScreen({
           hasVehicles ? (
             <View style={styles.section}>
               {profile.vehicles.map((vehicle) => (
-                <MemoVehicleCard key={vehicle.id} vehicle={vehicle} />
+                <MemoVehicleCard key={vehicle.id} vehicle={vehicle} onViewVehicle={onViewVehicle} />
               ))}
             </View>
           ) : (

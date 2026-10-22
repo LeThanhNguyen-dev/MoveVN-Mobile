@@ -1,3 +1,4 @@
+import BookingSearchFilters, { EMPTY_SEARCH } from "../components/BookingSearchFilters";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -31,6 +32,7 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [items, setItems] = useState<BookingResponse[]>([]);
   const [status, setStatus] = useState("");
+  const [search, setSearch] = useState(EMPTY_SEARCH);
   const requestId = useRef(0);
   const fetching = useRef(false);
   const [page, setPage] = useState(1);
@@ -57,6 +59,7 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
       }
       try {
         const res = await getMyBookings({
+          ...search,
           status: targetStatus || undefined,
           page: targetPage,
           pageSize: BOOKING_PAGE_SIZE,
@@ -77,7 +80,7 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
         }
       }
     },
-    [],
+    [search],
   );
 
   useFocusEffect(useCallback(() => {
@@ -116,6 +119,8 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
           </AppText>
         </View>
       </View>
+
+      <BookingSearchFilters onApply={setSearch} />
 
       <ScrollView
         horizontal

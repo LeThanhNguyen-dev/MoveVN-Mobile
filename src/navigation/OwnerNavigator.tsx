@@ -105,9 +105,9 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
               />
             )}
           </View>
-          {(activeTab !== "messages" || chatRoute === "ChatList") && (activeTab !== "bookings" || bookingRoute !== "BookingChat") && !disputesVisible ? <MobileBottomBar activeKey={activeTab} items={ownerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} /> : null}
+          {(activeTab !== "messages" || chatRoute === "ChatList") && (activeTab !== "bookings" || bookingRoute === "OwnerBookingList") && !disputesVisible ? <MobileBottomBar activeKey={activeTab} items={ownerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} /> : null}
           {/* ChatbotAI (không booking) cho chủ xe */}
-          <AssistantFab />
+          {!(activeTab === "bookings" && bookingRoute === "OwnerBookingHandover") && <AssistantFab />}
         </>
       )}
     </SafeAreaView>

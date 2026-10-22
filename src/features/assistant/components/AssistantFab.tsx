@@ -116,16 +116,16 @@ export default function AssistantFab({
         <SafeAreaView edges={["top", "bottom"]} style={styles.modal}>
           <AssistantScreen
             onBack={() => setChatOpen(false)}
-            onViewVehicle={onViewVehicle}
-            onViewBooking={onViewBooking}
-            onQuickBook={(params) => {
+            onViewVehicle={onViewVehicle ? id => { setChatOpen(false); onViewVehicle(id); } : undefined}
+            onViewBooking={onViewBooking ? id => { setChatOpen(false); onViewBooking(id); } : undefined}
+            onQuickBook={onQuickBook ? (params) => {
               setChatOpen(false);
-              onQuickBook?.(params);
-            }}
-            onBookingConfirmed={(bookingId) => {
+              onQuickBook(params);
+            } : undefined}
+            onBookingConfirmed={onBookingConfirmed ? (bookingId) => {
               setChatOpen(false);
-              onBookingConfirmed?.(bookingId);
-            }}
+              onBookingConfirmed(bookingId);
+            } : undefined}
           />
         </SafeAreaView>
       </Modal>

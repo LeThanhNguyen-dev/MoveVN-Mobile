@@ -21,6 +21,8 @@ export default function ExploreNavigator({
   onBookingCreated,
   quickBook,  onConsumedQuickBook,
   onGoDeals,
+  pendingVehicleId,
+  onConsumedVehicle,
   onOpenUserProfile,
 }: {
   user: AuthUser;
@@ -30,6 +32,8 @@ export default function ExploreNavigator({
   quickBook?: QuickBookParams | null;
   onConsumedQuickBook?: () => void;
   onGoDeals?: () => void;
+  pendingVehicleId?: number | null;
+  onConsumedVehicle?: () => void;
   onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
@@ -56,6 +60,12 @@ export default function ExploreNavigator({
     }
     onConsumedQuickBook?.();
   }, [quickBook, onConsumedQuickBook]);
+
+  useEffect(() => {
+    if (!pendingVehicleId || !exploreNavRef.current) return;
+    exploreNavRef.current.navigate("VehicleDetail", { vehicleId: pendingVehicleId });
+    onConsumedVehicle?.();
+  }, [pendingVehicleId, onConsumedVehicle]);
 
   return (
     <Stack.Navigator

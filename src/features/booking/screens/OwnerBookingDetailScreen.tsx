@@ -1,3 +1,6 @@
+import ReportBookingViolation from "../components/ReportBookingViolation";
+import { bookingActions } from "../bookingActions";
+import InspectionSummaryLink from "../components/InspectionSummaryLink";
 import { goBackOrFallback } from "@/navigation/goBackOrFallback";
 import { checkoutStartDate } from "../bookingDisplay";
 import { getPendingTopUp, type BookingTopUpPendingResponse } from "@/features/payments/services/paymentService";
@@ -52,12 +55,12 @@ import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { useFocusEffect } from "@react-navigation/native";
 import { BookingButton } from "../components/BookingControls";
 import { OutstandingSurcharge } from "../components/CheckoutSummary";
-import { canOwnerCancel, parseServerDate } from "../bookingDisplay";
+import { parseServerDate } from "../bookingDisplay";
 import { getPendingAutoCancelHours } from "@/features/systemConfig/configService";
 import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
 
-type DetailRoute = RouteProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
-type DetailNav = NativeStackNavigationProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
+type DetailRoute = RouteProp<OwnerBookingsStackParamList, "OwnerBookingDetail" | "OwnerBookingHandover">;
+type DetailNav = NativeStackNavigationProp<OwnerBookingsStackParamList>;
 
 export default function OwnerBookingDetailScreen({
   route,
@@ -73,6 +76,7 @@ export default function OwnerBookingDetailScreen({
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId } = route.params;
+  const handover = "inspectionType" in route.params ? route.params.inspectionType : null;
   const handleBack = () => goBackOrFallback(navigation, () => navigation.replace("OwnerBookingList"));
   const userId = useAuthStore((s) => s.user?.userId ?? 0);
 
@@ -203,6 +207,7 @@ export default function OwnerBookingDetailScreen({
   }
 
   const status = booking.status;
+  const actions = bookingActions(booking, reports, "Owner", now);
   const pickupReached = parseServerDate(checkoutStartDate(booking)).getTime() <= now;
   const checkInReport = reports.find((r) => r.type === "CheckIn");
   const checkOutReport = reports.find((r) => r.type === "CheckOut");
@@ -211,6 +216,32 @@ export default function OwnerBookingDetailScreen({
     ? rentalProgress(booking.startDate, booking.endDate)
     : null;
 
+  const checkInActions = <>
+        {actions.createCheckIn && (
+          <ActionButton theme={theme} label={checkInReport?.requiresRevision ? "Lập lại và gửi biên bản nhận xe" : "Lập biên bản nhận xe"} onPress={() => setForm("CheckIn")} disabled={!dataReady || busy !== null} />
+        )}
+        {status === "DepositPaid" && !checkInReport && !pickupReached && booking.canCheckInNow === true ? (
+          <Text style={styles.muted}>Xe trống: có thể nhận sớm tối đa 2 tiếng. Bạn có thể lập biên bản nhận xe ngay. Giờ trả và giá thuê giữ theo booking.</Text>
+        ) : null}
+
+        {status === "DepositPaid" && !checkInReport && booking.canCheckInNow !== true ? <Text style={styles.muted}>{booking.checkInUnavailableReason || "Tải lại để kiểm tra khả năng nhận xe."}{booking.checkInOpensAt ? ` Mở nhận sớm từ ${formatDateTime(booking.checkInOpensAt)}.` : ""}</Text> : null}
+  </>;
+  const checkOutActions = <>
+    <ReturnProgress booking={booking} report={checkOutReport} role="Owner" />
+    <OutstandingSurcharge booking={booking} report={checkOutReport} role="Owner" onUpdated={load} />
+        {actions.createCheckOut && (
+          <ActionButton theme={theme} label="Lập biên bản trả xe" onPress={() => setForm("CheckOut")} disabled={!dataReady || busy !== null} />
+        )}
+
+        {checkOutReport ? <CheckoutEditor booking={booking} report={checkOutReport} initialKm={checkInReport?.odometerKm} onSaved={load} /> : null}
+
+        {actions.confirmReceipt && (
+          <ActionButton theme={theme} label="Xác nhận đã nhận xe" onPress={() => runAction("receipt", () => confirmReceipt(bookingId, {}).then(() => undefined), "Đã xác nhận nhận xe.")} disabled={!dataReady || busy !== null} />
+        )}
+
+
+  </>;
+
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
@@ -218,16 +249,26 @@ export default function OwnerBookingDetailScreen({
           <ArrowLeft color={theme.text} size={20} />
         </Pressable>
         <Text numberOfLines={1} style={styles.headerTitle}>
-          {booking.bookingCode}
+          {handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : booking.bookingCode}
         </Text>
         <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với khách thuê" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.backButton}><MessageSquare color={theme.brand} size={22} /></Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
+        {handover ? <>
+          <Text style={styles.cardTitle}>{booking.bookingCode}</Text>
+          <BookingButton secondary title="Tải lại biên bản" disabled={busy !== null} onPress={() => void load()} />
+          {!dataReady && <Text accessibilityRole="alert" style={styles.muted}>Chưa tải được dữ liệu mới. Tải lại trước khi thao tác.</Text>}
+          <Text style={styles.muted}>Kiểm tra biên bản, ảnh xe và các khoản thanh toán trước khi xác nhận.</Text>
+          {(handover === "CheckIn" ? checkInReport : checkOutReport) ? <InspectionReportCard booking={booking} report={(handover === "CheckIn" ? checkInReport : checkOutReport)!} /> : <Text style={styles.muted}>Chưa có biên bản. Thao tác khả dụng sẽ xuất hiện theo trạng thái chuyến đi.</Text>}
+          {handover === "CheckIn" ? checkInActions : checkOutActions}
+        </> : <>
+
         <View style={styles.vehicleCard}>
           {vehiclePhoto ? <Image source={{ uri: vehiclePhoto }} style={styles.vehiclePhoto} resizeMode="cover" /> : <View style={styles.vehiclePhotoPlaceholder}><Text style={styles.vehiclePhotoPlaceholderText}>Xe MoveVN</Text></View>}
           <View style={styles.vehicleInfo}>
-            <Text style={styles.vehicleName}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text>
-            <Text style={styles.muted}>Khách thuê: {booking.customerName || `#${booking.customerId}`}</Text>
+            <Pressable accessibilityRole="link" onPress={() => navigation.navigate("VehicleDetail", { vehicleId: booking.vehicleId })}><Text style={styles.vehicleName}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text></Pressable>
+            <Pressable accessibilityRole="link" onPress={() => navigation.navigate("BookingUserProfile", { userId: booking.ownerId })}><Text style={{ color: theme.brand, fontWeight: "600" }}>Chủ xe: {booking.ownerName || `#${booking.ownerId}`}</Text></Pressable>
+            <Pressable accessibilityRole="link" onPress={() => navigation.navigate("BookingUserProfile", { userId: booking.customerId })}><Text style={{ color: theme.brand, fontWeight: "600" }}>Khách thuê: {booking.customerName || `#${booking.customerId}`}</Text></Pressable>
             <Text style={styles.muted}>Ngày yêu cầu: {formatDateTime(booking.createdAt)}</Text>
           </View>
         </View>
@@ -348,7 +389,7 @@ export default function OwnerBookingDetailScreen({
           </Text>
         ) : null}
 
-        {status === "Pending" && (
+        {actions.approve && (
           <View style={styles.actionRow}>
             <Pressable
               onPress={() => runAction("approve", () => approveBooking(bookingId).then(() => undefined), "Đã duyệt. Hợp đồng tự tạo để 2 bên ký.")}
@@ -367,37 +408,21 @@ export default function OwnerBookingDetailScreen({
           </View>
         )}
 
-        {canOwnerCancel(booking, now) && (
+        {actions.cancel && (
           <ActionButton theme={theme} label="Hủy booking (hoàn 100% cọc)" onPress={() => { setReason(""); setReasonModal({ mode: "cancel" }); }} disabled={!dataReady || busy !== null} danger />
         )}
 
-        {status === "DepositPaid" && (!checkInReport || checkInReport.requiresRevision) && booking.canCheckInNow === true && (
-          <ActionButton theme={theme} label={checkInReport?.requiresRevision ? "Lập lại và gửi biên bản nhận xe" : "Lập biên bản nhận xe"} onPress={() => setForm("CheckIn")} disabled={!dataReady || busy !== null} />
-        )}
-        {status === "DepositPaid" && !checkInReport && !pickupReached && booking.canCheckInNow === true ? (
-          <Text style={styles.muted}>Xe trống: có thể nhận sớm tối đa 2 tiếng. Bạn có thể lập biên bản nhận xe ngay. Giờ trả và giá thuê giữ theo booking.</Text>
-        ) : null}
-
-        {(status === "InProgress" || status === "Returning") && !checkOutReport && parseServerDate(checkoutStartDate(booking)).getTime() <= now && (
-          <ActionButton theme={theme} label="Lập biên bản trả xe" onPress={() => setForm("CheckOut")} disabled={!dataReady || busy !== null} />
-        )}
-
-        {checkOutReport ? <CheckoutEditor booking={booking} report={checkOutReport} initialKm={checkInReport?.odometerKm} onSaved={load} /> : null}
-
-        {status === "Returned" && (
-          <ActionButton theme={theme} label="Xác nhận đã nhận xe" onPress={() => runAction("receipt", () => confirmReceipt(bookingId, {}).then(() => undefined), "Đã xác nhận nhận xe.")} disabled={!dataReady || busy !== null} />
-        )}
-
+        <InspectionSummaryLink type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckIn" })} />
+        <InspectionSummaryLink type="CheckOut" report={checkOutReport} onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckOut" })} />
         {status === "Completed" && booking.escrowStatus === "Held" && (
           hold.withinHoldWindow ? (
             <Text style={styles.muted}>Tiền cọc đang giữ để đối soát. Còn khoảng {hold.remainingHours} giờ nữa mới được giải ngân.</Text>
           ) : (
-            <ActionButton theme={theme} label="Giải ngân tiền cọc" onPress={() => runAction("settle", () => requestSettlement(bookingId).then(() => undefined), "Đã giải ngân escrow.")} disabled={!dataReady || busy !== null} />
+            <ActionButton theme={theme} label="Giải ngân tiền cọc" onPress={() => runAction("settle", () => requestSettlement(bookingId).then(() => undefined), "Đã giải ngân escrow.")} disabled={!dataReady || busy !== null || !actions.settle} />
           )
         )}
 
-        {status === "DepositPaid" && !checkInReport && booking.canCheckInNow !== true ? <Text style={styles.muted}>{booking.checkInUnavailableReason || "Tải lại để kiểm tra khả năng nhận xe."}{booking.checkInOpensAt ? ` Mở nhận sớm từ ${formatDateTime(booking.checkInOpensAt)}.` : ""}</Text> : null}
-        {reports.map(report => <InspectionReportCard key={report.id} booking={booking} report={report} />)}
+
 
         {pendingTopUp && pendingTopUp.amount > 0 ? <View style={styles.card}><Text style={styles.cardTitle}>Chờ cọc bổ sung để gia hạn</Text><Text style={styles.muted}>Khách cần thanh toán {formatMoney(pendingTopUp.amount)}{pendingTopUp.dueAt ? ` trước ${formatDateTime(pendingTopUp.dueAt)}` : ""}. Nếu quá hạn, yêu cầu gia hạn bị hủy và hợp đồng cũ tiếp tục hiệu lực.</Text></View> : null}
         <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage onChanged={() => load()} />
@@ -409,6 +434,7 @@ export default function OwnerBookingDetailScreen({
           </View>
         ) : null}
 
+        <ReportBookingViolation key={`violation-${booking.id}`} bookingId={booking.id} bookingCode={booking.bookingCode} />
         <BookingAssistance key={booking.id} bookingId={booking.id} bookingCode={booking.bookingCode} />
         <BookingTimeline history={booking.statusHistory} />
 
@@ -462,6 +488,7 @@ export default function OwnerBookingDetailScreen({
             {bookingReviews.filter((review) => review.reviewType === "Owner").length === 0 ? <Text style={styles.muted}>Bạn đã gửi đánh giá cho booking này.</Text> : null}
           </View>
         )}
+        </>}
       </ScrollView>
 
       <Modal visible={reasonModal !== null} transparent animationType="fade" onRequestClose={() => setReasonModal(null)}>

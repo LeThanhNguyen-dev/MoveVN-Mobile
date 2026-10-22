@@ -1,3 +1,6 @@
+import ReportBookingViolation from "../components/ReportBookingViolation";
+import { bookingActions } from "../bookingActions";
+import InspectionSummaryLink from "../components/InspectionSummaryLink";
 import { goBackOrFallback } from "@/navigation/goBackOrFallback";
 import { checkoutStartDate } from "../bookingDisplay";
 import { useBookingNotificationRefresh } from "../useBookingNotificationRefresh";
@@ -9,7 +12,7 @@ import CheckoutSummary, { OutstandingSurcharge } from "../components/CheckoutSum
 import CheckoutConfirmation from "../components/CheckoutConfirmation";
 import { BookingButton } from "../components/BookingControls";
 import { CHECKOUT_CONSENT } from "../checkoutRules";
-import { canReportNoShow, isDepositExpired, parseServerDate } from "../bookingDisplay";
+import { isDepositExpired, parseServerDate } from "../bookingDisplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -67,8 +70,8 @@ import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
 
-type DetailRoute = RouteProp<TripsStackParamList, "TripDetail">;
-type DetailNav = NativeStackNavigationProp<TripsStackParamList, "TripDetail">;
+type DetailRoute = RouteProp<TripsStackParamList, "TripDetail" | "TripHandover">;
+type DetailNav = NativeStackNavigationProp<TripsStackParamList>;
 
 const POLL_MAX = 10;
 const POLL_MS = 3000;
@@ -87,6 +90,7 @@ export default function TripDetailScreen({
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId } = route.params;
+  const handover = "inspectionType" in route.params ? route.params.inspectionType : null;
   const handleBack = () => goBackOrFallback(navigation, () => navigation.replace("TripList"));
 
   const [now, setNow] = useState(Date.now());
@@ -232,7 +236,7 @@ export default function TripDetailScreen({
       const message = getApiErrorMessage(err, "Vui lòng thử lại sau.");
       setActionError(key === "checkout" ? `${message} Hãy kiểm tra lại biên bản và phụ phí trước khi xác nhận.` : message);
       Alert.alert("Thất bại", message);
-      if (key === "checkout") await load();
+      if (key === "checkout") { setCheckoutToConfirm(null); await load(); }
       return false;
     } finally {
       actionLock.current = false;
@@ -370,14 +374,78 @@ export default function TripDetailScreen({
     : <CreateDisputeScreen role="Customer" initial={{ bookingId, reportType: "Other", description: "Tôi không đồng ý với biên bản trả xe: " }} onBack={() => setDisputeOpen(false)} onCreated={id => { setCreatedDisputeId(id); void load(); }} />;
 
   const status = booking.status;
+  const actions = bookingActions(booking, reports, "Customer", now);
   const checkInReport = reports.find(r => r.type === "CheckIn");
   const checkOutReport = reports.find(r => r.type === "CheckOut");
   const pickupReached = parseServerDate(checkoutStartDate(booking)).getTime() <= now;
   const depositExpired = isDepositExpired(booking, now);
-  const canCancel = ["Pending", "Approved", "DepositPaid", "Confirmed"].includes(status) && !pickupReached;
+  const canCancel = actions.cancel;
   const progress = status === "InProgress" || status === "Returning"
     ? rentalProgress(booking.startDate, booking.endDate)
     : null;
+
+  const checkInActions = <>
+        {(status === "DepositPaid" || status === "Confirmed") && (
+          <>
+            {status === "DepositPaid" && booking.canCheckInNow === true && !pickupReached ? <Text style={styles.muted}>Xe trống: có thể nhận sớm tối đa 2 tiếng. Chủ xe lập biên bản, khách kiểm tra rồi xác nhận nhận xe. Giờ trả và giá thuê giữ theo booking.</Text> : null}
+            {actions.confirmCheckIn && checkInReport ? <ActionButton
+              theme={theme}
+              label="Đồng ý biên bản và nhận xe"
+              onPress={() => runAction("checkin", () => confirmCheckIn(bookingId, checkInReport.version ?? 1).then(() => undefined), "Đã xác nhận nhận xe. Chúc bạn đi tốt!")}
+              disabled={!dataReady || actionBusy !== null}
+            /> : <Text style={styles.muted}>{booking.checkInUnavailableReason || "Chờ biên bản nhận xe và kiểm tra khả năng check-in."}</Text>}
+            {checkInReport && !checkInReport.isCustomerConfirmed ? checkInReport.requiresRevision
+              ? <Text style={styles.muted}>Đã yêu cầu lập lại: {checkInReport.revisionReason}. Chờ chủ xe gửi biên bản mới rồi kiểm tra lại.</Text>
+              : <ActionButton theme={theme} label="Không đồng ý / Yêu cầu lập lại" secondary disabled={!dataReady || actionBusy !== null} onPress={() => { setRevisionReason(""); setRevisionOpen(true); }} />
+              : null}
+            {actions.reportNoShow ? <ActionButton
+              theme={theme}
+              label="Chủ xe không giao xe"
+              onPress={handleNoShow}
+              disabled={!dataReady || actionBusy !== null}
+              secondary
+            /> : null}
+          </>
+        )}
+
+
+  </>;
+  const checkOutActions = <>
+        {actions.reportReturn && (
+          <ActionButton
+            theme={theme}
+            label="Báo xe đã được bàn giao lại"
+            onPress={() => runAction("report", () => reportReturn(bookingId).then(() => undefined), "Đã báo trả xe. Chờ chủ xe lập biên bản.")}
+            disabled={!dataReady || actionBusy !== null}
+          />
+        )}
+
+        {actions.confirmCheckOut && checkOutReport && (
+          <View><Text style={styles.muted}>{CHECKOUT_CONSENT}</Text><ActionButton
+            theme={theme}
+            label="Kiểm tra biên bản và xác nhận trả xe"
+            onPress={() => setCheckoutToConfirm(checkOutReport)}
+            disabled={!dataReady || actionBusy !== null}
+          /></View>
+        )}
+        {actions.disputeCheckOut && (
+          <ActionButton
+            theme={theme}
+            label="Không đồng ý / Mở tranh chấp"
+            onPress={() => {
+              setCreatedDisputeId(null);
+              setDisputeOpen(true);
+            }}
+            disabled={actionBusy !== null}
+            secondary
+          />
+        )}
+
+        <ReturnProgress booking={booking} report={checkOutReport} role="Customer" />
+        <OutstandingSurcharge booking={booking} report={checkOutReport} role="Customer" onUpdated={load} onOpenWallet={() => navigation.navigate("BookingWallet")} />
+
+
+  </>;
 
   return (
     <View style={styles.screen}>
@@ -386,16 +454,27 @@ export default function TripDetailScreen({
           <ArrowLeft color={theme.text} size={20} />
         </Pressable>
         <Text numberOfLines={1} style={styles.headerTitle}>
-          {booking.bookingCode}
+          {handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : booking.bookingCode}
         </Text>
         <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với chủ xe" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.backButton}><MessageSquare color={theme.brand} size={22} /></Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
+        {handover ? <>
+          <Text style={styles.cardTitle}>{booking.bookingCode}</Text>
+          {!!actionError && <Text accessibilityRole="alert" style={{ color: theme.danger }}>{actionError}</Text>}
+          <BookingButton secondary title="Tải lại biên bản" disabled={actionBusy !== null} onPress={() => void load()} />
+          {!dataReady && <Text accessibilityRole="alert" style={styles.muted}>Chưa tải được dữ liệu mới. Tải lại trước khi thao tác.</Text>}
+          <Text style={styles.muted}>Kiểm tra biên bản, ảnh xe và các khoản thanh toán trước khi xác nhận.</Text>
+          {(handover === "CheckIn" ? checkInReport : checkOutReport) ? <InspectionReportCard booking={booking} report={(handover === "CheckIn" ? checkInReport : checkOutReport)!} /> : <Text style={styles.muted}>Chưa có biên bản. Thao tác khả dụng sẽ xuất hiện theo trạng thái chuyến đi.</Text>}
+          {handover === "CheckIn" ? checkInActions : checkOutActions}
+        </> : <>
+
         <View style={styles.vehicleCard}>
           {vehiclePhoto ? <Image source={{ uri: vehiclePhoto }} style={styles.bookingVehicleImage} resizeMode="cover" /> : <View style={[styles.bookingVehicleImage, styles.bookingVehiclePlaceholder]}><Text style={styles.bookingVehiclePlaceholderText}>MoveVN</Text></View>}
           <View style={styles.vehicleInfo}>
-            <Text style={styles.vehicleName}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text>
-            <Text style={styles.muted}>Chủ xe: {booking.ownerName || `#${booking.ownerId}`}</Text>
+            <Pressable accessibilityRole="link" onPress={() => navigation.navigate("VehicleDetail", { vehicleId: booking.vehicleId })}><Text style={styles.vehicleName}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text></Pressable>
+            <Pressable accessibilityRole="link" onPress={() => navigation.navigate("BookingUserProfile", { userId: booking.ownerId })}><Text style={{ color: theme.brand, fontWeight: "600" }}>Chủ xe: {booking.ownerName || `#${booking.ownerId}`}</Text></Pressable>
+            <Pressable accessibilityRole="link" onPress={() => navigation.navigate("BookingUserProfile", { userId: booking.customerId })}><Text style={{ color: theme.brand, fontWeight: "600" }}>Khách thuê: {booking.customerName || `#${booking.customerId}`}</Text></Pressable>
             <Text style={styles.muted}>Ngày yêu cầu: {formatDateTime(booking.createdAt)}</Text>
           </View>
         </View>
@@ -561,63 +640,9 @@ export default function TripDetailScreen({
           />
         )}
 
-        {(status === "DepositPaid" || status === "Confirmed") && (
-          <>
-            {status === "DepositPaid" && booking.canCheckInNow === true && !pickupReached ? <Text style={styles.muted}>Xe trống: có thể nhận sớm tối đa 2 tiếng. Chủ xe lập biên bản, khách kiểm tra rồi xác nhận nhận xe. Giờ trả và giá thuê giữ theo booking.</Text> : null}
-            {checkInReport && !checkInReport.requiresRevision && !checkInReport.isCustomerConfirmed && booking.canCheckInNow === true ? <ActionButton
-              theme={theme}
-              label="Xác nhận đã nhận xe"
-              onPress={() => runAction("checkin", () => confirmCheckIn(bookingId, checkInReport.version ?? 1).then(() => undefined), "Đã xác nhận nhận xe. Chúc bạn đi tốt!")}
-              disabled={!dataReady || actionBusy !== null}
-            /> : <Text style={styles.muted}>{booking.checkInUnavailableReason || "Chờ biên bản nhận xe và kiểm tra khả năng check-in."}</Text>}
-            {checkInReport && !checkInReport.isCustomerConfirmed ? checkInReport.requiresRevision
-              ? <Text style={styles.muted}>Đã yêu cầu lập lại: {checkInReport.revisionReason}. Chờ chủ xe gửi biên bản mới rồi kiểm tra lại.</Text>
-              : <ActionButton theme={theme} label="Không đồng ý / Yêu cầu lập lại" secondary disabled={!dataReady || actionBusy !== null} onPress={() => { setRevisionReason(""); setRevisionOpen(true); }} />
-              : null}
-            {canReportNoShow(booking, reports, now) ? <ActionButton
-              theme={theme}
-              label="Chủ xe không giao xe"
-              onPress={handleNoShow}
-              disabled={!dataReady || actionBusy !== null}
-              secondary
-            /> : null}
-          </>
-        )}
-
-        {status === "InProgress" && !checkOutReport && pickupReached && (
-          <ActionButton
-            theme={theme}
-            label="Báo xe đã được bàn giao lại"
-            onPress={() => runAction("report", () => reportReturn(bookingId).then(() => undefined), "Đã báo trả xe. Chờ chủ xe lập biên bản.")}
-            disabled={!dataReady || actionBusy !== null}
-          />
-        )}
-
-        {["Returning", "InProgress"].includes(status) && pickupReached && checkOutReport && !checkOutReport.isCustomerConfirmed && (
-          <View><Text style={styles.muted}>{CHECKOUT_CONSENT}</Text><ActionButton
-            theme={theme}
-            label="Kiểm tra biên bản và xác nhận trả xe"
-            onPress={() => setCheckoutToConfirm(checkOutReport)}
-            disabled={!dataReady || actionBusy !== null}
-          /></View>
-        )}
-        {status === "Returning" && checkOutReport && !checkOutReport.isCustomerConfirmed && pickupReached && (
-          <ActionButton
-            theme={theme}
-            label="Không đồng ý / Mở tranh chấp"
-            onPress={() => {
-              setCreatedDisputeId(null);
-              setDisputeOpen(true);
-            }}
-            disabled={actionBusy !== null}
-            secondary
-          />
-        )}
-
-        <ReturnProgress booking={booking} report={checkOutReport} role="Customer" />
-        <OutstandingSurcharge booking={booking} report={checkOutReport} role={"Customer"} onUpdated={load} />
-        {reports.map(report => <InspectionReportCard key={report.id} booking={booking} report={report} />)}
-
+        <InspectionSummaryLink type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckIn" })} />
+        <InspectionSummaryLink type="CheckOut" report={checkOutReport} onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckOut" })} />
+        <OutstandingSurcharge booking={booking} report={checkOutReport} role="Customer" onUpdated={load} onOpenWallet={() => navigation.navigate("BookingWallet")} />
         <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage={false} onChanged={() => load()} />
 
         {(status === "Cancelled" || status === "Rejected") && booking.cancelReason ? (
@@ -627,6 +652,7 @@ export default function TripDetailScreen({
           </View>
         ) : null}
 
+        <ReportBookingViolation key={`violation-${booking.id}`} bookingId={booking.id} bookingCode={booking.bookingCode} />
         <BookingAssistance key={booking.id} bookingId={booking.id} bookingCode={booking.bookingCode} />
         <BookingTimeline history={booking.statusHistory} />
 
@@ -655,6 +681,7 @@ export default function TripDetailScreen({
             {alreadyReviewed && bookingReviews.filter((review) => review.reviewType === "Customer").length === 0 ? <Text style={styles.muted}>Bạn đã gửi đánh giá cho chuyến đi này.</Text> : null}
           </View>
         )}
+        </>}
       </ScrollView>
 
       <CheckoutConfirmation booking={booking} report={checkoutToConfirm} busy={actionBusy !== null} onClose={() => setCheckoutToConfirm(null)} onConfirm={(report, paymentMethod) => {

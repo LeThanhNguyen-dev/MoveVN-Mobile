@@ -49,8 +49,8 @@ beforeEach(() => {
   mocks.serverTime.mockResolvedValue("2026-10-04T02:00:00Z");
 });
 afterEach(async () => { if (tree) await act(async () => tree!.unmount()); tree = undefined; });
-async function mount(sourcePhoto?: { uri: string; width: number; height: number; capturedAt: string }) {
-  await act(async () => { tree = create(React.createElement(InspectionCameraModal, { bookingCode: "MVN-42", type: "CheckIn", sourcePhoto, onCaptured: mocks.captured, onClose: mocks.close }), { createNodeMock: () => ({}) }); });
+async function mount() {
+  await act(async () => { tree = create(React.createElement(InspectionCameraModal, { bookingCode: "MVN-42", type: "CheckIn", onCaptured: mocks.captured, onClose: mocks.close }), { createNodeMock: () => ({}) }); });
 }
 function host(type: string) { return tree!.root.findAll((node) => (node.type as unknown) === type); }
 function button(title: string) {
@@ -122,22 +122,10 @@ it("captures iOS at the composition bounds so Retina scaling cannot leave a blan
   expect(button("Dùng ảnh này").props.disabled).toBe(false);
 });
 
-it("shows permission guidance with the library alternative", async () => {
+it("requires camera permission without offering the image library", async () => {
   mocks.permission.granted = false; await mount();
   expect(host("CameraView")).toHaveLength(0);
-  expect(JSON.stringify(tree!.toJSON())).toContain("chọn ảnh từ thư viện");
+  expect(JSON.stringify(tree!.toJSON())).not.toContain("chọn ảnh từ thư viện");
+  expect(button("Cho phép camera")).toBeDefined();
   expect(mocks.takePicture).not.toHaveBeenCalled();
-});
-
-
-it("burns a watermark onto an imported photo without requiring camera permission", async () => {
-  mocks.platform = "ios"; mocks.permission.granted = false;
-  await mount({ uri: "file:///library.jpg", width: 1200, height: 1600, capturedAt: "2026-10-17T15:00:00Z" });
-  expect(host("CameraView")).toHaveLength(0);
-  expect(mocks.takePicture).not.toHaveBeenCalled();
-  expect(JSON.stringify(tree!.toJSON())).toContain("THÊM ẢNH:");
-  expect(button("Dùng ảnh này").props.disabled).toBe(true);
-  await finishStamp();
-  await act(async () => button("Dùng ảnh này").props.onPress());
-  expect(mocks.captured).toHaveBeenCalledWith({ ...stamped, source: "library" });
 });

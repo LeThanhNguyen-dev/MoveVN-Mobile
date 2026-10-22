@@ -7,8 +7,8 @@ import { settleCheckoutSurcharges } from "../bookingService";
 import type { BookingResponse, InspectionReportResponse } from "../types";
 import { BookingButton, BookingField } from "./BookingControls";
 
-export default function OutstandingSurchargePayment({ booking, report, role, onUpdated }: {
-  booking: BookingResponse; report?: InspectionReportResponse; role?: "Owner" | "Customer"; onUpdated?: () => void | Promise<void>;
+export default function OutstandingSurchargePayment({ booking, report, role, onUpdated, onOpenWallet }: {
+  booking: BookingResponse; report?: InspectionReportResponse; role?: "Owner" | "Customer"; onUpdated?: () => void | Promise<void>; onOpenWallet?: () => void;
 }) {
   const { theme } = useTheme();
   const [busy, setBusy] = useState(false), [error, setError] = useState(""), [note, setNote] = useState("");
@@ -33,6 +33,7 @@ export default function OutstandingSurchargePayment({ booking, report, role, onU
     {role === "Customer" && report ? <>
       <BookingButton title="Thanh toán qua ví MoveVN" busy={busy} onPress={() => void pay("Wallet")} />
       <BookingButton secondary title="Chọn trả trực tiếp" disabled={busy || external >= amount} onPress={() => void pay("External")} />
+      {onOpenWallet && <BookingButton secondary title="Nạp tiền vào ví" disabled={busy} onPress={onOpenWallet} />}
       <Text style={{ color: theme.muted }}>Nếu ví thiếu tiền, vào Ví MoveVN để nạp thêm rồi thanh toán khoản còn lại.</Text>
     </> : null}
     {role === "Owner" && external > 0 && report ? <>

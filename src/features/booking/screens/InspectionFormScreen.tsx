@@ -11,12 +11,11 @@ import { useTheme } from "@/theme/useTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { createCheckInReport, createCheckOutReport } from "../bookingService";
 import { createInspectionForm } from "../inspectionForm";
-import { pickAndStampPhotosWeb } from "../utils/stampWebPhoto";
 import { formatVietnamDateTime, inspectionLabel, MAX_INSPECTION_PHOTOS, validateInspectionFields, type InspectionType } from "../bookingDisplay";
-import { deleteInspectionPhoto, resizeCameraPhoto, type CapturedInspectionPhoto } from "../inspectionPhoto";
+import { deleteInspectionPhoto, type CapturedInspectionPhoto } from "../inspectionPhoto";
 import type { BookingResponse, InspectionReportResponse } from "../types";
 import { BookingButton, BookingCard, BookingField, BookingHeader } from "../components/BookingControls";
-import InspectionCameraModal, { type RawPhoto } from "../components/InspectionCameraModal";
+import InspectionCameraModal from "../components/InspectionCameraModal";
 
 export default function InspectionFormScreen({ booking, reports = [], type, onBack, onSaved }: {
   booking: BookingResponse; reports?: InspectionReportResponse[]; type: InspectionType; onBack: () => void; onSaved: (report: InspectionReportResponse) => void;
@@ -32,11 +31,8 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
   const [damageDescription, setDamageDescription] = useState(previous?.damageDescription ?? "");
   const [photos, setPhotos] = useState<CapturedInspectionPhoto[]>([]);
   const photoFiles = useRef<CapturedInspectionPhoto[]>([]);
-  const libraryQueue = useRef<RawPhoto[]>([]);
-  const [libraryPhoto, setLibraryPhoto] = useState<RawPhoto | undefined>();
   const [cameraOpen, setCameraOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [picking, setPicking] = useState(false);
   const saveLock = useRef(false);
   const alive = useRef(true);
   const [error, setError] = useState("");
@@ -44,7 +40,7 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
 
   useEffect(() => {
     alive.current = true;
-    return () => { alive.current = false; photoFiles.current.forEach((photo) => deleteInspectionPhoto(photo.uri)); libraryQueue.current.forEach(photo => deleteInspectionPhoto(photo.uri)); };
+    return () => { alive.current = false; photoFiles.current.forEach((photo) => deleteInspectionPhoto(photo.uri)); };
   }, []);
 
   function leave() {
@@ -76,71 +72,6 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
     photoFiles.current = photoFiles.current.filter((item) => item.id !== photo.id); setPhotos(photoFiles.current);
   }
 
-  async function addWebPhotos() {
-    if (photos.length >= MAX_INSPECTION_PHOTOS) {
-      setError(`Tối đa ${MAX_INSPECTION_PHOTOS} ảnh. Xóa bớt rồi thêm tiếp.`);
-      return;
-    }
-    setPicking(true);
-    try {
-      const { photos: picked, skipped, canceled } = await pickAndStampPhotosWeb({
-        bookingCode: booking.bookingCode,
-        type,
-        maxCount: MAX_INSPECTION_PHOTOS - photoFiles.current.length,
-      });
-      if (canceled) return;
-      if (picked.length === 0) {
-        setError("Không đóng dấu được ảnh. Vui lòng thử lại.");
-        return;
-      }
-      const stamped: CapturedInspectionPhoto[] = picked.map((item, index) => ({
-        source: "library",
-        id: `${item.capturedAt.replace(/[^\d]/g, "")}-${Date.now()}-${index}`,
-        uri: item.previewUrl,
-        capturedAt: item.capturedAt,
-        file: { uri: item.previewUrl, name: item.name, type: "image/jpeg" },
-        uploadBlob: item.file,
-      }));
-      const next = [...photoFiles.current, ...stamped].slice(0, MAX_INSPECTION_PHOTOS);
-      photoFiles.current = next;
-      setPhotos(next);
-      setError(skipped > 0 ? `${skipped} ảnh lỗi đã được bỏ qua.` : "");
-    } catch {
-      setError("Không chọn được ảnh. Vui lòng thử lại.");
-    } finally {
-      setPicking(false);
-    }
-  }
-  async function addLibraryPhotos() {
-    if (Platform.OS === "web") { await addWebPhotos(); return; }
-    if (busy || picking || photos.length >= MAX_INSPECTION_PHOTOS) return;
-    setPicking(true); setError("");
-    try {
-      const picker = await import("expo-image-picker");
-      const result = await picker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: MAX_INSPECTION_PHOTOS - photoFiles.current.length, quality: 1 });
-      if (result.canceled) return;
-      const selected = result.assets.slice(0, MAX_INSPECTION_PHOTOS - photoFiles.current.length);
-      for (const asset of selected) {
-        const resized = await resizeCameraPhoto(asset.uri, asset.width, asset.height);
-        if (!alive.current) { deleteInspectionPhoto(resized.uri); return; }
-        libraryQueue.current.push({ ...resized, capturedAt: new Date().toISOString() });
-      }
-      const first = libraryQueue.current.shift();
-      if (!first) return;
-      setLibraryPhoto(first);
-      setCameraOpen(true);
-    } catch {
-      libraryQueue.current.forEach(photo => deleteInspectionPhoto(photo.uri));
-      libraryQueue.current = [];
-      if (alive.current) setError("Không chọn được ảnh. Vui lòng thử lại.");
-    }
-    finally { if (alive.current) setPicking(false); }
-  }
-  function closeCamera() {
-    const next = libraryQueue.current.shift();
-    setLibraryPhoto(next);
-    setCameraOpen(Boolean(next));
-  }
   async function submit() {
     if (saveLock.current) return;
     if (validation) { setError(validation); return; }
@@ -181,33 +112,19 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
       </BookingCard>
       <BookingCard>
         <Text style={{ color: theme.text, fontSize: 17, fontWeight: "700" }}>Ảnh xe ({photos.length}/{MAX_INSPECTION_PHOTOS})</Text>
-        <Text style={{ color: theme.muted, lineHeight: 21 }}>
-          {Platform.OS === "web"
-            ? "Chọn ảnh từ thư viện, app tự gắn ngày giờ hệ thống lên từng ảnh."
-            : "Chọn nhiều ảnh từ thư viện hoặc chụp ảnh mới, tối đa 12 ảnh. Xem lại watermark trên từng ảnh rồi bấm Dùng ảnh này."}
-        </Text>
+        <Text style={{ color: theme.muted, lineHeight: 21 }}>Chụp ảnh trực tiếp bằng camera, tối đa 12 ảnh. Kiểm tra watermark ngày giờ trên từng ảnh trước khi gửi.</Text>
         <View style={styles.photos}>{photos.map((photo, index) => <View key={photo.id} style={styles.photo}>
-          <InspectionPhoto key={photo.uri} uri={photo.uri} label={photo.source === "library" ? `Ảnh thư viện ${index + 1} đã có watermark` : `Ảnh chụp xe ${index + 1} đã có watermark`} />
-          <Text style={{ color: theme.muted, fontSize: 11 }}>{photo.source === "library" ? "Đã thêm: " : ""}{formatVietnamDateTime(photo.capturedAt)}</Text>
+          <InspectionPhoto key={photo.uri} uri={photo.uri} label={`Ảnh chụp xe ${index + 1} đã có watermark`} />
+          <Text style={{ color: theme.muted, fontSize: 11 }}>{formatVietnamDateTime(photo.capturedAt)}</Text>
           <Pressable accessibilityRole="button" accessibilityLabel={`Xóa ảnh ${index + 1}`} disabled={busy} onPress={() => removePhoto(photo)} style={styles.remove}><Text style={{ color: theme.danger, fontWeight: "600" }}>Xóa / chụp lại</Text></Pressable>
         </View>)}</View>
-        <BookingButton
-          secondary
-          title={picking ? "Đang xử lý ảnh…" : Platform.OS === "web" ? "Chọn ảnh có sẵn" : "Chụp ảnh xe"}
-          busy={picking}
-          disabled={busy || picking || photos.length >= MAX_INSPECTION_PHOTOS}
-          onPress={() => {
-            if (Platform.OS === "web") void addWebPhotos();
-            else { setLibraryPhoto(undefined); setCameraOpen(true); }
-          }}
-        />
-        {Platform.OS !== "web" ? <BookingButton secondary title="Chọn ảnh từ thư viện" busy={picking} disabled={busy || picking || photos.length >= MAX_INSPECTION_PHOTOS} onPress={() => void addLibraryPhotos()} /> : null}
+        <BookingButton secondary title="Chụp ảnh xe" disabled={busy || photos.length >= MAX_INSPECTION_PHOTOS} onPress={() => setCameraOpen(true)} />
       </BookingCard>
       {error ? <Text accessibilityRole="alert" style={{ color: theme.danger }}>{error}</Text> : null}
       <BookingButton title="Gửi biên bản cho khách xác nhận" busy={busy} disabled={photos.length === 0} onPress={() => void submit()} />
       <Text style={{ color: theme.muted, fontSize: 13, textAlign: "center" }}>Kiểm tra kỹ ảnh và nội dung trước khi gửi. Biên bản trả xe chỉ có thể sửa trước khi khách xác nhận; ảnh gốc được giữ nguyên.</Text>
     </ScrollView>
-    {cameraOpen ? <InspectionCameraModal key={libraryPhoto?.uri ?? "camera"} bookingCode={booking.bookingCode} type={type} sourcePhoto={libraryPhoto} onCaptured={addPhoto} onClose={closeCamera} /> : null}
+    {cameraOpen ? <InspectionCameraModal bookingCode={booking.bookingCode} type={type} onCaptured={addPhoto} onClose={() => setCameraOpen(false)} /> : null}
   </KeyboardAvoidingView>;
 }
 
