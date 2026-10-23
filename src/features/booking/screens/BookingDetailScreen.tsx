@@ -9,9 +9,11 @@ import { BOOKING_STATUS_LABELS, formatMoney, formatVietnamDateTime, inspectionAv
 import { BookingButton, BookingCard, BookingField, BookingHeader } from "../components/BookingControls";
 import InspectionReportCard from "../components/InspectionReportCard";
 import InspectionFormScreen from "./InspectionFormScreen";
+import { useAuthStore } from "@/features/auth/hooks/useAuth";
 
 export default function BookingDetailScreen({ bookingId, role, onBack }: { bookingId: number; role: BookingRole; onBack: () => void }) {
   const { theme } = useTheme();
+  const userId = useAuthStore((state) => state.user?.userId);
   const [booking, setBooking] = useState<BookingResponse | null>(null);
   const [reports, setReports] = useState<InspectionReportResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,6 +120,12 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
     setMessage("Đã gửi biên bản. Đang chờ khách xác nhận."); void load();
   }} />;
 
+  // Phân quyền theo quyền sở hữu thực tế của đơn, không theo role đang chọn trên app:
+  // tài khoản vừa là khách vừa là chủ xe không được thấy nút duyệt đơn của người khác.
+  const viewerRole: BookingRole | null = booking
+    ? booking.ownerId === userId ? "Owner" : booking.customerId === userId ? "Customer" : null
+    : role;
+
   return <View style={{ flex: 1, backgroundColor: theme.background }}>
     <BookingHeader title={booking?.bookingCode || "Chi tiết đơn thuê"} onBack={() => { if (!lock.current) onBack(); }} />
     {!booking && loading ? <View style={styles.center}><ActivityIndicator color={theme.brand} /><Text style={{ color: theme.muted }}>Đang tải đơn thuê…</Text></View> :
@@ -143,20 +151,20 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
             {booking.securityDepositAmount > 0 ? <Text style={{ color: theme.text }}>Cọc đảm bảo: {formatMoney(booking.securityDepositAmount)}</Text> : null}
             {booking.paymentDueAt && booking.status === "Approved" ? <Text style={{ color: theme.muted }}>Hạn đặt cọc: {formatVietnamDateTime(booking.paymentDueAt)}</Text> : null}
           </BookingCard>
-          {role === "Owner" && booking.status === "Pending" ? <BookingCard>
+          {viewerRole === "Owner" && booking.status === "Pending" ? <BookingCard>
             <Text style={{ color: theme.text, fontWeight: "700" }}>Yêu cầu thuê đang chờ duyệt</Text>
             <BookingButton title="Duyệt đơn thuê" disabled={loading || !!error} busy={busy} onPress={() => void action(() => approveBooking(bookingId), "Đã duyệt đơn. Chờ khách đặt cọc.")} />
             <BookingButton title="Từ chối yêu cầu" secondary disabled={busy || loading || !!error} onPress={() => setRejecting(!rejecting)} />
             {rejecting ? <><BookingField label="Lý do từ chối" value={rejectReason} onChangeText={setRejectReason} multiline editable={!busy} />
               <BookingButton title="Xác nhận từ chối" danger disabled={!rejectReason.trim() || loading || !!error} busy={busy} onPress={() => void action(() => rejectBooking(bookingId, { reason: rejectReason.trim() }), "Đã từ chối đơn thuê.")} /></> : null}
           </BookingCard> : null}
-          {role === "Customer" && booking.status === "Approved" ? <BookingCard>
+          {viewerRole === "Customer" && booking.status === "Approved" ? <BookingCard>
             <Text style={{ color: theme.text }}>Chủ xe đã duyệt. Vui lòng thanh toán đặt cọc trước khi nhận xe.</Text>
             <BookingButton title="Thanh toán đặt cọc" busy={busy} disabled={loading || !!error || (!!booking.paymentDueAt && parseServerDate(booking.paymentDueAt).getTime() <= now)} onPress={() => void payDeposit()} />
             {paymentOrder ? <BookingButton secondary title="Kiểm tra thanh toán" busy={busy} onPress={() => void verifyPayment()} /> : null}
           </BookingCard> : null}
           {(["CheckIn", "CheckOut"] as const).map((type) => {
-            const state = inspectionAvailability(booking, role, type, reports, now);
+            const state = inspectionAvailability(booking, viewerRole ?? role, type, reports, now);
             return <View key={type} style={styles.section}>
               <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 19, fontWeight: "800" }}>{inspectionLabel(type)}</Text>
               {state.report ? <InspectionReportCard report={state.report} /> : <Text style={{ color: theme.muted }}>Chưa có biên bản {type === "CheckIn" ? "nhận xe" : "trả xe"}.</Text>}
@@ -169,11 +177,11 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
               {type === "CheckIn" && !state.pickupReached && booking.status === "DepositPaid" ? <Text style={{ color: theme.muted }}>
                 {booking.canCheckInNow ? "Xe trống: có thể check-in sớm tối đa 2 giờ. Giờ trả và giá thuê theo đơn đã đặt." : booking.checkInUnavailableReason || "Có thể check-in sớm tối đa 2 giờ nếu xe trống. Tải lại đơn để kiểm tra."}
               </Text> : null}
-              {type === "CheckIn" && role === "Customer" && !state.report && booking.status === "DepositPaid" ? <Text style={{ color: theme.muted }}>Chờ chủ xe chụp ảnh và lập biên bản nhận xe.</Text> : null}
-              {type === "CheckOut" && role === "Customer" && !state.report && booking.status === "InProgress" ? <Text style={{ color: theme.muted }}>Khi trả xe, chủ xe sẽ chụp ảnh và lập biên bản để bạn đối chiếu.</Text> : null}
+              {type === "CheckIn" && viewerRole === "Customer" && !state.report && booking.status === "DepositPaid" ? <Text style={{ color: theme.muted }}>Chờ chủ xe chụp ảnh và lập biên bản nhận xe.</Text> : null}
+              {type === "CheckOut" && viewerRole === "Customer" && !state.report && booking.status === "InProgress" ? <Text style={{ color: theme.muted }}>Khi trả xe, chủ xe sẽ chụp ảnh và lập biên bản để bạn đối chiếu.</Text> : null}
             </View>;
           })}
-          {role === "Customer" && ["Pending", "Approved", "DepositPaid"].includes(booking.status) ? <BookingButton title="Xem chính sách và hủy đơn" secondary disabled={busy || loading || !!error} onPress={() => void requestCancel()} /> : null}
+          {viewerRole === "Customer" && ["Pending", "Approved", "DepositPaid"].includes(booking.status) ? <BookingButton title="Xem chính sách và hủy đơn" secondary disabled={busy || loading || !!error} onPress={() => void requestCancel()} /> : null}
           {booking.cancelReason ? <Text style={{ color: theme.muted }}>Lý do: {booking.cancelReason}</Text> : null}
           {booking.statusHistory.length ? <BookingCard>
             <Text style={{ color: theme.text, fontSize: 17, fontWeight: "700" }}>Lịch sử đơn thuê</Text>

@@ -613,7 +613,7 @@ export default function OwnerBookingDetailScreen({
           </Text>
         ) : null}
 
-        {status === "Pending" && (
+        {status === "Pending" && userId === booking.ownerId && (
           <View style={styles.actionRow}>
             <Pressable
               onPress={() => runAction("approve", () => approveBooking(bookingId).then(() => undefined), "Đã duyệt. Hợp đồng tự tạo để 2 bên ký.")}
