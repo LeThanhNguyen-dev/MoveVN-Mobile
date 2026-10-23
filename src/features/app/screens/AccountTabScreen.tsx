@@ -52,6 +52,7 @@ import { useTheme } from "@/theme/useTheme";
 import { useNotificationStore } from "@/features/notifications/useNotifications";
 import { useAssistantUi } from "@/features/assistant/useAssistantUi";
 import { openFavoriteVehicles } from "@/features/favorites/favoriteActions";
+import { openSupportTickets } from "@/features/supportTickets/ticketNavigation";
 
 type TabIcon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 
@@ -237,6 +238,7 @@ export default function AccountTabScreen({
     {
       title: "Hỗ trợ",
       items: [
+        { key: "support-tickets", label: "Yêu cầu hỗ trợ của tôi", icon: Headphones, accent: "#7C3AED", onPress: () => openSupportTickets() },
         {
           key: "chatbot",
           label: "Chatbot MoveVN",
