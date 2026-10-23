@@ -4,6 +4,7 @@ import { getPendingTopUp, type BookingTopUpPendingResponse } from "@/features/pa
 import InspectionFormScreen from "./InspectionFormScreen";
 import { useBookingNotificationRefresh } from "../useBookingNotificationRefresh";
 import BookingAssistance from "../components/BookingAssistance";
+import ReportViolationButton from "@/features/violations/ReportViolationButton";
 import ReturnProgress from "../components/ReturnProgress";
 import InspectionReportCard from "../components/InspectionReportCard";
 import CheckoutEditor from "../components/CheckoutEditor";
@@ -410,6 +411,7 @@ export default function OwnerBookingDetailScreen({
         ) : null}
 
         <BookingAssistance key={booking.id} bookingId={booking.id} bookingCode={booking.bookingCode} />
+        <ReportViolationButton target={{ targetType: "Booking", targetId: booking.id, label: booking.bookingCode }} />
         <BookingTimeline history={booking.statusHistory} />
 
         {status === "Completed" && !alreadyReviewed && (
