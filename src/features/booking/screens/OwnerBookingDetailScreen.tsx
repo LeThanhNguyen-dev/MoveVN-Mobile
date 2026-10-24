@@ -413,8 +413,8 @@ export default function OwnerBookingDetailScreen({
           <ActionButton theme={theme} label="Hủy booking (hoàn 100% cọc)" onPress={() => { setReason(""); setReasonModal({ mode: "cancel" }); }} disabled={!dataReady || busy !== null} danger />
         )}
 
-        <InspectionSummaryLink type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckIn" })} />
-        <InspectionSummaryLink type="CheckOut" report={checkOutReport} onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckOut" })} />
+        <InspectionSummaryLink booking={booking} type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckIn" })} />
+        <InspectionSummaryLink booking={booking} type="CheckOut" report={checkOutReport} onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckOut" })} />
         {status === "Completed" && booking.escrowStatus === "Held" && (
           hold.withinHoldWindow ? (
             <Text style={styles.muted}>Tiền cọc đang giữ để đối soát. Còn khoảng {hold.remainingHours} giờ nữa mới được giải ngân.</Text>
