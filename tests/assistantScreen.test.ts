@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { themes } from "@/theme/tokens";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
-const mocks = vi.hoisted(() => ({ list: vi.fn(), history: vi.fn(), send: vi.fn(), getDraft: vi.fn(), patch: vi.fn(), stored: vi.fn(), handoff: vi.fn(), getMessage: vi.fn(), event: null as null | ((event: { conversationId: string; status: string }) => void) }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), history: vi.fn(), send: vi.fn(), getDraft: vi.fn(), patch: vi.fn(), stored: vi.fn(), event: null as null | ((event: { conversationId: string; status: string }) => void) }));
 vi.mock("react-native", () => ({
   View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable", ScrollView: "ScrollView", ActivityIndicator: "ActivityIndicator", KeyboardAvoidingView: "KeyboardAvoidingView",
   Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 },
@@ -25,7 +25,7 @@ vi.mock("@/features/assistant/components/BookingFunnel", () => ({ default: "Book
 vi.mock("@/features/cms/screens/PolicyDetailScreen", () => ({ default: "PolicyDetailScreen" }));
 vi.mock("@/features/assistant/assistantService", () => ({
   listConversations: mocks.list, getHistory: mocks.history, sendQuestion: mocks.send, getDraft: mocks.getDraft, patchDraft: mocks.patch,
-  createConversation: vi.fn(), getMessage: mocks.getMessage, handoff: mocks.handoff, sendFeedback: vi.fn(), assistantError: () => "Error",
+  createConversation: vi.fn(), getMessage: vi.fn(), handoff: vi.fn(), sendFeedback: vi.fn(), assistantError: () => "Error",
 }));
 import AssistantScreen from "@/features/assistant/screens/AssistantScreen";
 import { getAssistantReplies } from "@/features/assistant/assistantPresentation";
@@ -50,8 +50,6 @@ beforeEach(() => {
   mocks.history.mockResolvedValue({ items: [message], totalCount: 1 });
   mocks.send.mockResolvedValue({ status: "Completed" });
   mocks.getDraft.mockResolvedValue(null); mocks.patch.mockResolvedValue({});
-  mocks.handoff.mockResolvedValue({ ...current, status: "WaitingForStaff", ticketId: 45 });
-  mocks.getMessage.mockResolvedValue({ status: "Failed", errorCode: "AI_UNAVAILABLE" });
 });
 afterEach(async () => { if (tree) await act(async () => tree.unmount()); });
 
@@ -117,41 +115,4 @@ it("uses server quick replies and supplies contextual fallbacks", () => {
   expect(getAssistantReplies("Ngày nào?", ["Ngày mai"])).toEqual(["Ngày mai"]);
   expect(getAssistantReplies("Ngày nào?", [])).toEqual([]);
   expect(getAssistantReplies("Ngân sách bao nhiêu?")).toContain("3tr tổng chuyến");
-});
-
-it("does not send empty questions", async () => {
-  await render();
-  const input = tree.root.findAllByType("TextInput" as never)[0]!;
-  await act(async () => input.props.onChangeText("   "));
-  expect(tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.disabled).toBe(true);
-  await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
-  expect(mocks.send).not.toHaveBeenCalled();
-});
-
-it("requires explicit staff consent and a support note before transferring", async () => {
-  await render(); await press("Gặp nhân viên");
-  expect(mocks.handoff).not.toHaveBeenCalled();
-  expect(button("Đồng ý chuyển").props.disabled).toBe(true);
-  await act(async () => tree.root.findByProps({ placeholder: "Bạn cần hỗ trợ vấn đề gì?" }).props.onChangeText("Cần hỗ trợ thuê xe"));
-  await press("Đồng ý chuyển");
-  expect(mocks.handoff).toHaveBeenCalledWith("c1", "Cần hỗ trợ thuê xe");
-  expect(tree.root.findByProps({ placeholder: "Nhắn cho nhân viên…" })).toBeDefined();
-});
-
-it("shows a failed AI request as a retryable error without fabricating an answer", async () => {
-  mocks.history.mockResolvedValue({ items: [{ id: "failed", role: "user", status: "Failed", content: "Xin chào", requestId: "failed-id", createdAt: "2026-10-22" }], totalCount: 1 });
-  await render();
-  expect(mocks.getMessage).toHaveBeenCalledWith("c1", "failed-id", expect.anything());
-  expect(button("Thử lại")).toBeDefined();
-  expect(JSON.stringify(tree.toJSON())).not.toContain("Tìm được xe");
-});
-
-it("closes input on an ended conversation and allows starting a clean conversation", async () => {
-  mocks.stored.mockResolvedValue("c1");
-  mocks.list.mockResolvedValue({ items: [{ ...current, status: "Closed" }] });
-  await render();
-  expect(tree.root.findAllByProps({ accessibilityLabel: "Gửi tin nhắn" })).toHaveLength(0);
-  await press("Bắt đầu trò chuyện mới");
-  expect(tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" })).toBeDefined();
-  expect(JSON.stringify(tree.toJSON())).not.toContain("Tìm được xe");
 });

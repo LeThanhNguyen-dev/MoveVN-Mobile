@@ -32,8 +32,8 @@ export default function TripsNavigator({
   // Mở thẳng chi tiết khi vừa tạo booking xong (dùng initialParams thay vì
   // navigate tay lúc mount để tránh race "not handled by any navigator").
   useEffect(() => {
+    onRouteChange?.(hasPending ? "TripDetail" : "TripList");
     if (hasPending && !consumedRef.current) {
-      onRouteChange?.("TripDetail");
       consumedRef.current = true;
       onConsumedPending();
     }

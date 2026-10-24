@@ -10,7 +10,7 @@ export function parseBookingTarget(dataJson?: string | null): BookingNotificatio
     const data = JSON.parse(dataJson) as { bookingId?: unknown; booking_id?: unknown; roleTarget?: unknown };
     const raw = data.bookingId ?? data.booking_id;
     const id = typeof raw === "number" ? raw : Number(raw);
-    if (!Number.isSafeInteger(id) || id <= 0) return null;
+    if (!Number.isFinite(id) || id <= 0) return null;
     return {
       bookingId: Math.trunc(id),
       roleTarget: typeof data.roleTarget === "string" ? data.roleTarget : "",

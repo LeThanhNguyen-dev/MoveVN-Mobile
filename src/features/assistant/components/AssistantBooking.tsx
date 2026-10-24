@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
@@ -27,11 +27,6 @@ const money = (value: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
 
 const formatDateTime = (value: string) => new Date(value).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
-
-function checkoutUrl(value?: string) {
-  try { const url = new URL(value ?? ""); return url.protocol === "https:" ? url.href : null; }
-  catch { return null; }
-}
 
 export function QuoteCard({ quote }: { quote: AssistantQuote }) {
   const { theme } = useTheme();
@@ -69,34 +64,26 @@ export function BookingPaymentCard({
   const [payment, setPayment] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const actionLock = useRef(false);
-  const safeCheckout = checkoutUrl(payment?.checkoutUrl);
 
   async function openCheckout() {
-    if (actionLock.current) return;
-    actionLock.current = true;
     setBusy(true);
     setMessage("");
     try {
-      const link = safeCheckout && payment ? payment : await getDraftPaymentLink(conversationId);
+      const link = payment ?? await getDraftPaymentLink(conversationId);
       setPayment(link);
-      const url = checkoutUrl(link.checkoutUrl);
-      if (url) {
-        await Linking.openURL(url);
+      if (/^https:\/\//i.test(link.checkoutUrl)) {
+        await Linking.openURL(link.checkoutUrl);
       } else {
         setMessage("Đường dẫn thanh toán không hợp lệ.");
       }
     } catch (err) {
       setMessage(getApiErrorMessage(err, "Chưa kết nối được thanh toán. Bạn có thể mở đơn để thử lại."));
     } finally {
-      actionLock.current = false;
       setBusy(false);
     }
   }
 
   async function checkPaid() {
-    if (actionLock.current) return;
-    actionLock.current = true;
     setBusy(true);
     try {
       const result = await getAssistantPaymentStatus(bookingId);
@@ -110,7 +97,6 @@ export function BookingPaymentCard({
     } catch (err) {
       setMessage(getApiErrorMessage(err, "Chưa kiểm tra được thanh toán."));
     } finally {
-      actionLock.current = false;
       setBusy(false);
     }
   }
@@ -118,7 +104,7 @@ export function BookingPaymentCard({
   return (
     <View style={styles.paymentCard}>
       <Pressable disabled={!onViewBooking} onPress={() => onViewBooking?.(bookingId)}><Text style={styles.cardTitle}>Xem đơn #{bookingId}</Text></Pressable>
-      {safeCheckout ? (
+      {payment ? (
         <Pressable disabled={busy} onPress={openCheckout} style={styles.primaryButton}>
           <Text style={styles.primaryText}>Mở trang thanh toán</Text>
         </Pressable>
@@ -127,7 +113,7 @@ export function BookingPaymentCard({
           {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>Lấy đường dẫn thanh toán</Text>}
         </Pressable>
       )}
-      {!!safeCheckout && !!payment?.qrCode && <View accessibilityLabel="Mã QR thanh toán" style={{ alignItems: "center", padding: 8 }}><QRCode value={payment.qrCode} size={160} quietZone={8} /></View>}
+      {!!payment?.qrCode && <View accessibilityLabel="Mã QR thanh toán" style={{ alignItems: "center", padding: 8 }}><QRCode value={payment.qrCode} size={160} quietZone={8} /></View>}
       <Pressable disabled={busy} onPress={checkPaid}>
         <Text style={styles.link}>Tôi đã thanh toán — kiểm tra</Text>
       </Pressable>
@@ -156,7 +142,6 @@ export function ConfirmationCard({
   const [ack, setAck] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const actionLock = useRef(false);
 
   useEffect(() => {
     setCurrent(proposal);
@@ -169,8 +154,7 @@ export function ConfirmationCard({
   const rose = !!bookingDraft?.quote && bookingDraft.previousTotal != null && bookingDraft.quote.total > bookingDraft.previousTotal;
 
   async function confirm() {
-    if (!current.confirmToken || actionLock.current || Boolean(rose && !ack)) return;
-    actionLock.current = true;
+    if (!current.confirmToken) return;
     setBusy(true);
     setError("");
     try {
@@ -187,14 +171,11 @@ export function ConfirmationCard({
     } catch (err) {
       setError(getApiErrorMessage(err, "Xác nhận đã hết hạn hoặc thông tin đã thay đổi. Vui lòng báo giá lại."));
     } finally {
-      actionLock.current = false;
       setBusy(false);
     }
   }
 
   async function requote() {
-    if (actionLock.current) return;
-    actionLock.current = true;
     setBusy(true);
     setError("");
     try {
@@ -207,7 +188,6 @@ export function ConfirmationCard({
     } catch (err) {
       setError(getApiErrorMessage(err, "Chưa thể báo giá lại."));
     } finally {
-      actionLock.current = false;
       setBusy(false);
     }
   }
@@ -227,7 +207,7 @@ export function ConfirmationCard({
         bookingDraft?.quote && <QuoteCard quote={bookingDraft.quote} />
       )}
       {rose && !result ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: ack }} disabled={busy} onPress={() => setAck(value => !value)}><Text style={styles.warn}>{ack ? "✓ " : "☐ "}Giá tăng so với báo giá trước. Tôi đồng ý giá mới.</Text></Pressable> : null}
-      {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={styles.error}>{error}</Text> : null}
       {result ? (
         <>
           <Text style={styles.cardTitle}>

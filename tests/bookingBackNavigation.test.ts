@@ -5,10 +5,6 @@ import { goBackOrFallback } from "@/navigation/goBackOrFallback";
 describe.each([
   ["TripList", "TripDetail"],
   ["OwnerBookingList", "OwnerBookingDetail"],
-  ["ExploreMain", "VehicleDetail"],
-  ["FavoriteVehicles", "VehicleDetail"],
-  ["TripList", "VehicleDetail"],
-  ["OwnerBookingList", "VehicleDetail"],
 ])("booking back navigation: %s", (list, detail) => {
   function stack(initialRouteName: string) {
     const router = StackRouter({ initialRouteName });

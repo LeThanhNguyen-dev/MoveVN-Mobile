@@ -2,7 +2,6 @@ import { clearSession, getSessionGeneration, initializeAuthSession, setSession, 
 import { getCurrentUser, logout, toApiError } from "./authService";
 import { refreshAuthSession } from "@/services/apiClient";
 import type { AuthResponse } from "../types";
-import { unregisterPushDevice } from "@/features/notifications/pushDeviceService";
 
 let restoring: Promise<void> | null = null;
 
@@ -39,10 +38,9 @@ export async function completeSignIn(result: AuthResponse) {
 }
 
 export async function signOut() {
-  const unregistering = unregisterPushDevice().catch(() => undefined);
   const token = useAuthStore.getState().token;
   const clearing = clearSession();
   const revoking = token ? logout(token.refreshToken, token.accessToken) : Promise.resolve();
-  const results = await Promise.allSettled([clearing, revoking, unregistering]);
+  const results = await Promise.allSettled([clearing, revoking]);
   for (const result of results) if (result.status === "rejected") throw result.reason;
 }

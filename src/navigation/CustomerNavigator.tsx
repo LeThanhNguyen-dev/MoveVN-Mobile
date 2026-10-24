@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
-import { usePushNavigation } from "@/features/notifications/pushNavigation";
+import { useCallback, useState } from "react";
 import { CalendarCheck, Gift, LayoutGrid, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -40,8 +39,6 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
   const [tripsRoute, setTripsRoute] = useState("TripList");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
-  const [tripRequest, setTripRequest] = useState(0);
-  const pendingPush = usePushNavigation(state => state.pending);
   const [chatRoute, setChatRoute] = useState("ChatList");
   const [pendingVehicleId, setPendingVehicleId] = useState<number | null>(null);
   const [quickBook, setQuickBook] = useState<QuickBookParams | null>(null);
@@ -56,19 +53,10 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   }, []);
 
   const goToTrip = useCallback((bookingId: number) => {
-    setTripRequest(value => value + 1);
     setPendingTripId(bookingId);
     setTripsRoute("TripDetail");
     setActiveTab("trips");
   }, []);
-
-  useEffect(() => {
-    if (!pendingPush || pendingPush.userId !== user.userId || pendingPush.roleTarget !== "Customer") return;
-    setShowProfile(false); setShowWallet(false); setProfileUserId(null);
-    useFavoriteStore.setState({ open: false });
-    goToTrip(pendingPush.bookingId);
-    usePushNavigation.getState().clear();
-  }, [pendingPush, user.userId, goToTrip]);
 
   const consumePendingTrip = useCallback(() => {
     setPendingTripId(null);
@@ -155,7 +143,6 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
               />
             ) : activeTab === "trips" ? (
               <TripsNavigator
-                key={tripRequest}
                 pendingBookingId={pendingTripId}
                 onConsumedPending={consumePendingTrip}
                 onRouteChange={setTripsRoute}

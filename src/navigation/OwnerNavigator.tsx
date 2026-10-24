@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
-import { usePushNavigation } from "@/features/notifications/pushNavigation";
+import { useCallback, useState } from "react";
 import { CalendarCheck, CarFront, LayoutDashboard, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -35,15 +34,6 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const [chatRoute, setChatRoute] = useState("ChatList");
   const [bookingRoute, setBookingRoute] = useState("OwnerBookingList");
-  const [pushBooking, setPushBooking] = useState<{ bookingId: number; requestId: string } | null>(null);
-  const pendingPush = usePushNavigation(state => state.pending);
-  useEffect(() => {
-    if (!pendingPush || pendingPush.userId !== user.userId || pendingPush.roleTarget !== "Owner") return;
-    setShowProfile(false); setShowWallet(false); setProfileUserId(null);
-    setPushBooking(pendingPush);
-    setActiveTab("bookings");
-    usePushNavigation.getState().clear();
-  }, [pendingPush, user.userId]);
   const [pendingDispute, setPendingDispute] = useState<DisputeCreatePrefill | null>(null);
   const [disputeOrigin, setDisputeOrigin] = useState<{ tab: "bookings" } | null>(null);
   const [disputesVisible, setDisputesVisible] = useState(false);
@@ -95,8 +85,6 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
               <OwnerOverviewScreen onAvatarPress={() => setShowProfile(true)} user={user} />
             ) : activeTab === "bookings" ? (
               <OwnerBookingsNavigator
-                key={pushBooking?.requestId ?? "bookings"}
-                pendingBookingId={pushBooking?.bookingId}
                 onRouteChange={setBookingRoute}
                 onOpenDisputes={openDisputes}
                 onOpenUserProfile={openUserProfile}

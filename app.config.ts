@@ -6,15 +6,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: config.name ?? "MoveVN Mobile",
     slug: config.slug ?? "movevn-mobile",
-    extra: { ...config.extra, remotePushEnabled: process.env.EXPO_PUBLIC_ENABLE_REMOTE_PUSH === "true", eas: { ...config.extra?.eas, ...(process.env.EXPO_PUBLIC_EAS_PROJECT_ID ? { projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID } : {}) } },
     ios: { ...config.ios, ...(process.env.MOVEVN_IOS_BUNDLE_IDENTIFIER ? { bundleIdentifier: process.env.MOVEVN_IOS_BUNDLE_IDENTIFIER } : {}) },
-    android: { ...config.android, ...(process.env.MOVEVN_ANDROID_PACKAGE ? { package: process.env.MOVEVN_ANDROID_PACKAGE } : {}), ...(process.env.MOVEVN_GOOGLE_SERVICES_FILE ? { googleServicesFile: process.env.MOVEVN_GOOGLE_SERVICES_FILE } : {}) },
+    android: { ...config.android, ...(process.env.MOVEVN_ANDROID_PACKAGE ? { package: process.env.MOVEVN_ANDROID_PACKAGE } : {}) },
     plugins: [
       ...(config.plugins ?? []),
       "expo-font",
       "expo-secure-store",
       "expo-sharing",
-      ["expo-notifications", { defaultChannel: "bookings" }],
       ["expo-camera", {
         cameraPermission: "MoveVN cần camera để chụp ảnh check-in/check-out xe.",
         recordAudioAndroid: false,
