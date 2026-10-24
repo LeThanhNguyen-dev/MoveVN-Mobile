@@ -18,6 +18,8 @@ import { getCmsPageNavigation } from "@/features/cms/services/cmsService";
 import type { CmsPageNavigationItem } from "@/features/cms/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
+import { openSupportTickets } from "@/features/supportTickets/ticketNavigation";
+import { TicketButton } from "@/features/supportTickets/TicketUi";
 
 type FaqTab = "CUSTOMER" | "OWNER";
 
@@ -150,6 +152,8 @@ export default function SupportCenterScreen({
             Giải đáp cách MoveVN hoạt động và hướng dẫn sử dụng cho khách thuê và chủ xe.
           </AppText>
         </View>
+
+        <View style={{ gap: 10 }}><TicketButton title="Gửi yêu cầu cho nhân viên hỗ trợ" onPress={() => openSupportTickets({ create: true })} /><TicketButton secondary title="Xem yêu cầu hỗ trợ của tôi" onPress={() => openSupportTickets()} /></View>
 
         <View style={[styles.searchBox, searchFocused && styles.searchBoxFocused]}>
           <Search color={theme.faint} size={19} strokeWidth={2.3} />
