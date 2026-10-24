@@ -1,0 +1,10 @@
+export type ViolationTargetType = "User" | "Vehicle" | "Booking";
+export type ViolationStatus = "Open" | "InReview" | "Resolved" | "Rejected";
+export type ViolationReason = { code: string; label: string; targetTypes: ViolationTargetType[] };
+export type ViolationTarget = { targetType: ViolationTargetType; targetId: number; label: string; ownerId?: number };
+export type ViolationQuery = { page: number; pageSize: number; status?: string; targetType?: string; keyword?: string };
+export type ViolationItem = { id: string; targetType: ViolationTargetType; targetId: number; targetLabel: string; reason: string; status: ViolationStatus; createdAt: string; updatedAt: string; assigneeName?: string | null; assignedTo?: number | null };
+export type ViolationDetail = ViolationItem & { reporterId: number; description: string; evidenceUrls: string[]; decision: string | null; resolution: string | null; closedAt: string | null; history: { id: number; action: string; note: string; internal: boolean; actorName: string; createdAt: string }[] };
+export type ViolationPage = { items: ViolationItem[]; totalCount: number; page: number; pageSize: number; totalPages: number };
+export type CreateViolation = { targetType: ViolationTargetType; targetId: number; reason: string; description: string; evidenceUrls: string[] };
+export type ViolationEntry = { reportId?: string; target?: ViolationTarget };

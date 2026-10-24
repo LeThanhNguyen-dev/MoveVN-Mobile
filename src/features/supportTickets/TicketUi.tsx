@@ -13,12 +13,12 @@ export function TicketButton({ title, onPress, disabled, busy, secondary, icon }
     <AppText style={[styles.buttonText, secondary && { color: theme.brand }]}>{title}</AppText>
   </Pressable>;
 }
-export function TicketHeader({ title, subtitle, onBack, onRefresh, busy }: { title: string; subtitle?: string; onBack: () => void; onRefresh?: () => void; busy?: boolean }) {
+export function TicketHeader({ title, subtitle, onBack, onRefresh, busy, refreshLabel = "Làm mới yêu cầu" }: { title: string; subtitle?: string; onBack: () => void; onRefresh?: () => void; busy?: boolean; refreshLabel?: string }) {
   const { theme } = useTheme(); const styles = ticketStyles(theme);
   return <View style={styles.header}>
     <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={onBack} style={styles.iconButton}><ArrowLeft color={theme.text} size={23} /></Pressable>
     <View style={{ flex: 1, minWidth: 0 }}><AppText display style={styles.heading}>{title}</AppText>{subtitle && <AppText numberOfLines={1} style={styles.muted}>{subtitle}</AppText>}</View>
-    {onRefresh && <Pressable accessibilityRole="button" accessibilityLabel="Làm mới yêu cầu" disabled={busy} onPress={onRefresh} style={styles.iconButton}><RefreshCw color={theme.brand} size={20} /></Pressable>}
+    {onRefresh && <Pressable accessibilityRole="button" accessibilityLabel={refreshLabel} disabled={busy} onPress={onRefresh} style={styles.iconButton}><RefreshCw color={theme.brand} size={20} /></Pressable>}
   </View>;
 }
 export function TicketNotice({ message, onRetry }: { message: string; onRetry?: () => void }) {

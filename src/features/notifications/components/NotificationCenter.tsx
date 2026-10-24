@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Bell, BellOff, CalendarCheck, CarFront, CheckCheck, ChevronRight, CircleAlert, Headphones, MessageSquare, RefreshCw, Wallet } from "lucide-react-native";
+import { ArrowLeft, Bell, BellOff, CalendarCheck, CarFront, CheckCheck, ChevronRight, CircleAlert, Flag, Headphones, MessageSquare, RefreshCw, Wallet } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import type { Theme } from "@/theme/tokens";
 import { getApiErrorMessage } from "@/services/apiClient";
@@ -13,6 +13,8 @@ import type { NotificationItem } from "../types";
 import { getAuthUser, getSessionGeneration } from "@/features/auth/hooks/useAuth";
 import { openSupportTickets } from "@/features/supportTickets/ticketNavigation";
 import { ticketFromNotification } from "@/features/supportTickets/ticketModel";
+import { openViolations } from "@/features/violations/violationNavigation";
+import { violationFromNotification } from "@/features/violations/violationModel";
 
 const icons = { booking: CalendarCheck, wallet: Wallet, support: Headphones, vehicle: CarFront, message: MessageSquare, system: Bell };
 
@@ -26,10 +28,14 @@ export default function NotificationCenter({ userId }: { userId: number }) {
   const detail = selected ? state.items.find((item) => item.id === selected.id) ?? state.updates[selected.id]?.item ?? selected : null;
   const busy = state.markingAll || state.pendingIds.length > 0;
   const pendingTicket = useRef<{ id: number; generation: number } | null>(null);
+  const pendingReport = useRef<{ id: string; generation: number } | null>(null);
   const ticketId = ticketFromNotification(detail?.dataJson);
+  const reportId = violationFromNotification(detail?.dataJson);
   function launchPendingTicket() {
     const pending = pendingTicket.current; pendingTicket.current = null;
     if (pending && getAuthUser()?.userId === userId && pending.generation === getSessionGeneration()) openSupportTickets({ ticketId: pending.id });
+    const report = pendingReport.current; pendingReport.current = null;
+    if (report && getAuthUser()?.userId === userId && report.generation === getSessionGeneration()) openViolations({ reportId: report.id });
   }
 
   useEffect(() => {
@@ -91,6 +97,11 @@ export default function NotificationCenter({ userId }: { userId: number }) {
             <View style={styles.rule} />
             <AppText selectable style={styles.body}>{detail.body}</AppText>
             {notificationReference(detail.dataJson) ? <AppText selectable style={styles.reference}>{notificationReference(detail.dataJson)}</AppText> : null}
+            {reportId && <Pressable accessibilityRole="button" onPress={() => {
+              pendingReport.current = { id: reportId, generation: getSessionGeneration() };
+              useNotificationStore.setState({ centerOpen: false });
+              if (Platform.OS !== "ios") launchPendingTicket();
+            }} style={styles.primaryButton}><Flag color={theme.onBrand} size={19} /><AppText style={styles.primaryText}>Xem kết quả báo cáo</AppText></Pressable>}
             {ticketId && <Pressable accessibilityRole="button" onPress={() => {
               pendingTicket.current = { id: ticketId, generation: getSessionGeneration() };
               useNotificationStore.setState({ centerOpen: false });
