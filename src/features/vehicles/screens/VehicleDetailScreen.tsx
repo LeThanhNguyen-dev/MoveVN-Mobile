@@ -6,6 +6,8 @@ import ReportViolationButton from "@/features/violations/ReportViolationButton";
 import { ArrowLeft, CalendarDays, Check, ChevronRight, ImageOff, MapPin, ShieldCheck, Star, Truck, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RouteProp } from "@react-navigation/native";
+import { CommonActions } from "@react-navigation/native";
+import { goBackOrFallback } from "@/navigation/goBackOrFallback";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { ExploreStackParamList } from "@/navigation/types";
 import type { Theme } from "@/theme/tokens";
@@ -23,7 +25,7 @@ import SurchargePolicySummary from "@/features/vehicles/components/SurchargePoli
 import { BookingButton } from "@/features/booking/components/BookingControls";
 
 type DetailRoute = RouteProp<ExploreStackParamList, "VehicleDetail">;
-type DetailNav = Pick<NativeStackNavigationProp<ExploreStackParamList, "VehicleDetail">, "goBack">;
+type DetailNav = Pick<NativeStackNavigationProp<ExploreStackParamList, "VehicleDetail">, "goBack" | "canGoBack" | "getState" | "dispatch">;
 
 export default function VehicleDetailScreen({
   route,
@@ -137,7 +139,10 @@ export default function VehicleDetailScreen({
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={() => goBackOrFallback(navigation, () => {
+          const state = navigation.getState();
+          navigation.dispatch({ ...CommonActions.reset({ index: 0, routes: [{ name: state.routeNames[0]! }] }), target: state.key });
+        })} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={20} />
         </Pressable>
         <AppText display numberOfLines={1} style={styles.headerTitle}>
