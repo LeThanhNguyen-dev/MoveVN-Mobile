@@ -199,6 +199,7 @@ export const endpoints = {
     updateProfile: "/api/users/me/profile",
     uploadAvatar: "/api/users/me/avatar",
     profile: (id: number) => `/api/users/${id}/profile`,
+    profileReviews: (id: number) => `/api/users/${id}/profile/reviews`,
   },
   notifications: {
     base: "/api/notifications",

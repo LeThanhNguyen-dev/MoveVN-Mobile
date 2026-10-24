@@ -16,6 +16,10 @@ const baseProfile: PublicUserProfile = {
   completedTripsAsOwner: 0,
   completedTripsAsCustomer: 5,
   totalReviewsReceived: 7,
+  ownerReviewCount: 3,
+  ownerAverageRating: null,
+  customerReviewCount: 4,
+  customerAverageRating: null,
   totalVehicles: 0,
   vehicles: [],
   reviews: [],
@@ -46,7 +50,7 @@ describe("profile stats", () => {
       "Xe đang cho thuê",
       "Đánh giá nhận được",
     ]);
-    expect(stats[0].value).toBe("12");
+    expect(stats[0]!.value).toBe("12");
   });
 });
 

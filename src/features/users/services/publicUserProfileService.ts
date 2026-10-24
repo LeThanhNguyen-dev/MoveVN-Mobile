@@ -23,6 +23,8 @@ export type PublicProfileReview = {
   rating: number;
   comment: string | null;
   createdAt: string;
+  vehicleId: number | null;
+  vehicleName: string | null;
 };
 
 /** Hồ sơ công khai (mirror web PublicUserProfile — không có email/SĐT/giấy tờ). */
@@ -43,6 +45,10 @@ export type PublicUserProfile = {
   completedTripsAsOwner: number;
   completedTripsAsCustomer: number;
   totalReviewsReceived: number;
+  ownerReviewCount: number;
+  ownerAverageRating: number | null;
+  customerReviewCount: number;
+  customerAverageRating: number | null;
   totalVehicles: number;
 
   vehicles: PublicProfileVehicle[];
@@ -57,7 +63,33 @@ export async function getPublicUserProfile(userId: number): Promise<PublicUserPr
   return res.data.data;
 }
 
-/** Người dùng không tồn tại / đã bị vô hiệu hoá (HTTP 404). */
+export type PublicProfileReviewRole = "owner" | "customer";
+export type PublicProfileReviewSort = "recent" | "highest" | "lowest";
+
+export type PublicProfileReviewsResult = {
+  reviews: PublicProfileReview[];
+  total: number;
+  page: number;
+  pageSize: number;
+  ratingCounts: Record<string, number>;
+};
+
+export async function getPublicProfileReviews(
+  userId: number,
+  role: PublicProfileReviewRole,
+  page: number,
+  rating: number | null,
+  sort: PublicProfileReviewSort,
+): Promise<PublicProfileReviewsResult> {
+  const res = await apiClient.get<ApiResponse<PublicProfileReviewsResult>>(
+    endpoints.users.profileReviews(userId),
+    { params: { role, page, pageSize: 5, rating: rating ?? undefined, sort } },
+  );
+  if (!res.data.data) {
+    throw new Error(res.data.message || "Reviews not found.");
+  }
+  return res.data.data;
+}
 export function isPublicProfileNotFound(error: unknown): boolean {
   return axios.isAxiosError(error) && error.response?.status === 404;
 }

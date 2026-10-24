@@ -24,8 +24,11 @@ import ProfileAvatar from "@/features/users/components/ProfileAvatar";
 import ProfileStars from "@/features/users/components/ProfileStars";
 import {
   getPublicUserProfile,
+  getPublicProfileReviews,
   isPublicProfileNotFound,
   type PublicProfileReview,
+  type PublicProfileReviewRole,
+  type PublicProfileReviewSort,
   type PublicProfileVehicle,
   type PublicUserProfile,
 } from "@/features/users/services/publicUserProfileService";
@@ -36,6 +39,8 @@ type PublicUserProfileScreenProps = {
   onBack: () => void;
   /** Mở hồ sơ người khác (ví dụ người viết đánh giá). */
   onOpenProfile?: (userId: number) => void;
+  /** Mở chi tiết xe liên quan đến đánh giá. */
+  onOpenVehicle?: (vehicleId: number) => void;
   userId: number;
 };
 
@@ -108,9 +113,11 @@ const MemoVehicleCard = memo(ProfileVehicleCard);
 function ProfileReviewCard({
   review,
   onOpenProfile,
+  onOpenVehicle,
 }: {
   review: PublicProfileReview;
   onOpenProfile?: (userId: number) => void;
+  onOpenVehicle?: (vehicleId: number) => void;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -145,6 +152,18 @@ function ProfileReviewCard({
       <AppText style={styles.reviewComment}>
         {review.comment?.trim() || "Không có nhận xét."}
       </AppText>
+      {review.vehicleId ? (
+        <Pressable
+          onPress={() => onOpenVehicle?.(review.vehicleId!)}
+          disabled={!onOpenVehicle}
+          style={styles.vehicleLink}
+        >
+          <Car color={theme.brand} size={12} />
+          <AppText style={styles.vehicleLinkText} numberOfLines={1}>
+            {review.vehicleName ?? "Xem xe"}
+          </AppText>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -168,6 +187,18 @@ export default function PublicUserProfileScreen({
   const [errorMessage, setErrorMessage] = useState("");
   const [tab, setTab] = useState<ProfileTab>("vehicles");
   const [reloadKey, setReloadKey] = useState(0);
+
+  // Reviews state (paginated, filtered, role-aware)
+  const [reviewRole, setReviewRole] = useState<PublicProfileReviewRole>(profile?.isOwner ? "owner" : "customer");
+  const [reviewFilter, setReviewFilter] = useState<number | null>(null);
+  const [reviewSort, setReviewSort] = useState<PublicProfileReviewSort>("recent");
+  const [reviews, setReviews] = useState<PublicProfileReview[]>([]);
+  const [reviewTotal, setReviewTotal] = useState(0);
+  const [ratingCounts, setRatingCounts] = useState<Record<string, number>>({});
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [reviewPage, setReviewPage] = useState(1);
 
   const load = useCallback(async () => {
     if (!Number.isInteger(userId) || userId <= 0) {
@@ -194,6 +225,47 @@ export default function PublicUserProfileScreen({
   useEffect(() => {
     void load();
   }, [load, reloadKey]);
+
+  useEffect(() => {
+    if (!profile) return;
+    let active = true;
+    setReviewLoading(true);
+    setReviewError("");
+    getPublicProfileReviews(profile.userId, reviewRole, reviewPage, reviewFilter, reviewSort)
+      .then((result) => {
+        if (!active) return;
+        if (reviewPage === 1) {
+          setReviews(result.reviews);
+        } else {
+          setReviews((current) => [...current, ...result.reviews]);
+        }
+        setReviewTotal(result.total);
+        setRatingCounts(result.ratingCounts);
+      })
+      .catch(() => {
+        if (active) setReviewError("Không tải được đánh giá.");
+      })
+      .finally(() => {
+        if (active) {
+          setReviewLoading(false);
+          setIsLoadingMore(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [profile, reviewRole, reviewPage, reviewFilter, reviewSort]);
+
+  async function loadMore() {
+    if (isLoadingMore || reviews.length >= reviewTotal) return;
+    setIsLoadingMore(true);
+    setReviewPage((current) => current + 1);
+  }
+
+  useEffect(() => {
+    setReviewPage(1);
+    setReviews([]);
+  }, [reviewRole, reviewFilter, reviewSort]);
 
   const stats = useMemo(
     () => (profile ? (profile.isOwner ? buildOwnerStats(profile) : buildCustomerStats(profile)) : []),
@@ -383,34 +455,71 @@ export default function PublicUserProfileScreen({
             </View>
           )
         ) : (
-          <View style={styles.section}>
-            {profile.averageRating != null ? (
-              <View style={styles.ratingSummary}>
-                <View style={styles.ratingScoreCol}>
-                  <AppText display style={styles.ratingScore}>
-                    {profile.averageRating.toFixed(1)}
+            <View style={styles.section}>
+              <View style={styles.reviewRoleRow}>
+                <Pressable
+                  onPress={() => setReviewRole("owner")}
+                  style={[styles.reviewRoleButton, reviewRole === "owner" && styles.reviewRoleButtonActive]}
+                >
+                  <AppText style={[styles.reviewRoleText, reviewRole === "owner" && styles.reviewRoleTextActive]}>
+                    Chủ xe ({profile.ownerReviewCount})
                   </AppText>
-                  <ProfileStars rating={profile.averageRating} size={13} />
+                </Pressable>
+                <Pressable
+                  onPress={() => setReviewRole("customer")}
+                  style={[styles.reviewRoleButton, reviewRole === "customer" && styles.reviewRoleButtonActive]}
+                >
+                  <AppText style={[styles.reviewRoleText, reviewRole === "customer" && styles.reviewRoleTextActive]}>
+                    Khách thuê ({profile.customerReviewCount})
+                  </AppText>
+                </Pressable>
+              </View>
+              <AppText style={styles.reviewRoleDesc}>
+                {reviewRole === "owner" ? "Đánh giá từ khách thuê sau chuyến thuê xe." : "Đánh giá từ chủ xe sau chuyến thuê."}
+              </AppText>
+              {(reviewRole === "owner" ? profile.ownerAverageRating : profile.customerAverageRating) != null ? (
+                <View style={styles.ratingSummary}>
+                  <View style={styles.ratingScoreCol}>
+                    <AppText display style={styles.ratingScore}>
+                      {(reviewRole === "owner" ? profile.ownerAverageRating! : profile.customerAverageRating!).toFixed(1)}
+                    </AppText>
+                    <ProfileStars
+                      rating={(reviewRole === "owner" ? profile.ownerAverageRating : profile.customerAverageRating) ?? 0}
+                      size={13}
+                    />
                   <AppText style={styles.ratingCount}>
-                    {profile.totalReviewsReceived} đánh giá
+                      {reviewTotal} đánh giá
                   </AppText>
                 </View>
               </View>
             ) : null}
 
-            {profile.reviews.length === 0 ? (
+            {reviews.length === 0 ? (
               <View style={styles.emptyBox}>
                 <MessageSquareOff color={theme.faint} size={24} />
-                <AppText style={styles.emptyText}>Chưa có đánh giá công khai</AppText>
+                <AppText style={styles.emptyText}>
+                  Chưa có đánh giá với vai trò {reviewRole === "owner" ? "chủ xe" : "khách thuê"}.
+                </AppText>
               </View>
             ) : (
-              profile.reviews.map((review) => (
+              reviews.map((review) => (
                 <MemoReviewCard
                   key={review.id}
                   review={review}
                   onOpenProfile={onOpenProfile}
                 />
               ))
+            )}
+            {reviews.length > 0 && reviews.length < reviewTotal && (
+              <Pressable
+                onPress={loadMore}
+                disabled={isLoadingMore}
+                style={styles.loadMoreButton}
+              >
+                <AppText style={styles.loadMoreText}>
+                  {isLoadingMore ? "Đang tải…" : `Xem thêm đánh giá (+${reviewTotal - reviews.length})`}
+                </AppText>
+              </Pressable>
             )}
           </View>
         )}
@@ -620,6 +729,8 @@ const createStyles = (theme: Theme) =>
     reviewRating: { color: "#F59E0B", fontSize: 11, fontWeight: "700" },
     reviewTime: { color: theme.faint, fontSize: 10 },
     reviewComment: { color: theme.muted, fontSize: 12, lineHeight: 17 },
+    vehicleLink: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
+    vehicleLinkText: { color: theme.brand, fontSize: 11, fontWeight: "700" },
 
     emptyBox: {
       alignItems: "center",
@@ -628,6 +739,16 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 16,
     },
     emptyText: { color: theme.muted, fontSize: 12, textAlign: "center" },
+
+    loadMoreButton: {
+      alignItems: "center",
+      paddingVertical: 10,
+      borderRadius: 10,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+    },
+    loadMoreText: { color: theme.brand, fontSize: 12, fontWeight: "700" },
 
     centerBox: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8, padding: 24 },
     stateIcon: {
@@ -651,4 +772,10 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 9,
     },
     retryText: { color: "#FFFFFF", fontSize: 12, fontWeight: "800" },
+    reviewRoleRow: { flexDirection: "row", gap: 8, marginBottom: 8 },
+    reviewRoleButton: { flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: theme.surface, alignItems: "center" },
+    reviewRoleButtonActive: { backgroundColor: theme.brand },
+    reviewRoleText: { fontSize: 13, fontWeight: "600", color: theme.text },
+    reviewRoleTextActive: { color: "#fff" },
+    reviewRoleDesc: { fontSize: 12, color: theme.faint, marginBottom: 8 },
   });
