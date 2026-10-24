@@ -18,6 +18,7 @@ import {
   View,
 } from "react-native";
 import AppText from "@/components/AppText";
+import ReportViolationButton from "@/features/violations/ReportViolationButton";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import ProfileAvatar from "@/features/users/components/ProfileAvatar";
@@ -270,6 +271,7 @@ export default function PublicUserProfileScreen({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <ReportViolationButton target={{ targetType: "User", targetId: userId, label: profile.fullName }} />
         <View style={styles.profileCard}>
           <View style={styles.profileTop}>
             <ProfileAvatar avatarUrl={profile.avatarUrl} fullName={profile.fullName} size={64} />

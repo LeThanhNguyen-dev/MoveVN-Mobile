@@ -15,21 +15,23 @@ import { MAX_TICKET_IMAGES, MAX_TICKET_IMAGE_BYTES, ticketError } from "./ticket
 import { TicketButton, TicketNotice, ticketStyles } from "./TicketUi";
 
 type Photo = { uri: string; input: UploadFileInput };
-export function useTicketImages() {
+export function useTicketImages(options?: { max?: number; uploadFile?: (file: UploadFileInput) => Promise<string> }) {
+  const max = options?.max ?? MAX_TICKET_IMAGES;
+  const uploadFile = options?.uploadFile ?? uploadSupportTicketAttachment;
   const [photos, setPhotos] = useState<Photo[]>([]); const [error, setError] = useState(""); const [picking, setPicking] = useState(false);
   const uploaded = useRef(new Map<string, string>()); const lock = useRef(false); const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   async function pick(camera = false) {
-    if (lock.current || photos.length >= MAX_TICKET_IMAGES) return;
+    if (lock.current || photos.length >= max) return;
     lock.current = true; setPicking(true); setError("");
     const generation = getSessionGeneration();
     try {
       if (camera) { const permission = await ImagePicker.requestCameraPermissionsAsync(); if (!permission.granted) throw new Error("Hãy cho phép truy cập camera trong cài đặt của điện thoại."); }
       const result = camera ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.85 })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: MAX_TICKET_IMAGES - photos.length, quality: 0.85 });
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: max - photos.length, quality: 0.85 });
       if (result.canceled) return;
       const next: Photo[] = [];
-      for (const asset of result.assets.slice(0, MAX_TICKET_IMAGES - photos.length)) {
+      for (const asset of result.assets.slice(0, max - photos.length)) {
         let uri = asset.uri; let mime = asset.mimeType ?? "";
         let name = asset.fileName ?? "";
         if (!["image/jpeg", "image/png", "image/webp"].includes(mime)) {
@@ -43,29 +45,32 @@ export function useTicketImages() {
         else { if (new File(uri).size > MAX_TICKET_IMAGE_BYTES) throw new Error("Mỗi ảnh tối đa 5 MB. Hãy chọn ảnh nhỏ hơn."); input = { uri, name, type: mime }; }
         next.push({ uri, input });
       }
-      if (alive.current && generation === getSessionGeneration()) setPhotos(current => [...current, ...next].slice(0, MAX_TICKET_IMAGES));
+      if (alive.current && generation === getSessionGeneration()) setPhotos(current => [...current, ...next].slice(0, max));
     } catch (e) { if (alive.current) setError(ticketError(e, "Không chọn được ảnh. Vui lòng kiểm tra quyền truy cập ảnh.")); }
     finally { lock.current = false; if (alive.current) setPicking(false); }
   }
-  async function upload() {
+  async function uploadUrls() {
     const generation = getSessionGeneration(); const urls: string[] = [];
     for (const photo of photos) {
       if (!alive.current || generation !== getSessionGeneration()) throw new Error("Phiên đăng nhập đã thay đổi.");
       let url = uploaded.current.get(photo.uri);
-      if (!url) { url = await uploadSupportTicketAttachment(photo.input); uploaded.current.set(photo.uri, url); }
+      if (!url) { url = await uploadFile(photo.input); uploaded.current.set(photo.uri, url); }
       urls.push(url);
     }
     if (!alive.current || generation !== getSessionGeneration()) throw new Error("Phiên đăng nhập đã thay đổi.");
-    const serialized = serializeSupportTicketAttachmentUrls(urls);
+    return urls;
+  }
+  async function upload() {
+    const serialized = serializeSupportTicketAttachmentUrls(await uploadUrls());
     if (serialized && serialized.length > 4000) throw new Error("Thông tin ảnh quá dài. Hãy bớt ảnh rồi thử lại.");
     return serialized;
   }
-  return { photos, error, picking, pick, upload, remove: (uri: string) => setPhotos(p => p.filter(x => x.uri !== uri)), clear: () => { setPhotos([]); uploaded.current.clear(); setError(""); } };
+  return { max, photos, error, picking, pick, upload, uploadUrls, remove: (uri: string) => setPhotos(p => p.filter(x => x.uri !== uri)), clear: () => { setPhotos([]); uploaded.current.clear(); setError(""); } };
 }
-export function TicketImageInput({ images, disabled }: { images: ReturnType<typeof useTicketImages>; disabled?: boolean }) {
+export function TicketImageInput({ images, disabled, title = "Ảnh đính kèm" }: { images: ReturnType<typeof useTicketImages>; disabled?: boolean; title?: string }) {
   const { theme } = useTheme(); const styles = ticketStyles(theme);
-  return <View style={{ gap: 10 }}><View style={styles.row}><AppText style={styles.label}>Ảnh đính kèm</AppText><AppText style={styles.muted}>{images.photos.length}/{MAX_TICKET_IMAGES} · JPG, PNG, WebP · tối đa 5 MB/ảnh</AppText></View>
-    <View style={styles.row}><TicketButton secondary title="Chọn ảnh" icon={<ImagePlus size={18} color={theme.brand} />} disabled={disabled || images.picking || images.photos.length >= MAX_TICKET_IMAGES} onPress={() => { void images.pick(); }} /><TicketButton secondary title="Chụp ảnh" icon={<Camera size={18} color={theme.brand} />} disabled={disabled || images.picking || images.photos.length >= MAX_TICKET_IMAGES} onPress={() => { void images.pick(true); }} /></View>
+  return <View style={{ gap: 10 }}><View style={styles.row}><AppText style={styles.label}>{title}</AppText><AppText style={styles.muted}>{images.photos.length}/{images.max} · JPG, PNG, WebP · tối đa 5 MB/ảnh</AppText></View>
+    <View style={styles.row}><TicketButton secondary title="Chọn ảnh" icon={<ImagePlus size={18} color={theme.brand} />} disabled={disabled || images.picking || images.photos.length >= images.max} onPress={() => { void images.pick(); }} /><TicketButton secondary title="Chụp ảnh" icon={<Camera size={18} color={theme.brand} />} disabled={disabled || images.picking || images.photos.length >= images.max} onPress={() => { void images.pick(true); }} /></View>
     {images.error && <TicketNotice message={images.error} />}
     <View style={styles.row}>{images.photos.map((photo, index) => <View key={photo.uri + index}><Image source={{ uri: photo.uri }} style={{ width: 88, height: 88, borderRadius: 12 }} /><Pressable accessibilityRole="button" accessibilityLabel={`Xóa ảnh ${index + 1}`} disabled={disabled || images.picking} onPress={() => images.remove(photo.uri)} style={{ position: "absolute", top: 0, right: 0, width: 44, height: 44, alignItems: "center", justifyContent: "center", backgroundColor: theme.overlay, borderRadius: 12 }}><X color="#fff" size={19} /></Pressable></View>)}</View>
   </View>;

@@ -17,6 +17,7 @@ import { useFavoriteSession } from "@/features/favorites/useFavoriteSession";
 import ToastHost from "@/features/notifications/components/ToastHost";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
 import SupportTicketCenter from "@/features/supportTickets/SupportTicketCenter";
+import ViolationCenter from "@/features/violations/ViolationCenter";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { initializeTheme } from "@/theme/useThemeStore";
@@ -79,6 +80,7 @@ export default function RootNavigator() {
           : <RoleNotSupportedScreen role={role ?? "Staff"} />}
     {token && user ? <NotificationCenter key={user.userId} userId={user.userId} /> : null}
     {token && user ? <SupportTicketCenter key={`support-${user.userId}`} userId={user.userId} /> : null}
+    {token && user ? <ViolationCenter key={`violations-${user.userId}`} userId={user.userId} /> : null}
     <ToastHost />
   </NavigationContainer>;
 }
