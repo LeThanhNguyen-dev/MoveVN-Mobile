@@ -641,8 +641,8 @@ export default function TripDetailScreen({
           />
         )}
 
-        <InspectionSummaryLink type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckIn" })} />
-        <InspectionSummaryLink type="CheckOut" report={checkOutReport} onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckOut" })} />
+        <InspectionSummaryLink booking={booking} type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckIn" })} />
+        <InspectionSummaryLink booking={booking} type="CheckOut" report={checkOutReport} onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckOut" })} />
         <OutstandingSurcharge booking={booking} report={checkOutReport} role="Customer" onUpdated={load} onOpenWallet={() => navigation.navigate("BookingWallet")} />
         <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage={false} onChanged={() => load()} />
 
