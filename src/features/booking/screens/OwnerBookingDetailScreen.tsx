@@ -286,6 +286,9 @@ export default function OwnerBookingDetailScreen({
             <Text style={styles.progressText}>{progress.summary}</Text>
           </View>
         )}
+        {(status === "InProgress" || status === "Returning") && (
+          <BookingButton secondary title="Xem vị trí xe (GPS)" disabled={busy !== null} onPress={() => navigation.navigate("OwnerTracking", { bookingId, vehicleName: booking.vehicleName })} />
+        )}
 
         <View style={styles.statusRow}>
           <RiskScoreBadge score={booking.riskScore} />

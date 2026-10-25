@@ -17,6 +17,7 @@ import ChatNavigator from "./ChatNavigator";
 import FavoritesNavigator from "./FavoritesNavigator";
 import { useFavoriteStore } from "@/features/favorites/useFavorites";
 import { useChatStore } from "@/features/chat/useChat";
+import { useGpsPublisher } from "@/features/gps/useGpsPublisher";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
 import { useTheme } from "@/theme/useTheme";
 
@@ -31,6 +32,8 @@ const customerTabs: MobileTabItem<CustomerTabKey>[] = [
 ];
 
 export default function CustomerNavigator({ user }: { user: AuthUser }) {
+  // Publish GPS khi khách có chuyến InProgress/Returning (đăng ký từ TripDetail).
+  useGpsPublisher();
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);

@@ -69,6 +69,7 @@ import CreateDisputeScreen from "@/features/disputes/screens/CreateDisputeScreen
 import DisputeDetailScreen from "@/features/disputes/screens/DisputeDetailScreen";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
+import { useGpsStore } from "@/features/gps/gpsStore";
 import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
 
 type DetailRoute = RouteProp<TripsStackParamList, "TripDetail" | "TripHandover">;
@@ -131,11 +132,13 @@ export default function TripDetailScreen({
     const request = ++loadId.current;
     try {
       const data = await getBookingById(bookingId);
-      setVehiclePhoto(data.vehicleImage || null);
+      // Không reset về null khi poll lại: nếu booking không có ảnh chính thì giữ
+      // ảnh đang hiển thị, tránh màn hình nháy placeholder → ảnh mỗi 30 giây.
+      setVehiclePhoto((prev) => data.vehicleImage ?? prev);
       if (!data.vehicleImage) {
         void getPublicVehicleImages(data.vehicleId).then((images) => {
           const photo = [...images].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.sortOrder - b.sortOrder)[0];
-          if (photo?.imageUrl) setVehiclePhoto(photo.imageUrl);
+          if (photo?.imageUrl) setVehiclePhoto((prevPhoto) => photo.imageUrl === prevPhoto ? prevPhoto : (prevPhoto ?? photo.imageUrl));
         }).catch(() => undefined);
       }
       const [reviewed, reviewList, topUp, inspectionList] = await Promise.all([
@@ -171,6 +174,27 @@ export default function TripDetailScreen({
 
   useBookingNotificationRefresh(bookingId, useCallback(() => { if (!actionLock.current) void load(); }, [load]));
   useFocusEffect(useCallback(() => { void load(); return () => { loadId.current++; }; }, [load]));
+
+  // Chia sẻ GPS trong chuyến đang thuê: đăng ký booking vào gps store,
+  // useGpsPublisher (mount ở CustomerNavigator) sẽ xin quyền và gửi vị trí định kỳ.
+  // Hook phải đứng trước mọi return sớm của màn hình.
+  const setActivePublishBooking = useGpsStore((state) => state.setActivePublishBooking);
+  const gpsPermissionStatus = useGpsStore((state) => state.permissionStatus);
+  const gpsPublishError = useGpsStore((state) => state.publishError);
+  const gpsSharingHere = useGpsStore((state) => state.activePublishBookingId === bookingId);
+  const gpsLastPublishedAt = useGpsStore((state) => state.lastPublishedAt);
+  useEffect(() => {
+    // Đăng ký GPS CHỈ khi booking đang thuê; khi rời màn KHÔNG gỡ — publisher
+    // (mount ở CustomerNavigator) gửi tiếp chừng nào app còn mở, tránh "mất tín hiệu" oan.
+    // Publisher tự ngừng khi server trả GPS_BOOKING_NOT_ACTIVE (chuyến đã kết thúc).
+    if (!booking) return;
+    if (booking.status === "InProgress" || booking.status === "Returning") {
+      setActivePublishBooking(booking.id);
+    } else if (useGpsStore.getState().activePublishBookingId === booking.id) {
+      setActivePublishBooking(null);
+    }
+  }, [booking?.id, booking?.status, setActivePublishBooking]);
+
   useEffect(() => {
     const timer = setInterval(() => { setNow(Date.now()); if (!actionLock.current) void load(); }, 30000);
     const sub = AppState.addEventListener("change", state => { if (state === "active" && !actionLock.current) void load(); });
@@ -491,6 +515,14 @@ export default function TripDetailScreen({
             <Text style={styles.progressText}>{progress.summary}</Text>
           </View>
         )}
+        {(status === "InProgress" || status === "Returning") && gpsSharingHere && gpsPermissionStatus === "granted" && !gpsPublishError ? (
+          <Text style={[styles.muted, { color: theme.success }]}>
+            Đang chia sẻ vị trí cho chủ xe theo dõi{gpsLastPublishedAt ? ` · cập nhật ${new Date(gpsLastPublishedAt).toLocaleTimeString("vi-VN")}` : ""}.
+          </Text>
+        ) : null}
+        {(status === "InProgress" || status === "Returning") && (gpsPermissionStatus === "denied" || gpsPublishError) ? (
+          <Text style={styles.muted}>Chia sẻ vị trí: {gpsPublishError || "Bạn chưa cấp quyền vị trí cho MoveVN. Bật GPS để chủ xe theo dõi chuyến đi."}</Text>
+        ) : null}
         <View style={styles.statusRow}>
           <RiskScoreBadge score={booking.riskScore} />
           {onOpenDisputes ? (
