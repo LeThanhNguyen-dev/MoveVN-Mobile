@@ -1,7 +1,8 @@
-import type { ConfigContext, ExpoConfig } from "expo/config";
+﻿import type { ConfigContext, ExpoConfig } from "expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+
   return {
     ...config,
     name: config.name ?? "MoveVN Mobile",
@@ -14,6 +15,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       "expo-font",
       "expo-secure-store",
       "expo-sharing",
+      "expo-image",
+      "expo-status-bar",
       ["expo-notifications", { defaultChannel: "bookings" }],
       ["expo-camera", {
         cameraPermission: "MoveVN cần camera để chụp ảnh check-in/check-out xe.",
