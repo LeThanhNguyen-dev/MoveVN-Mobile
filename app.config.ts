@@ -20,6 +20,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         recordAudioAndroid: false,
         barcodeScannerEnabled: false,
       }],
+      ["expo-location", {
+        // Chỉ xin location khi app mở (MVP tracking foreground, không xin background).
+        locationWhenInUsePermission: "MoveVN cần vị trí của bạn để chủ xe theo dõi chuyến đi khi thuê xe.",
+      }],
       ...(iosClientId ? [["@react-native-google-signin/google-signin", {
         iosUrlScheme: iosClientId.split(".").reverse().join("."),
       }] as [string, { iosUrlScheme: string }]] : []),

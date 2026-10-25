@@ -210,6 +210,14 @@ export const endpoints = {
     markRead: (id: number) => `/api/notifications/${id}/read`,
     markAllRead: "/api/notifications/read-all",
   },
+  tracking: {
+    postLocation: (bookingId: number) => `/api/tracking/${bookingId}/location`,
+    live: (bookingId: number) => `/api/tracking/${bookingId}/live`,
+    route: (bookingId: number) => `/api/tracking/${bookingId}/route`,
+    session: (bookingId: number) => `/api/tracking/${bookingId}/session`,
+    requestGps: (bookingId: number) => `/api/tracking/${bookingId}/request-gps`,
+    address: (bookingId: number) => `/api/tracking/${bookingId}/address`,
+  },
   publicCmsPages: {
     navigation: "/api/cms-pages/navigation",
     bySlug: (slug: string) => `/api/cms-pages/${slug}`,
