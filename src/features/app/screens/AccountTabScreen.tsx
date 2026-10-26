@@ -54,6 +54,7 @@ import { useNotificationStore } from "@/features/notifications/useNotifications"
 import { useAssistantUi } from "@/features/assistant/useAssistantUi";
 import { openFavoriteVehicles } from "@/features/favorites/favoriteActions";
 import { openSupportTickets } from "@/features/supportTickets/ticketNavigation";
+import { openAvailabilityAlerts } from "@/features/availabilityAlerts/alertNavigation";
 import { openViolations } from "@/features/violations/violationNavigation";
 
 type TabIcon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
@@ -235,6 +236,7 @@ export default function AccountTabScreen({
         { key: "deals", label: "Ưu đãi", icon: BadgePercent, accent: "#D97706" },
         { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626", onPress: () => setShowDisputes(true) },
         { key: "violations", label: "Báo cáo vi phạm của tôi", icon: Flag, accent: "#EA580C", onPress: () => openViolations() },
+        { key: "availability-alerts", label: "Thông báo xe trống", icon: Bell, accent: theme.brand, onPress: () => openAvailabilityAlerts() },
         { key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB" },
       ],
     },

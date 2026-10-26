@@ -15,6 +15,7 @@ import { openSupportTickets } from "@/features/supportTickets/ticketNavigation";
 import { ticketFromNotification } from "@/features/supportTickets/ticketModel";
 import { openViolations } from "@/features/violations/violationNavigation";
 import { violationFromNotification } from "@/features/violations/violationModel";
+import { availabilityTarget, openAvailabilityAlerts, type AlertVehicleTarget } from "@/features/availabilityAlerts/alertNavigation";
 
 const icons = { booking: CalendarCheck, wallet: Wallet, support: Headphones, vehicle: CarFront, message: MessageSquare, system: Bell };
 
@@ -29,6 +30,8 @@ export default function NotificationCenter({ userId }: { userId: number }) {
   const busy = state.markingAll || state.pendingIds.length > 0;
   const pendingTicket = useRef<{ id: number; generation: number } | null>(null);
   const pendingReport = useRef<{ id: string; generation: number } | null>(null);
+  const pendingVehicle = useRef<{ target: AlertVehicleTarget; generation: number } | null>(null);
+  const vehicleTarget = availabilityTarget(detail?.dataJson);
   const ticketId = ticketFromNotification(detail?.dataJson);
   const reportId = violationFromNotification(detail?.dataJson);
   function launchPendingTicket() {
@@ -36,6 +39,8 @@ export default function NotificationCenter({ userId }: { userId: number }) {
     if (pending && getAuthUser()?.userId === userId && pending.generation === getSessionGeneration()) openSupportTickets({ ticketId: pending.id });
     const report = pendingReport.current; pendingReport.current = null;
     if (report && getAuthUser()?.userId === userId && report.generation === getSessionGeneration()) openViolations({ reportId: report.id });
+    const vehicle = pendingVehicle.current; pendingVehicle.current = null;
+    if (vehicle && getAuthUser()?.userId === userId && vehicle.generation === getSessionGeneration()) openAvailabilityAlerts(vehicle.target);
   }
 
   useEffect(() => {
@@ -97,6 +102,11 @@ export default function NotificationCenter({ userId }: { userId: number }) {
             <View style={styles.rule} />
             <AppText selectable style={styles.body}>{detail.body}</AppText>
             {notificationReference(detail.dataJson) ? <AppText selectable style={styles.reference}>{notificationReference(detail.dataJson)}</AppText> : null}
+            {vehicleTarget && <Pressable accessibilityRole="button" onPress={() => {
+              pendingVehicle.current = { target: vehicleTarget, generation: getSessionGeneration() };
+              useNotificationStore.setState({ centerOpen: false });
+              if (Platform.OS !== "ios") launchPendingTicket();
+            }} style={styles.primaryButton}><CarFront color={theme.onBrand} size={19} /><AppText style={styles.primaryText}>Xem xe và lịch thuê</AppText></Pressable>}
             {reportId && <Pressable accessibilityRole="button" onPress={() => {
               pendingReport.current = { id: reportId, generation: getSessionGeneration() };
               useNotificationStore.setState({ centerOpen: false });
