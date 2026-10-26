@@ -11,6 +11,8 @@ vi.mock("@/features/ownerAnalytics/service", () => ({ getOwnerAnalytics: mocks.g
 vi.mock("@/features/ownerAnalytics/downloadWorkbook", () => ({ downloadOwnerWorkbook: mocks.download }));
 vi.mock("@/services/apiClient", () => ({ getApiErrorMessage: (_e: unknown, fallback: string) => fallback }));
 vi.mock("@/features/app/components/AppDashboardHeader", () => ({ default: () => null }));
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
+vi.mock("@/features/disputes/screens/DisputeDetailScreen", () => ({ default: () => null }));
 vi.mock("react-native", () => ({ View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable", ScrollView: "ScrollView", ActivityIndicator: "ActivityIndicator", RefreshControl: "RefreshControl", StyleSheet: { create: (x: unknown) => x, hairlineWidth: 1, absoluteFill: {} },
   Modal: ({ visible, children }: { visible: boolean; children: React.ReactNode }) => visible ? React.createElement("Modal", null, children) : null,
 }));
@@ -41,6 +43,26 @@ it("selects a ranked vehicle, resets paging and allows returning to the full fle
   expect(mocks.get).toHaveBeenLastCalledWith(expect.objectContaining({ vehicleId: 1, page: 1 }), expect.any(AbortSignal));
   await press("Xem toàn bộ đội xe");
   expect(mocks.get.mock.calls.at(-1)![0].vehicleId).toBeUndefined();
+});
+it("shows the selected vehicle cases and paginates disputes independently of booking history", async () => {
+  const detail = structuredClone(seed);
+  detail.summary.disputesCreated = 2; detail.summary.openDisputes = 1;
+  detail.disputes = { items: [{ id: 77, bookingId: 501, bookingCode: "BK-DETAIL", createdAt: "2026-10-05T03:00:00Z", status: "Open", resolvedAt: null, isTrafficFine: false }], totalCount: 2, page: 1, pageSize: 1, totalPages: 2 };
+  detail.bookingHistory = { items: [{ id: 501, bookingCode: "BK-DETAIL", createdAt: "2026-10-05T03:00:00Z", startDate: "2026-10-06T03:00:00Z", endDate: "2026-10-07T03:00:00Z", status: "Completed", totalAmount: 100000 }], totalCount: 1, page: 1, pageSize: 1, totalPages: 1 };
+  mocks.get.mockResolvedValue(detail);
+  await mount(); await press("Xe được đặt nhiều nhất: 43A-12345");
+  expect(text()).toContain("Tranh chấp của xe"); expect(text()).toContain("BK-DETAIL");
+  expect(text()).toContain("Đang xử lý"); expect(text()).toContain("Lịch sử đặt xe");
+  await press("Tranh chấp: trang sau");
+  expect(mocks.get).toHaveBeenLastCalledWith(expect.objectContaining({ vehicleId: 1, disputePage: 2, bookingPage: 1 }), expect.any(AbortSignal));
+  await press("7 ngày");
+  expect(mocks.get).toHaveBeenLastCalledWith(expect.objectContaining({ disputePage: 1, bookingPage: 1 }), expect.any(AbortSignal));
+});
+it("offers a direct per-vehicle detail action and sorting by dispute count", async () => {
+  await mount(); await press("Xem thống kê chi tiết");
+  expect(mocks.get).toHaveBeenLastCalledWith(expect.objectContaining({ vehicleId: seed.vehicles.items[0]!.vehicleId, page: 1 }), expect.any(AbortSignal));
+  await press("Sắp xếp theo tranh chấp");
+  expect(mocks.get).toHaveBeenLastCalledWith(expect.objectContaining({ sort: "disputes" }), expect.any(AbortSignal));
 });
 it("validates custom dates before fetching and applies a selected valid period", async () => {
   await mount(); const count = mocks.get.mock.calls.length;
