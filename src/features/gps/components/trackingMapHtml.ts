@@ -37,6 +37,8 @@ html,body,#map{margin:0;width:100%;height:100%;background:${backgroundColor};ove
   L.tileLayer(${JSON.stringify(tileUrl)},{subdomains:'abcd',maxZoom:20}).addTo(map);
   var marker=null;
   var followed=true;
+  var routePts=[];
+  var routeLine=null;
   function send(payload){if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(JSON.stringify(payload));}}
   function iconFor(state){
     return L.divIcon({className:'',html:'<div class="tracking-pin '+(state||'')+'">'+carSvg+'</div>',iconSize:[40,40],iconAnchor:[20,20]});
@@ -50,7 +52,21 @@ html,body,#map{margin:0;width:100%;height:100%;background:${backgroundColor};ove
       marker=L.marker([latitude,longitude],{icon:iconFor(state)}).addTo(map);
       map.setView([latitude,longitude],16,{animate:false});
     }
+    if(routeLine){
+      var last=routePts[routePts.length-1];
+      if(!last||last[0]!==latitude||last[1]!==longitude){
+        routePts.push([latitude,longitude]);
+        routeLine.addLatLng([latitude,longitude]);
+      }
+    }
     if(followed){map.panTo([latitude,longitude],{animate:true,duration:0.5});}
+  };
+  window.setRoute=function(points){
+    if(!Array.isArray(points)||points.length<1)return;
+    routePts=points.slice();
+    if(routeLine){routeLine.setLatLngs(routePts);return;}
+    routeLine=L.polyline(routePts,{color:${JSON.stringify(brandColor)},weight:4,opacity:0.8,interactive:false}).addTo(map);
+    if(routePts.length>1){map.fitBounds(routeLine.getBounds(),{padding:[24,24]});}
   };
   window.setFollowed=function(value){followed=!!value;};
   map.on('dragstart',function(){followed=false;send({type:'drag'});});

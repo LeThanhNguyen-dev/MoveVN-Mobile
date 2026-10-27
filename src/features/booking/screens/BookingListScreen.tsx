@@ -1,4 +1,4 @@
-import BookingSearchFilters, { EMPTY_SEARCH } from "../components/BookingSearchFilters";
+import { EMPTY_SEARCH } from "../components/BookingSearchFilters";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
@@ -14,7 +14,7 @@ const filters = ["", "Pending", "Approved", "DepositPaid", "InProgress", "Return
 export default function BookingListScreen({ role, onOpen }: { role: BookingRole; onOpen: (id: number) => void }) {
   const { theme } = useTheme();
   const [status, setStatus] = useState("");
-  const [search, setSearch] = useState(EMPTY_SEARCH);
+  const search = EMPTY_SEARCH;
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<BookingResponse[]>([]);
   const [total, setTotal] = useState(0);
@@ -31,12 +31,11 @@ export default function BookingListScreen({ role, onOpen }: { role: BookingRole;
     } catch (err) {
       if (mounted.current && request === requestId.current) { setItems([]); setError(getApiErrorMessage(err, "Không tải được danh sách đơn thuê.")); }
     } finally { if (mounted.current && request === requestId.current) setLoading(false); }
-  }, [role, status, page, search]);
+  }, [role, status, page]);
   useEffect(() => { mounted.current = true; void load(); return () => { mounted.current = false; requestId.current++; }; }, [load]);
 
   return <View style={{ flex: 1, backgroundColor: theme.background }}>
     <BookingHeader title={role === "Owner" ? "Đơn thuê của khách" : "Chuyến đi của tôi"} />
-    <BookingSearchFilters onApply={filters => { setSearch(filters); setPage(1); }} />
     <View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
       {filters.map((value) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: status === value }} onPress={() => { setStatus(value); setPage(1); }}
         style={[styles.filter, { backgroundColor: value === status ? theme.brand : theme.surfaceAlt }]}><Text style={{ color: value === status ? theme.onBrand : theme.text, fontWeight: "600" }}>{BOOKING_STATUS_LABELS[value] || "Tất cả"}</Text></Pressable>)}

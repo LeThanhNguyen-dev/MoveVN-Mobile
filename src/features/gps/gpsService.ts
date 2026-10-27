@@ -5,8 +5,10 @@ import type {
   GpsLivePositionResponse,
   GpsPointRequest,
   GpsPointsAcceptedResponse,
+  GpsRoadPathResponse,
   GpsRoutePointResponse,
   GpsTrackingSessionResponse,
+  GpsTripSummaryResponse,
   RequestGpsEnableResponse,
 } from "./types";
 
@@ -45,4 +47,16 @@ export async function getGpsAddress(bookingId: number, latitude: number, longitu
     params: { lat: latitude, lng: longitude },
   });
   return res.data.data ?? null;
+}
+
+/** Polyline phát lại chuyến đi theo đúng đường phố (OSRM map matching, fallback nối thẳng). */
+export async function getGpsRoadPath(bookingId: number): Promise<GpsRoadPathResponse> {
+  const res = await apiClient.get<ApiResponse<GpsRoadPathResponse>>(endpoints.tracking.routeRoad(bookingId));
+  return res.data.data!;
+}
+
+/** Tổng hợp chuyến đi: quãng đường, tốc độ max/TB, số lần mất tín hiệu. */
+export async function getGpsSummary(bookingId: number): Promise<GpsTripSummaryResponse> {
+  const res = await apiClient.get<ApiResponse<GpsTripSummaryResponse>>(endpoints.tracking.summary(bookingId));
+  return res.data.data!;
 }

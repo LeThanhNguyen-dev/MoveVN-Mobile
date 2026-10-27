@@ -289,6 +289,9 @@ export default function OwnerBookingDetailScreen({
         {(status === "InProgress" || status === "Returning") && (
           <BookingButton secondary title="Xem vị trí xe (GPS)" disabled={busy !== null} onPress={() => navigation.navigate("OwnerTracking", { bookingId, vehicleName: booking.vehicleName })} />
         )}
+        {status === "Completed" && (
+          <BookingButton secondary title="Xem hành trình chuyến đi" disabled={busy !== null} onPress={() => navigation.navigate("OwnerPlayback", { bookingId, vehicleName: booking.vehicleName })} />
+        )}
 
         <View style={styles.statusRow}>
           <RiskScoreBadge score={booking.riskScore} />
