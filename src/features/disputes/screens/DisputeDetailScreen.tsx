@@ -1,3 +1,5 @@
+import AppScreenHeader from "@/components/ui/AppScreenHeader";
+import Text from "@/components/AppText";
 import { useCallback, useEffect, useMemo, useState, useRef, type ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -7,7 +9,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from "react-native";
@@ -260,18 +261,7 @@ export default function DisputeDetailScreen({
 
   return (
     <View style={styles.screen}>
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Quay lại danh sách"
-          onPress={onBack}
-          style={styles.backButton}
-        >
-          <Text style={styles.backText}>‹</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Chi tiết tranh chấp</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Làm mới tranh chấp" disabled={busy} onPress={() => void load(true)}><Text style={styles.link}>Làm mới</Text></Pressable>
-      </View>
+      <AppScreenHeader title="Chi tiết tranh chấp" onBack={onBack} backLabel="Quay lại danh sách" onRefresh={() => void load(true)} refreshLabel="Làm mới tranh chấp" busy={busy} />
       <ScrollView contentContainerStyle={styles.scrollBody}>
       <View style={styles.headerCard}>
         <View style={styles.titleRow}>
@@ -696,13 +686,13 @@ const createStyles = (theme: Theme) =>
     stepper: { flexDirection: "row", alignItems: "flex-start", marginTop: 4 },
     stepItem: { flex: 1, alignItems: "center", gap: 4 },
     stepDot: { width: 22, height: 22, borderRadius: 11, backgroundColor: theme.surfaceAlt, borderWidth: 1, borderColor: theme.border, alignItems: "center", justifyContent: "center" },
-    stepDotDone: { backgroundColor: theme.brand, borderColor: theme.brand },
+    stepDotDone: { backgroundColor: theme.brandSolid, borderColor: theme.brand },
     stepDotText: { color: theme.muted, fontSize: 11, fontWeight: "800" },
     stepDotTextDone: { color: "#fff" },
     stepLabel: { color: theme.muted, fontSize: 10, fontWeight: "700", textAlign: "center" },
     stepLabelDone: { color: theme.text },
     stepLine: { position: "absolute", top: 11, left: "60%", right: "-40%", height: 2, backgroundColor: theme.border },
-    stepLineDone: { backgroundColor: theme.brand },
+    stepLineDone: { backgroundColor: theme.brandSolid },
     stepperDone: { backgroundColor: theme.successSoft, borderRadius: 10, paddingVertical: 8, alignItems: "center" },
     stepperDoneText: { color: theme.success, fontSize: 13, fontWeight: "800" },
     stepperEscalated: { backgroundColor: theme.brandSoft, borderRadius: 10, paddingVertical: 8, alignItems: "center" },
@@ -751,7 +741,7 @@ const createStyles = (theme: Theme) =>
     fileName: { color: theme.text, fontSize: 12, flex: 1 },
     removeText: { color: theme.danger, fontSize: 12, fontWeight: "700" },
     actionBox: { gap: 10, borderWidth: 1, borderColor: theme.brandBorder, borderRadius: 16, padding: 16, backgroundColor: theme.brandSoft },
-    primaryButton: { borderRadius: 12, backgroundColor: theme.brand, paddingVertical: 13, alignItems: "center" },
+    primaryButton: { borderRadius: 12, backgroundColor: theme.brandSolid, paddingVertical: 13, alignItems: "center" },
     primaryText: { color: "#fff", fontSize: 13, fontWeight: "800" },
     secondaryButton: { borderRadius: 12, borderWidth: 1, borderColor: theme.brandBorder, backgroundColor: theme.surface, paddingVertical: 12, alignItems: "center" },
     secondaryText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
@@ -762,7 +752,7 @@ const createStyles = (theme: Theme) =>
     timeline: { gap: 0 },
     timelineRow: { flexDirection: "row", gap: 10 },
     timelineRail: { alignItems: "center", width: 14 },
-    timelineDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.brand, marginTop: 4 },
+    timelineDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.brandSolid, marginTop: 4 },
     timelineLine: { width: 2, flex: 1, backgroundColor: theme.border, borderRadius: 1, marginVertical: 4 },
     timelineContent: { flex: 1, gap: 3, paddingBottom: 16 },
     auditDetailBox: { gap: 3, borderRadius: 10, backgroundColor: theme.surfaceAlt, padding: 10, marginTop: 4 },

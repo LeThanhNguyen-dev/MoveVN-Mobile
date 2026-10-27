@@ -8,10 +8,11 @@ const mocks = vi.hoisted(() => ({ get: vi.fn(), accept: vi.fn(), external: vi.fn
 vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator", Image: "Image", Modal: "Modal", Pressable: "Pressable",
   ScrollView: "ScrollView", Text: "Text", TextInput: "TextInput", View: "View",
-  StyleSheet: { create: (styles: unknown) => styles },
+  StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (styles: unknown) => styles },
   AppState: { currentState: "active", addEventListener: () => ({ remove: vi.fn() }) },
 }));
 vi.mock("expo-image-picker", () => ({}));
+vi.mock("lucide-react-native", () => ({ ArrowLeft: "ArrowLeft", RefreshCw: "RefreshCw" }));
 vi.mock("@/theme/useTheme", () => ({ useTheme: () => ({ theme: themes.light, mode: "light" }) }));
 vi.mock("@/features/auth/hooks/useAuth", () => ({ useAuthStore: (select: (state: unknown) => unknown) => select({ user: { userId: 1 } }) }));
 vi.mock("@/services/apiClient", () => ({ getApiErrorMessage: (err: Error) => err.message }));

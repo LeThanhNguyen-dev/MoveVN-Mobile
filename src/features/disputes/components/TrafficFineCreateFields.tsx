@@ -1,5 +1,6 @@
+import Text from "@/components/AppText";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
 import type { Theme } from "@/theme/tokens";

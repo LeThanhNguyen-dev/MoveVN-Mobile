@@ -1,6 +1,7 @@
+import Text from "@/components/AppText";
 import { useEffect, useState } from "react";
 import InspectionFinancialSummary from "./InspectionFinancialSummary";
-import { Modal, ScrollView, Text, View } from "react-native";
+import { Modal, ScrollView, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import { CHECKOUT_CONSENT } from "../checkoutRules";
 import type { BookingResponse, InspectionReportResponse } from "../types";

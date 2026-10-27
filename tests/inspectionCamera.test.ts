@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator", Image: "Image", Modal: "Modal", Pressable: "Pressable", Text: "Text", View: "View",
-  Platform: { get OS() { return mocks.platform; } }, StyleSheet: { create: (styles: unknown) => styles }, Linking: { openSettings: vi.fn() },
+  Platform: { get OS() { return mocks.platform; } }, StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (styles: unknown) => styles }, Linking: { openSettings: vi.fn() },
   PixelRatio: { get: () => 3 },
   AppState: { currentState: "active", addEventListener: () => ({ remove: vi.fn() }) },
 }));

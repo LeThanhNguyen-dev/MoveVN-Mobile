@@ -1,3 +1,4 @@
+import Text from "@/components/AppText";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -9,7 +10,6 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
   TextInput,
   View,
 } from "react-native";
@@ -731,7 +731,7 @@ const createStyles = (theme: Theme) =>
     promoInput: { flex: 1 },
     promoButton: {
       borderRadius: 10,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       paddingHorizontal: 16,
       alignItems: "center",
       justifyContent: "center",
@@ -791,7 +791,7 @@ const createStyles = (theme: Theme) =>
     submit: {
       marginTop: 14,
       borderRadius: 12,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       paddingVertical: 14,
       alignItems: "center",
     },

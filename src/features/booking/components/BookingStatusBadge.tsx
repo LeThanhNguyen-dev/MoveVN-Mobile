@@ -12,7 +12,7 @@ export function getBookingStatusStyle(status: string, theme: Theme): {
 } {
   switch (status) {
     case "Pending":
-      return { bg: "#FEF3C7", text: "#B45309", dot: "#F59E0B" };
+      return { bg: theme.warningSoft, text: theme.warning, dot: theme.warning };
     case "Approved":
     case "DepositPaid":
       return { bg: theme.brandSoft, text: theme.brand, dot: theme.brand };
@@ -37,7 +37,7 @@ function BookingStatusBadge({ status }: { status: string }) {
   return (
     <View style={[styles.badge, { backgroundColor: s.bg }]}>
       <View style={[styles.dot, { backgroundColor: s.dot }]} />
-      <AppText numberOfLines={1} style={[styles.text, { color: s.text }]}>
+      <AppText style={[styles.text, { color: s.text }]}>
         {bookingStatusLabel(status)}
       </AppText>
     </View>
@@ -55,9 +55,10 @@ const createStyles = (theme: Theme) =>
       borderRadius: 999,
       paddingHorizontal: 9,
       paddingVertical: 4,
-      maxWidth: 112,
-      flexShrink: 0,
+      maxWidth: "100%",
+      alignSelf: "flex-start",
+      flexShrink: 1,
     },
     dot: { width: 7, height: 7, borderRadius: 4 },
-    text: { fontSize: 11, fontWeight: "800" },
+    text: { fontSize: 12, lineHeight: 18, fontWeight: "600", flexShrink: 1 },
   });

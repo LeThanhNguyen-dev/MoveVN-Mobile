@@ -3,6 +3,7 @@ import NotificationBell from "@/features/notifications/components/NotificationBe
 import { useMemo } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
+import AppAvatar from "@/components/ui/AppAvatar";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { AuthUser, UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
@@ -41,11 +42,7 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
           onPress={onAvatarPress}
           style={styles.avatar}
         >
-          {user.avatarUrl ? (
-            <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
-          ) : (
-            <UserRound color={theme.brand} size={24} />
-          )}
+          <AppAvatar name={user.fullName} uri={user.avatarUrl} />
         </Pressable>
         <View style={styles.nameBlock}>
           <AppText style={styles.greeting}>Xin chào</AppText>
@@ -66,7 +63,6 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
             >
               <ArrowLeftRight color={theme.text} size={21} strokeWidth={2.3} />
             </Pressable>
-            <View style={styles.divider} />
           </>
         ) : null}
         {activeRole === "Customer" && user.roles.includes("Customer") ? (
@@ -74,7 +70,6 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
             <Pressable accessibilityLabel="Xe yêu thích" accessibilityRole="button" onPress={openFavoriteVehicles} hitSlop={6} style={styles.iconButton}>
               <Heart color={theme.text} size={21} strokeWidth={2.3} />
             </Pressable>
-            <View style={styles.divider} />
           </>
         ) : null}
         <NotificationBell />
@@ -89,7 +84,8 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 16,
+    gap: 8,
+    paddingVertical: 8,
   },
   identity: {
     minWidth: 0,
@@ -99,9 +95,9 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     gap: 12,
   },
   avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: theme.brandSoft,
     alignItems: "center",
     justifyContent: "center",
@@ -119,23 +115,27 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   greeting: {
     color: theme.muted,
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   name: {
     color: theme.text,
-    fontSize: 14,
-    fontWeight: "800",
+    fontSize: 15,
+    fontWeight: "700",
     marginTop: 2,
   },
   actions: {
     height: 44,
     flexDirection: "row",
     alignItems: "center",
-    gap: 2,
+    gap: 4,
   },
   iconButton: {
-    width: 34,
-    height: 36,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.border,
     alignItems: "center",
     justifyContent: "center",
   },

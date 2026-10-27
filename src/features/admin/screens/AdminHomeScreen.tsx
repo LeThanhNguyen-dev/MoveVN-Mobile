@@ -86,7 +86,7 @@ const createStyles = (theme: Theme) =>
       width: 70,
       height: 70,
       borderRadius: 35,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -95,7 +95,7 @@ const createStyles = (theme: Theme) =>
     action: {
       minHeight: 54,
       borderRadius: 12,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",

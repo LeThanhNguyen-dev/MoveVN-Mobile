@@ -1,5 +1,11 @@
 export type ThemeMode = "light" | "dark";
 
+export const brandPalette = {
+  solid: "#861AFF",
+  gradient: ["#861AFF", "#A324FF", "#BD35F6"] as const,
+  softGradient: ["#9838ED", "#AE35EA"] as const,
+};
+
 export type Theme = {
   mode: ThemeMode;
   background: string;
@@ -13,11 +19,14 @@ export type Theme = {
   faint: string;
   placeholder: string;
   brand: string;
+  brandSolid: string;
   onBrand: string;
   brandSoft: string;
   brandBorder: string;
   success: string;
   successSoft: string;
+  warning: string;
+  warningSoft: string;
   danger: string;
   dangerSoft: string;
   dangerBorder: string;
@@ -38,35 +47,38 @@ export type Theme = {
 
 const lightTheme: Theme = {
   mode: "light",
-  background: "#FAF6FF",
+  background: "#F7F8FC",
   surface: "#FFFFFF",
   surfaceAlt: "#F1F5F9",
-  input: "#FAF6FF",
-  border: "#E8E1F2",
-  divider: "#F0EBF6",
-  text: "#101936",
-  muted: "#746F7E",
-  faint: "#94A3B8",
-  placeholder: "#A7A1B3",
-  brand: "#6B19FF",
+  input: "#FFFFFF",
+  border: "#E3E7F0",
+  divider: "#EDF0F6",
+  text: "#141B2D",
+  muted: "#526077",
+  faint: "#69768B",
+  placeholder: "#748095",
+  brand: brandPalette.solid,
+  brandSolid: brandPalette.solid,
   onBrand: "#FFFFFF",
-  brandSoft: "#F1E7FF",
-  brandBorder: "#DACBFF",
+  brandSoft: "#F5EDFF",
+  brandBorder: "#E4D1FF",
   success: "#059669",
   successSoft: "#D1FAE5",
+  warning: "#A35108",
+  warningSoft: "#FFF4DA",
   danger: "#DC2626",
   dangerSoft: "#FFE4E6",
   dangerBorder: "#FECACA",
   error: "#B4235A",
   errorSoft: "#FFF2F6",
   errorBorder: "#F5C4D7",
-  info: "#5215A2",
-  infoSoft: "#F7F1FF",
-  infoBorder: "#DDCCFA",
+  info: "#2563C9",
+  infoSoft: "#EEF5FF",
+  infoBorder: "#CDDEFF",
   overlay: "rgba(16, 25, 54, 0.45)",
   shadow: "#2C174C",
-  barBg: "rgba(255, 255, 255, 0.5)",
-  barBorder: "rgba(232, 225, 242, 0.82)",
+  barBg: "#FFFFFF",
+  barBorder: "#E3E7F0",
   prominentBg: "rgba(255, 255, 255, 0.94)",
   decorA: "#E2CCFF",
   decorB: "#F3CBE5",
@@ -84,12 +96,15 @@ const darkTheme: Theme = {
   muted: "#ABA2C9",
   faint: "#6E6591",
   placeholder: "#7E7694",
-  brand: "#8B5CFF",
+  brand: "#B597FF",
+  brandSolid: brandPalette.solid,
   onBrand: "#FFFFFF",
   brandSoft: "#2E2757",
   brandBorder: "#4C4180",
   success: "#34D399",
   successSoft: "#123B2E",
+  warning: "#FCD278",
+  warningSoft: "#3B301C",
   danger: "#F87171",
   dangerSoft: "#3B2230",
   dangerBorder: "#5B2B3A",
@@ -101,8 +116,8 @@ const darkTheme: Theme = {
   infoBorder: "#453A7A",
   overlay: "rgba(0, 0, 0, 0.6)",
   shadow: "#000000",
-  barBg: "rgba(30, 25, 48, 0.6)",
-  barBorder: "rgba(52, 44, 82, 0.9)",
+  barBg: "#1E1930",
+  barBorder: "#342C52",
   prominentBg: "rgba(38, 32, 64, 0.95)",
   decorA: "#3A2F63",
   decorB: "#4A2C4E",

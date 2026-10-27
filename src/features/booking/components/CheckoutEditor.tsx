@@ -1,10 +1,11 @@
+import Text from "@/components/AppText";
 import CheckoutSurchargePicker from "./CheckoutSurchargePicker";
 import { validateSurchargeSelection } from "../checkoutSurcharges";
 import type { CheckoutSurchargeSelection } from "../types";
 import { checkoutStartDate } from "../bookingDisplay";
 import MileageFeePreview from "./MileageFeePreview";
 import { useRef, useState } from "react";
-import { Text, View, Switch } from "react-native";
+import { View, Switch } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { amendCheckout } from "../bookingService";

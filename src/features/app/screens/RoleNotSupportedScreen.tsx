@@ -38,6 +38,6 @@ const createStyles = (theme: Theme) =>
     title: { color: theme.text, fontSize: 18, fontWeight: "800", textAlign: "center" },
     muted: { color: theme.muted, fontSize: 14, textAlign: "center", lineHeight: 20 },
     notifications: { flexDirection: "row", alignItems: "center", gap: 12 },
-    button: { marginTop: 8, borderRadius: 12, backgroundColor: theme.brand, paddingHorizontal: 24, paddingVertical: 12 },
+    button: { marginTop: 8, borderRadius: 12, backgroundColor: theme.brandSolid, paddingHorizontal: 24, paddingVertical: 12 },
     buttonText: { color: theme.onBrand, fontSize: 15, fontWeight: "800" },
   });

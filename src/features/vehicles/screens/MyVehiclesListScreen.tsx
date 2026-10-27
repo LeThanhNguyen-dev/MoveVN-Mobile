@@ -10,6 +10,8 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
+import AppScreenHeader from "@/components/ui/AppScreenHeader";
+import AppButton from "@/components/ui/AppButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { VehicleListItemResponse } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
@@ -141,18 +143,9 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View>
-            <AppText display style={styles.title}>Xe của tôi</AppText>
-            <AppText style={styles.count}>
-              {loading && items.length === 0 ? "Đang tải..." : `${totalCount} xe`}
-            </AppText>
-          </View>
-          <Pressable onPress={onAdd} style={styles.addButton}>
-            <Plus color={theme.onBrand} size={18} />
-            <AppText style={styles.addText}>Thêm xe</AppText>
-          </Pressable>
-        </View>
+        <AppScreenHeader title="Xe của tôi" subtitle={loading && items.length === 0 ? "Đang tải..." : `${totalCount} xe`}
+          style={{ paddingHorizontal: 0, borderBottomWidth: 0 }}
+          actions={<AppButton title="Thêm xe" onPress={onAdd} icon={<Plus color={theme.onBrand} size={18} />} />} />
 
         <View style={styles.tabRow}>
           {TYPE_TABS.map((t) => {
@@ -259,7 +252,7 @@ const createStyles = (theme: Theme) => {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       borderRadius: 12,
       paddingHorizontal: 14,
       height: 40,
@@ -287,7 +280,7 @@ const createStyles = (theme: Theme) => {
       justifyContent: "center",
       paddingHorizontal: 16,
     },
-    tabActive: { backgroundColor: theme.brand, borderColor: theme.brand },
+    tabActive: { backgroundColor: theme.brandSolid, borderColor: theme.brand },
     tabText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
     tabTextSmall: { color: theme.brand, fontSize: 11, fontWeight: "800" },
     tabTextActive: { color: theme.onBrand },
@@ -302,7 +295,7 @@ const createStyles = (theme: Theme) => {
       height: 40,
       paddingHorizontal: 18,
       borderRadius: 12,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       alignItems: "center",
       justifyContent: "center",
     },

@@ -1,3 +1,4 @@
+import AppInput from "@/components/ui/AppInput";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Clipboard from "expo-clipboard";
 import {
@@ -209,7 +210,7 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
                 <>
                   <View style={styles.searchBox}>
                     <Search color={theme.placeholder} size={17} />
-                    <TextInput
+                    <AppInput
                       value={bankSearch}
                       onChangeText={setBankSearch}
                       placeholder="Tìm Vietcombank, BIDV, MB..."
@@ -245,7 +246,7 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
               ) : null}
               <View style={styles.field}>
                 <AppText style={styles.fieldLabel}>Số tài khoản</AppText>
-                <TextInput
+                <AppInput
                   ref={accountRef}
                   value={accountNumber}
                   onChangeText={(v) => setAccountNumber(v.replace(/[^0-9]/g, ""))}
@@ -264,7 +265,7 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
 
               <View style={styles.field}>
                 <AppText style={styles.fieldLabel}>Chủ tài khoản</AppText>
-                <TextInput
+                <AppInput
                   ref={holderRef}
                   value={holderName}
                   onChangeText={setHolderName}
@@ -509,7 +510,7 @@ const createStyles = (theme: Theme) =>
     },
     primaryButton: {
       borderRadius: 12,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       paddingVertical: 13,
       alignItems: "center",
       marginTop: 2,

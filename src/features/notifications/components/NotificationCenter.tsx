@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
+import AppScreenHeader from "@/components/ui/AppScreenHeader";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Bell, BellOff, CalendarCheck, CarFront, CheckCheck, ChevronRight, CircleAlert, Flag, Headphones, MessageSquare, RefreshCw, Wallet } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
@@ -79,18 +80,10 @@ export default function NotificationCenter({ userId }: { userId: number }) {
   return <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={goBack} onDismiss={launchPendingTicket}>
     <SafeAreaProvider>
       <SafeAreaView style={styles.safe}>
-        <View style={styles.header}>
-          <Pressable accessibilityRole="button" accessibilityLabel={detail ? "Quay lại danh sách thông báo" : "Đóng thông báo"} onPress={goBack} style={styles.iconButton}>
-            <ArrowLeft size={23} color={theme.text} />
-          </Pressable>
-          <View style={styles.heading}>
-            <AppText display style={styles.title}>{detail ? "Chi tiết thông báo" : "Thông báo"}</AppText>
-            {!detail ? <AppText style={styles.subtitle}>{state.countError ? "Chưa thể cập nhật số chưa đọc" : state.countRevision === 0 ? "Đang cập nhật thông báo…" : state.unreadCount > 0 ? `${state.unreadCount} thông báo chưa đọc` : "Bạn đã đọc hết thông báo"}</AppText> : null}
-          </View>
-          {!detail ? <Pressable accessibilityRole="button" accessibilityLabel="Làm mới thông báo" disabled={state.loading || state.refreshing} onPress={() => { void loadNotificationPage(); }} style={styles.iconButton}>
-            {state.refreshing ? <ActivityIndicator color={theme.brand} /> : <RefreshCw size={20} color={theme.brand} />}
-          </Pressable> : null}
-        </View>
+        <AppScreenHeader title={detail ? "Chi tiết thông báo" : "Thông báo"}
+          subtitle={detail ? undefined : state.countError ? "Chưa thể cập nhật số chưa đọc" : state.countRevision === 0 ? "Đang cập nhật thông báo…" : state.unreadCount > 0 ? `${state.unreadCount} thông báo chưa đọc` : "Bạn đã đọc hết thông báo"}
+          onBack={goBack} backLabel={detail ? "Quay lại danh sách thông báo" : "Đóng thông báo"}
+          onRefresh={detail ? undefined : () => { void loadNotificationPage(); }} refreshLabel="Làm mới thông báo" busy={state.loading || state.refreshing} />
         {detail ? <ScrollView contentContainerStyle={styles.detailContent}>
           <View style={styles.detailCard}>
             <View style={styles.row}>
@@ -187,7 +180,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   card: { flexDirection: "row", alignItems: "flex-start", padding: 15, gap: 12, borderRadius: 18, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border },
   unreadCard: { borderColor: theme.brandBorder }, itemIcon: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   itemContent: { flex: 1, minWidth: 0 }, row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
-  itemCategory: { color: theme.brand, fontSize: 11, fontWeight: "700" }, dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.brand },
+  itemCategory: { color: theme.brand, fontSize: 11, fontWeight: "700" }, dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.brandSolid },
   itemTitle: { color: theme.text, fontSize: 14, lineHeight: 20, fontWeight: "600", marginTop: 5 }, unreadTitle: { fontWeight: "800" },
   preview: { color: theme.muted, fontSize: 13, lineHeight: 19, marginTop: 4 }, date: { color: theme.faint, fontSize: 11, lineHeight: 17, marginTop: 8 },
   empty: { flex: 1, padding: 28, alignItems: "center", justifyContent: "center", gap: 12 }, emptyIcon: { padding: 24, borderRadius: 50, backgroundColor: theme.brandSoft },
@@ -199,5 +192,5 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   category: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: theme.brandSoft }, categoryText: { color: theme.brand, fontSize: 12, fontWeight: "700" }, status: { fontSize: 12, fontWeight: "700" },
   detailTitle: { marginTop: 18, color: theme.text, fontSize: 23, lineHeight: 31, fontWeight: "800" }, rule: { height: StyleSheet.hairlineWidth, backgroundColor: theme.border, marginVertical: 20 },
   body: { color: theme.text, fontSize: 16, lineHeight: 26 }, reference: { color: theme.muted, fontSize: 13, marginTop: 20 },
-  primaryButton: { minHeight: 50, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: theme.brand }, primaryText: { fontSize: 14, color: theme.onBrand, fontWeight: "700" }, disabled: { opacity: 0.5 },
+  primaryButton: { minHeight: 50, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: theme.brandSolid }, primaryText: { fontSize: 14, color: theme.onBrand, fontWeight: "700" }, disabled: { opacity: 0.5 },
 });

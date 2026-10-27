@@ -1,5 +1,6 @@
+import Text from "@/components/AppText";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";

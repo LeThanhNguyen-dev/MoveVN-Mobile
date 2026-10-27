@@ -13,7 +13,7 @@ vi.mock("@/services/apiClient", () => ({ getApiErrorMessage: (_e: unknown, fallb
 vi.mock("@/features/app/components/AppDashboardHeader", () => ({ default: () => null }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
 vi.mock("@/features/disputes/screens/DisputeDetailScreen", () => ({ default: () => null }));
-vi.mock("react-native", () => ({ View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable", ScrollView: "ScrollView", ActivityIndicator: "ActivityIndicator", RefreshControl: "RefreshControl", StyleSheet: { create: (x: unknown) => x, hairlineWidth: 1, absoluteFill: {} },
+vi.mock("react-native", () => ({ View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable", ScrollView: "ScrollView", ActivityIndicator: "ActivityIndicator", RefreshControl: "RefreshControl", StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (x: unknown) => x, hairlineWidth: 1, absoluteFill: {} },
   Modal: ({ visible, children }: { visible: boolean; children: React.ReactNode }) => visible ? React.createElement("Modal", null, children) : null,
 }));
 vi.mock("lucide-react-native", () => Object.fromEntries(["BarChart3", "CalendarCheck", "CarFront", "ChevronDown", "CircleHelp", "Download", "RefreshCw", "ShieldCheck", "Star", "Trophy", "X"].map(n => [n, n])));

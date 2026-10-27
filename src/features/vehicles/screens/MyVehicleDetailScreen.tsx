@@ -1,3 +1,4 @@
+import AppScreenHeader from "@/components/ui/AppScreenHeader";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -271,22 +272,9 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
 
   return (
     <View style={styles.screen}>
-      <View style={styles.topBar}>
-        <Pressable onPress={onBack} style={styles.iconBtn}>
-          <ArrowLeft color={theme.text} size={20} />
-        </Pressable>
-        <View style={styles.topTitleWrap}>
-          <AppText display numberOfLines={1} style={styles.topTitle}>
-            {vehicle.brandName} {vehicle.modelName}
-          </AppText>
-          <AppText style={styles.topSub}>
-            {vehicle.licensePlate} · {getOwnerStatusLabel(vehicle.status)}
-          </AppText>
-        </View>
-        <Pressable onPress={() => onEdit(vehicle.id)} style={styles.editBtn}>
+      <AppScreenHeader title="{vehicle.brandName} {vehicle.modelName}" subtitle="{vehicle.licensePlate} · {getOwnerStatusLabel(vehicle.status)}" onBack={onBack} actions={<Pressable onPress={() => onEdit(vehicle.id)} style={styles.editBtn}>
           <Pencil color={theme.onBrand} size={16} />
-        </Pressable>
-      </View>
+        </Pressable>} />
 
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: Math.max(insets.bottom, 16) + (showDelete ? 76 : 16) }]}
@@ -887,7 +875,7 @@ const createStyles = (theme: Theme) =>
       width: 38,
       height: 38,
       borderRadius: 12,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -899,7 +887,7 @@ const createStyles = (theme: Theme) =>
       position: "absolute",
       left: 10,
       top: 10,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       borderRadius: 999,
       paddingHorizontal: 10,
       paddingVertical: 4,
@@ -938,7 +926,7 @@ const createStyles = (theme: Theme) =>
     counterText: { color: "#FFF", fontSize: 11, fontWeight: "800" },
     dots: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingTop: 8 },
     dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.border },
-    dotActive: { width: 18, backgroundColor: theme.brand },
+    dotActive: { width: 18, backgroundColor: theme.brandSolid },
     noImage: {
       borderRadius: 16,
       borderWidth: StyleSheet.hairlineWidth,
@@ -1125,7 +1113,7 @@ const createStyles = (theme: Theme) =>
     primaryBtn: {
       minHeight: 46,
       borderRadius: 14,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       alignItems: "center",
       justifyContent: "center",
       paddingHorizontal: 16,

@@ -9,7 +9,7 @@ vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 const mocks = vi.hoisted(() => ({ checkIn: vi.fn(), checkOut: vi.fn(), delete: vi.fn(), saved: vi.fn(), back: vi.fn(), resize: vi.fn(), library: vi.fn() }));
 vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator", Image: "Image", KeyboardAvoidingView: "KeyboardAvoidingView", Pressable: "Pressable", ScrollView: "ScrollView", Switch: "Switch", Text: "Text", TextInput: "TextInput", View: "View",
-  Platform: { OS: "android" }, StyleSheet: { create: (styles: unknown) => styles },
+  Platform: { OS: "android" }, StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (styles: unknown) => styles },
   Alert: { alert: vi.fn() }, BackHandler: { addEventListener: () => ({ remove: vi.fn() }) },
 }));
 vi.mock("lucide-react-native", () => ({ ArrowLeft: "ArrowLeft" }));

@@ -1,4 +1,8 @@
-import BookingSearchFilters, { EMPTY_SEARCH } from "../components/BookingSearchFilters";
+import BookingListHeader from "../components/BookingListHeader";
+import BookingStatusFilters from "../components/BookingStatusFilters";
+import BookingSearchFilters, {
+  EMPTY_SEARCH,
+} from "../components/BookingSearchFilters";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -6,10 +10,9 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   View,
-} from "react-native"
+} from "react-native";
 import AppText from "@/components/AppText";
 import { CalendarCheck } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,14 +22,18 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { getMyBookings } from "@/features/booking/bookingService";
 import type { BookingResponse } from "@/features/booking/types";
-import { BOOKING_PAGE_SIZE, BOOKING_STATUS_FILTERS } from "@/features/booking/constants";
+import { BOOKING_PAGE_SIZE } from "@/features/booking/constants";
 import BookingCard from "@/features/booking/components/BookingCard";
 import BookingCardSkeleton from "@/features/booking/components/BookingCardSkeleton";
 import { getApiErrorMessage } from "@/services/apiClient";
 
 type ListNav = NativeStackNavigationProp<TripsStackParamList, "TripList">;
 
-export default function TripListScreen({ navigation }: { navigation: ListNav }) {
+export default function TripListScreen({
+  navigation,
+}: {
+  navigation: ListNav;
+}) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -44,6 +51,9 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
 
   const hasMore = items.length < totalCount;
   const remaining = Math.max(0, totalCount - items.length);
+  const filtered = Boolean(
+    status || search.keyword || search.fromDate || search.toDate,
+  );
 
   const fetchPage = useCallback(
     async (targetPage: number, targetStatus: string, replace: boolean) => {
@@ -51,7 +61,8 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
       fetching.current = true;
       const request = ++requestId.current;
       if (replace) {
-        setItems([]); setPage(1);
+        setItems([]);
+        setPage(1);
         setLoading(true);
         setError("");
       } else {
@@ -70,7 +81,10 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
         setPage(res.page);
       } catch (err) {
         if (request !== requestId.current) return;
-        if (replace) setError(getApiErrorMessage(err, "Không tải được danh sách chuyến đi."));
+        if (replace)
+          setError(
+            getApiErrorMessage(err, "Không tải được danh sách chuyến đi."),
+          );
       } finally {
         if (request === requestId.current) {
           fetching.current = false;
@@ -83,10 +97,15 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
     [search],
   );
 
-  useFocusEffect(useCallback(() => {
-    void fetchPage(1, status, true);
-    return () => { requestId.current++; fetching.current = false; };
-  }, [fetchPage, status]));
+  useFocusEffect(
+    useCallback(() => {
+      void fetchPage(1, status, true);
+      return () => {
+        requestId.current++;
+        fetching.current = false;
+      };
+    }, [fetchPage, status]),
+  );
 
   function handleRefresh() {
     setRefreshing(true);
@@ -103,7 +122,9 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
       <BookingCard
         booking={item}
         variant="customer"
-        onPress={() => navigation.navigate("TripDetail", { bookingId: item.id })}
+        onPress={() =>
+          navigation.navigate("TripDetail", { bookingId: item.id })
+        }
       />
     ),
     [navigation],
@@ -111,46 +132,40 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <View>
-          <AppText display style={styles.title}>Chuyến đi của tôi</AppText>
-          <AppText style={styles.count}>
-            {loading && items.length === 0 ? "Đang tải..." : `${totalCount} chuyến`}
-          </AppText>
-        </View>
-      </View>
-
-      <BookingSearchFilters onApply={setSearch} />
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filters}
-        style={styles.filterBar}
-      >
-        {BOOKING_STATUS_FILTERS.map((f) => {
-          const active = status === f.key;
-          return (
-            <Pressable
-              key={f.key || "all"}
-              onPress={() => setStatus(f.key)}
-              style={[styles.chip, active && styles.chipActive]}
-            >
-              <AppText style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</AppText>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <BookingListHeader
+        title="Chuyến đi của tôi"
+        count={loading ? "Đang tải…" : error ? "—" : `${totalCount} chuyến`}
+      />
 
       <FlatList
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <View style={{ gap: 10, paddingBottom: 4 }}>
+            <BookingSearchFilters
+              value={search}
+              inset={false}
+              onApply={setSearch}
+            />
+            <BookingStatusFilters value={status} onChange={setStatus} />
+          </View>
+        }
         data={items}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
-        contentContainerStyle={[styles.list, { paddingBottom: Math.max(insets.bottom, 16) + 24 }]}
+        contentContainerStyle={[
+          styles.list,
+          { paddingBottom: Math.max(insets.bottom, 16) + 24 },
+        ]}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.4}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.brand} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={theme.brand}
+          />
         }
         ListEmptyComponent={
           loading ? (
@@ -171,13 +186,31 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
               <View style={styles.emptyIcon}>
                 <CalendarCheck color={theme.brand} size={32} />
               </View>
-              <AppText display style={styles.emptyTitle}>Chưa có chuyến đi nào</AppText>
-              <AppText style={styles.emptyDesc}>Các chuyến bạn đặt sẽ hiện ở đây để dễ theo dõi.</AppText>
+              <AppText display style={styles.emptyTitle}>
+                {filtered ? "Không có chuyến phù hợp" : "Chưa có chuyến đi nào"}
+              </AppText>
+              <AppText style={styles.emptyDesc}>
+                {filtered
+                  ? "Thử đổi từ khóa, thời gian hoặc trạng thái."
+                  : "Các chuyến bạn đặt sẽ hiện ở đây để dễ theo dõi."}
+              </AppText>
+              {filtered && (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setSearch(EMPTY_SEARCH);
+                    setStatus("");
+                  }}
+                  style={styles.moreButton}
+                >
+                  <AppText style={styles.moreText}>Xóa tất cả bộ lọc</AppText>
+                </Pressable>
+              )}
             </View>
           )
         }
         ListFooterComponent={
-          loading || items.length === 0 ? null : loadingMore ? (
+          loading || items.length === 0 ? undefined : loadingMore ? (
             <ActivityIndicator color={theme.brand} style={styles.more} />
           ) : hasMore ? (
             <Pressable onPress={handleLoadMore} style={styles.moreButton}>
@@ -195,29 +228,7 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.background },
-    header: {
-      paddingHorizontal: 16,
-      paddingTop: 12,
-      paddingBottom: 8,
-    },
-    title: { color: theme.text, fontSize: 17, fontWeight: "800" },
-    count: { color: theme.muted, fontSize: 12, fontWeight: "600", marginTop: 2 },
-    filterBar: { flexGrow: 0, flexShrink: 0 },
-    filters: { flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
-    chip: {
-      height: 34,
-      borderRadius: 999,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      backgroundColor: theme.surface,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 16,
-    },
-    chipActive: { backgroundColor: theme.brand, borderColor: theme.brand },
-    chipText: { color: theme.muted, fontSize: 12, fontWeight: "700" },
-    chipTextActive: { color: theme.onBrand, fontWeight: "800" },
-    list: { paddingHorizontal: 16, paddingTop: 4, gap: 12 },
+    list: { paddingHorizontal: 16, paddingTop: 12, gap: 12 },
     skeletons: { gap: 12 },
     center: { alignItems: "center", paddingVertical: 48, gap: 8 },
     emptyIcon: {
@@ -230,13 +241,18 @@ const createStyles = (theme: Theme) =>
     },
     emptyTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
     emptyDesc: { color: theme.muted, fontSize: 13, textAlign: "center" },
-    errorText: { color: theme.danger, fontSize: 13, fontWeight: "600", textAlign: "center" },
+    errorText: {
+      color: theme.danger,
+      fontSize: 13,
+      fontWeight: "600",
+      textAlign: "center",
+    },
     retryBtn: {
       marginTop: 8,
       height: 40,
       paddingHorizontal: 18,
       borderRadius: 12,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -251,5 +267,10 @@ const createStyles = (theme: Theme) =>
       marginTop: 4,
     },
     moreText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
-    endText: { color: theme.faint, fontSize: 12, textAlign: "center", marginTop: 8 },
+    endText: {
+      color: theme.faint,
+      fontSize: 12,
+      textAlign: "center",
+      marginTop: 8,
+    },
   });

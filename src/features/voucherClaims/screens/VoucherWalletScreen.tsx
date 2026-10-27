@@ -357,7 +357,7 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: theme.background },
     scroll: { flex: 1 },
-    scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 96, gap: 14 },
+    scrollContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 28, gap: 12 },
     pageTitle: { color: theme.text, fontSize: 21, fontWeight: "900", letterSpacing: -0.4 },
     sectionHead: { gap: 4 },
     sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -380,7 +380,7 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 3,
     },
     daysBadgeText: { fontSize: 10, fontWeight: "800" },
-    ticketList: { gap: 14 },
+    ticketList: { gap: 10 },
     centerBox: { paddingVertical: 64, alignItems: "center" },
     emptyBox: {
       alignItems: "center",

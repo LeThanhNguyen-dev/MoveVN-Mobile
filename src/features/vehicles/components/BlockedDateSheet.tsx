@@ -261,7 +261,7 @@ const createStyles = (theme: Theme) =>
     day: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
     dayText: { color: theme.text, fontSize: 13, fontWeight: "500" },
     dayPast: { color: theme.faint },
-    daySelected: { backgroundColor: theme.brand },
+    daySelected: { backgroundColor: theme.brandSolid },
     daySelectedText: { color: theme.onBrand, fontWeight: "800" },
     dayRange: { backgroundColor: theme.brandSoft, borderRadius: 8 },
     dayRangeText: { color: theme.brand, fontWeight: "700" },
@@ -290,7 +290,7 @@ const createStyles = (theme: Theme) =>
     confirmBtn: {
       height: 46,
       borderRadius: 14,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       alignItems: "center",
       justifyContent: "center",
     },

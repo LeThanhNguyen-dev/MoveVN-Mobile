@@ -1,5 +1,6 @@
+import Text from "@/components/AppText";
 import { createElement, useEffect, useRef, useState } from "react";
-import { Modal, Text, View } from "react-native";
+import { Modal, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/theme/useTheme";
 import { stampWebPhoto } from "../utils/stampWebPhoto";

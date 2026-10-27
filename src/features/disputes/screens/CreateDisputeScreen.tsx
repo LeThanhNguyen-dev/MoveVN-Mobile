@@ -1,5 +1,7 @@
+import AppScreenHeader from "@/components/ui/AppScreenHeader";
+import Text from "@/components/AppText";
 import { useEffect, useMemo, useState, useRef } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
 import type { Theme } from "@/theme/tokens";
@@ -238,18 +240,7 @@ export default function CreateDisputeScreen({
 
   return (
     <View style={styles.screen}>
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Quay lại danh sách"
-          disabled={submitting} onPress={onBack}
-          style={styles.backButton}
-        >
-          <Text style={styles.backText}>‹</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Tạo tranh chấp mới</Text>
-        <View style={styles.backButtonPlaceholder} />
-      </View>
+      <AppScreenHeader title="Tạo tranh chấp mới" onBack={onBack} backDisabled={submitting} backLabel="Quay lại danh sách" />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
       <Text style={styles.label}>Booking khiếu nại</Text>
       {selectedBooking ? (
@@ -426,7 +417,7 @@ const createStyles = (theme: Theme) =>
     actions: { flexDirection: "row", gap: 8, marginTop: 8 },
     ghostButton: { flex: 1, borderRadius: 12, borderWidth: 1, borderColor: theme.border, paddingVertical: 13, alignItems: "center" },
     ghostText: { color: theme.muted, fontSize: 14, fontWeight: "800" },
-    primaryButton: { flex: 2, borderRadius: 12, backgroundColor: theme.brand, paddingVertical: 13, alignItems: "center" },
+    primaryButton: { flex: 2, borderRadius: 12, backgroundColor: theme.brandSolid, paddingVertical: 13, alignItems: "center" },
     primaryText: { color: "#fff", fontSize: 14, fontWeight: "800" },
     disabled: { opacity: 0.4 },
   });

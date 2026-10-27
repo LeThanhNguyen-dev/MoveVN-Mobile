@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator", KeyboardAvoidingView: "KeyboardAvoidingView", Pressable: "Pressable",
   ScrollView: "ScrollView", Text: "Text", TextInput: "TextInput", View: "View", Image: "Image",
-  Platform: { OS: "android" }, StyleSheet: { create: (styles: unknown) => styles },
+  Platform: { OS: "android" }, StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (styles: unknown) => styles },
   Linking: { openURL: vi.fn() }, BackHandler: { addEventListener: () => ({ remove: vi.fn() }) },
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));

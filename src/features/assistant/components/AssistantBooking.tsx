@@ -1,5 +1,6 @@
+import Text from "@/components/AppText";
 import { memo, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
 import type { Theme } from "@/theme/tokens";
@@ -313,7 +314,7 @@ const createStyles = (theme: Theme) =>
     total: { color: theme.text, fontSize: 13, fontWeight: "800" },
     warn: { color: "#92400e", backgroundColor: "#fef3c7", fontSize: 12, borderRadius: 8, padding: 8 },
     error: { color: theme.danger, fontSize: 12 },
-    primaryButton: { borderRadius: 12, backgroundColor: theme.brand, paddingVertical: 12, alignItems: "center" },
+    primaryButton: { borderRadius: 12, backgroundColor: theme.brandSolid, paddingVertical: 12, alignItems: "center" },
     disabled: { opacity: 0.4 },
     primaryText: { color: "#fff", fontSize: 13, fontWeight: "800" },
     link: { color: theme.brand, fontSize: 12, fontWeight: "700" },

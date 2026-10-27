@@ -6,7 +6,7 @@ import type { BookingResponse, InspectionReportResponse } from "@/features/booki
 
 vi.stubGlobal("React", React); vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 const mocks = vi.hoisted(() => ({ settle: vi.fn(), updated: vi.fn() }));
-vi.mock("react-native", () => ({ Text: "Text", View: "View", Pressable: "Pressable", TextInput: "TextInput", ActivityIndicator: "ActivityIndicator", StyleSheet: { create: (s: unknown) => s } }));
+vi.mock("react-native", () => ({ Text: "Text", View: "View", Pressable: "Pressable", TextInput: "TextInput", ActivityIndicator: "ActivityIndicator", StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (s: unknown) => s } }));
 vi.mock("lucide-react-native", () => ({ ArrowLeft: "ArrowLeft" }));
 vi.mock("@/theme/useTheme", () => ({ useTheme: () => ({ theme: themes.light }) }));
 vi.mock("@/services/apiClient", () => ({ getApiErrorMessage: (_error: unknown, fallback: string) => fallback }));

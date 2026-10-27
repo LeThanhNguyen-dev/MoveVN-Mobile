@@ -11,7 +11,7 @@ import {
   StyleSheet,
   View,
   useWindowDimensions,
-} from "react-native"
+} from "react-native";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -156,7 +156,10 @@ function HeroCarousel({
       {slides.length > 1 ? (
         <View style={styles.dotsRow}>
           {slides.map((s, i) => (
-            <View key={String(s.id)} style={[styles.dot, i === page && styles.dotActive]} />
+            <View
+              key={String(s.id)}
+              style={[styles.dot, i === page && styles.dotActive]}
+            />
           ))}
         </View>
       ) : null}
@@ -193,7 +196,8 @@ export default function CustomerPromotionsScreen() {
         setBanners(Array.isArray(bannerList) ? bannerList : []);
       })
       .catch(() => {
-        if (!cancelled) setError("Không thể tải danh sách khuyến mãi. Vui lòng thử lại sau.");
+        if (!cancelled)
+          setError("Không thể tải danh sách khuyến mãi. Vui lòng thử lại sau.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -204,11 +208,16 @@ export default function CustomerPromotionsScreen() {
   }, []);
 
   const carCount = useMemo(
-    () => items.filter((p) => p.vehicleType === "Car" || p.vehicleType === "All").length,
+    () =>
+      items.filter((p) => p.vehicleType === "Car" || p.vehicleType === "All")
+        .length,
     [items],
   );
   const motorbikeCount = useMemo(
-    () => items.filter((p) => p.vehicleType === "Motorbike" || p.vehicleType === "All").length,
+    () =>
+      items.filter(
+        (p) => p.vehicleType === "Motorbike" || p.vehicleType === "All",
+      ).length,
     [items],
   );
   const expiringCount = useMemo(
@@ -219,7 +228,11 @@ export default function CustomerPromotionsScreen() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const result = items.filter((p) => {
-      if (vehicleFilter !== "All" && p.vehicleType !== "All" && p.vehicleType !== vehicleFilter)
+      if (
+        vehicleFilter !== "All" &&
+        p.vehicleType !== "All" &&
+        p.vehicleType !== vehicleFilter
+      )
         return false;
       if (expiringOnly && !isExpiringSoon(p.endAt)) return false;
       if (!q) return true;
@@ -232,11 +245,17 @@ export default function CustomerPromotionsScreen() {
 
     return result.sort((first, second) => {
       if (sortOrder === "ending") {
-        const firstEnd = first.endAt ? new Date(first.endAt).getTime() : Number.MAX_SAFE_INTEGER;
-        const secondEnd = second.endAt ? new Date(second.endAt).getTime() : Number.MAX_SAFE_INTEGER;
+        const firstEnd = first.endAt
+          ? new Date(first.endAt).getTime()
+          : Number.MAX_SAFE_INTEGER;
+        const secondEnd = second.endAt
+          ? new Date(second.endAt).getTime()
+          : Number.MAX_SAFE_INTEGER;
         return firstEnd - secondEnd;
       }
-      return new Date(second.startAt).getTime() - new Date(first.startAt).getTime();
+      return (
+        new Date(second.startAt).getTime() - new Date(first.startAt).getTime()
+      );
     });
   }, [items, search, vehicleFilter, expiringOnly, sortOrder]);
 
@@ -280,7 +299,12 @@ export default function CustomerPromotionsScreen() {
       { value: "All", label: "Tất cả", count: items.length },
       { value: "Car", label: "Ô tô", count: carCount },
       { value: "Motorbike", label: "Xe máy", count: motorbikeCount },
-      { value: "expiring", label: "Sắp hết hạn", count: expiringCount, tone: "amber" as const },
+      {
+        value: "expiring",
+        label: "Sắp hết hạn",
+        count: expiringCount,
+        tone: "amber" as const,
+      },
     ],
     [items.length, carCount, motorbikeCount, expiringCount],
   );
@@ -348,7 +372,8 @@ export default function CustomerPromotionsScreen() {
               Chưa có ưu đãi đang diễn ra
             </AppText>
             <AppText style={styles.emptyDesc}>
-              Các chương trình mới sẽ xuất hiện tại đây. Bạn có thể xem những voucher hiện đang chờ nhận.
+              Các chương trình mới sẽ xuất hiện tại đây. Bạn có thể xem những
+              voucher hiện đang chờ nhận.
             </AppText>
             <Pressable
               onPress={() => navigation.navigate("VoucherHunt")}
@@ -365,12 +390,11 @@ export default function CustomerPromotionsScreen() {
                   {sectionTitle}
                 </AppText>
                 <View style={styles.countBadge}>
-                  <AppText style={styles.countBadgeText}>{filtered.length}</AppText>
+                  <AppText style={styles.countBadgeText}>
+                    {filtered.length}
+                  </AppText>
                 </View>
               </View>
-              <AppText style={styles.sectionDesc}>
-                Chọn một voucher để xem điều kiện và cách nhận.
-              </AppText>
             </View>
 
             {filtered.length === 0 ? (
@@ -412,12 +436,7 @@ type TicketCardProps = {
 };
 
 function TicketCard({ item, onOpen }: TicketCardProps) {
-  return (
-    <VoucherTicketCard
-      data={toCardData(item)}
-      onOpenDetail={onOpen}
-    />
-  );
+  return <VoucherTicketCard data={toCardData(item)} onOpenDetail={onOpen} />;
 }
 
 const MemoTicketCard = memo(TicketCard);
@@ -426,11 +445,26 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: theme.background },
     scroll: { flex: 1 },
-    scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 96, gap: 14 },
-    pageTitle: { color: theme.text, fontSize: 21, fontWeight: "900", letterSpacing: -0.4 },
+    scrollContent: {
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 28,
+      gap: 12,
+    },
+    pageTitle: {
+      color: theme.text,
+      fontSize: 21,
+      fontWeight: "900",
+      letterSpacing: -0.4,
+    },
     sectionHead: { gap: 4 },
     sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-    sectionTitle: { color: theme.text, fontSize: 17, fontWeight: "900", flexShrink: 1 },
+    sectionTitle: {
+      color: theme.text,
+      fontSize: 17,
+      fontWeight: "900",
+      flexShrink: 1,
+    },
     countBadge: {
       borderRadius: 999,
       backgroundColor: theme.brandSoft,
@@ -438,7 +472,6 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 3,
     },
     countBadgeText: { color: theme.brand, fontSize: 11, fontWeight: "900" },
-    sectionDesc: { color: theme.muted, fontSize: 12 },
     heroCard: {
       aspectRatio: 16 / 8,
       borderRadius: 18,
@@ -447,7 +480,13 @@ const createStyles = (theme: Theme) =>
       justifyContent: "flex-end",
       padding: 12,
     },
-    heroShade: { position: "absolute", left: 0, right: 0, bottom: 0, height: "70%" },
+    heroShade: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: "70%",
+    },
     heroBadge: {
       position: "absolute",
       left: 12,
@@ -462,8 +501,18 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 8,
       paddingVertical: 4,
     },
-    heroBadgeText: { color: "#FFFFFF", fontSize: 9, fontWeight: "900", letterSpacing: 1 },
-    heroTitle: { color: "#FFFFFF", fontSize: 15, fontWeight: "900", paddingRight: 90 },
+    heroBadgeText: {
+      color: "#FFFFFF",
+      fontSize: 9,
+      fontWeight: "900",
+      letterSpacing: 1,
+    },
+    heroTitle: {
+      color: "#FFFFFF",
+      fontSize: 15,
+      fontWeight: "900",
+      paddingRight: 90,
+    },
     heroCta: {
       position: "absolute",
       right: 12,
@@ -477,15 +526,26 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 7,
     },
     heroCtaText: { color: "#6B21A8", fontSize: 11, fontWeight: "900" },
-    dotsRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 10 },
+    dotsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      marginTop: 10,
+    },
     dot: {
       width: 6,
       height: 6,
       borderRadius: 3,
       backgroundColor: theme.mode === "dark" ? theme.border : "#DDD6FE",
     },
-    dotActive: { width: 24, height: 6, borderRadius: 3, backgroundColor: "#7C3AED" },
-    ticketList: { gap: 14 },
+    dotActive: {
+      width: 24,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: "#7C3AED",
+    },
+    ticketList: { gap: 10 },
     centerBox: { paddingVertical: 64, alignItems: "center" },
     errorBox: {
       borderRadius: 14,
@@ -514,8 +574,19 @@ const createStyles = (theme: Theme) =>
       justifyContent: "center",
       backgroundColor: theme.brandSoft,
     },
-    emptyTitle: { color: theme.text, fontSize: 15, fontWeight: "900", marginTop: 8, textAlign: "center" },
-    emptyDesc: { color: theme.muted, fontSize: 13, textAlign: "center", lineHeight: 19 },
+    emptyTitle: {
+      color: theme.text,
+      fontSize: 15,
+      fontWeight: "900",
+      marginTop: 8,
+      textAlign: "center",
+    },
+    emptyDesc: {
+      color: theme.muted,
+      fontSize: 13,
+      textAlign: "center",
+      lineHeight: 19,
+    },
     emptyLinkTouch: { marginTop: 6, padding: 6 },
     emptyLink: { color: theme.brand, fontSize: 13, fontWeight: "800" },
   });

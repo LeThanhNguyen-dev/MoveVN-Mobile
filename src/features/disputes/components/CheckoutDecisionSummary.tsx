@@ -1,4 +1,5 @@
-import { Text, View } from "react-native";
+import Text from "@/components/AppText";
+import { View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import { formatDisputeMoney, formatDisputeDateTime } from "./disputeLabels";
 import type { InspectionReportResponse } from "@/features/booking/types";

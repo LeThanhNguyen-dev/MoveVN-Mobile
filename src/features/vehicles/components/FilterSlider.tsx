@@ -204,7 +204,7 @@ const createStyles = (theme: Theme) =>
       top: 0,
       bottom: 0,
       borderRadius: 3,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
     },
     thumb: {
       position: "absolute",
