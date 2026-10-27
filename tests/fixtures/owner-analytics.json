@@ -31,7 +31,13 @@
     "reviewCount": 15,
     "averageRating": 4.33,
     "cancellationRate": 20,
-    "utilizationRate": 46.67
+    "utilizationRate": 46.67,
+    "platformRevenue": 0,
+    "disputesCreated": 0,
+    "openDisputes": 0,
+    "resolvedDisputes": 0,
+    "lifetimeDisputes": 0,
+    "disputedBookings": 0
   },
   "previousSummary": {
     "vehicles": 3,
@@ -51,7 +57,13 @@
     "reviewCount": 15,
     "averageRating": 4.33,
     "cancellationRate": 20,
-    "utilizationRate": 46.67
+    "utilizationRate": 46.67,
+    "platformRevenue": 0,
+    "disputesCreated": 0,
+    "openDisputes": 0,
+    "resolvedDisputes": 0,
+    "lifetimeDisputes": 0,
+    "disputedBookings": 0
   },
   "completedWithoutDateCount": 0,
   "vehicleOptions": [
@@ -134,7 +146,13 @@
       "licensePlate": "43A-12345",
       "vehicleType": "Car",
       "status": "Approved",
-      "imageUrl": null
+      "imageUrl": null,
+      "platformRevenue": 0,
+      "disputesCreated": 0,
+      "openDisputes": 0,
+      "resolvedDisputes": 0,
+      "lifetimeDisputes": 0,
+      "disputedBookings": 0
     },
     {
       "vehicles": 1,
@@ -160,7 +178,13 @@
       "licensePlate": "43A-67890",
       "vehicleType": "Car",
       "status": "Approved",
-      "imageUrl": null
+      "imageUrl": null,
+      "platformRevenue": 0,
+      "disputesCreated": 0,
+      "openDisputes": 0,
+      "resolvedDisputes": 0,
+      "lifetimeDisputes": 0,
+      "disputedBookings": 0
     }
   ],
   "topIncomeVehicles": [
@@ -188,7 +212,13 @@
       "licensePlate": "43A-12345",
       "vehicleType": "Car",
       "status": "Approved",
-      "imageUrl": null
+      "imageUrl": null,
+      "platformRevenue": 0,
+      "disputesCreated": 0,
+      "openDisputes": 0,
+      "resolvedDisputes": 0,
+      "lifetimeDisputes": 0,
+      "disputedBookings": 0
     },
     {
       "vehicles": 1,
@@ -214,7 +244,13 @@
       "licensePlate": "43A-67890",
       "vehicleType": "Car",
       "status": "Approved",
-      "imageUrl": null
+      "imageUrl": null,
+      "platformRevenue": 0,
+      "disputesCreated": 0,
+      "openDisputes": 0,
+      "resolvedDisputes": 0,
+      "lifetimeDisputes": 0,
+      "disputedBookings": 0
     }
   ],
   "vehicles": {
@@ -243,7 +279,13 @@
         "licensePlate": "43A-12345",
         "vehicleType": "Car",
         "status": "Approved",
-        "imageUrl": null
+        "imageUrl": null,
+        "platformRevenue": 0,
+        "disputesCreated": 0,
+        "openDisputes": 0,
+        "resolvedDisputes": 0,
+        "lifetimeDisputes": 0,
+        "disputedBookings": 0
       },
       {
         "vehicles": 1,
@@ -269,7 +311,13 @@
         "licensePlate": "43A-67890",
         "vehicleType": "Car",
         "status": "Approved",
-        "imageUrl": null
+        "imageUrl": null,
+        "platformRevenue": 0,
+        "disputesCreated": 0,
+        "openDisputes": 0,
+        "resolvedDisputes": 0,
+        "lifetimeDisputes": 0,
+        "disputedBookings": 0
       },
       {
         "vehicles": 1,
@@ -295,7 +343,13 @@
         "licensePlate": "43G1-12345",
         "vehicleType": "Motorbike",
         "status": "Approved",
-        "imageUrl": null
+        "imageUrl": null,
+        "platformRevenue": 0,
+        "disputesCreated": 0,
+        "openDisputes": 0,
+        "resolvedDisputes": 0,
+        "lifetimeDisputes": 0,
+        "disputedBookings": 0
       }
     ],
     "totalCount": 3,
@@ -319,5 +373,20 @@
       "label": "Tỷ lệ ngày có lịch thuê",
       "description": "Ngày có đơn hợp lệ chia tổng ngày xe đã tồn tại trong kỳ; không đếm trùng."
     }
-  ]
+  ],
+  "isSystemScope": false,
+  "bookingHistory": {
+    "items": [],
+    "totalCount": 0,
+    "page": 1,
+    "pageSize": 10,
+    "totalPages": 0
+  },
+  "disputes": {
+    "items": [],
+    "totalCount": 0,
+    "page": 1,
+    "pageSize": 10,
+    "totalPages": 0
+  }
 }
