@@ -426,7 +426,7 @@ const createStyles = (theme: Theme) =>
       width: 6,
       height: 6,
       borderRadius: 3,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
     },
     conditionRow: { flexDirection: "row", gap: 6 },
     conditionBullet: { color: theme.brand, fontSize: 11, fontWeight: "900", lineHeight: 16 },

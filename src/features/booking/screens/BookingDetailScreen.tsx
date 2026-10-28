@@ -1,8 +1,9 @@
+import Text from "@/components/AppText";
 import CheckoutConfirmation from "../components/CheckoutConfirmation";
 import CheckoutEditor from "../components/CheckoutEditor";
 import { OutstandingSurcharge } from "../components/CheckoutSummary";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, AppState, BackHandler, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, AppState, BackHandler, Image, Linking, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { checkPaymentStatus, createPaymentLink } from "@/features/payments/services/paymentService";

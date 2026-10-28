@@ -1,3 +1,5 @@
+import AppScreenHeader from "@/components/ui/AppScreenHeader";
+import Text from "@/components/AppText";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -5,7 +7,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from "react-native";
@@ -236,19 +237,7 @@ export default function DisputeListScreen({
 
   return (
     <View style={styles.screen}>
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Quay lại Tài khoản"
-          onPress={onBack}
-          hitSlop={8}
-          style={styles.backButton}
-        >
-          <Text style={styles.backText}>‹</Text>
-        </Pressable>
-        <Text style={styles.screenTitle}>Tranh chấp của tôi</Text>
-        <View style={styles.backButtonPlaceholder} />
-      </View>
+      <AppScreenHeader title="Tranh chấp của tôi" onBack={onBack} backLabel="Quay lại Tài khoản" />
 
       {loading ? (
         <ScrollView contentContainerStyle={styles.scrollGrow}>
@@ -540,7 +529,7 @@ const createStyles = (theme: Theme) =>
       right: 16,
       bottom: 16,
       borderRadius: 14,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       paddingVertical: 14,
       alignItems: "center",
     },

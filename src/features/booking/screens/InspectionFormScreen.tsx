@@ -1,3 +1,4 @@
+import Text from "@/components/AppText";
 import CheckoutSurchargePicker from "../components/CheckoutSurchargePicker";
 import InspectionPhoto from "../components/InspectionPhoto";
 import { appendSurcharges, validateSurchargeSelection } from "../checkoutSurcharges";
@@ -6,7 +7,7 @@ import { checkoutStartDate } from "../bookingDisplay";
 import MileageFeePreview from "../components/MileageFeePreview";
 import { returnTimeISO, validateCheckoutKm, vietnamInput } from "../checkoutRules";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { createCheckInReport, createCheckOutReport } from "../bookingService";

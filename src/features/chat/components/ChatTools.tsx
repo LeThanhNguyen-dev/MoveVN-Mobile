@@ -142,7 +142,7 @@ export default function ChatTools({
                 onPress={search}
                 style={{
                   padding: 12,
-                  backgroundColor: theme.brand,
+                  backgroundColor: theme.brandSolid,
                   borderRadius: 12,
                 }}
               >

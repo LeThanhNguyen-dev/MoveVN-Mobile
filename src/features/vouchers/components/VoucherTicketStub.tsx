@@ -1,11 +1,10 @@
 import { TicketPercent } from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { memo, useMemo } from "react";
-import { StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
-import { CTA_GRADIENT, formatVoucherStub } from "@/features/vouchers/voucherFormat";
+import { formatVoucherStub } from "@/features/vouchers/voucherFormat";
 
 type VoucherTicketStubProps = {
   discountType: string;
@@ -25,29 +24,26 @@ function VoucherTicketStub({
   discountType,
   discountValue,
   dimmed = false,
-  topLabel = "VOUCHER",
+  topLabel = "",
   caption = null,
-  hideIcon = false,
+  hideIcon = true,
 }: VoucherTicketStubProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View style={[styles.stub, dimmed && styles.stubDimmed]}>
-      {!dimmed ? (
-        <LinearGradient
-          colors={[CTA_GRADIENT[0], CTA_GRADIENT[1], CTA_GRADIENT[2]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : null}
-      <AppText style={styles.stubLabel}>{topLabel}</AppText>
+      {topLabel ? <AppText style={styles.stubLabel}>{topLabel}</AppText> : null}
       <AppText style={styles.stubHint}>GIẢM</AppText>
-      <AppText style={styles.stubValue} numberOfLines={1}>
+      <AppText
+        style={styles.stubValue}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.75}
+      >
         {formatVoucherStub(discountType, discountValue)}
       </AppText>
-      {hideIcon ? null : <TicketPercent color="rgba(255,255,255,0.55)" size={16} />}
+      {hideIcon ? null : <TicketPercent color={theme.brand} size={16} />}
       {caption ? (
         <View style={styles.captionWrap}>
           <AppText style={styles.captionText} numberOfLines={2}>
@@ -64,42 +60,48 @@ export default memo(VoucherTicketStub);
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     stub: {
-      width: 96,
+      width: 66,
       alignSelf: "stretch",
       alignItems: "center",
       justifyContent: "center",
       gap: 2,
-      paddingVertical: 14,
+      paddingVertical: 12,
       paddingHorizontal: 6,
       overflow: "hidden",
+      backgroundColor: theme.brandSoft,
     },
     stubDimmed: {
-      backgroundColor: theme.mode === "dark" ? "#3F3F46" : "#94A3B8",
+      backgroundColor: theme.surfaceAlt,
     },
     stubLabel: {
-      color: "rgba(255,255,255,0.72)",
+      color: theme.brand,
       fontSize: 9,
       fontWeight: "800",
       letterSpacing: 1.6,
     },
     stubHint: {
-      color: "rgba(255,255,255,0.8)",
+      color: theme.brand,
       fontSize: 9,
       fontWeight: "700",
       letterSpacing: 1,
       textTransform: "uppercase",
     },
-    stubValue: { color: "#FFFFFF", fontSize: 22, fontWeight: "900", letterSpacing: -0.6 },
+    stubValue: {
+      color: theme.brand,
+      fontSize: 20,
+      fontWeight: "700",
+      letterSpacing: -0.4,
+    },
     captionWrap: {
       alignSelf: "stretch",
       marginTop: 6,
       borderTopWidth: 1,
-      borderTopColor: "rgba(255,255,255,0.45)",
+      borderTopColor: theme.brandBorder,
       paddingTop: 6,
       alignItems: "center",
     },
     captionText: {
-      color: "rgba(255,255,255,0.88)",
+      color: theme.muted,
       fontSize: 9,
       fontWeight: "700",
       lineHeight: 12,

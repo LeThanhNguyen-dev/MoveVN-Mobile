@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from "react-native";
+import Text from "@/components/AppText";
+import { Pressable, View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import type { BookingResponse, InspectionReportResponse } from "../types";

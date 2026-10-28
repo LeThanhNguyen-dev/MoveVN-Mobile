@@ -1,11 +1,12 @@
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { Bike, Car, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react-native";
 import FavoriteVehicleButton from "@/features/favorites/components/FavoriteVehicleButton";
 import { memo, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import type { VehicleListItemResponse } from "@/features/vehicles/types";
-import type { Theme } from "@/theme/tokens";
+import { brandPalette, type Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
 type VehicleListCardProps = {
@@ -136,16 +137,18 @@ function VehicleListCard({
             <AppText style={styles.price} numberOfLines={1}>
               {formatVehicleCurrency(totalPrice)}
             </AppText>
-            {totalPrice > 0 ? (
-              <AppText style={styles.perDay} numberOfLines={1}>
-                {days} ngày · TB {formatVehicleCurrency(avgPrice)}/ngày
-              </AppText>
-            ) : null}
           </View>
         </View>
+        {totalPrice > 0 ? (
+          <AppText style={styles.perDay}>
+            {days} ngày · TB {formatVehicleCurrency(avgPrice)}/ngày
+          </AppText>
+        ) : null}
 
         <Pressable accessibilityRole="button" accessibilityLabel={`Đặt xe ${title}`} onPress={() => onBook(vehicle.id)} style={styles.bookButton}>
-          <AppText style={styles.bookText}>Đặt ngay</AppText>
+          <LinearGradient colors={brandPalette.softGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.bookFill}>
+            <AppText style={styles.bookText}>Đặt ngay</AppText>
+          </LinearGradient>
         </Pressable>
       </View>
     </Pressable>
@@ -160,7 +163,7 @@ const createStyles = (theme: Theme) =>
       borderRadius: 18,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.border,
-      backgroundColor: "transparent",
+      backgroundColor: theme.surface,
       overflow: "hidden",
     },
     imageWrap: {
@@ -213,22 +216,26 @@ const createStyles = (theme: Theme) =>
     metaText: { color: theme.muted, fontSize: 12, fontWeight: "600", flexShrink: 1 },
     area: { color: theme.muted, fontSize: 13, fontWeight: "500", flexShrink: 1 },
     divider: { height: 1, backgroundColor: theme.divider, marginVertical: 3 },
-    priceRow: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: 8 },
+    priceRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
     ratingCol: { flexShrink: 1, minWidth: 0 },
     ratingWrap: { flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 1 },
     rating: { color: theme.text, fontSize: 14, fontWeight: "800", flexShrink: 0 },
     ratingCount: { color: theme.muted, fontSize: 12, flexShrink: 1 },
     noRating: { color: theme.faint, fontSize: 12, fontStyle: "italic" },
-    priceWrap: { alignItems: "flex-end", flexShrink: 1, minWidth: 0 },
-    price: { color: theme.brand, fontSize: 16, fontWeight: "800" },
-    perDay: { color: theme.muted, fontSize: 11, marginTop: 2 },
+    priceWrap: { alignItems: "flex-end", flexShrink: 0 },
+    price: { color: theme.brand, fontSize: 14, fontWeight: "600" },
+    perDay: { color: theme.muted, fontSize: 11, textAlign: "right" },
     bookButton: {
-      height: 42,
       borderRadius: 12,
-      backgroundColor: theme.brand,
-      alignItems: "center",
-      justifyContent: "center",
+      overflow: "hidden",
       marginTop: 4,
     },
-    bookText: { color: theme.onBrand, fontSize: 14, fontWeight: "800" },
+    bookFill: {
+      minHeight: 44,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    bookText: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
   });

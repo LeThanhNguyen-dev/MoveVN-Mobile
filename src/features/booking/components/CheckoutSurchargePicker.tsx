@@ -1,4 +1,5 @@
-import { Switch, Text, View } from "react-native";
+import Text from "@/components/AppText";
+import { Switch, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import type { BookingResponse, CheckoutSurchargeSelection } from "../types";
 import { selectableSurcharges, surchargeAmount, surchargeUnit } from "../checkoutSurcharges";

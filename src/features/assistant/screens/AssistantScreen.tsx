@@ -1,3 +1,4 @@
+import Text from "@/components/AppText";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -7,7 +8,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from "react-native";
@@ -885,7 +885,7 @@ const createStyles = (theme: Theme) =>
     bubbleRow: { flexDirection: "row", justifyContent: "flex-start" },
     bubbleRowRight: { justifyContent: "flex-end" },
     bubble: { maxWidth: "88%", borderRadius: 14, padding: 12 },
-    bubbleUser: { backgroundColor: theme.brand },
+    bubbleUser: { backgroundColor: theme.brandSolid },
     bubbleBot: { backgroundColor: theme.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border },
     botLabel: { color: theme.brand, fontSize: 12, fontWeight: "800", marginBottom: 4 },
     message: { color: theme.text, fontSize: 14, lineHeight: 20 },
@@ -921,7 +921,7 @@ const createStyles = (theme: Theme) =>
     primaryButton: {
       margin: 14,
       borderRadius: 14,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       padding: 14,
       alignItems: "center",
     },
@@ -944,7 +944,7 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.input,
       fontSize: 14,
     },
-    sendButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.brand, alignItems: "center", justifyContent: "center" },
+    sendButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.brandSolid, alignItems: "center", justifyContent: "center" },
     sendDisabled: { opacity: 0.4 },
     disabled: { opacity: 0.4 },
     bookingBanner: {
@@ -955,7 +955,7 @@ const createStyles = (theme: Theme) =>
       marginHorizontal: 14,
       marginTop: 10,
       borderRadius: 12,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       paddingVertical: 12,
     },
     bookingBannerText: { color: "#fff", fontSize: 14, fontWeight: "800" },

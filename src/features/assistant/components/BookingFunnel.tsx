@@ -1,5 +1,6 @@
+import Text from "@/components/AppText";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import RentalPeriodSheet from "@/features/vehicles/components/RentalPeriodSheet";
 import { formatDateTime } from "@/features/booking/utils/format";

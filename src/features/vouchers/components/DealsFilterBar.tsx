@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Search, X } from "lucide-react-native";
+import { ArrowDownWideNarrow, Check, Search, X } from "lucide-react-native";
 import { memo, useMemo, useState } from "react";
 import {
   Modal,
@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppText from "@/components/AppText";
+import { fontFamilyForWeight } from "@/theme/typography";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
@@ -63,26 +64,37 @@ function DealsFilterBar({
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.searchRow}>
-        <Search color={theme.faint} size={16} />
-        <TextInput
-          value={search}
-          onChangeText={onSearchChange}
-          placeholder={searchPlaceholder}
-          placeholderTextColor={theme.placeholder}
-          style={styles.searchInput}
-          returnKeyType="search"
-        />
-        {search ? (
-          <Pressable
-            onPress={() => onSearchChange("")}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Xoá tìm kiếm"
-          >
-            <X color={theme.faint} size={15} />
-          </Pressable>
-        ) : null}
+      <View style={styles.toolbar}>
+        <View style={styles.searchRow}>
+          <Search color={theme.faint} size={16} />
+          <TextInput
+            value={search}
+            onChangeText={onSearchChange}
+            placeholder={searchPlaceholder}
+            placeholderTextColor={theme.placeholder}
+            style={styles.searchInput}
+            returnKeyType="search"
+          />
+          {search ? (
+            <Pressable
+              onPress={() => onSearchChange("")}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Xoá tìm kiếm"
+            >
+              <X color={theme.faint} size={15} />
+            </Pressable>
+          ) : null}
+        </View>
+        <Pressable
+          onPress={() => setSortOpen(true)}
+          style={styles.sortButton}
+          accessibilityRole="button"
+          accessibilityLabel={`${sortLabel}: ${selectedSort?.label ?? ""}`}
+          accessibilityHint="Mở lựa chọn sắp xếp ưu đãi"
+        >
+          <ArrowDownWideNarrow color={theme.brand} size={18} />
+        </Pressable>
       </View>
 
       <ScrollView
@@ -111,11 +123,15 @@ function DealsFilterBar({
               accessibilityState={{ selected: active }}
               accessibilityLabel={filter.label}
             >
-              <AppText style={[styles.chipText, active && styles.chipTextActive]}>
+              <AppText
+                style={[styles.chipText, active && styles.chipTextActive]}
+              >
                 {filter.label}
               </AppText>
               {typeof filter.count === "number" ? (
-                <AppText style={[styles.chipCount, active && styles.chipCountActive]}>
+                <AppText
+                  style={[styles.chipCount, active && styles.chipCountActive]}
+                >
                   ({filter.count})
                 </AppText>
               ) : null}
@@ -124,20 +140,12 @@ function DealsFilterBar({
         })}
       </ScrollView>
 
-      <Pressable
-        onPress={() => setSortOpen(true)}
-        style={styles.sortButton}
-        accessibilityRole="button"
-        accessibilityLabel={sortLabel}
+      <Modal
+        visible={sortOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSortOpen(false)}
       >
-        <AppText style={styles.sortLabel}>{sortLabel}</AppText>
-        <AppText style={styles.sortValue} numberOfLines={1}>
-          {selectedSort?.label ?? ""}
-        </AppText>
-        <ChevronDown color={theme.muted} size={15} />
-      </Pressable>
-
-      <Modal visible={sortOpen} transparent animationType="slide" onRequestClose={() => setSortOpen(false)}>
         <SortSheet
           options={sortOptions}
           value={sortValue}
@@ -166,8 +174,14 @@ function SortSheet({ options, value, onSelect, onClose }: SortSheetProps) {
 
   return (
     <View style={styles.sheetOverlay}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Đóng" />
-      <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        onPress={onClose}
+        accessibilityLabel="Đóng"
+      />
+      <View
+        style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}
+      >
         <View style={styles.sheetHead}>
           <AppText display style={styles.sheetTitle}>
             Sắp xếp
@@ -186,7 +200,9 @@ function SortSheet({ options, value, onSelect, onClose }: SortSheetProps) {
               accessibilityRole="menuitem"
               accessibilityState={{ selected: active }}
             >
-              <AppText style={[styles.optionText, active && styles.optionTextActive]}>
+              <AppText
+                style={[styles.optionText, active && styles.optionTextActive]}
+              >
                 {option.label}
               </AppText>
               {active ? <Check color={theme.brand} size={16} /> : null}
@@ -202,51 +218,65 @@ export default memo(DealsFilterBar);
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    wrap: { gap: 10 },
+    wrap: { gap: 8 },
+    toolbar: { flexDirection: "row", alignItems: "center", gap: 8 },
     searchRow: {
+      flex: 1,
+      minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
-      height: 44,
+      minHeight: 44,
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.border,
       backgroundColor: theme.surface,
       paddingHorizontal: 12,
     },
-    searchInput: { flex: 1, color: theme.text, fontSize: 14, height: "100%" },
-    chipRow: { gap: 8, paddingRight: 8 },
+    searchInput: {
+      flex: 1,
+      minWidth: 0,
+      color: theme.text,
+      fontSize: 13,
+      minHeight: 44,
+      paddingVertical: 8,
+      fontFamily: fontFamilyForWeight("500"),
+    },
+    chipRow: { gap: 6, paddingRight: 8 },
     chip: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "center",
+      minHeight: 44,
       gap: 5,
       borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 9,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
     },
-    chipIdle: { backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F1F5F9" },
-    chipIdleAmber: { backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F1F5F9" },
-    chipActive: { backgroundColor: "#6D28D9" },
-    chipActiveAmber: { backgroundColor: "#F59E0B" },
-    chipText: { color: theme.muted, fontSize: 12, fontWeight: "700" },
-    chipTextActive: { color: "#FFFFFF" },
-    chipCount: { color: theme.faint, fontSize: 11, fontWeight: "700" },
-    chipCountActive: { color: "rgba(255,255,255,0.75)" },
+    chipIdle: { backgroundColor: theme.surface },
+    chipIdleAmber: { backgroundColor: theme.surface },
+    chipActive: { backgroundColor: theme.brandSoft },
+    chipActiveAmber: { backgroundColor: theme.brandSoft },
+    chipText: { color: theme.muted, fontSize: 12, fontWeight: "500" },
+    chipTextActive: { color: theme.brand, fontWeight: "600" },
+    chipCount: { color: theme.faint, fontSize: 11, fontWeight: "500" },
+    chipCountActive: { color: theme.brand },
     sortButton: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
-      alignSelf: "flex-start",
+      justifyContent: "center",
+      width: 44,
+      minHeight: 44,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: theme.border,
-      backgroundColor: theme.surface,
-      paddingHorizontal: 12,
-      paddingVertical: 9,
+      borderColor: theme.brandBorder,
+      backgroundColor: theme.brandSoft,
     },
-    sortLabel: { color: theme.muted, fontSize: 12, fontWeight: "600" },
-    sortValue: { color: theme.text, fontSize: 12, fontWeight: "800", maxWidth: 150 },
-    sheetOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: theme.overlay },
+    sheetOverlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: theme.overlay,
+    },
     sheet: {
       backgroundColor: theme.surface,
       borderTopLeftRadius: 20,

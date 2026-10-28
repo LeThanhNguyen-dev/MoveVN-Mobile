@@ -10,8 +10,8 @@ type Route =
   | { name: "add" }
   | { name: "edit"; vehicleId: number };
 
-export default function OwnerVehiclesScreen() {
-  const [route, setRoute] = useState<Route>({ name: "list" });
+export default function OwnerVehiclesScreen({ initialAdd = false }: { initialAdd?: boolean }) {
+  const [route, setRoute] = useState<Route>(() => initialAdd ? { name: "add" } : { name: "list" });
   const [refreshToken, setRefreshToken] = useState(0);
 
   function refreshList() {

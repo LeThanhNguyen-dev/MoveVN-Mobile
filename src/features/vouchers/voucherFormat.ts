@@ -1,5 +1,7 @@
-/** Gradient chữ ký MoveVN dùng cho CTA / cuống vé (sáng + tối đều dùng). */
-export const CTA_GRADIENT: readonly [string, string, string] = ["#6B19FF", "#7C3AED", "#D946EF"];
+import { brandPalette } from "@/theme/tokens";
+
+/** Same brand colours as search and shared primary controls. */
+export const CTA_GRADIENT: readonly [string, string, string] = brandPalette.gradient;
 
 export function formatVnd(value: number): string {
   return `${new Intl.NumberFormat("vi-VN").format(value)}đ`;

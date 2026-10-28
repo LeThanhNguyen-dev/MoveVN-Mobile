@@ -1,3 +1,4 @@
+import AppSegmentedControl from "@/components/ui/AppSegmentedControl";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -5,6 +6,7 @@ import {
   CalendarDays,
   Car,
   Check,
+  ChevronDown,
   ChevronRight,
   Copy,
   MapPin,
@@ -14,16 +16,15 @@ import {
   X,
 } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native"
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import AppText from "@/components/AppText";
 import * as Clipboard from "expo-clipboard";
-import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
+import MobileBrandHeader, {
+  type ExperiencePage,
+} from "@/features/app/components/MobileBrandHeader";
+import MobilityGuideScreen from "./MobilityGuideScreen";
+import SupportCenterScreen from "./SupportCenterScreen";
+import useExperienceBack from "../components/useExperienceBack";
 import type { AuthUser } from "@/features/auth/types";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { HomepageBanner } from "@/features/banners/types";
@@ -41,11 +42,13 @@ import {
   formatPeriodSummary,
   getDefaultRentalPeriod,
 } from "@/features/vehicles/utils/rentalPeriod";
-import { loadSearchPrefs, saveSearchPrefs } from "@/features/vehicles/utils/searchPrefs";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  loadSearchPrefs,
+  saveSearchPrefs,
+} from "@/features/vehicles/utils/searchPrefs";
 import { useFocusEffect } from "@react-navigation/native";
 import type { ExploreStackParamList } from "@/navigation/types";
-import type { Theme } from "@/theme/tokens";
+import { brandPalette, type Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
 type VehicleTab = "Car" | "Motorbike";
@@ -53,8 +56,7 @@ type VehicleTab = "Car" | "Motorbike";
 // Ảnh nền phủ tràn cả topbar, theo mode sáng/tối:
 // - Sáng: cầu Rồng Đà Nẵng ban ngày; - Tối: cùng khung cảnh ban đêm.
 // Bố cục đối xứng nên căn giữa, màn hẹp crop đều 2 bên.
-const HERO_IMAGE_LIGHT = require("../../../../public/images/Gemini_Generated_Image_rpsnyhrpsnyhrpsn.png");
-const HERO_IMAGE_DARK = require("../../../../public/images/Gemini_Generated_Image_rpsnyhrpsnyhrpsn (1).png");
+const HERO_IMAGE_LIGHT = require("../../../../assets/experience/hero-airport.webp");
 
 // Khối top (nền + header + card) cao theo nội dung — ảnh absolute-fill nên
 // luôn phủ hết card tới tận ô giờ giấc, không cần tính overlap thủ công.
@@ -63,14 +65,14 @@ const HERO_IMAGE_DARK = require("../../../../public/images/Gemini_Generated_Imag
 // Riêng nền card / tabs / ô nhập theo theme: sáng nền trắng đặc,
 // tối nền tím-than để không bị chói trên ảnh nền.
 const HERO = {
-  tabActiveBg: "#7c3aed",
+  tabActiveBg: "#861AFF",
   tabActiveText: "#ffffff",
   tabIdleTextLight: "#5215a2",
   tabIdleTextDark: "#C4B5FD",
-  fieldIcon: "#7c3aed",
-  ctaFrom: "#6b19ff",
-  ctaVia: "#7c3aed",
-  ctaTo: "#d946ef",
+  fieldIcon: "#861AFF",
+  ctaFrom: brandPalette.gradient[0],
+  ctaVia: brandPalette.gradient[1],
+  ctaTo: brandPalette.gradient[2],
   ctaText: "#ffffff",
 } as const;
 
@@ -178,7 +180,7 @@ const ADVANTAGES = [
   },
 ] as const;
 
-const HOST_BANNER_IMAGE = require("../../../../public/images/Gemini_Generated_Image_g3r482g3r482g3r4.png");
+const HOST_BANNER_IMAGE = require("../../../../assets/experience/owner-car.webp");
 
 function formatBannerDiscount(banner: HomepageBanner): string | null {
   if (banner.discountValue == null) return null;
@@ -198,7 +200,11 @@ function formatBannerEndDate(endAt?: string | null): string | null {
   if (!endAt) return null;
   const d = new Date(endAt);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 /**
@@ -230,10 +236,14 @@ function BannerDetailSheet({
   const code = banner.promotionCode ?? null;
   // Banner gắn Promotion: Promotion là source of truth cho tiêu đề (giống backend/web).
   const effectiveTitle =
-    banner.promotionName || banner.popupTitle || banner.title || "Chi tiết khuyến mãi";
+    banner.promotionName ||
+    banner.popupTitle ||
+    banner.title ||
+    "Chi tiết khuyến mãi";
   // CTA chỉ hiện khi có promotion hợp lệ (tránh orphan PromotionId).
   const hasPromotion =
-    banner.promotionId != null && (banner.promotionCode != null || banner.promotionName != null);
+    banner.promotionId != null &&
+    (banner.promotionCode != null || banner.promotionName != null);
 
   function handleCopyCode() {
     if (!code) return;
@@ -279,11 +289,15 @@ function BannerDetailSheet({
             )}
 
             <View style={styles.sheetBody}>
-              <AppText display style={styles.sheetTitle}>{effectiveTitle}</AppText>
+              <AppText display style={styles.sheetTitle}>
+                {effectiveTitle}
+              </AppText>
               <View style={styles.sheetDivider} />
 
               {!!banner.popupDescription && (
-                <AppText style={styles.sheetDesc}>{banner.popupDescription}</AppText>
+                <AppText style={styles.sheetDesc}>
+                  {banner.popupDescription}
+                </AppText>
               )}
 
               <View style={styles.chipRow}>
@@ -299,7 +313,9 @@ function BannerDetailSheet({
                     ) : (
                       <Copy color={theme.brand} size={13} />
                     )}
-                    <AppText style={styles.chipText}>{codeCopied ? "Đã sao chép!" : code}</AppText>
+                    <AppText style={styles.chipText}>
+                      {codeCopied ? "Đã sao chép!" : code}
+                    </AppText>
                   </Pressable>
                 )}
                 {!!discount && (
@@ -329,7 +345,9 @@ function BannerDetailSheet({
                   accessibilityRole="button"
                   accessibilityLabel={banner.popupCtaLabel || "Nhận voucher"}
                 >
-                  <AppText style={styles.sheetCtaText}>{banner.popupCtaLabel || "Nhận voucher"}</AppText>
+                  <AppText style={styles.sheetCtaText}>
+                    {banner.popupCtaLabel || "Nhận voucher"}
+                  </AppText>
                   <ArrowRight color={theme.onBrand} size={16} />
                 </Pressable>
               ) : null}
@@ -357,9 +375,12 @@ function SectionHeader({
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionTitleWrap}>
-        <AppText display style={styles.sectionTitle}>{title}</AppText>
-        <View style={styles.sectionAccent} />
-        {subtitle ? <AppText style={styles.sectionSubtitle}>{subtitle}</AppText> : null}
+        <AppText display style={styles.sectionTitle}>
+          {title}
+        </AppText>
+        {subtitle ? (
+          <AppText style={styles.sectionSubtitle}>{subtitle}</AppText>
+        ) : null}
       </View>
       {actionLabel ? (
         <Pressable
@@ -409,7 +430,9 @@ function AdvantageIcon({ iconKey }: { iconKey: string }) {
     case "file":
       return <AdvLogo source={ADV_PAPERWORK_LOGO} label="Thủ tục đơn giản" />;
     default:
-      return <AdvLogo source={ADV_SUPPORT_LOGO} label="Hỗ trợ trọn hành trình" />;
+      return (
+        <AdvLogo source={ADV_SUPPORT_LOGO} label="Hỗ trợ trọn hành trình" />
+      );
   }
 }
 
@@ -431,9 +454,8 @@ export default function CustomerExploreScreen({
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const insets = useSafeAreaInsets();
-  // Kéo nội dung lên dưới status bar để ảnh nền phủ từ top:0 kịch đỉnh máy.
-  const topInset = insets.top;
+  const [publicPage, setPublicPage] = useState<ExperiencePage>("home");
+  useExperienceBack(publicPage !== "home", () => setPublicPage("home"));
 
   const [searchTab, setSearchTab] = useState<VehicleTab>("Car");
   // Mặc định TP. Hồ Chí Minh theo thiết kế; địa điểm đã lưu trên máy sẽ ghi đè khi focus.
@@ -454,7 +476,9 @@ export default function CustomerExploreScreen({
 
   const [banners, setBanners] = useState<HomepageBanner[]>([]);
   const [bannersLoading, setBannersLoading] = useState(true);
-  const [selectedBanner, setSelectedBanner] = useState<HomepageBanner | null>(null);
+  const [selectedBanner, setSelectedBanner] = useState<HomepageBanner | null>(
+    null,
+  );
   const [showOwnerVerify, setShowOwnerVerify] = useState(false);
   const activeRole = useAuthStore((state) => state.activeRole);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
@@ -482,10 +506,17 @@ export default function CustomerExploreScreen({
       setFeaturedLoading(true);
       setFeaturedError("");
       try {
-        const result = await getPublicVehicles({ page: 1, pageSize: 6, sortBy: "rating_desc" });
+        const result = await getPublicVehicles({
+          page: 1,
+          pageSize: 6,
+          sortBy: "rating_desc",
+        });
         if (!cancelled) setFeatured(result.items);
       } catch {
-        if (!cancelled) setFeaturedError("Không tải được xe nổi bật. Kiểm tra mạng rồi thử lại.");
+        if (!cancelled)
+          setFeaturedError(
+            "Không tải được xe nổi bật. Kiểm tra mạng rồi thử lại.",
+          );
       } finally {
         if (!cancelled) setFeaturedLoading(false);
       }
@@ -511,8 +542,9 @@ export default function CustomerExploreScreen({
 
   const rentalDays = calculateRentalDays(startDate, endDate);
   const periodText = formatPeriodSummary(startDate, endDate);
-  const areaText = province ? `${province}${district ? ` · ${district}` : ""}` : "";
-  const tabIdleColor = theme.mode === "dark" ? HERO.tabIdleTextDark : HERO.tabIdleTextLight;
+  const areaText = province
+    ? `${province}${district ? ` · ${district}` : ""}`
+    : "";
   function buildSearchParams(
     provinceOverride?: string,
     typeOverride?: "Car" | "Motorbike",
@@ -584,13 +616,8 @@ export default function CustomerExploreScreen({
     handlePromoSeeAll();
   }
 
-  // Bố cục hero kiểu ảnh mẫu:
-  // - Nền cao cố định 360px từ kịch đỉnh màn hình, bo góc dưới ôm card.
-  // - Card hạ thấp để lộ 70% ảnh nền, chỉ đè 30% rìa dưới.
-  // - Card trong suốt để nhìn xuyên thấy ảnh đằng sau.
-  const TOP_BG_HEIGHT = 360;
-  const BG_VISIBLE_RATIO = 0.7;
-  const cardOverlap = Math.round(TOP_BG_HEIGHT * (1 - BG_VISIBLE_RATIO));
+  // Keep the search card just over the lower edge of the photo.
+  const cardOverlap = 22;
 
   function handleOpenVehicle(vehicleId: number) {
     onVehiclePress?.({
@@ -612,112 +639,173 @@ export default function CustomerExploreScreen({
     showToast({
       type: "info",
       title: "Bạn chưa là chủ xe",
-      message: "Hãy xác thực CCCD để đăng ký trở thành chủ xe, sau đó bổ sung GPLX và giấy tờ xe.",
+      message:
+        "Hãy xác thực CCCD để đăng ký trở thành chủ xe, sau đó bổ sung GPLX và giấy tờ xe.",
     });
     setShowOwnerVerify(true);
   }
 
+  if (showOwnerVerify)
+    return <OwnerVerificationScreen onBack={() => setShowOwnerVerify(false)} />;
+  if (publicPage !== "home")
+    return (
+      <View style={styles.root}>
+        <MobileBrandHeader
+          activePage={publicPage}
+          onNavigate={setPublicPage}
+          onAccount={onAvatarPress}
+          favorites
+          onBack={() => setPublicPage("home")}
+        />
+        {publicPage === "support" ? (
+          <SupportCenterScreen
+            embedded
+            onBack={() => setPublicPage("home")}
+            onBecomeOwner={() => setPublicPage("owners")}
+          />
+        ) : (
+          <MobilityGuideScreen
+            key={publicPage}
+            owner={publicPage === "owners"}
+            onSearch={() => {
+              setPublicPage("home");
+              handleSeeAllVehicles();
+            }}
+            onBecomeOwner={handleHostPress}
+            onShowOwners={() => setPublicPage("owners")}
+          />
+        )}
+      </View>
+    );
+
   return (
-    <View style={[styles.root, { marginTop: -topInset }]}>
+    <View style={styles.root}>
+      <MobileBrandHeader
+        onNavigate={setPublicPage}
+        onAccount={onAvatarPress}
+        favorites
+      />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* SECTION 1: hero full-bleed + search card đè nhẹ rìa dưới nền */}
-        <View style={[styles.topBg, { height: TOP_BG_HEIGHT }]}>
+        <View style={styles.topBg}>
           <Image
-            source={theme.mode === "dark" ? HERO_IMAGE_DARK : HERO_IMAGE_LIGHT}
+            source={HERO_IMAGE_LIGHT}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
-            contentPosition="center"
+            contentPosition={{ left: "68%", top: "50%" }}
             transition={250}
             accessibilityLabel="MoveVN"
           />
-          {theme.mode === "dark" ? <View style={styles.topBgVeil} /> : null}
-          {/* padding-top cho status bar nằm TRONG khối nền, nền phủ từ top:0 */}
-          <View style={{ height: topInset }} />
-          <View style={styles.headerPad}>
-            <AppDashboardHeader onAvatarPress={onAvatarPress} user={user} />
+          <LinearGradient
+            colors={["rgba(15,12,34,0.78)", "rgba(15,12,34,0.3)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.heroCopy}>
+            <AppText display style={styles.heroTitle}>
+              Chọn xe phù hợp.{"\n"}Chủ động mọi chuyến đi.
+            </AppText>
+            <AppText style={styles.heroDescription}>
+              Thuê ô tô hoặc xe máy dễ dàng, an toàn và linh hoạt cùng MoveVN.
+            </AppText>
           </View>
         </View>
 
         <View style={[styles.searchCard, { marginTop: -cardOverlap }]}>
-            <View style={styles.tabs}>
-              <Pressable
-                onPress={() => setSearchTab("Car")}
-                style={[styles.tab, searchTab === "Car" && styles.tabActive]}
-              >
-                <Car color={searchTab === "Car" ? HERO.tabActiveText : tabIdleColor} size={16} />
-                <AppText style={[styles.tabText, searchTab === "Car" && styles.tabTextActive]}>
-                  Ô tô
+          <AppSegmentedControl<VehicleTab>
+            value={searchTab}
+            onChange={setSearchTab}
+            items={[
+              {
+                value: "Car",
+                label: "Ô tô",
+                icon: (color) => <Car size={18} color={color} />,
+              },
+              {
+                value: "Motorbike",
+                label: "Xe máy",
+                icon: (color) => <Motorbike size={18} color={color} />,
+              },
+            ]}
+          />
+
+          <View style={styles.fieldGroup}>
+            <Pressable
+              style={styles.fieldRow}
+              onPress={() => setAreaVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Địa điểm thuê xe: ${areaText}`}
+            >
+              <MapPin color={HERO.fieldIcon} size={18} />
+              <View style={styles.fieldTextWrap}>
+                <AppText style={styles.fieldLabel}>Địa điểm</AppText>
+                <AppText
+                  style={[
+                    styles.fieldValue,
+                    !areaText && styles.fieldPlaceholder,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {areaText || "Chọn tỉnh / thành phố, phường / xã"}
                 </AppText>
-              </Pressable>
-              <Pressable
-                onPress={() => setSearchTab("Motorbike")}
-                style={[styles.tab, searchTab === "Motorbike" && styles.tabActive]}
-              >
-              <Motorbike
-                color={searchTab === "Motorbike" ? HERO.tabActiveText : tabIdleColor}
-                size={16}
-              />
-                <AppText style={[styles.tabText, searchTab === "Motorbike" && styles.tabTextActive]}>
-                  Xe máy
-                </AppText>
-              </Pressable>
-            </View>
+              </View>
+              <ChevronDown size={17} color={theme.muted} />
+            </Pressable>
 
-            <View style={styles.fieldGroup}>
-              <Pressable style={styles.fieldRow} onPress={() => setAreaVisible(true)}>
-                <MapPin color={HERO.fieldIcon} size={18} />
-                <View style={styles.fieldTextWrap}>
-                  <AppText style={styles.fieldLabel}>Địa điểm</AppText>
-                  <AppText
-                    style={[styles.fieldValue, !areaText && styles.fieldPlaceholder]}
-                    numberOfLines={1}
-                  >
-                    {areaText || "Chọn tỉnh / thành phố, phường / xã"}
-                  </AppText>
-                </View>
-              </Pressable>
-
-              <View style={styles.fieldDivider} />
-
-              <Pressable style={styles.fieldRow} onPress={() => setSheetVisible(true)}>
-                <CalendarDays color={HERO.fieldIcon} size={18} />
-                <View style={styles.fieldTextWrap}>
-                  <AppText style={styles.fieldLabel}>Thời gian thuê</AppText>
-                  <AppText
-                    style={[
-                      styles.fieldValue,
-                      !startDate && !endDate && styles.fieldPlaceholder,
-                    ]}
-                    numberOfLines={2}
-                  >
-                    {periodText}
-                  </AppText>
-                </View>
-              </Pressable>
-            </View>
-
-            {error ? <AppText style={styles.error}>{error}</AppText> : null}
+            <View style={styles.fieldDivider} />
 
             <Pressable
-              onPress={handleSearch}
-              style={styles.searchButton}
+              style={styles.fieldRow}
+              onPress={() => setSheetVisible(true)}
               accessibilityRole="button"
-              accessibilityLabel="Tìm xe"
+              accessibilityLabel={`Thời gian thuê: ${periodText}`}
             >
-              <LinearGradient
-                colors={[HERO.ctaFrom, HERO.ctaVia, HERO.ctaTo]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.searchButtonBg}
-              >
-                <Search color={HERO.ctaText} size={18} />
-                <AppText style={styles.searchButtonText}>TÌM XE</AppText>
-              </LinearGradient>
+              <CalendarDays color={HERO.fieldIcon} size={18} />
+              <View style={styles.fieldTextWrap}>
+                <AppText style={styles.fieldLabel}>Nhận xe</AppText>
+                <AppText style={styles.fieldValue}>
+                  {startDate.slice(0, 10).split("-").reverse().join("/")}
+                </AppText>
+                <AppText style={styles.dateHour}>
+                  {startDate.slice(11, 16)}
+                </AppText>
+              </View>
+              <ArrowRight color={theme.faint} size={17} />
+              <View style={styles.fieldTextWrap}>
+                <AppText style={styles.fieldLabel}>Trả xe</AppText>
+                <AppText style={styles.fieldValue}>
+                  {endDate.slice(0, 10).split("-").reverse().join("/")}
+                </AppText>
+                <AppText style={styles.dateHour}>
+                  {endDate.slice(11, 16)}
+                </AppText>
+              </View>
             </Pressable>
+          </View>
+
+          {error ? <AppText style={styles.error}>{error}</AppText> : null}
+
+          <Pressable
+            onPress={handleSearch}
+            style={styles.searchButton}
+            accessibilityRole="button"
+            accessibilityLabel="Tìm xe"
+          >
+            <LinearGradient
+              colors={[HERO.ctaFrom, HERO.ctaVia, HERO.ctaTo]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.searchButtonBg}
+            >
+              <Search color={HERO.ctaText} size={18} />
+              <AppText style={styles.searchButtonText}>Tìm xe</AppText>
+            </LinearGradient>
+          </Pressable>
         </View>
 
         {/* SECTION 2: KHUYẾN MÃI — ảnh 16:9 từ bảng Banners, bấm mở popup chi tiết */}
@@ -725,8 +813,8 @@ export default function CustomerExploreScreen({
           <View style={styles.section}>
             <View style={styles.sectionPad}>
               <SectionHeader
-                title="Chương trình khuyến mãi"
-                actionLabel="Săn tất cả"
+                title="Ưu đãi cho bạn"
+                actionLabel="Xem tất cả"
                 onAction={handlePromoSeeAll}
               />
             </View>
@@ -767,7 +855,11 @@ export default function CustomerExploreScreen({
                       colors={["transparent", "rgba(0,0,0,0.62)"]}
                       style={styles.promoShade}
                     />
-                    <AppText display style={styles.promoTitle} numberOfLines={1}>
+                    <AppText
+                      display
+                      style={styles.promoTitle}
+                      numberOfLines={1}
+                    >
                       {banner.title}
                     </AppText>
                   </Pressable>
@@ -776,6 +868,67 @@ export default function CustomerExploreScreen({
             )}
           </View>
         ) : null}
+
+        {/* SECTION 6: XE NỔI BẬT */}
+        <View style={styles.section}>
+          <View style={styles.sectionPad}>
+            <SectionHeader
+              title="Xe nổi bật dành cho bạn"
+              actionLabel="Xem tất cả"
+              onAction={handleSeeAllVehicles}
+            />
+          </View>
+          {featuredLoading ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.vehicleContent}
+            >
+              <View style={styles.vehicleItem}>
+                <VehicleCardSkeleton />
+              </View>
+              <View style={styles.vehicleItem}>
+                <VehicleCardSkeleton />
+              </View>
+            </ScrollView>
+          ) : featuredError ? (
+            <View style={styles.sectionPad}>
+              <View style={styles.inlineErrorBox}>
+                <AppText style={styles.inlineErrorText}>
+                  {featuredError}
+                </AppText>
+                <Pressable
+                  style={styles.retryButton}
+                  onPress={() => setReloadKey((k) => k + 1)}
+                >
+                  <AppText style={styles.retryButtonText}>Thử lại</AppText>
+                </Pressable>
+              </View>
+            </View>
+          ) : featured.length === 0 ? (
+            <View style={styles.sectionPad}>
+              <AppText style={styles.emptyText}>
+                Chưa có xe nổi bật. Hãy thử tìm xe theo địa điểm.
+              </AppText>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.vehicleContent}
+            >
+              {featured.map((vehicle) => (
+                <View key={vehicle.id} style={styles.vehicleItem}>
+                  <VehicleListCard
+                    vehicle={vehicle}
+                    onOpen={handleOpenVehicle}
+                    onBook={handleOpenVehicle}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
 
         {/* SECTION 3: ĐỊA ĐIỂM NỔI BẬT — mirror web destinations */}
         <View style={styles.section}>
@@ -806,14 +959,20 @@ export default function CustomerExploreScreen({
                   transition={250}
                 />
                 <LinearGradient
-                  colors={["transparent", "rgba(0,0,0,0.25)", "rgba(0,0,0,0.9)"]}
+                  colors={[
+                    "transparent",
+                    "rgba(0,0,0,0.25)",
+                    "rgba(0,0,0,0.9)",
+                  ]}
                   locations={[0, 0.45, 1]}
                   style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.cityTextWrap}>
                   <View style={styles.cityBadge}>
                     <MapPin color="#E9D5FF" size={12} />
-                    <AppText style={styles.cityBadgeText}>Điểm đến được yêu thích</AppText>
+                    <AppText style={styles.cityBadgeText}>
+                      Điểm đến được yêu thích
+                    </AppText>
                   </View>
                   <AppText style={styles.cityName}>{dest.name}</AppText>
                   <AppText style={styles.cityDesc} numberOfLines={2}>
@@ -838,44 +997,48 @@ export default function CustomerExploreScreen({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.serviceList}
           >
-              {HIGHLIGHT_SERVICES.map((service) => (
-                <View key={service.key} style={styles.serviceCard}>
-                  <Image
-                    source={{ uri: service.image }}
-                    style={StyleSheet.absoluteFill}
-                    contentFit="cover"
-                    transition={250}
-                  />
-                  <LinearGradient
-                    colors={["transparent", "rgba(0,0,0,0.4)", "rgba(0,0,0,0.9)"]}
-                    locations={[0, 0.45, 1]}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <View style={styles.serviceBody}>
-                    <AppText display style={styles.serviceTitle}>{service.title}</AppText>
-                    <AppText style={styles.serviceDesc} numberOfLines={3}>
-                      {service.desc}
-                    </AppText>
-                    <Pressable
-                      onPress={() => handleServiceSearch(service.vehicleType)}
-                      style={styles.serviceCtaTouch}
-                      accessibilityRole="button"
-                      accessibilityLabel={service.cta}
+            {HIGHLIGHT_SERVICES.map((service) => (
+              <View key={service.key} style={styles.serviceCard}>
+                <Image
+                  source={{ uri: service.image }}
+                  style={StyleSheet.absoluteFill}
+                  contentFit="cover"
+                  transition={250}
+                />
+                <LinearGradient
+                  colors={["transparent", "rgba(0,0,0,0.4)", "rgba(0,0,0,0.9)"]}
+                  locations={[0, 0.45, 1]}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.serviceBody}>
+                  <AppText display style={styles.serviceTitle}>
+                    {service.title}
+                  </AppText>
+                  <AppText style={styles.serviceDesc} numberOfLines={3}>
+                    {service.desc}
+                  </AppText>
+                  <Pressable
+                    onPress={() => handleServiceSearch(service.vehicleType)}
+                    style={styles.serviceCtaTouch}
+                    accessibilityRole="button"
+                    accessibilityLabel={service.cta}
+                  >
+                    <LinearGradient
+                      colors={[HERO.ctaFrom, HERO.ctaVia, HERO.ctaTo]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.serviceCtaGradient}
                     >
-                      <LinearGradient
-                        colors={[HERO.ctaFrom, HERO.ctaVia, HERO.ctaTo]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.serviceCtaGradient}
-                      >
-                        <AppText style={styles.serviceCtaTextLight}>{service.cta}</AppText>
-                        <ArrowRight color="#FFFFFF" size={15} />
-                      </LinearGradient>
-                    </Pressable>
-                  </View>
+                      <AppText style={styles.serviceCtaTextLight}>
+                        {service.cta}
+                      </AppText>
+                      <ArrowRight color="#FFFFFF" size={15} />
+                    </LinearGradient>
+                  </Pressable>
                 </View>
-              ))}
-            </ScrollView>
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         {/* SECTION 5: ƯU ĐIỂM MOVEVN — mirror web FEATURES, icon trái cùng hàng chữ */}
@@ -890,80 +1053,28 @@ export default function CustomerExploreScreen({
           >
             {ADVANTAGES.map((item) => (
               <View key={item.key} style={styles.advCard}>
-                  <View style={styles.advIcon}>
-                    <AdvantageIcon iconKey={item.key} />
-                  </View>
-                  <View style={styles.advTextWrap}>
-                    <AppText display style={styles.advTitle}>{item.title}</AppText>
-                    <AppText style={styles.advDesc}>{item.desc}</AppText>
-                  </View>
+                <View style={styles.advIcon}>
+                  <AdvantageIcon iconKey={item.key} />
                 </View>
-              ))}
-            </ScrollView>
-        </View>
-
-        {/* SECTION 6: XE NỔI BẬT */}
-        <View style={styles.section}>
-          <View style={styles.sectionPad}>
-            <SectionHeader
-              title="Xe nổi bật dành cho bạn"
-              actionLabel="Xem tất cả"
-              onAction={handleSeeAllVehicles}
-            />
-          </View>
-          {featuredLoading ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.vehicleContent}
-            >
-              <View style={styles.vehicleItem}>
-                <VehicleCardSkeleton />
-              </View>
-              <View style={styles.vehicleItem}>
-                <VehicleCardSkeleton />
-              </View>
-            </ScrollView>
-          ) : featuredError ? (
-            <View style={styles.sectionPad}>
-              <View style={styles.inlineErrorBox}>
-                <AppText style={styles.inlineErrorText}>{featuredError}</AppText>
-                <Pressable style={styles.retryButton} onPress={() => setReloadKey((k) => k + 1)}>
-                  <AppText style={styles.retryButtonText}>Thử lại</AppText>
-                </Pressable>
-              </View>
-            </View>
-          ) : featured.length === 0 ? (
-            <View style={styles.sectionPad}>
-              <AppText style={styles.emptyText}>Chưa có xe nổi bật. Hãy thử tìm xe theo địa điểm.</AppText>
-            </View>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.vehicleContent}
-            >
-              {featured.map((vehicle) => (
-                <View key={vehicle.id} style={styles.vehicleItem}>
-                  <VehicleListCard
-                    vehicle={vehicle}
-                    onOpen={handleOpenVehicle}
-                    onBook={handleOpenVehicle}
-                  />
+                <View style={styles.advTextWrap}>
+                  <AppText display style={styles.advTitle}>
+                    {item.title}
+                  </AppText>
+                  <AppText style={styles.advDesc}>{item.desc}</AppText>
                 </View>
-              ))}
-            </ScrollView>
-          )}
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         {/* SECTION 7: BANNER CHỦ XE */}
         <View style={styles.section}>
           <View style={styles.sectionPad}>
             <Pressable
-              onPress={handleHostPress}
+              onPress={() => setPublicPage("owners")}
               style={styles.hostCard}
               accessibilityRole="button"
-              accessibilityLabel="Đăng ký cho thuê xe"
+              accessibilityLabel="Tìm hiểu dành cho chủ xe"
             >
               <Image
                 source={HOST_BANNER_IMAGE}
@@ -974,18 +1085,24 @@ export default function CustomerExploreScreen({
                 accessibilityLabel="Cho thuê xe cùng MoveVN"
               />
               <LinearGradient
-                colors={["rgba(0,0,0,0.15)", "rgba(0,0,0,0.45)", "rgba(0,0,0,0.72)"]}
+                colors={[
+                  "rgba(0,0,0,0.15)",
+                  "rgba(0,0,0,0.45)",
+                  "rgba(0,0,0,0.72)",
+                ]}
                 locations={[0, 0.5, 1]}
                 style={StyleSheet.absoluteFill}
               />
               <View style={styles.hostContent}>
                 <AppText style={styles.hostEyebrow}>DÀNH CHO CHỦ XE</AppText>
-                <AppText display style={styles.hostTitle}>Bạn muốn cho thuê xe?</AppText>
+                <AppText display style={styles.hostTitle}>
+                  Bạn muốn cho thuê xe?
+                </AppText>
                 <AppText style={styles.hostDesc}>
-                  Hơn 15.000 chủ xe đang cho thuê hiệu quả trên MoveVN.
+                  Chủ động cho thuê xe và theo dõi thu nhập trên MoveVN.
                 </AppText>
                 <View style={styles.hostButton}>
-                  <AppText style={styles.hostButtonText}>Đăng ký ngay</AppText>
+                  <AppText style={styles.hostButtonText}>Tìm hiểu thêm</AppText>
                   <ArrowRight color="#FFFFFF" size={15} />
                 </View>
               </View>
@@ -993,12 +1110,6 @@ export default function CustomerExploreScreen({
           </View>
         </View>
       </ScrollView>
-
-      {showOwnerVerify ? (
-        <View style={styles.ownerOverlay}>
-          <OwnerVerificationScreen onBack={() => setShowOwnerVerify(false)} />
-        </View>
-      ) : null}
 
       <BannerDetailSheet
         banner={selectedBanner}
@@ -1034,13 +1145,27 @@ export default function CustomerExploreScreen({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: theme.background },
-    headerPad: { paddingHorizontal: 20, paddingTop: 8 },
+    heroCopy: { padding: 22, paddingTop: 28, paddingBottom: 62, gap: 12 },
+    heroTitle: {
+      color: "#FFFFFF",
+      fontSize: 28,
+      lineHeight: 37,
+      fontWeight: "700",
+      maxWidth: 300,
+    },
+    heroDescription: {
+      color: "#F2EDFF",
+      fontSize: 13,
+      lineHeight: 21,
+      maxWidth: 245,
+    },
+    dateHour: { color: theme.muted, fontSize: 11, marginTop: 2 },
     scroll: { flex: 1 },
     // Vừa đủ để card cuối không bị Bottom Bar nổi che (bar trong suốt nên 96 là fit).
-    scrollContent: { paddingBottom: 96 },
+    scrollContent: { paddingBottom: 28 },
     // 24px giữa đáy form và section kế tiếp để có khoảng thở.
-    section: { marginTop: 24 },
-    sectionPad: { paddingHorizontal: 20 },
+    section: { marginTop: 28 },
+    sectionPad: { paddingHorizontal: 16 },
     sectionHeader: {
       flexDirection: "row",
       alignItems: "center",
@@ -1048,12 +1173,17 @@ const createStyles = (theme: Theme) =>
       marginBottom: 12,
     },
     sectionTitleWrap: { flex: 1, marginRight: 12 },
-    sectionTitle: { color: theme.text, fontSize: 17, fontWeight: "800" },
+    sectionTitle: {
+      color: theme.text,
+      fontSize: 19,
+      lineHeight: 27,
+      fontWeight: "700",
+    },
     sectionAccent: {
       width: 30,
       height: 4,
       borderRadius: 2,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       marginTop: 6,
     },
     ownerOverlay: {
@@ -1064,58 +1194,41 @@ const createStyles = (theme: Theme) =>
       bottom: 0,
       backgroundColor: theme.background,
     },
-    sectionSubtitle: { color: theme.muted, fontSize: 12, marginTop: 4, lineHeight: 17 },
-    sectionAction: { flexDirection: "row", alignItems: "center", gap: 2, flexShrink: 0 },
+    sectionSubtitle: {
+      color: theme.muted,
+      fontSize: 12,
+      marginTop: 4,
+      lineHeight: 17,
+    },
+    sectionAction: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 2,
+      flexShrink: 0,
+    },
     sectionActionText: { color: theme.brand, fontSize: 13, fontWeight: "700" },
 
     // --- Section 1: hero full-bleed 360px, bo góc dưới ôm card ---
     topBg: {
       position: "relative",
       overflow: "hidden",
-      backgroundColor: "#f4efff",
-      borderBottomLeftRadius: 28,
-      borderBottomRightRadius: 28,
-    },
-    topBgVeil: {
-      position: "absolute",
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      backgroundColor: "rgba(19, 16, 34, 0.35)",
+      backgroundColor: "#211A38",
+      minHeight: 260,
     },
     searchCard: {
-      marginHorizontal: 20,
-      backgroundColor: "rgba(248,250,252,0.5)",
-      borderRadius: 18,
-      borderWidth: 0,
-      borderColor: "transparent",
-      padding: 12,
-      gap: 10,
+      marginHorizontal: 16,
+      backgroundColor: theme.surface,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: theme.border,
+      padding: 16,
+      gap: 12,
     },
-    tabs: { flexDirection: "row", gap: 8 },
-    tab: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
-      height: 38,
-      borderRadius: 12,
-      backgroundColor: theme.mode === "dark" ? "rgba(139,92,255,0.25)" : "rgba(255,255,255,0.6)",
-    },
-    tabActive: { backgroundColor: HERO.tabActiveBg },
-    tabText: {
-      color: theme.mode === "dark" ? HERO.tabIdleTextDark : HERO.tabIdleTextLight,
-      fontSize: 13,
-      fontWeight: "700",
-    },
-    tabTextActive: { color: HERO.tabActiveText },
     fieldGroup: {
       borderWidth: 1,
       borderColor: theme.mode === "dark" ? theme.border : "#E2E8F0",
       borderRadius: 12,
-      backgroundColor: theme.mode === "dark" ? "rgba(38,32,64,0.65)" : "rgba(255,255,255,0.7)",
+      backgroundColor: theme.input,
       overflow: "hidden",
     },
     fieldRow: {
@@ -1132,9 +1245,10 @@ const createStyles = (theme: Theme) =>
     },
     fieldTextWrap: { flex: 1 },
     fieldLabel: {
-      color: theme.mode === "dark" ? theme.placeholder : "#6B7280",
-      fontSize: 10,
-      fontWeight: "700",
+      color: theme.brand,
+      fontSize: 12,
+      lineHeight: 18,
+      fontWeight: "600",
     },
     fieldValue: {
       color: theme.mode === "dark" ? theme.text : "#111827",
@@ -1160,10 +1274,11 @@ const createStyles = (theme: Theme) =>
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-      height: 46,
+      minHeight: 48,
+      paddingVertical: 12,
       borderRadius: 12,
     },
-    searchButtonText: { color: HERO.ctaText, fontSize: 14, fontWeight: "800", letterSpacing: 1 },
+    searchButtonText: { color: HERO.ctaText, fontSize: 14, fontWeight: "700" },
 
     // --- Section 2: homepage banners (bảng Banners, ảnh 16:9) ---
     promoContent: { paddingHorizontal: 20, gap: 12 },
@@ -1205,7 +1320,13 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.overlay,
       paddingHorizontal: 20,
     },
-    sheetBackdrop: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0 },
+    sheetBackdrop: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+    },
     sheetCard: {
       width: "100%",
       maxHeight: "82%",
@@ -1225,15 +1346,24 @@ const createStyles = (theme: Theme) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    sheetImage: { width: "100%", aspectRatio: 16 / 9, backgroundColor: theme.surfaceAlt },
+    sheetImage: {
+      width: "100%",
+      aspectRatio: 16 / 9,
+      backgroundColor: theme.surfaceAlt,
+    },
     sheetBody: { padding: 18, gap: 10 },
-    sheetTitle: { color: theme.text, fontSize: 18, fontWeight: "800", textAlign: "center" },
+    sheetTitle: {
+      color: theme.text,
+      fontSize: 18,
+      fontWeight: "800",
+      textAlign: "center",
+    },
     sheetDivider: {
       alignSelf: "center",
       width: 64,
       height: 3,
       borderRadius: 2,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
     },
     sheetDesc: { color: theme.muted, fontSize: 13, lineHeight: 20 },
     chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -1256,7 +1386,7 @@ const createStyles = (theme: Theme) =>
       gap: 8,
       height: 46,
       borderRadius: 12,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       marginTop: 4,
     },
     sheetCtaText: { color: theme.onBrand, fontSize: 14, fontWeight: "800" },
@@ -1307,7 +1437,11 @@ const createStyles = (theme: Theme) =>
     serviceBody: { flex: 1, justifyContent: "flex-end", padding: 16, gap: 6 },
     serviceTitle: { color: "#E9D5FF", fontSize: 20, fontWeight: "800" },
     serviceDesc: { color: "#D1D5DB", fontSize: 12, lineHeight: 17 },
-    serviceCtaTouch: { alignSelf: "flex-start", marginTop: 6, borderRadius: 12 },
+    serviceCtaTouch: {
+      alignSelf: "flex-start",
+      marginTop: 6,
+      borderRadius: 12,
+    },
     serviceCtaGradient: {
       flexDirection: "row",
       alignItems: "center",
@@ -1316,7 +1450,12 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 18,
       borderRadius: 12,
     },
-    serviceCtaTextLight: { color: "#FFFFFF", fontSize: 12, fontWeight: "800", letterSpacing: 0.5 },
+    serviceCtaTextLight: {
+      color: "#FFFFFF",
+      fontSize: 12,
+      fontWeight: "800",
+      letterSpacing: 0.5,
+    },
 
     // --- Section 5: advantages (mirror web FEATURES, icon trái, kéo ngang) ---
     advList: { paddingHorizontal: 20, gap: 12 },
@@ -1359,7 +1498,7 @@ const createStyles = (theme: Theme) =>
       height: 38,
       paddingHorizontal: 16,
       borderRadius: 10,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -1374,7 +1513,12 @@ const createStyles = (theme: Theme) =>
       backgroundColor: "#1F2937",
     },
     hostContent: { flex: 1, justifyContent: "flex-end", padding: 20, gap: 8 },
-    hostEyebrow: { color: "#E9D5FF", fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
+    hostEyebrow: {
+      color: "#E9D5FF",
+      fontSize: 11,
+      fontWeight: "800",
+      letterSpacing: 1.5,
+    },
     hostTitle: { color: "#FFFFFF", fontSize: 21, fontWeight: "800" },
     hostDesc: { color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 19 },
     hostButton: {
@@ -1387,7 +1531,7 @@ const createStyles = (theme: Theme) =>
       height: 42,
       paddingHorizontal: 20,
       borderRadius: 10,
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
     },
     hostButtonText: { color: theme.onBrand, fontSize: 14, fontWeight: "800" },
   });

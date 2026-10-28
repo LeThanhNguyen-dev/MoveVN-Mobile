@@ -86,7 +86,7 @@ export default function BalanceCard({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     card: {
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       borderRadius: 20,
       padding: 18,
       gap: 8,
@@ -124,8 +124,8 @@ const createStyles = (theme: Theme) =>
     },
     label: { color: theme.onBrand, fontSize: 13, opacity: 0.85, fontWeight: "600" },
     eyeButton: {
-      width: 32,
-      height: 32,
+      width: 44,
+      height: 44,
       borderRadius: 16,
       backgroundColor: "rgba(255,255,255,0.2)",
       alignItems: "center",

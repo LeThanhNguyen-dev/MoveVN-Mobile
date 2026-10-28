@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { themes } from "@/theme/tokens";
 
 vi.mock("react-native", () => ({
-  StyleSheet: { create: (styles: object) => styles, hairlineWidth: 1 },
+  StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (styles: object) => styles, hairlineWidth: 1 },
 }));
 vi.mock("lucide-react-native", () => ({ ArrowLeft: "ArrowLeft", ChevronDown: "ChevronDown" }));
 vi.mock("@/theme/useTheme", () => ({ useTheme: () => ({ theme: themes.light }) }));

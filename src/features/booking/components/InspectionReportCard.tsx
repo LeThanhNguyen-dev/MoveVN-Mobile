@@ -1,10 +1,11 @@
+import Text from "@/components/AppText";
 import { inspectionImageUrl } from "../inspectionImageUrl";
 import InspectionPhoto from "./InspectionPhoto";
 import InspectionPdfButton from "./InspectionPdfButton";
 import InspectionFinancialSummary from "./InspectionFinancialSummary";
 import CheckoutSummary from "./CheckoutSummary";
 import { useState } from "react";
-import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Modal, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/theme/useTheme";
 import type { BookingResponse, InspectionReportResponse } from "../types";

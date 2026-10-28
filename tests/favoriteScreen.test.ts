@@ -55,6 +55,7 @@ vi.mock("expo-secure-store", () => ({
   deleteItemAsync: vi.fn(),
 }));
 vi.mock("expo-image", () => ({ Image: "Image" }));
+vi.mock("expo-linear-gradient", () => ({ LinearGradient: "LinearGradient" }));
 vi.mock("@react-navigation/native", () => ({
   useFocusEffect: (effect: () => (() => void) | undefined) =>
     useEffect(effect, [effect]),
@@ -68,7 +69,7 @@ vi.mock("react-native", () => ({
   RefreshControl: "RefreshControl",
   Platform: { OS: "android" },
   Alert: { alert: mocks.alert },
-  StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 },
+  StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (styles: unknown) => styles, hairlineWidth: 1 },
   BackHandler: {
     addEventListener: (_event: string, handler: () => boolean) => {
       mocks.hardwareBack = handler;

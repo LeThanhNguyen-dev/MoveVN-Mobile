@@ -1,3 +1,4 @@
+import AppScreenHeader from "@/components/ui/AppScreenHeader";
 import { useCallback, useEffect, useMemo } from "react";
 import {
   ActivityIndicator,
@@ -65,33 +66,7 @@ export default function FavoriteVehiclesScreen({
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Quay lại từ xe yêu thích"
-          onPress={onBack}
-          style={styles.icon}
-        >
-          <ArrowLeft color={theme.text} size={23} />
-        </Pressable>
-        <View style={styles.heading}>
-          <AppText display style={styles.title}>Xe yêu thích</AppText>
-          <AppText style={styles.subtitle}>
-            {state.listLoaded
-              ? `${state.totalCount} xe đang hiển thị`
-              : "Những chiếc xe bạn muốn thuê"}
-          </AppText>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Làm mới xe yêu thích"
-          disabled={state.loading || state.refreshing || state.loadingMore}
-          onPress={refresh}
-          style={styles.icon}
-        >
-          <RefreshCw color={theme.brand} size={21} />
-        </Pressable>
-      </View>
+      <AppScreenHeader title="Xe yêu thích" subtitle={state.listLoaded ? `${state.totalCount} xe đang hiển thị` : "Những chiếc xe bạn muốn thuê"} onBack={onBack} backLabel="Quay lại từ xe yêu thích" onRefresh={refresh} refreshLabel="Làm mới xe yêu thích" busy={state.loading || state.refreshing || state.loadingMore} />
       {state.idsError ? (
         <Pressable
           accessibilityRole="button"
@@ -251,7 +226,7 @@ const createStyles = (theme: Theme) =>
       textAlign: "center",
     },
     primary: {
-      backgroundColor: theme.brand,
+      backgroundColor: theme.brandSolid,
       padding: 14,
       paddingHorizontal: 24,
       borderRadius: 14,

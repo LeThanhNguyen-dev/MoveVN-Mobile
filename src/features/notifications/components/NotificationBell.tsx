@@ -13,7 +13,7 @@ export default function NotificationBell() {
     accessibilityRole="button"
     accessibilityLabel={count > 0 ? `Thông báo, ${count} chưa đọc` : "Thông báo"}
     onPress={() => useNotificationStore.setState({ centerOpen: true })}
-    style={styles.button}
+    style={[styles.button, { backgroundColor: theme.surface, borderColor: theme.border }]}
   >
     <Bell color={theme.text} size={22} strokeWidth={2.2} />
     {count > 0 ? <View style={[styles.badge, { backgroundColor: theme.danger, borderColor: theme.surface }]}>
@@ -23,7 +23,7 @@ export default function NotificationBell() {
 }
 
 const styles = StyleSheet.create({
-  button: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  badge: { position: "absolute", top: 0, right: 0, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 4, borderWidth: 2, alignItems: "center", justifyContent: "center" },
+  button: { width: 44, height: 44, borderWidth: 1, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  badge: { position: "absolute", top: -6, right: -6, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 4, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   count: { fontSize: 10, fontWeight: "800" },
 });

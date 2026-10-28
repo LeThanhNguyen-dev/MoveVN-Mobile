@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentRef } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   ArrowDown,
@@ -59,6 +59,9 @@ export default function ChatRoomScreen({
   onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const screen = useRef<ComponentRef<typeof SafeAreaView>>(null);
+  const [keyboardOffset, setKeyboardOffset] = useState(insets.top);
   const userId = useAuthStore((auth) => auth.user?.userId ?? 0);
   const notificationOpen = useNotificationStore(
     (notifications) => notifications.centerOpen,
@@ -79,7 +82,7 @@ export default function ChatRoomScreen({
   const focused = useRef(false);
   const quoteRequest = useRef<AbortController | null>(null);
   const list = useRef<FlatList<ChatMessage>>(null);
-  const input = useRef<TextInput>(null);
+  const input = useRef<ComponentRef<typeof TextInput>>(null);
   const room = state.rooms.find((item) => item.id === roomId);
   const history = state.histories[roomId] ?? emptyHistory;
   const draft = state.drafts[roomId] ?? emptyDraft;
@@ -240,8 +243,17 @@ export default function ChatRoomScreen({
 
   return (
     <SafeAreaView
+      ref={screen}
       edges={["bottom"]}
       style={{ flex: 1, backgroundColor: theme.background }}
+      onLayout={() => {
+        // The navigator already handles the top safe area. KAV measures its
+        // frame relative to this screen, while keyboard events use window coordinates.
+        if (Platform.OS !== "ios") return;
+        screen.current?.measureInWindow((_x: number, y: number) => {
+          if (screen.current && Number.isFinite(y)) setKeyboardOffset(Math.max(0, y));
+        });
+      }}
     >
       <View style={[styles.header, { borderColor: theme.border }]}>
         <Pressable
@@ -334,11 +346,13 @@ export default function ChatRoomScreen({
       ) : null}
       {!opening && room && !openError ? (
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
+          style={{ flex: 1, minHeight: 0 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? keyboardOffset : 0}
         >
           <FlatList
             ref={list}
+            style={{ flex: 1 }}
             inverted
             data={[...history.items].reverse()}
             keyExtractor={(item) => item.id}
@@ -610,7 +624,7 @@ export default function ChatRoomScreen({
                   }}
                   style={[
                     styles.send,
-                    { backgroundColor: theme.brand },
+                    { backgroundColor: theme.brandSolid },
                     (sending ||
                       picking ||
                       (!draft.content.trim() && !draft.images.length)) &&
@@ -774,7 +788,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   personLink: { alignSelf: "flex-start" },
-  composer: { padding: 8, gap: 8, borderTopWidth: StyleSheet.hairlineWidth },
+  composer: { padding: 8, gap: 8, flexShrink: 0, borderTopWidth: StyleSheet.hairlineWidth },
   send: {
     width: 44,
     height: 44,

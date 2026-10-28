@@ -1,3 +1,4 @@
+import AppScreenHeader from "@/components/ui/AppScreenHeader";
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 import { ArrowLeft, BookOpen, ChevronRight, Scale, Search, X } from "lucide-react-native";
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
@@ -84,13 +85,7 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
 
   return (
     <View style={styles.content}>
-      <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
-          <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
-        </Pressable>
-        <AppText display style={styles.topBarTitle}>Điều khoản & Chính sách</AppText>
-        <View style={styles.topBarSpacer} />
-      </View>
+      <AppScreenHeader title="Điều khoản & Chính sách" onBack={onBack} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}

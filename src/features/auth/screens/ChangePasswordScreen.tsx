@@ -228,7 +228,7 @@ const createStyles = (theme: Theme) =>
     progressRow: { width: "100%", gap: 8 },
     progressText: { color: theme.muted, fontSize: 12, fontWeight: "800", textAlign: "center" },
     progressTrack: { height: 6, borderRadius: 999, backgroundColor: theme.surfaceAlt, overflow: "hidden" },
-    progressFill: { height: 6, borderRadius: 999, backgroundColor: theme.brand },
+    progressFill: { height: 6, borderRadius: 999, backgroundColor: theme.brandSolid },
     heading: { flexDirection: "row", alignItems: "center", alignSelf: "center", gap: 8 },
     title: { color: theme.text, fontSize: 16, fontWeight: "800", textAlign: "center" },
     description: { color: theme.muted, fontSize: 13, lineHeight: 19, textAlign: "center", fontWeight: "500" },

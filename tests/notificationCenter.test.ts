@@ -19,7 +19,7 @@ vi.mock("@/features/notifications/services/notificationService", () => ({
 vi.mock("expo-secure-store", () => ({ getItemAsync: vi.fn(async () => null), setItemAsync: vi.fn(), deleteItemAsync: vi.fn() }));
 vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator", Pressable: "Pressable", Text: "Text", View: "View", ScrollView: "ScrollView", RefreshControl: "RefreshControl",
-  StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 },
+  StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (styles: unknown) => styles, hairlineWidth: 1 },
   Modal: ({ visible, children, onRequestClose }: { visible: boolean; children: React.ReactNode; onRequestClose: () => void }) => visible ? React.createElement("Modal", { onRequestClose }, children) : null,
   FlatList: ({ data, renderItem, ListEmptyComponent, ListFooterComponent, refreshControl }: {
     data: NotificationItem[]; renderItem: (props: { item: NotificationItem }) => React.ReactNode;
