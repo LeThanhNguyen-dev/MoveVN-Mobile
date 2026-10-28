@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -13,7 +14,7 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   ArrowDown,
@@ -21,6 +22,7 @@ import {
   Camera,
   ImagePlus,
   Images,
+  MessageSquare,
   Search,
   Send,
   X,
@@ -43,6 +45,8 @@ import { emptyDraft, emptyHistory, useChatStore as store } from "../useChat";
 import ChatMessageCard, { type ChatPhoto } from "../components/ChatMessageCard";
 import ChatImage from "../components/ChatImage";
 import ChatTools from "../components/ChatTools";
+import ChatAvatar from "../components/ChatAvatar";
+import { useChatPresence } from "../useChatPresence";
 import type { ChatMessage } from "../types";
 
 export default function ChatRoomScreen({
@@ -59,6 +63,8 @@ export default function ChatRoomScreen({
   onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const userId = useAuthStore((auth) => auth.user?.userId ?? 0);
   const notificationOpen = useNotificationStore(
     (notifications) => notifications.centerOpen,
@@ -85,6 +91,17 @@ export default function ChatRoomScreen({
   const draft = state.drafts[roomId] ?? emptyDraft;
   const sending = state.sending[roomId];
   const person = room ? chatCounterpart(room, userId) : null;
+  const presence = useChatPresence(person);
+
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow", () => {
+      setKeyboardVisible(true);
+    });
+    const hide = Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide", () => {
+      setKeyboardVisible(false);
+    });
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   useEffect(() => {
     if (!focused.current) return;
@@ -239,11 +256,12 @@ export default function ChatRoomScreen({
   );
 
   return (
-    <SafeAreaView
-      edges={["bottom"]}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
       style={{ flex: 1, backgroundColor: theme.background }}
     >
-      <View style={[styles.header, { borderColor: theme.border }]}>
+      <View style={[styles.header, { borderColor: theme.border, backgroundColor: theme.surface }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Quay lại"
@@ -252,7 +270,16 @@ export default function ChatRoomScreen({
         >
           <ArrowLeft size={23} color={theme.text} />
         </Pressable>
-        <View style={{ flex: 1 }}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Xem hồ sơ ${person?.name ?? "người trò chuyện"}`}
+          disabled={!onOpenUserProfile || !person?.id}
+          onPress={() => person && onOpenUserProfile?.(person.id)}
+        >
+          <ChatAvatar name={person?.name ?? "Người trò chuyện"} uri={person?.avatarUrl}
+            size={40} online={person ? presence.isOnline : undefined} />
+        </Pressable>
+        <View style={{ flex: 1, minWidth: 0, marginLeft: 5 }}>
           {onOpenUserProfile && person?.id ? (
             <Pressable
               accessibilityRole="link"
@@ -262,7 +289,7 @@ export default function ChatRoomScreen({
             >
               <AppText
                 numberOfLines={1}
-                style={{ color: theme.text, fontSize: 17, fontWeight: "800" }}
+                style={{ color: theme.text, fontSize: 15, fontWeight: "700" }}
               >
                 {person?.name ?? "Chat booking"}
               </AppText>
@@ -270,38 +297,44 @@ export default function ChatRoomScreen({
           ) : (
             <AppText
               numberOfLines={1}
-              style={{ color: theme.text, fontSize: 17, fontWeight: "800" }}
+              style={{ color: theme.text, fontSize: 15, fontWeight: "700" }}
             >
               {person?.name ?? "Chat booking"}
             </AppText>
           )}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Xem booking"
-            disabled={!room}
-            onPress={() => room && onBookingPress(room.bookingId)}
-          >
-            <AppText
-              numberOfLines={1}
-              style={{ color: theme.brand, fontSize: 11, marginTop: 3 }}
-            >
-              {room?.bookingCode ?? "Đang mở…"} · Xem booking
-            </AppText>
-          </Pressable>
+          <AppText numberOfLines={1} style={{
+            color: presence.isOnline ? theme.success : theme.muted,
+            fontSize: 11, marginTop: 4,
+          }}>{person ? presence.label : "Đang mở cuộc trò chuyện…"}</AppText>
         </View>
         {iconButton(
           "Tìm trong chat booking",
           Search,
-          () => setTools("search"),
+          () => { Keyboard.dismiss(); setTools("search"); },
           !room,
         )}
         {iconButton(
           "Thư viện ảnh booking",
           Images,
-          () => setTools("gallery"),
+          () => { Keyboard.dismiss(); setTools("gallery"); },
           !room,
         )}
       </View>
+      {room ? (
+        <Pressable accessibilityRole="button" accessibilityLabel="Xem đơn thuê"
+          onPress={() => { Keyboard.dismiss(); onBookingPress(room.bookingId); }}
+          style={{ flexDirection: "row", alignItems: "center", gap: 8,
+            paddingHorizontal: 16, paddingVertical: 9,
+            backgroundColor: theme.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: theme.border }}>
+          <AppText numberOfLines={1} style={{ color: theme.brand, fontWeight: "600", fontSize: 11 }}>
+            {room.bookingCode}
+          </AppText>
+          <AppText numberOfLines={1} style={{ flex: 1, color: theme.muted, fontSize: 11 }}>
+            {room.vehicleName || "Đơn thuê xe"}
+          </AppText>
+          <AppText style={{ color: theme.brand, fontSize: 11 }}>Xem đơn →</AppText>
+        </Pressable>
+      ) : null}
       {state.connectionStatus !== "connected" ? (
         <AppText
           style={{
@@ -333,17 +366,21 @@ export default function ChatRoomScreen({
         </View>
       ) : null}
       {!opening && room && !openError ? (
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
+        <View style={{ flex: 1, minHeight: 0 }}>
           <FlatList
             ref={list}
             inverted
+            style={{ flex: 1, minHeight: 0 }}
+            contentContainerStyle={history.items.length
+              ? { paddingVertical: 10 }
+              : { flexGrow: 1, justifyContent: "center" }}
             data={[...history.items].reverse()}
             keyExtractor={(item) => item.id}
             keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
+            onLayout={() => {
+              if (!awayFromBottom) list.current?.scrollToOffset({ offset: 0, animated: false });
+            }}
+            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
             initialNumToRender={10}
             windowSize={5}
             maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
@@ -355,6 +392,7 @@ export default function ChatRoomScreen({
               <ChatMessageCard
                 message={item}
                 userId={userId}
+                senderAvatarUrl={room.participants.find((participant) => Number(participant.userId) === Number(item.senderId))?.avatarUrl}
                 onPhoto={setPhoto}
                 onQuote={(id) => {
                   void openQuote(id);
@@ -368,14 +406,22 @@ export default function ChatRoomScreen({
                   transform: [{ scaleY: -1 }],
                   padding: 32,
                   alignItems: "center",
+                  gap: 12,
                 }}
               >
                 {history.loading ? (
                   <ActivityIndicator color={theme.brand} />
                 ) : !history.error ? (
-                  <AppText style={{ color: theme.muted }}>
-                    Chưa có tin nhắn. Hãy bắt đầu trao đổi về booking này.
-                  </AppText>
+                  <>
+                    <View style={{ width: 56, height: 56, borderRadius: 20, backgroundColor: theme.brandSoft,
+                      alignItems: "center", justifyContent: "center" }}>
+                      <MessageSquare size={26} color={theme.brand} />
+                    </View>
+                    <AppText style={{ color: theme.text, fontWeight: "600", fontSize: 15 }}>Bắt đầu cuộc trò chuyện</AppText>
+                    <AppText style={{ color: theme.muted, textAlign: "center", fontSize: 13, lineHeight: 20 }}>
+                      Trao đổi về lịch nhận xe, địa điểm hoặc chuyến đi của bạn.
+                    </AppText>
+                  </>
                 ) : null}
               </View>
             }
@@ -456,7 +502,8 @@ export default function ChatRoomScreen({
             <View
               style={[
                 styles.composer,
-                { borderColor: theme.border, backgroundColor: theme.surface },
+                { borderColor: theme.border, backgroundColor: theme.surface,
+                  paddingBottom: keyboardVisible ? 8 : Math.max(insets.bottom, 8) },
               ]}
             >
               {draft.reply ? (
@@ -581,14 +628,16 @@ export default function ChatRoomScreen({
                     flex: 1,
                     minHeight: 44,
                     maxHeight: 120,
-                    borderRadius: 12,
+                    borderRadius: 20,
                     paddingHorizontal: 12,
                     paddingVertical: 10,
-                    backgroundColor: theme.input,
+                    backgroundColor: theme.surfaceAlt,
                     color: theme.text,
                     borderWidth: 1,
                     borderColor: theme.border,
                     fontSize: 15,
+                    lineHeight: 21,
+                    textAlignVertical: "top",
                   }}
                 />
                 <Pressable
@@ -641,12 +690,13 @@ export default function ChatRoomScreen({
             </View>
           ) : (
             <AppText
-              style={{ color: theme.muted, padding: 16, textAlign: "center" }}
+              style={{ color: theme.muted, padding: 16,
+                paddingBottom: Math.max(insets.bottom, 16), textAlign: "center" }}
             >
               Cuộc trò chuyện đã đóng. Bạn vẫn có thể xem lịch sử.
             </AppText>
           )}
-        </KeyboardAvoidingView>
+        </View>
       ) : null}
       {tools && room ? (
         <ChatTools
@@ -753,7 +803,7 @@ export default function ChatRoomScreen({
           </SafeAreaProvider>
         </Modal>
       ) : null}
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -765,22 +815,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    flexShrink: 0,
   },
   icon: {
-    padding: 10,
-    minWidth: 40,
+    padding: 8,
+    minWidth: 36,
     minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
   },
   personLink: { alignSelf: "flex-start" },
-  composer: { padding: 8, gap: 8, borderTopWidth: StyleSheet.hairlineWidth },
+  composer: { padding: 8, gap: 8, flexShrink: 0, borderTopWidth: StyleSheet.hairlineWidth },
   send: {
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 13,
+    borderRadius: 22,
   },
   disabled: { opacity: 0.4 },
 });

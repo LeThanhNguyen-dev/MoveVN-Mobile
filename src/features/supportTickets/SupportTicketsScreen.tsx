@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, BackHandler, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, TextInput, View } from "react-native";
-import { ChevronLeft, ChevronRight, Headphones, MessageCircle, Plus, Search, Send } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Headphones, MessageCircle, Plus, Send } from "lucide-react-native";
 import AppText from "@/components/AppText";
 import { getSessionGeneration } from "@/features/auth/hooks/useAuth";
 import { useTheme } from "@/theme/useTheme";
@@ -8,7 +8,7 @@ import { createSupportTicket, getMySupportTickets, getSupportTicketById, addSupp
 import type { SupportTicketDetailResponse, SupportTicketListRequest, TicketEntry } from "./types";
 import { supportTicketCategoryOptions, supportTicketPriorityOptions, supportTicketPriorityLabels, supportTicketStatusOptions } from "./supportTicketConstants";
 import { isTicketClosed, ticketDate, ticketError, validateReply, validateTicket } from "./ticketModel";
-import { TicketButton, TicketChoice, TicketHeader, TicketNotice, TicketStatus, ticketStyles } from "./TicketUi";
+import { TicketButton, TicketChoice, TicketHeader, TicketSearchField, TicketNotice, TicketStatus, ticketStyles } from "./TicketUi";
 import { TicketGallery, TicketImageInput, useTicketImages } from "./TicketAttachments";
 import { useTicketData } from "./useTicketData";
 import TicketQualityPanel from "./TicketQualityPanel";
@@ -32,14 +32,49 @@ function TicketList({ filters, onFilters, subtitle, onBack, onCreate, onOpen }: 
   const page = filters.page ?? 1;
   useEffect(() => { if (query.data && totalPages > 0 && page > totalPages) onFilters({ ...filters, page: totalPages }); }, [query.data, totalPages, page, filters, onFilters]);
   useEffect(() => { const back = BackHandler.addEventListener("hardwareBackPress", () => { onBack(); return true; }); return () => back.remove(); }, [onBack]);
-  return <View style={styles.screen}><TicketHeader title="Yêu cầu hỗ trợ" subtitle={subtitle} onBack={onBack} onRefresh={query.refresh} busy={query.refreshing} />
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={query.refreshing && !query.loading} onRefresh={query.refresh} tintColor={theme.brand} />}>
-      <View style={[styles.card, { backgroundColor: theme.brandSoft, borderColor: theme.brandBorder }]}><Headphones size={27} color={theme.brand} /><AppText display style={styles.title}>MoveVN luôn sẵn sàng hỗ trợ</AppText><AppText style={styles.body}>Gửi vấn đề, theo dõi tiến độ và trao đổi trực tiếp với đội ngũ hỗ trợ.</AppText><TicketButton title="Tạo yêu cầu mới" icon={<Plus size={18} color={theme.onBrand} />} onPress={onCreate} /></View>
-      <View style={styles.card}><AppText style={styles.label}>Tìm yêu cầu</AppText><TextInput accessibilityLabel="Tìm theo mã hoặc tiêu đề" style={styles.input} value={keyword} onChangeText={setKeyword} maxLength={100} placeholder="Nhập mã hoặc tiêu đề" placeholderTextColor={theme.placeholder} returnKeyType="search" onSubmitEditing={() => onFilters({ ...filters, keyword: keyword.trim() || undefined, page: 1 })} />
-        <TicketButton title="Tìm kiếm" secondary icon={<Search size={18} color={theme.brand} />} onPress={() => onFilters({ ...filters, keyword: keyword.trim() || undefined, page: 1 })} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>{supportTicketStatusOptions.map(option => <TicketChoice key={option.value} title={option.label ?? option.value} selected={(filters.status ?? "") === option.value} onPress={() => onFilters({ ...filters, status: option.value || undefined, page: 1 })} />)}</ScrollView>
-        <AppText style={styles.muted}>Nhóm yêu cầu</AppText><View style={styles.row}>{[{ value: "", label: "Tất cả nhóm" }, ...supportTicketCategoryOptions].map(option => <TicketChoice key={option.value} title={option.label} selected={(filters.category ?? "") === option.value} onPress={() => onFilters({ ...filters, category: option.value || undefined, page: 1 })} />)}</View>
-        {Boolean(filters.status || filters.category || filters.keyword) && <TicketButton title="Xóa bộ lọc" secondary onPress={() => { setKeyword(""); onFilters({ bookingId: filters.bookingId, page: 1, pageSize: 10 }); }} />}
+  return <View style={styles.screen}>
+    <TicketHeader compact title="Yêu cầu hỗ trợ" subtitle={filters.bookingId ? subtitle : undefined}
+      onBack={onBack} onRefresh={query.refresh} busy={query.refreshing} />
+    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.listContent}
+      refreshControl={<RefreshControl refreshing={query.refreshing && !query.loading} onRefresh={query.refresh} tintColor={theme.brand} />}>
+      <View style={styles.intro}>
+        <View style={styles.introIcon}><Headphones size={19} color={theme.brand} /></View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <AppText style={styles.introTitle}>Bạn cần hỗ trợ?</AppText>
+          <AppText style={styles.introText}>Gửi yêu cầu và theo dõi phản hồi.</AppText>
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Tạo yêu cầu hỗ trợ mới"
+          onPress={onCreate} style={styles.createButton}>
+          <Plus size={16} color={theme.onBrand} />
+          <AppText style={styles.createText}>Tạo mới</AppText>
+        </Pressable>
+      </View>
+      <View style={styles.filterCard}>
+        <TicketSearchField value={keyword} onChangeText={setKeyword}
+          placeholder="Mã hoặc tiêu đề yêu cầu…" label="Tìm theo mã hoặc tiêu đề yêu cầu"
+          onSearch={() => onFilters({ ...filters, keyword: keyword.trim() || undefined, page: 1 })} />
+        <View>
+          <AppText style={styles.filterLabel}>Trạng thái</AppText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChips}>
+            {supportTicketStatusOptions.map(option => <TicketChoice compact key={option.value}
+              title={option.label ?? option.value} selected={(filters.status ?? "") === option.value}
+              onPress={() => onFilters({ ...filters, status: option.value || undefined, page: 1 })} />)}
+          </ScrollView>
+        </View>
+        <View>
+          <AppText style={styles.filterLabel}>Nhóm yêu cầu</AppText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChips}>
+            {[{ value: "", label: "Tất cả" }, ...supportTicketCategoryOptions].map(option => <TicketChoice compact
+              key={option.value} title={option.label} selected={(filters.category ?? "") === option.value}
+              onPress={() => onFilters({ ...filters, category: option.value || undefined, page: 1 })} />)}
+          </ScrollView>
+        </View>
+        {Boolean(filters.status || filters.category || filters.keyword) && (
+          <Pressable accessibilityRole="button" accessibilityLabel="Xóa bộ lọc yêu cầu" style={styles.resetLink}
+            onPress={() => { setKeyword(""); onFilters({ bookingId: filters.bookingId, page: 1, pageSize: 10 }); }}>
+            <AppText style={styles.resetText}>Xóa bộ lọc</AppText>
+          </Pressable>
+        )}
       </View>
       {query.loading && <View style={styles.empty}><ActivityIndicator size="large" color={theme.brand} /><AppText style={styles.muted}>Đang tải yêu cầu…</AppText></View>}
       {query.error && <TicketNotice message={query.error} onRetry={query.refresh} />}

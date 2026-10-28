@@ -20,11 +20,36 @@ export function notificationReference(dataJson?: string | null) {
     const data: unknown = JSON.parse(dataJson);
     if (!data || typeof data !== "object" || Array.isArray(data)) return null;
     const record = data as Record<string, unknown>;
-    for (const [key, label] of [["bookingNumber", "Mã booking"], ["ticketNumber", "Mã hỗ trợ"], ["bookingId", "Booking"], ["ticketId", "Yêu cầu hỗ trợ"]]) {
+    for (const [key, label] of [["bookingCode", "Mã đặt xe"], ["bookingNumber", "Mã booking"], ["ticketNumber", "Mã hỗ trợ"], ["bookingId", "Booking"], ["ticketId", "Yêu cầu hỗ trợ"]]) {
       if (!key || !label) continue;
       const value = record[key];
       if ((typeof value === "string" && value.trim()) || (typeof value === "number" && Number.isFinite(value))) return `${label}: ${value}`;
     }
   } catch { /* Older notifications may contain non-JSON metadata. */ }
   return null;
+}
+
+export function notificationDayGroup(value: string, now = Date.now()) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Trước đó";
+  const day = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  const key = day.format(date);
+  if (key === day.format(new Date(now))) return "Hôm nay";
+  if (key === day.format(new Date(now - 86_400_000))) return "Hôm qua";
+  return "Trước đó";
+}
+
+export function notificationRelativeTime(value: string, now = Date.now()) {
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return "";
+  const minutes = Math.floor((now - timestamp) / 60_000);
+  if (minutes >= 0 && minutes < 1) return "Vừa xong";
+  if (minutes >= 1 && minutes < 60) return `${minutes} phút trước`;
+  if (minutes >= 60 && minutes < 1440) return `${Math.floor(minutes / 60)} giờ trước`;
+  return new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit",
+    ...(new Date(timestamp).getUTCFullYear() !== new Date(now).getUTCFullYear() ? { year: "numeric" as const } : {}),
+  }).format(new Date(timestamp));
 }

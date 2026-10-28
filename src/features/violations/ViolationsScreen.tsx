@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, TextInput, View } from "react-native";
-import { CheckCircle2, ChevronLeft, ChevronRight, Flag, Search, Send, ShieldCheck } from "lucide-react-native";
+import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Flag, Send, ShieldCheck } from "lucide-react-native";
 import AppText from "@/components/AppText";
 import { getSessionGeneration } from "@/features/auth/hooks/useAuth";
 import { useTheme } from "@/theme/useTheme";
-import { TicketButton, TicketChoice, TicketHeader, TicketNotice, ticketStyles } from "@/features/supportTickets/TicketUi";
+import { TicketButton, TicketChoice, TicketHeader, TicketSearchField, TicketNotice, ticketStyles } from "@/features/supportTickets/TicketUi";
 import { TicketGallery, TicketImageInput, useTicketImages } from "@/features/supportTickets/TicketAttachments";
 import { useTicketData } from "@/features/supportTickets/useTicketData";
 import { ticketDate } from "@/features/supportTickets/ticketModel";
@@ -31,16 +31,59 @@ function ReportStatus({ status }: { status: ViolationStatus }) {
 
 function ReportList({ query, setQuery, onBack, onOpen }: { query: ViolationQuery; setQuery: (query: ViolationQuery) => void; onBack: () => void; onOpen: (id: string) => void }) {
   const { theme } = useTheme(); const styles = ticketStyles(theme); const [keyword, setKeyword] = useState(query.keyword ?? "");
+  const [showGuide, setShowGuide] = useState(false);
   const loader = useCallback(async (signal: AbortSignal) => { const [page, reasons] = await Promise.all([getMyViolations(query, signal), getViolationReasons(signal)]); return { page, reasons }; }, [query]);
   const result = useTicketData(loader, false, queryOptions); const page = result.data?.page; const totalPages = page ? Math.ceil(page.totalCount / page.pageSize) : 0;
   useEffect(() => { if (page && totalPages > 0 && query.page > totalPages) setQuery({ ...query, page: totalPages }); }, [page, totalPages, query, setQuery]);
-  return <View style={styles.screen}><TicketHeader title="Báo cáo vi phạm" subtitle="Các phản ánh bạn đã gửi" onBack={onBack} onRefresh={result.refresh} refreshLabel="Làm mới báo cáo" busy={result.refreshing} />
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={result.refreshing && !result.loading} onRefresh={result.refresh} tintColor={theme.brand} />}>
-      <View style={[styles.card, { backgroundColor: theme.brandSoft, borderColor: theme.brandBorder }]}><ShieldCheck size={29} color={theme.brand} /><AppText display style={styles.title}>Cùng giữ MoveVN an toàn</AppText><AppText style={styles.body}>Gửi báo cáo từ hồ sơ người dùng, chi tiết xe hoặc booking bạn tham gia. Đội ngũ kiểm duyệt sẽ xác minh trước khi kết luận.</AppText><AppText style={styles.muted}>Báo cáo vi phạm không tự hoàn tiền hoặc thay thế hồ sơ tranh chấp. Nếu cần hỗ trợ sử dụng app, hãy gửi ticket hỗ trợ.</AppText></View>
-      <View style={styles.card}><AppText style={styles.label}>Tìm đối tượng đã báo cáo</AppText><TextInput accessibilityLabel="Tìm báo cáo theo tên đối tượng" value={keyword} onChangeText={setKeyword} maxLength={100} placeholder="Tên tài khoản, biển số hoặc mã booking" placeholderTextColor={theme.placeholder} style={styles.input} returnKeyType="search" onSubmitEditing={() => setQuery({ ...query, keyword: keyword.trim() || undefined, page: 1 })} /><TicketButton secondary title="Tìm báo cáo" icon={<Search color={theme.brand} size={18} />} onPress={() => setQuery({ ...query, keyword: keyword.trim() || undefined, page: 1 })} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>{[{ value: "", label: "Tất cả trạng thái" }, ...Object.entries(statusLabels).map(([value, label]) => ({ value, label }))].map(item => <TicketChoice key={item.value} title={item.label} selected={(query.status ?? "") === item.value} onPress={() => setQuery({ ...query, status: item.value || undefined, page: 1 })} />)}</ScrollView>
-        <View style={styles.row}>{[{ value: "", label: "Tất cả đối tượng" }, ...Object.entries(targetLabels).map(([value, label]) => ({ value, label }))].map(item => <TicketChoice key={item.value} title={item.label} selected={(query.targetType ?? "") === item.value} onPress={() => setQuery({ ...query, targetType: item.value || undefined, page: 1 })} />)}</View>
-        {Boolean(query.status || query.targetType || query.keyword) && <TicketButton secondary title="Xóa bộ lọc báo cáo" onPress={() => { setKeyword(""); setQuery({ page: 1, pageSize: 10 }); }} />}
+  return <View style={styles.screen}>
+    <TicketHeader compact title="Báo cáo vi phạm" onBack={onBack}
+      onRefresh={result.refresh} refreshLabel="Làm mới báo cáo" busy={result.refreshing} />
+    <ScrollView contentContainerStyle={styles.listContent} keyboardShouldPersistTaps="handled"
+      refreshControl={<RefreshControl refreshing={result.refreshing && !result.loading} onRefresh={result.refresh} tintColor={theme.brand} />}>
+      <View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Hướng dẫn gửi báo cáo vi phạm"
+          accessibilityState={{ expanded: showGuide }} onPress={() => setShowGuide(value => !value)}
+          style={styles.intro}>
+          <View style={styles.introIcon}><ShieldCheck size={19} color={theme.brand} /></View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <AppText style={styles.introTitle}>Cách gửi báo cáo</AppText>
+            <AppText style={styles.introText}>Từ hồ sơ, chi tiết xe hoặc đơn thuê.</AppText>
+          </View>
+          <ChevronDown size={18} color={theme.brand} style={{ transform: [{ rotate: showGuide ? "180deg" : "0deg" }] }} />
+        </Pressable>
+        {showGuide ? <View style={{ paddingHorizontal: 13, paddingTop: 10, gap: 6 }}>
+          <AppText style={styles.muted}>Mọi phản ánh đều được xác minh trước khi kết luận.</AppText>
+          <AppText style={styles.muted}>Báo cáo vi phạm không tự hoàn tiền hoặc thay thế hồ sơ tranh chấp. Nếu cần trợ giúp sử dụng ứng dụng, hãy gửi yêu cầu hỗ trợ.</AppText>
+        </View> : null}
+      </View>
+      <View style={styles.filterCard}>
+        <TicketSearchField value={keyword} onChangeText={setKeyword}
+          placeholder="Tên, biển số hoặc mã đặt xe…" label="Tìm báo cáo theo tên, biển số hoặc mã đặt xe"
+          onSearch={() => setQuery({ ...query, keyword: keyword.trim() || undefined, page: 1 })} />
+        <View>
+          <AppText style={styles.filterLabel}>Trạng thái</AppText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChips}>
+            {[{ value: "", label: "Tất cả" }, ...Object.entries(statusLabels).map(([value, label]) => ({ value, label }))].map(item => (
+              <TicketChoice compact key={item.value} title={item.label} selected={(query.status ?? "") === item.value}
+                onPress={() => setQuery({ ...query, status: item.value || undefined, page: 1 })} />
+            ))}
+          </ScrollView>
+        </View>
+        <View>
+          <AppText style={styles.filterLabel}>Đối tượng</AppText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChips}>
+            {[{ value: "", label: "Tất cả" }, ...Object.entries(targetLabels).map(([value, label]) => ({ value, label: value === "Booking" ? "Đơn thuê" : label }))].map(item => (
+              <TicketChoice compact key={item.value} title={item.label} selected={(query.targetType ?? "") === item.value}
+                onPress={() => setQuery({ ...query, targetType: item.value || undefined, page: 1 })} />
+            ))}
+          </ScrollView>
+        </View>
+        {Boolean(query.status || query.targetType || query.keyword) && (
+          <Pressable accessibilityRole="button" accessibilityLabel="Xóa bộ lọc báo cáo" style={styles.resetLink}
+            onPress={() => { setKeyword(""); setQuery({ page: 1, pageSize: 10 }); }}>
+            <AppText style={styles.resetText}>Xóa bộ lọc</AppText>
+          </Pressable>
+        )}
       </View>
       {result.loading && <View style={styles.empty}><ActivityIndicator color={theme.brand} size="large" /><AppText style={styles.muted}>Đang tải báo cáo…</AppText></View>}
       {result.error && <TicketNotice message={result.error} onRetry={result.refresh} />}

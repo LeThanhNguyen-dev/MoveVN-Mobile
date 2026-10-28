@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Pressable, View } from "react-native"
+import { ActivityIndicator, Image, Pressable, useWindowDimensions, View } from "react-native"
 import AppText from "@/components/AppText";
 import { useTheme } from "@/theme/useTheme";
 import { getChatImageData } from "../chatService";
@@ -21,6 +21,12 @@ export default function ChatImage({
   full?: boolean;
 }) {
   const { theme } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const ratio = Number.isFinite(attachment.width) && Number.isFinite(attachment.height)
+    && attachment.width > 0 && attachment.height > 0
+    ? attachment.width / attachment.height : 4 / 3;
+  // Keep the photo's actual proportions rather than a fixed box with empty side bands.
+  const thumbnailWidth = Math.min(232, screenWidth * 0.65, 320 * ratio);
   const [uri, setUri] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -48,10 +54,10 @@ export default function ChatImage({
         else if (uri) onOpen?.();
       }}
       style={{
-        width: full ? "100%" : 180,
-        height: full ? "85%" : 150,
+        width: full ? "100%" : thumbnailWidth,
+        height: full ? "85%" : thumbnailWidth / ratio,
         maxWidth: "100%",
-        backgroundColor: theme.surfaceAlt,
+        backgroundColor: uri && !error ? "transparent" : theme.surfaceAlt,
         borderRadius: 12,
         justifyContent: "center",
         overflow: "hidden",
