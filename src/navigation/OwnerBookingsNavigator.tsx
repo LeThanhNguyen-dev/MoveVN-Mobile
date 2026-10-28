@@ -24,13 +24,11 @@ const Stack = createNativeStackNavigator<OwnerBookingsStackParamList>();
 
 export default function OwnerBookingsNavigator({
   pendingBookingId,
-  initialStatus,
   onRouteChange,
   onOpenDisputes,
   onOpenUserProfile,
 }: {
   pendingBookingId?: number;
-  initialStatus?: string;
   onRouteChange?: (route: string) => void;
   onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
   onOpenUserProfile?: (userId: number) => void;
@@ -43,7 +41,7 @@ export default function OwnerBookingsNavigator({
       screenListeners={({ route }) => ({ focus: () => onRouteChange?.(route.name) })}
     >
       <Stack.Screen name="OwnerBookingList">
-        {(props) => <OwnerBookingListScreen {...props} initialStatus={initialStatus} onOpenUserProfile={onOpenUserProfile} />}
+        {(props) => <OwnerBookingListScreen {...props} onOpenUserProfile={onOpenUserProfile} />}
       </Stack.Screen>
       <Stack.Screen
         name="OwnerBookingDetail"

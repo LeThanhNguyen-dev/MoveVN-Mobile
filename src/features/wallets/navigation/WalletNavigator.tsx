@@ -1,4 +1,3 @@
-import AppScreenHeader from "@/components/ui/AppScreenHeader";
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
@@ -49,7 +48,18 @@ export default function WalletNavigator({ onBack }: { onBack: () => void }) {
 
   return (
     <View style={styles.screen}>
-      <AppScreenHeader title="Ví của tôi" onBack={onBack} />
+      <View style={styles.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Quay lại"
+          onPress={onBack}
+          style={styles.backButton}
+        >
+          <AppText style={styles.backText}>‹</AppText>
+        </Pressable>
+        <AppText display style={styles.headerTitle}>Ví của tôi</AppText>
+        <View style={styles.backButtonPlaceholder} />
+      </View>
 
       <View style={styles.content}>
         {activeTab === "home" ? (

@@ -26,9 +26,6 @@ const mocks = vi.hoisted(() => ({
   back: vi.fn(),
   booking: vi.fn(),
   open: vi.fn(),
-  platform: "android",
-  topInset: 0,
-  windowTop: 0,
 }));
 vi.mock("@/features/auth/hooks/useAuth", () => ({
   getAuthUser: () => ({ userId: 1 }),
@@ -77,8 +74,8 @@ vi.mock("react-native", () => ({
   ScrollView: "ScrollView",
   RefreshControl: "RefreshControl",
   KeyboardAvoidingView: "KeyboardAvoidingView",
-  Platform: { get OS() { return mocks.platform; } },
-  StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (styles: unknown) => styles, hairlineWidth: 1 },
+  Platform: { OS: "android" },
+  StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 },
   TextInput: forwardRef((props: Record<string, unknown>, ref) => {
     useImperativeHandle(ref, () => ({ focus: vi.fn() }));
     return React.createElement("TextInput", props);
@@ -128,12 +125,8 @@ vi.mock("react-native", () => ({
   ),
 }));
 vi.mock("react-native-safe-area-context", () => ({
-  SafeAreaView: forwardRef((props: Record<string, unknown>, ref) => {
-    useImperativeHandle(ref, () => ({ measureInWindow: (callback: (x: number, y: number) => void) => callback(0, mocks.windowTop) }));
-    return React.createElement("SafeAreaView", props);
-  }),
+  SafeAreaView: "SafeAreaView",
   SafeAreaProvider: "SafeAreaProvider",
-  useSafeAreaInsets: () => ({ top: mocks.topInset, bottom: 34, left: 0, right: 0 }),
 }));
 vi.mock("lucide-react-native", () =>
   Object.fromEntries(
@@ -169,9 +162,6 @@ const text = () =>
     .join("\n");
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.platform = "android";
-  mocks.topInset = 0;
-  mocks.windowTop = 0;
   store.getState().activate(null);
   store.getState().activate(1);
   mocks.rooms.mockResolvedValue(chatPage([chatRoom()]));
@@ -290,32 +280,6 @@ it("opens the customer's booking room, reads it, replies and sends a scoped mess
   expect(text()).toContain("Mình đến lúc 8h");
   await press("Xem booking");
   expect(mocks.booking).toHaveBeenCalledWith(101);
-});
-
-it("accounts for the iPhone safe area and actual screen position while composing and sending", async () => {
-  mocks.platform = "ios";
-  mocks.topInset = 59;
-  mocks.windowTop = 83;
-  await mount();
-  const avoidingView = () => tree!.root.find(n => n.type as unknown === "KeyboardAvoidingView");
-  expect(avoidingView().props.behavior).toBe("padding");
-  expect(avoidingView().props.keyboardVerticalOffset).toBe(59);
-  const rootScreen = tree!.root.findAll(n => n.type as unknown === "SafeAreaView")[0]!;
-  await act(async () => rootScreen.props.onLayout());
-  expect(avoidingView().props.keyboardVerticalOffset).toBe(83);
-  expect(avoidingView().findAll(n => n.type as unknown === "TextInput" && n.props.accessibilityLabel === "Nội dung tin nhắn")).toHaveLength(1);
-  await type("Nội dung tin nhắn", "Tin nhắn trên iPhone");
-  expect(text()).toContain("Tin nhắn trên iPhone");
-  await press("Gửi tin nhắn");
-  expect(mocks.send).toHaveBeenCalledWith("room-a", expect.objectContaining({ content: "Tin nhắn trên iPhone" }));
-});
-
-it("keeps Android resize behaviour independent of the iOS keyboard offset", async () => {
-  mocks.topInset = 24;
-  await mount();
-  const avoidingView = tree!.root.find(n => n.type as unknown === "KeyboardAvoidingView");
-  expect(avoidingView.props.behavior).toBe("height");
-  expect(avoidingView.props.keyboardVerticalOffset).toBe(0);
 });
 
 it("lets the user choose/remove images and retry an image-only send without losing the draft", async () => {

@@ -189,7 +189,7 @@ const createStyles = (theme: Theme) =>
     verifyButton: {
       minHeight: 48,
       borderRadius: 14,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       alignItems: "center",
       justifyContent: "center",
     },

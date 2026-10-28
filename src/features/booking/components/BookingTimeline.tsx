@@ -1,7 +1,6 @@
-import Text from "@/components/AppText";
 import BookingDisclosure from "./BookingDisclosure";
 import { useMemo } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { BookingStatusHistoryDto } from "@/features/booking/types";
@@ -17,7 +16,7 @@ export default function BookingTimeline({ history }: { history: BookingStatusHis
       {history.map((h, i) => (
         <View key={`${h.createdAt}-${i}`} style={styles.row}>
           <View style={styles.markerColumn}>
-            <View style={styles.dotOuter}><View style={[styles.dot, { backgroundColor: theme.brandSolid }]} /></View>
+            <View style={styles.dotOuter}><View style={[styles.dot, { backgroundColor: theme.brand }]} /></View>
             {i < history.length - 1 ? <View style={styles.connector} /> : null}
           </View>
           <View style={styles.info}>

@@ -1,4 +1,3 @@
-import AppScreenHeader from "@/components/ui/AppScreenHeader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ImageSource } from "expo-image";
 import { ArrowLeft, ChevronDown } from "lucide-react-native";
@@ -154,7 +153,15 @@ export default function PolicyDetailScreen({
 
   return (
     <View style={styles.content}>
-      <AppScreenHeader title={groupLabel || "Điều khoản & Chính sách"} onBack={onBack} />
+      <View style={styles.topBar}>
+        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+          <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
+        </Pressable>
+        <AppText display numberOfLines={1} style={styles.topBarTitle}>
+          {groupLabel || "Điều khoản & Chính sách"}
+        </AppText>
+        <View style={styles.topBarSpacer} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {page === undefined ? (
@@ -344,7 +351,7 @@ const createStyles = (theme: Theme) =>
       gap: 8,
     },
     headingRow: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 8 },
-    headingAccent: { width: 3, alignSelf: "stretch", borderRadius: 2, backgroundColor: theme.brandSolid },
+    headingAccent: { width: 3, alignSelf: "stretch", borderRadius: 2, backgroundColor: theme.brand },
     heading: { flex: 1, minWidth: 0, color: theme.text, fontSize: 15, lineHeight: 21, fontWeight: "800" },
     chevronOpen: { transform: [{ rotate: "180deg" }] },
     accordionItem: { gap: 8 },

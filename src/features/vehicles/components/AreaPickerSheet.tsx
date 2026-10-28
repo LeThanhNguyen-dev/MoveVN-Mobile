@@ -316,7 +316,7 @@ const createStyles = (theme: Theme) =>
     stepRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 },
     stepDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.border },
     stepLine: { width: 28, height: 2, borderRadius: 1, backgroundColor: theme.border },
-    stepDone: { backgroundColor: theme.brandSolid },
+    stepDone: { backgroundColor: theme.brand },
     stepText: { color: theme.muted, fontSize: 11, fontWeight: "600" },
     searchBox: {
       flexDirection: "row",
@@ -371,7 +371,7 @@ const createStyles = (theme: Theme) =>
       height: 44,
       paddingHorizontal: 22,
       borderRadius: 12,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       alignItems: "center",
       justifyContent: "center",
     },

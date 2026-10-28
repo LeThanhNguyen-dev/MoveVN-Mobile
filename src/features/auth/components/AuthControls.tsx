@@ -4,7 +4,6 @@ import AppText from "@/components/AppText";
 import { ArrowRight, CheckCircle2, CircleAlert, Eye, EyeOff } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import type { Theme } from "@/theme/tokens";
-import { fontFamilyForWeight } from "@/theme/typography";
 
 export function AuthButton({ title, onPress, disabled, busy, variant = "primary", icon }: { title: string; onPress: () => void; disabled?: boolean; busy?: boolean; variant?: "primary" | "outline"; icon?: ReactNode }) {
   const { theme } = useTheme();
@@ -12,9 +11,9 @@ export function AuthButton({ title, onPress, disabled, busy, variant = "primary"
   const inactive = disabled || busy;
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled: inactive, busy }} disabled={inactive} onPress={onPress}
     style={({ pressed }) => [styles.button, variant === "outline" && styles.buttonOutline, (inactive || pressed) && styles.dim]}>
-    {busy ? <ActivityIndicator color={variant === "primary" ? theme.onBrand : theme.brand} /> : icon}
+    {busy ? <ActivityIndicator color={variant === "primary" ? theme.surface : theme.brand} /> : icon}
     <AppText style={[styles.buttonLabel, variant === "outline" && styles.buttonLabelAlt]}>{title}</AppText>
-    {variant === "primary" && !busy ? <ArrowRight size={18} color={theme.onBrand} /> : null}
+    {variant === "primary" && !busy ? <ArrowRight size={18} color={theme.surface} /> : null}
   </Pressable>;
 }
 
@@ -27,7 +26,7 @@ export function AuthField({ label, error, password, icon, ...props }: TextInputP
     <View style={[styles.inputRow, Boolean(error) && styles.invalid]}>
       <View style={styles.leadingIcon}>{icon}</View>
       <TextInput {...props} accessibilityLabel={label} accessibilityHint={error} autoCapitalize="none" autoCorrect={false}
-        placeholderTextColor={theme.placeholder} selectionColor={theme.brand} secureTextEntry={password && !visible} style={[styles.input, { fontFamily: fontFamilyForWeight("500") }]} />
+        placeholderTextColor={theme.placeholder} secureTextEntry={password && !visible} style={styles.input} />
       {password ? <Pressable accessibilityRole="button" accessibilityLabel={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"} disabled={props.editable === false}
         hitSlop={8} onPress={() => setVisible((current) => !current)} style={styles.trailingIcon}>
         {visible ? <EyeOff size={19} color={theme.muted} /> : <Eye size={19} color={theme.muted} />}
@@ -68,6 +67,6 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   leadingIcon: { width: 47, alignItems: "center", justifyContent: "center" }, trailingIcon: { width: 46, height: 50, alignItems: "center", justifyContent: "center" },
   input: { flex: 1, minWidth: 0, minHeight: 51, color: theme.text, fontSize: 16, paddingRight: 10, paddingVertical: 12 }, error: { color: theme.error, fontSize: 13, lineHeight: 19, fontWeight: "500" },
   notice: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderWidth: 1, borderColor: theme.infoBorder, borderRadius: 12, backgroundColor: theme.infoSoft, paddingHorizontal: 13, paddingVertical: 12 }, noticeError: { backgroundColor: theme.errorSoft, borderColor: theme.errorBorder }, noticeText: { flex: 1, color: theme.info, fontSize: 13, lineHeight: 20, fontWeight: "600" }, noticeErrorText: { color: theme.error },
-  button: { minHeight: 52, borderRadius: 12, backgroundColor: theme.brandSolid, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 18, shadowColor: theme.brand, shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 3 }, buttonOutline: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, shadowOpacity: 0, elevation: 0 }, buttonLabel: { color: theme.onBrand, fontSize: 16, lineHeight: 22, fontWeight: "700", textAlign: "center" }, buttonLabelAlt: { color: theme.brand }, dim: { opacity: 0.52 },
+  button: { minHeight: 52, borderRadius: 12, backgroundColor: theme.brand, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 18, shadowColor: theme.brand, shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 3 }, buttonOutline: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, shadowOpacity: 0, elevation: 0 }, buttonLabel: { color: theme.surface, fontSize: 16, lineHeight: 22, fontWeight: "700", textAlign: "center" }, buttonLabelAlt: { color: theme.brand }, dim: { opacity: 0.52 },
   otpRow: { flexDirection: "row", justifyContent: "space-between", gap: 7, position: "relative" }, otpCell: { flex: 1, height: 52, borderWidth: 1, borderColor: theme.border, borderRadius: 12, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" }, otpFilled: { borderColor: theme.brand, backgroundColor: theme.brandSoft }, otpInvalid: { borderColor: theme.error }, otpText: { color: theme.text, fontSize: 20, lineHeight: 24, fontWeight: "800" }, otpNativeInput: { position: "absolute", width: "100%", height: "100%", opacity: 0.01, color: "transparent" },
 });

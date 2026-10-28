@@ -1,6 +1,5 @@
-import Text from "@/components/AppText";
 import { useRef, useState } from "react";
-import { Image, Modal, ScrollView, View } from "react-native";
+import { Image, Modal, ScrollView, Text, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { apiClient, getApiErrorMessage } from "@/services/apiClient";
 import type { ApiResponse } from "@/features/auth/types";

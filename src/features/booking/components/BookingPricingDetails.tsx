@@ -1,6 +1,5 @@
-import Text from "@/components/AppText";
 import BookingDisclosure from "./BookingDisclosure";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import type { BookingResponse } from "../types";
 import { formatMoney } from "../utils/format";
 import { useTheme } from "@/theme/useTheme";

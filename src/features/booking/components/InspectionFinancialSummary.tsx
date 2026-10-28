@@ -1,5 +1,4 @@
-import Text from "@/components/AppText";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import { formatMoney } from "../bookingDisplay";
 import { inspectionBalance } from "../bookingSettlement";

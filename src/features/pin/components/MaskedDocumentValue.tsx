@@ -269,7 +269,7 @@ const createStyles = (theme: Theme, align: "left" | "right") =>
     primaryButton: {
       minHeight: 44,
       borderRadius: 12,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       alignItems: "center",
       justifyContent: "center",
       paddingHorizontal: 18,

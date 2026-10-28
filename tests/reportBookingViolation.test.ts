@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 const mocks = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), camera: vi.fn(), library: vi.fn() }));
-vi.mock("react-native", () => ({ StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (s: unknown) => s }, Image: "Image", Modal: "Modal", ScrollView: "ScrollView", Text: "Text", View: "View" }));
+vi.mock("react-native", () => ({ Image: "Image", Modal: "Modal", ScrollView: "ScrollView", Text: "Text", View: "View" }));
 vi.mock("expo-image-picker", () => ({ requestCameraPermissionsAsync: async () => ({ granted: true }), launchCameraAsync: mocks.camera, launchImageLibraryAsync: mocks.library }));
 vi.mock("@/services/apiClient", () => ({ apiClient: { get: mocks.get, post: mocks.post }, getApiErrorMessage: (_err: unknown, fallback: string) => fallback }));
 vi.mock("@/theme/useTheme", () => ({ useTheme: () => ({ theme: {} }) }));

@@ -3,7 +3,7 @@ import { act, create } from "react-test-renderer";
 import { expect, it, vi } from "vitest";
 import { themes } from "@/theme/tokens";
 vi.stubGlobal("React", React); vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
-vi.mock("react-native", () => ({ Modal: "Modal", ScrollView: "ScrollView", Text: "Text", View: "View", Pressable: "Pressable", ActivityIndicator: "ActivityIndicator", TextInput: "TextInput", StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (s: unknown) => s } }));
+vi.mock("react-native", () => ({ Modal: "Modal", ScrollView: "ScrollView", Text: "Text", View: "View", Pressable: "Pressable", ActivityIndicator: "ActivityIndicator", TextInput: "TextInput", StyleSheet: { create: (s: unknown) => s } }));
 vi.mock("lucide-react-native", () => ({ ArrowLeft: "ArrowLeft" }));
 vi.mock("@/theme/useTheme", () => ({ useTheme: () => ({ theme: themes.light }) }));
 vi.mock("@/features/booking/bookingService", () => ({ settleCheckoutSurcharges: vi.fn() }));

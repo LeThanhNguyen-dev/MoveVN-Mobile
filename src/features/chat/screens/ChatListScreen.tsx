@@ -1,7 +1,3 @@
-import AppScreenHeader from "@/components/ui/AppScreenHeader";
-import AppAvatar from "@/components/ui/AppAvatar";
-import AppEmptyState from "@/components/ui/AppEmptyState";
-import AppInput from "@/components/ui/AppInput";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -43,8 +39,36 @@ export default function ChatListScreen({
   );
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <AppScreenHeader title="Tin nhắn" subtitle="Trao đổi theo từng chuyến thuê" actions={<NotificationBell />} onRefresh={() => { void refreshChatRooms(); }} refreshLabel="Làm mới danh sách chat" busy={state.roomsLoading} />
-      <AppInput
+      <View
+        style={{
+          padding: 18,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <AppText style={{ color: theme.text, fontWeight: "800", fontSize: 25 }}>
+            Tin nhắn
+          </AppText>
+          <AppText style={{ color: theme.muted, marginTop: 4 }}>
+            Trao đổi theo từng booking
+          </AppText>
+        </View>
+        <NotificationBell />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Làm mới danh sách chat"
+          disabled={state.roomsLoading}
+          onPress={() => {
+            void refreshChatRooms();
+          }}
+          style={{ padding: 10 }}
+        >
+          <RefreshCw size={21} color={theme.brand} />
+        </Pressable>
+      </View>
+      <TextInput
         accessibilityLabel="Tìm booking hoặc người trò chuyện"
         value={query}
         onChangeText={setQuery}
@@ -91,9 +115,15 @@ export default function ChatListScreen({
         }
         ListEmptyComponent={
           !state.roomsLoading && !state.roomsError ? (
-            <AppEmptyState icon={<MessageSquare size={28} color={theme.brand} />}
-              title={query ? "Không tìm thấy booking" : "Chưa có cuộc trò chuyện"}
-              description="Mở chi tiết chuyến đi hoặc đơn thuê và chọn Nhắn tin để bắt đầu." />
+            <View style={{ alignItems: "center", padding: 36, gap: 12 }}>
+              <MessageSquare size={36} color={theme.muted} />
+              <AppText style={{ color: theme.text, fontWeight: "700" }}>
+                {query ? "Không tìm thấy booking" : "Chưa có cuộc trò chuyện"}
+              </AppText>
+              <AppText style={{ color: theme.muted, textAlign: "center" }}>
+                Mở chi tiết chuyến đi hoặc đơn thuê và chọn Nhắn tin để bắt đầu.
+              </AppText>
+            </View>
           ) : null
         }
         renderItem={({ item: room }) => {
@@ -118,7 +148,18 @@ export default function ChatListScreen({
                 borderColor: theme.border,
               }}
             >
-              <AppAvatar name={person.name} uri={room.participants.find(p => Number(p.userId) === Number(person.id))?.avatarUrl} online={person.isOnline} size={48} />
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  backgroundColor: theme.brandSoft,
+                  borderRadius: 22,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <MessageSquare size={22} color={theme.brand} />
+              </View>
               <View style={{ flex: 1, gap: 4 }}>
                 <AppText
                   numberOfLines={1}
@@ -150,7 +191,7 @@ export default function ChatListScreen({
                 {room.unreadCount > 0 ? (
                   <View
                     style={{
-                      backgroundColor: theme.brandSolid,
+                      backgroundColor: theme.brand,
                       borderRadius: 12,
                       minWidth: 22,
                       padding: 4,

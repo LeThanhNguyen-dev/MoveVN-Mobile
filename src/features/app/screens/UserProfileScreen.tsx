@@ -1,5 +1,3 @@
-import AppScreenHeader from "@/components/ui/AppScreenHeader";
-import AppInput from "@/components/ui/AppInput";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -177,7 +175,13 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 
   return (
     <View style={styles.content}>
-      <AppScreenHeader title="Thông tin tài khoản" onBack={onBack} />
+      <View style={styles.topBar}>
+        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+          <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
+        </Pressable>
+        <AppText display style={styles.topBarTitle}>Thông tin tài khoản</AppText>
+        <View style={styles.topBarSpacer} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.profileCard}>
@@ -432,7 +436,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 
               <View style={styles.field}>
                 <AppText style={styles.fieldLabel}>Họ và tên</AppText>
-                <AppInput
+                <TextInput
                   autoCapitalize="words"
                   editable={!isSaving}
                   placeholder="Nhập họ và tên"
@@ -448,7 +452,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 
               <View style={styles.field}>
                 <AppText style={styles.fieldLabel}>Số điện thoại</AppText>
-                <AppInput
+                <TextInput
                   ref={phoneInputRef}
                   editable={!isSaving}
                   keyboardType="phone-pad"
@@ -602,7 +606,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: theme.brandSolid,
+    backgroundColor: theme.brand,
     borderWidth: 2,
     borderColor: theme.onBrand,
     alignItems: "center",
@@ -835,7 +839,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   sheetSaveButton: {
     minHeight: 48,
     borderRadius: 24,
-    backgroundColor: theme.brandSolid,
+    backgroundColor: theme.brand,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 18,

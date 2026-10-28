@@ -30,7 +30,7 @@ export default function AvailabilityAlertPanel({ vehicleId, ownerId, startDate, 
       <AppText style={{ color: theme.text, fontSize: 13 }}>Chọn ngày giờ mong muốn, kể cả khi xe bận. MoveVN báo trong app một lần khi cả khoảng thuê trống. Thông báo không giữ chỗ.</AppText>
       <Pressable accessibilityRole="button" onPress={() => setPicker(true)} style={button}><AppText style={{ color: theme.text }}>{formatPeriodSummary(start, end)}</AppText><AppText style={{ color: theme.brand, fontSize: 12 }}>Chạm để chọn lịch · Giờ Việt Nam</AppText></Pressable>
       {error ? <AppText accessibilityRole="alert" style={{ color: theme.danger }}>{error}</AppText> : null}
-      {saved ? <AppText accessibilityRole="alert" style={{ color: theme.success }}>Đã đăng ký theo dõi khoảng thuê này.</AppText> : <Pressable accessibilityRole="button" disabled={busy || !start || !end} style={[button, { backgroundColor: theme.brandSolid, opacity: busy || !start || !end ? 0.5 : 1 }]} onPress={async () => {
+      {saved ? <AppText accessibilityRole="alert" style={{ color: theme.success }}>Đã đăng ký theo dõi khoảng thuê này.</AppText> : <Pressable accessibilityRole="button" disabled={busy || !start || !end} style={[button, { backgroundColor: theme.brand, opacity: busy || !start || !end ? 0.5 : 1 }]} onPress={async () => {
         const validation = alertPeriodError(start, end);
         if (validation) { setError(validation); return; }
         const expectedVersion = version.current;

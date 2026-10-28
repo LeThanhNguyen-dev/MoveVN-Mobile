@@ -18,16 +18,8 @@ function PulseBlock({
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 750,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 0.45,
-          duration: 750,
-          useNativeDriver: true,
-        }),
+        Animated.timing(opacity, { toValue: 1, duration: 750, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.45, duration: 750, useNativeDriver: true }),
       ]),
     );
     anim.start();
@@ -47,28 +39,24 @@ function PulseBlock({
   );
 }
 
-/** Match the compact booking card to avoid a large jump after loading. */
+/**
+ * Skeleton cho BookingCard ngang (ảnh 96 + info).
+ * Cao ~140px để khớp card thật, 1 màn thoáng ~4 card.
+ */
 function BookingCardSkeleton() {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.card}>
-      <View style={styles.row}>
-        <PulseBlock width="40%" height={11} radius={6} />
-        <PulseBlock width="30%" height={23} radius={12} />
-      </View>
-      <View style={styles.row}>
-        <View style={styles.image} />
-        <View style={styles.info}>
-          <PulseBlock width="85%" height={15} radius={6} />
-          <PulseBlock width="95%" height={11} radius={6} />
-          <PulseBlock width="90%" height={11} radius={6} />
-        </View>
-      </View>
-      <PulseBlock width="85%" height={10} radius={5} />
-      <View style={styles.row}>
-        <PulseBlock width="32%" height={25} radius={6} />
-        <PulseBlock width="25%" height={20} radius={6} />
+      <View style={styles.image} />
+      <View style={styles.info}>
+        <PulseBlock width="60%" height={12} radius={6} />
+        <PulseBlock width="90%" height={16} radius={6} />
+        <PulseBlock width="70%" height={12} radius={6} />
+        <PulseBlock width="85%" height={13} radius={6} />
+        <PulseBlock width="80%" height={13} radius={6} />
+        <PulseBlock width="75%" height={13} radius={6} />
+        <PulseBlock width="55%" height={16} radius={8} />
       </View>
     </View>
   );
@@ -79,24 +67,14 @@ export default memo(BookingCardSkeleton);
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     card: {
-      gap: 10,
+      flexDirection: "row",
+      gap: 12,
       borderRadius: 18,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.border,
       backgroundColor: theme.surface,
-      padding: 12,
+      padding: 16,
     },
-    row: {
-      flexDirection: "row",
-      gap: 12,
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    image: {
-      width: 64,
-      height: 68,
-      borderRadius: 12,
-      backgroundColor: theme.surfaceAlt,
-    },
-    info: { flex: 1, gap: 9, justifyContent: "center" },
+    image: { width: 88, height: 100, borderRadius: 14, backgroundColor: theme.surfaceAlt },
+    info: { flex: 1, gap: 10, justifyContent: "center" },
   });

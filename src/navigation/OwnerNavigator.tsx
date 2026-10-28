@@ -21,9 +21,9 @@ import { useTheme } from "@/theme/useTheme";
 type OwnerTabKey = "vehicles" | "bookings" | "overview" | "messages" | "account";
 
 const ownerTabs: MobileTabItem<OwnerTabKey>[] = [
-  { key: "overview", label: "Tổng quan", icon: LayoutDashboard, prominent: true },
   { key: "vehicles", label: "Xe của tôi", icon: CarFront },
   { key: "bookings", label: "Đơn thuê", icon: CalendarCheck },
+  { key: "overview", label: "Tổng quan", icon: LayoutDashboard, prominent: true },
   { key: "messages", label: "Tin nhắn", icon: MessageSquare },
   { key: "account", label: "Tài khoản", icon: UserRound },
 ];
@@ -35,16 +35,12 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const [chatRoute, setChatRoute] = useState("ChatList");
   const [bookingRoute, setBookingRoute] = useState("OwnerBookingList");
-  const [bookingStatus, setBookingStatus] = useState<string | undefined>();
-  const [bookingRequest, setBookingRequest] = useState(0);
-  const [createVehicle, setCreateVehicle] = useState(false);
   const [pushBooking, setPushBooking] = useState<{ bookingId: number; requestId: string } | null>(null);
   const pendingPush = usePushNavigation(state => state.pending);
   useEffect(() => {
     if (!pendingPush || pendingPush.userId !== user.userId || pendingPush.roleTarget !== "Owner") return;
     setShowProfile(false); setShowWallet(false); setProfileUserId(null);
     setPushBooking(pendingPush);
-    setBookingStatus(undefined);
     setActiveTab("bookings");
     usePushNavigation.getState().clear();
   }, [pendingPush, user.userId]);
@@ -96,26 +92,17 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
         <>
           <View style={styles.screen}>
             {activeTab === "overview" ? (
-              <OwnerOverviewScreen key={user.userId} onAvatarPress={() => setShowProfile(true)} user={user}
-                onAddVehicle={() => { setCreateVehicle(true); setActiveTab("vehicles"); }}
-                onVehicles={() => { setCreateVehicle(false); setActiveTab("vehicles"); }}
-                onBookings={(status, bookingId) => {
-                  setBookingStatus(status); setBookingRequest(value => value + 1);
-                  setPushBooking(bookingId != null ? { bookingId, requestId: `overview-${Date.now()}` } : null);
-                  setBookingRoute(bookingId != null ? "OwnerBookingDetail" : "OwnerBookingList");
-                  setActiveTab("bookings");
-                }} />
+              <OwnerOverviewScreen onAvatarPress={() => setShowProfile(true)} user={user} />
             ) : activeTab === "bookings" ? (
               <OwnerBookingsNavigator
-                key={pushBooking?.requestId ?? `bookings-${bookingRequest}`}
-                initialStatus={bookingStatus}
+                key={pushBooking?.requestId ?? "bookings"}
                 pendingBookingId={pushBooking?.bookingId}
                 onRouteChange={setBookingRoute}
                 onOpenDisputes={openDisputes}
                 onOpenUserProfile={openUserProfile}
               />
             ) : activeTab === "vehicles" ? (
-              <OwnerVehiclesScreen initialAdd={createVehicle} />
+              <OwnerVehiclesScreen />
             ) : activeTab === "messages" ? (
               <ChatNavigator owner onRouteChange={setChatRoute} onOpenUserProfile={openUserProfile} />
             ) : (
@@ -130,7 +117,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
               />
             )}
           </View>
-          {(activeTab !== "messages" || chatRoute === "ChatList") && (activeTab !== "bookings" || bookingRoute === "OwnerBookingList") && !disputesVisible ? <MobileBottomBar activeKey={activeTab} items={ownerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={tab => { setCreateVehicle(false); setActiveTab(tab); }} /> : null}
+          {(activeTab !== "messages" || chatRoute === "ChatList") && (activeTab !== "bookings" || bookingRoute === "OwnerBookingList") && !disputesVisible ? <MobileBottomBar activeKey={activeTab} items={ownerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} /> : null}
           {/* ChatbotAI (không booking) cho chủ xe */}
           {!(activeTab === "bookings" && bookingRoute === "OwnerBookingHandover") && <AssistantFab />}
         </>

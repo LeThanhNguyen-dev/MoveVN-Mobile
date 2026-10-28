@@ -5,8 +5,8 @@
  */
 
 export const BODY_FAMILY: Record<string, string> = {
-  "100": "BeVietnamPro_300Light",
-  "200": "BeVietnamPro_300Light",
+  "100": "BeVietnamPro_100Thin",
+  "200": "BeVietnamPro_200ExtraLight",
   "300": "BeVietnamPro_300Light",
   "400": "BeVietnamPro_400Regular",
   "500": "BeVietnamPro_500Medium",
@@ -19,9 +19,9 @@ export const BODY_FAMILY: Record<string, string> = {
 };
 
 export const DISPLAY_FAMILY: Record<string, string> = {
-  "100": "Quicksand_400Regular",
-  "200": "Quicksand_400Regular",
-  "300": "Quicksand_400Regular",
+  "100": "Quicksand_300Light",
+  "200": "Quicksand_300Light",
+  "300": "Quicksand_300Light",
   "400": "Quicksand_400Regular",
   "500": "Quicksand_500Medium",
   "600": "Quicksand_600SemiBold",
