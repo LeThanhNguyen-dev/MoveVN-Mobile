@@ -238,7 +238,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   speedText: { color: theme.text, fontSize: 13, fontWeight: "700" },
   addressText: { color: theme.text, fontSize: 13 },
   staleHint: { color: theme.muted, fontSize: 12 },
-  requestButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: theme.brandSolid, borderRadius: 12, paddingVertical: 12 },
+  requestButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: theme.brand, borderRadius: 12, paddingVertical: 12 },
   requestButtonDisabled: { opacity: 0.6 },
   requestButtonText: { color: theme.onBrand, fontSize: 14, fontWeight: "800" },
 });

@@ -8,7 +8,7 @@ Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mocks = vi.hoisted(() => ({ get: vi.fn(), state: vi.fn(), patch: vi.fn(), prepare: vi.fn(), confirm: vi.fn(), payment: vi.fn(), status: vi.fn(), open: vi.fn() }));
 vi.mock("react-native", () => ({
   View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable", ScrollView: "ScrollView", ActivityIndicator: "ActivityIndicator",
-  StyleSheet: { flatten: function flatten(style: unknown): Record<string, unknown> { return Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : style && typeof style === "object" ? style as Record<string, unknown> : {}; }, create: (value: unknown) => value }, Linking: { openURL: mocks.open },
+  StyleSheet: { create: (value: unknown) => value }, Linking: { openURL: mocks.open },
 }));
 vi.mock("react-native-qrcode-svg", () => ({ default: "QRCode" }));
 vi.mock("@/theme/useTheme", () => ({ useTheme: () => ({ theme: themes.light }) }));

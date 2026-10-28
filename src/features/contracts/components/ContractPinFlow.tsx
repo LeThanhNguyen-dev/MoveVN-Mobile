@@ -304,7 +304,7 @@ const createStyles = (theme: Theme) =>
     ghostText: { color: theme.muted, fontWeight: "700" },
     primaryButton: {
       borderRadius: 10,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       paddingHorizontal: 18,
       paddingVertical: 10,
       minWidth: 110,

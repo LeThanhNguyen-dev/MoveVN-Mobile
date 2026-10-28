@@ -290,7 +290,7 @@ const createStyles = (theme: Theme) =>
     },
     primaryButton: {
       borderRadius: 10,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       paddingVertical: 13,
       alignItems: "center",
     },

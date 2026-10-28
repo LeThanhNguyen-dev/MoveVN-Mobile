@@ -147,7 +147,7 @@ const createStyles = (theme: Theme) =>
       width: FAB_SIZE,
       height: FAB_SIZE,
       borderRadius: FAB_SIZE / 2,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       alignItems: "center",
       justifyContent: "center",
       elevation: 6,

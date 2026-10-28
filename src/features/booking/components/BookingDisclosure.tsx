@@ -1,6 +1,5 @@
-import Text from "@/components/AppText";
 import { useState, type ReactNode } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 

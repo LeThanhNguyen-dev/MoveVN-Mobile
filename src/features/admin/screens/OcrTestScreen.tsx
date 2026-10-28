@@ -597,7 +597,7 @@ const createStyles = (theme: Theme) =>
     submitButton: {
       minHeight: 50,
       borderRadius: 14,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       alignItems: "center",
       justifyContent: "center",
     },

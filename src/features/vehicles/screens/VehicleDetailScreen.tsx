@@ -1,4 +1,3 @@
-import AppScreenHeader from "@/components/ui/AppScreenHeader";
 import { Image } from "expo-image";
 import AvailabilityAlertPanel from "@/features/availabilityAlerts/AvailabilityAlertPanel";
 import { useMemo, useEffect, useState } from "react";
@@ -140,10 +139,18 @@ export default function VehicleDetailScreen({
   }
   return (
     <View style={styles.screen}>
-      <AppScreenHeader title="Chi tiết xe" onBack={() => goBackOrFallback(navigation, () => {
+      <View style={styles.header}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={() => goBackOrFallback(navigation, () => {
           const state = navigation.getState();
           navigation.dispatch({ ...CommonActions.reset({ index: 0, routes: [{ name: state.routeNames[0]! }] }), target: state.key });
-        })} />
+        })} style={styles.backButton}>
+          <ArrowLeft color={theme.text} size={20} />
+        </Pressable>
+        <AppText display numberOfLines={1} style={styles.headerTitle}>
+          Chi tiết xe
+        </AppText>
+        <FavoriteVehicleButton vehicleId={vehicleId} disabled={!vehicle} style={styles.backButton} />
+      </View>
       {vehicle === undefined ? (
         <View style={styles.center}>
           <ActivityIndicator color={theme.brand} />
@@ -247,7 +254,7 @@ const createStyles = (theme: Theme) =>
     review: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border, paddingTop: 14, gap: 5 },
     footer: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border, backgroundColor: theme.surface },
     price: { color: theme.brand, fontSize: 21, fontWeight: "800", marginVertical: 4 },
-    primaryButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: theme.brandSolid, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 15 },
+    primaryButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: theme.brand, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 15 },
     primaryText: { color: theme.onBrand, fontSize: 14, fontWeight: "700" },
     viewer: { flex: 1, backgroundColor: "#101014" },
     viewerHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, gap: 12 },
@@ -277,7 +284,7 @@ const createStyles = (theme: Theme) =>
     bookButton: {
       marginTop: 12,
       borderRadius: 12,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       paddingVertical: 14,
       alignItems: "center",
     },

@@ -563,9 +563,9 @@ function VerificationSection({
             <Pressable
               accessibilityRole="button"
               onPress={onOverview}
-              style={[styles.menuRow, styles.menuDivider]}
+              style={[styles.menuRow, styles.menuDivider, styles.subRowActive]}
             >
-              <View style={[styles.menuIcon, { backgroundColor: iconBackground(theme.brand) }]}>
+              <View style={[styles.menuIcon, { backgroundColor: theme.surface }]}>
                 <ShieldCheck color={theme.brand} size={20} strokeWidth={2.3} />
               </View>
               <View style={styles.menuContent}>
@@ -685,14 +685,14 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 28,
+    paddingBottom: 112,
   },
   profileCard: {
     minHeight: 104,
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.border,
-    backgroundColor: theme.surface,
+    backgroundColor: "transparent",
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
@@ -752,7 +752,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.brandBorder,
-    backgroundColor: theme.surface,
+    backgroundColor: "transparent",
     flexDirection: "row",
     alignItems: "center",
     gap: 13,
@@ -799,7 +799,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.border,
-    backgroundColor: theme.surface,
+    backgroundColor: "transparent",
     overflow: "hidden",
   },
   menuRow: {
@@ -813,6 +813,9 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   menuDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.divider,
+  },
+  subRowActive: {
+    backgroundColor: theme.brandSoft,
   },
   menuIcon: {
     width: 38,
@@ -867,7 +870,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.dangerBorder,
-    backgroundColor: theme.surface,
+    backgroundColor: "transparent",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

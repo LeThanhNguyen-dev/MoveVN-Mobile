@@ -1,5 +1,3 @@
-import AppScreenHeader from "@/components/ui/AppScreenHeader";
-import Text from "@/components/AppText";
 import ReportBookingViolation from "../components/ReportBookingViolation";
 import { bookingActions } from "../bookingActions";
 import InspectionSummaryLink from "../components/InspectionSummaryLink";
@@ -26,6 +24,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   TextInput,
   View,
 } from "react-native";
@@ -381,7 +380,13 @@ export default function TripDetailScreen({
   if (loading || !booking) {
     return (
       <View style={styles.screen}>
-        <AppScreenHeader title="Chi tiết chuyến đi" onBack={handleBack} />
+        <View style={styles.header}>
+          <Pressable onPress={handleBack} style={styles.backButton}>
+            <ArrowLeft color={theme.text} size={20} />
+          </Pressable>
+          <Text style={styles.headerTitle}>Chi tiết chuyến đi</Text>
+          <View style={styles.backButton} />
+        </View>
         <View style={styles.center}>
           {loading ? <ActivityIndicator color={theme.brand} /> : <Text style={styles.muted}>Không tải được.</Text>}
         </View>
@@ -469,7 +474,15 @@ export default function TripDetailScreen({
 
   return (
     <View style={styles.screen}>
-      <AppScreenHeader title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : booking.bookingCode} onBack={handleBack} actions={<Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với chủ xe" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.backButton}><MessageSquare color={theme.brand} size={22} /></Pressable>} />
+      <View style={styles.header}>
+        <Pressable onPress={handleBack} style={styles.backButton}>
+          <ArrowLeft color={theme.text} size={20} />
+        </Pressable>
+        <Text numberOfLines={1} style={styles.headerTitle}>
+          {handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : booking.bookingCode}
+        </Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với chủ xe" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.backButton}><MessageSquare color={theme.brand} size={22} /></Pressable>
+      </View>
       <ScrollView contentContainerStyle={styles.body}>
         {handover ? <>
           <Text style={styles.cardTitle}>{booking.bookingCode}</Text>
@@ -973,7 +986,7 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 7,
     },
     smallButtonText: { color: theme.text, fontSize: 12, fontWeight: "800" },
-    signButton: { backgroundColor: theme.brandSolid },
+    signButton: { backgroundColor: theme.brand },
     signButtonText: { color: theme.onBrand },
     stars: { flexDirection: "row", gap: 4, marginVertical: 6 },
     star: { padding: 4 },
@@ -1032,7 +1045,7 @@ const createStyles = (theme: Theme) =>
     ghostText: { color: theme.muted, fontWeight: "700" },
     primaryButton: {
       borderRadius: 10,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       paddingHorizontal: 18,
       paddingVertical: 10,
       minWidth: 110,

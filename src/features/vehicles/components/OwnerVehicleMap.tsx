@@ -208,7 +208,7 @@ const createStyles = (theme: Theme) =>
     primaryBtn: {
       height: 48,
       borderRadius: 14,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       alignItems: "center",
       justifyContent: "center",
     },

@@ -25,9 +25,9 @@ import { useTheme } from "@/theme/useTheme";
 type CustomerTabKey = "trips" | "deals" | "explore" | "messages" | "account";
 
 const customerTabs: MobileTabItem<CustomerTabKey>[] = [
-  { key: "explore", label: "Khám phá", icon: LayoutGrid, prominent: true },
   { key: "trips", label: "Chuyến đi", icon: CalendarCheck },
   { key: "deals", label: "Ưu đãi", icon: Gift },
+  { key: "explore", label: "Khám phá", icon: LayoutGrid, prominent: true },
   { key: "messages", label: "Tin nhắn", icon: MessageSquare },
   { key: "account", label: "Tài khoản", icon: UserRound },
 ];

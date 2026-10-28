@@ -1,6 +1,5 @@
-import Text from "@/components/AppText";
 import { useRef, useState } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import { endpoints } from "@/services/endpoints";
 import { getApiErrorMessage } from "@/services/apiClient";

@@ -1,4 +1,3 @@
-import AppScreenHeader from "@/components/ui/AppScreenHeader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Clock, ImagePlus, RefreshCw } from "lucide-react-native";
@@ -206,7 +205,12 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
 
   return (
     <View style={styles.content}>
-      <AppScreenHeader title="Giấy phép lái xe" onBack={onBack} actions={<Pressable
+      <View style={styles.topBar}>
+        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+          <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
+        </Pressable>
+        <AppText display style={styles.topBarTitle}>Giấy phép lái xe</AppText>
+        <Pressable
           accessibilityLabel="Tải lại trạng thái"
           accessibilityRole="button"
           disabled={loadingStatus}
@@ -214,7 +218,8 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
           style={styles.backButton}
         >
           <RefreshCw color={theme.brand} size={19} strokeWidth={2.3} />
-        </Pressable>} />
+        </Pressable>
+      </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
@@ -507,7 +512,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   submitButton: {
     minHeight: 50,
     borderRadius: 14,
-    backgroundColor: theme.brandSolid,
+    backgroundColor: theme.brand,
     alignItems: "center",
     justifyContent: "center",
   },

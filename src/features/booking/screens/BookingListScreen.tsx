@@ -1,7 +1,6 @@
-import Text from "@/components/AppText";
 import BookingSearchFilters, { EMPTY_SEARCH } from "../components/BookingSearchFilters";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { getMyBookings, getOwnerBookings } from "../bookingService";

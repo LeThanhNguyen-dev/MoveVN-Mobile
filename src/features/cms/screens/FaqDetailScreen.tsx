@@ -1,4 +1,3 @@
-import AppScreenHeader from "@/components/ui/AppScreenHeader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ImageSource } from "expo-image";
 import { ArrowLeft, ChevronDown } from "lucide-react-native";
@@ -57,7 +56,15 @@ export default function FaqDetailScreen({ onBack, slug }: { onBack: () => void; 
 
   return (
     <View style={styles.content}>
-      <AppScreenHeader title={page?.title || "Hỏi và trả lời"} onBack={onBack} />
+      <View style={styles.topBar}>
+        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+          <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
+        </Pressable>
+        <AppText display numberOfLines={1} style={styles.topBarTitle}>
+          {page?.title || "Hỏi và trả lời"}
+        </AppText>
+        <View style={styles.topBarSpacer} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {page === undefined ? (

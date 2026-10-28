@@ -225,7 +225,7 @@ const createStyles = (theme: Theme) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.border,
     },
-    subActive: { backgroundColor: theme.brandSolid, borderColor: theme.brand },
+    subActive: { backgroundColor: theme.brand, borderColor: theme.brand },
     subText: { color: theme.muted, fontSize: 13, fontWeight: "700" },
     subTextActive: { color: theme.onBrand, fontWeight: "800" },
     listHead: { gap: 10, paddingBottom: 4 },

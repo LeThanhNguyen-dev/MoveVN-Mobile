@@ -313,7 +313,7 @@ const createStyles = (theme: Theme) =>
     headerText: { flex: 1 },
     title: { color: theme.text, fontSize: 15, fontWeight: "800" },
     sub: { color: theme.muted, fontSize: 12, marginTop: 2 },
-    addBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 12, backgroundColor: theme.brandSolid, paddingHorizontal: 12, paddingVertical: 9 },
+    addBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 12, backgroundColor: theme.brand, paddingHorizontal: 12, paddingVertical: 9 },
     addText: { color: theme.onBrand, fontSize: 12, fontWeight: "800" },
     empty: { color: theme.faint, textAlign: "center", borderWidth: 1, borderStyle: "dashed", borderColor: theme.border, borderRadius: 12, paddingVertical: 14, fontSize: 12, fontWeight: "600" },
     card: { borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, backgroundColor: theme.surface, padding: 12, gap: 8 },

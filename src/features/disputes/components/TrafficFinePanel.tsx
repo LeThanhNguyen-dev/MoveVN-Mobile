@@ -1,6 +1,5 @@
-import Text from "@/components/AppText";
 import { useMemo, useState, useRef } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
 import type { Theme } from "@/theme/tokens";
@@ -313,7 +312,7 @@ const createStyles = (theme: Theme) =>
     },
     multiline: { minHeight: 70, textAlignVertical: "top" },
     actionRow: { flexDirection: "row", gap: 8 },
-    primaryButton: { borderRadius: 12, backgroundColor: theme.brandSolid, paddingVertical: 12, alignItems: "center", flex: 1 },
+    primaryButton: { borderRadius: 12, backgroundColor: theme.brand, paddingVertical: 12, alignItems: "center", flex: 1 },
     primaryText: { color: "#fff", fontSize: 13, fontWeight: "800" },
     secondaryButton: { borderRadius: 12, borderWidth: 1, borderColor: theme.brandBorder, paddingVertical: 12, alignItems: "center", flex: 1 },
     secondaryText: { color: theme.brand, fontSize: 13, fontWeight: "800" },

@@ -1,7 +1,6 @@
-import Text from "@/components/AppText";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, AppState, Image, Linking, Modal, PixelRatio, Platform, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, AppState, Image, Linking, Modal, PixelRatio, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Camera, X } from "lucide-react-native";
 import { captureRef } from "react-native-view-shot";

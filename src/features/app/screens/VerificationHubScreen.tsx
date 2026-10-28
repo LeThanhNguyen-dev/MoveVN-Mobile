@@ -1,4 +1,3 @@
-import AppScreenHeader from "@/components/ui/AppScreenHeader";
 import { useMemo, type ComponentType } from "react";
 import {
   ArrowLeft,
@@ -93,7 +92,13 @@ export default function VerificationHubScreen({
 
   return (
     <View style={styles.content}>
-      <AppScreenHeader title="Xác minh tài khoản" onBack={onBack} />
+      <View style={styles.topBar}>
+        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+          <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
+        </Pressable>
+        <AppText display style={styles.topBarTitle}>Xác minh tài khoản</AppText>
+        <View style={styles.topBarSpacer} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
@@ -248,7 +253,7 @@ const createStyles = (theme: Theme) =>
     verifyButton: {
       minHeight: 46,
       borderRadius: 13,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       alignItems: "center",
       justifyContent: "center",
     },

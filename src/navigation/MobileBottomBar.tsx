@@ -31,12 +31,12 @@ export default function MobileBottomBar<T extends string>({
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <View style={[styles.shell, { paddingBottom: bottomPadding }]}>
+    <View style={[styles.shell, { paddingBottom: bottomPadding + 8 }]}>
       <View style={styles.bar}>
         {items.map((item) => {
           const active = item.key === activeKey;
           const Icon = item.icon;
-          const color = active ? theme.brand : theme.muted;
+          const color = item.prominent || active ? theme.brand : theme.muted;
 
           return (
             <Pressable
@@ -45,13 +45,13 @@ export default function MobileBottomBar<T extends string>({
               accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} chưa đọc` : ""}`}
               key={item.key}
               onPress={() => onChange(item.key)}
-              style={({ pressed }) => [styles.item, pressed && { opacity: 0.65 }]}
+              style={[styles.item, item.prominent && styles.prominentItem]}
             >
-              <View style={[styles.iconWrap, active && { backgroundColor: theme.brandSoft }]}>
-                <Icon color={color} size={22} strokeWidth={active ? 2.4 : 1.9} />
+              <View style={[styles.iconWrap, item.prominent && styles.prominentIconWrap]}>
+                <Icon color={color} size={item.prominent ? 25 : 22} strokeWidth={item.prominent ? 2.6 : 2.3} />
                 {item.badge && item.badge > 0 ? <View style={{ position: "absolute", top: -4, right: -8, minWidth: 18, paddingHorizontal: 4, borderRadius: 10, backgroundColor: theme.brand }}><AppText style={{ color: theme.onBrand, fontSize: 10, fontWeight: "700", textAlign: "center" }}>{item.badge > 99 ? "99+" : item.badge}</AppText></View> : null}
               </View>
-              <AppText numberOfLines={2} style={[styles.label, active && styles.activeLabel]}>
+              <AppText numberOfLines={1} style={[styles.label, active && styles.activeLabel, item.prominent && styles.prominentLabel]}>
                 {item.label}
               </AppText>
             </Pressable>
@@ -64,50 +64,70 @@ export default function MobileBottomBar<T extends string>({
 
 const createStyles = (theme: Theme) => StyleSheet.create({
   shell: {
-    backgroundColor: theme.barBg,
-    borderTopWidth: 1,
-    borderTopColor: theme.barBorder,
-    paddingHorizontal: 8,
-    paddingTop: 4,
+    backgroundColor: "transparent",
+    paddingHorizontal: 18,
+    paddingTop: 6,
     shadowColor: theme.shadow,
     shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.03,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 12,
   },
   bar: {
     minHeight: 62,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     justifyContent: "space-around",
     paddingHorizontal: 5,
-    paddingTop: 0,
-    borderRadius: 0,
+    paddingTop: 6,
+    borderRadius: 22,
+    borderWidth: 0.7,
+    borderColor: theme.barBorder,
     backgroundColor: theme.barBg,
   },
   item: {
     width: "20%",
-    minHeight: 60,
+    minHeight: 54,
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
   },
+  prominentItem: {
+    marginTop: -14,
+  },
   iconWrap: {
-    width: 48,
+    width: 34,
     height: 30,
-    borderRadius: 12,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
   },
+  prominentIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.prominentBg,
+    borderColor: theme.brand,
+    borderWidth: 1,
+    shadowColor: theme.brand,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 6,
+  },
   label: {
     color: theme.muted,
-    fontSize: 10,
-    lineHeight: 15,
-    fontWeight: "600",
+    fontSize: 9.5,
+    fontWeight: "700",
     maxWidth: 76,
     textAlign: "center",
   },
   activeLabel: {
     color: theme.brand,
+  },
+  prominentLabel: {
+    color: theme.brand,
+    fontSize: 10.5,
+    marginTop: 1,
   },
 });

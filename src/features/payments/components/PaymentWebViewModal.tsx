@@ -127,7 +127,7 @@ const createStyles = (theme: Theme) =>
     failedText: { color: theme.muted, fontSize: 14 },
     browserButton: {
       borderRadius: 10,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       paddingHorizontal: 18,
       paddingVertical: 12,
     },

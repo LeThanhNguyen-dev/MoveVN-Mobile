@@ -1,6 +1,5 @@
-import Text from "@/components/AppText";
 import { useMemo } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { AlertTriangle, ShieldCheck } from "lucide-react-native";
 
 import type { Theme } from "@/theme/tokens";

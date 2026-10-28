@@ -1,4 +1,3 @@
-import Text from "@/components/AppText";
 import { BookingButton, BookingField } from "@/features/booking/components/BookingControls";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -9,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   TextInput,
   View,
 } from "react-native";
@@ -448,7 +448,7 @@ const createStyles = (theme: Theme) =>
       alignItems: "center",
     },
     smallText: { color: theme.text, fontSize: 12, fontWeight: "800" },
-    signButton: { backgroundColor: theme.brandSolid },
+    signButton: { backgroundColor: theme.brand },
     signText: { color: theme.onBrand },
     disabled: { opacity: 0.6 },
     backdrop: {
@@ -483,7 +483,7 @@ const createStyles = (theme: Theme) =>
     ghostText: { color: theme.muted, fontWeight: "700" },
     primaryButton: {
       borderRadius: 10,
-      backgroundColor: theme.brandSolid,
+      backgroundColor: theme.brand,
       paddingHorizontal: 18,
       paddingVertical: 10,
       minWidth: 110,
