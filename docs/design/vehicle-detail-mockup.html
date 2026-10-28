@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MoveVN · Vehicle Detail — UI Concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --page: #ebe8f2;
+    --page-ink: #1a1526;
+    --page-muted: #6f687f;
+    --font-body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: "Quicksand", var(--font-body);
+  }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 500px at 8% -10%, rgba(168, 85, 247, .16), transparent 60%),
+      radial-gradient(800px 500px at 96% 8%, rgba(16, 185, 129, .12), transparent 55%),
+      var(--page);
+    color: var(--page-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    padding: 46px 34px 70px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  /* ---------- Page header ---------- */
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  .brandline { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .brandmark {
+    width: 30px; height: 30px; border-radius: 10px;
+    background: linear-gradient(135deg, #6B19FF, #A855F7);
+    display: grid; place-items: center; color: #fff;
+    font-family: var(--font-display); font-weight: 700; font-size: 14px;
+    box-shadow: 0 8px 20px rgba(107, 25, 255, .3);
+  }
+  .brandline span { font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #5c5470; }
+  h1.page-title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(30px, 3.6vw, 44px); line-height: 1.1; letter-spacing: -.5px;
+    margin: 0 0 10px;
+  }
+  h1.page-title em { font-style: normal; color: #6B19FF; }
+  .page-sub { margin: 0; max-width: 560px; color: var(--page-muted); font-size: 14px; line-height: 1.65; }
+  .head-meta { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; padding-bottom: 4px; }
+  .meta-chip {
+    background: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.9);
+    padding: 8px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600; color: #4c4560;
+    backdrop-filter: blur(10px); white-space: nowrap;
+  }
+  .meta-chip b { color: #6B19FF; }
+
+  /* ---------- Palette ---------- */
+  .palette { display: flex; gap: 10px; flex-wrap: wrap; margin: 22px 0 34px; align-items: center; }
+  .swatch {
+    display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px;
+    border-radius: 999px; background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.8);
+    font-size: 10.5px; font-weight: 600; color: #5b536d;
+  }
+  .swatch i { width: 18px; height: 18px; border-radius: 50%; display: block; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+  .palette-note { margin-left: 4px; font-size: 11px; color: #7b738c; font-style: italic; }
+
+  /* ---------- Frames ---------- */
+  .stage { display: flex; gap: 34px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+  .frame { width: 390px; flex: 0 0 auto; }
+  .frame-label { display: flex; align-items: center; gap: 8px; margin: 0 0 12px 6px; }
+  .frame-label .num {
+    font-family: var(--font-display); font-weight: 700; font-size: 11px; color: #fff;
+    background: #1a1526; border-radius: 7px; padding: 3px 7px; letter-spacing: .5px;
+  }
+  .frame-label .txt { font-size: 12px; font-weight: 700; letter-spacing: .2px; color: #4d4560; }
+  .frame-label .hint { font-size: 11px; color: #8b839c; font-weight: 500; }
+
+  .phone {
+    width: 390px; padding: 7px; border-radius: 46px;
+    background: linear-gradient(160deg, #262032, #0d0a14 55%, #211a2e);
+    box-shadow:
+      0 2px 3px rgba(255,255,255,.22) inset,
+      0 40px 80px -30px rgba(38, 18, 80, .55),
+      0 12px 30px rgba(30, 16, 60, .18);
+  }
+  .screen {
+    position: relative; height: 820px; width: 100%;
+    border-radius: 39px; overflow-y: auto; overflow-x: hidden;
+    scrollbar-width: none; overscroll-behavior: contain;
+    background: var(--bg);
+    color: var(--ink);
+    isolation: isolate;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen > * { width: 100%; }
+
+  /* ---------- Theme tokens ---------- */
+  .theme-light {
+    --bg: #F5F3FA;
+    --surface: #FFFFFF;
+    --surface-2: #FAF8FF;
+    --surface-3: #F1ECFA;
+    --ink: #161226;
+    --muted: #6F6A82;
+    --faint: #9A94AC;
+    --line: #ECE7F5;
+    --brand: #6B19FF;
+    --brand-2: #A855F7;
+    --brand-soft: #F2EAFF;
+    --brand-border: #DDCCFF;
+    --mint: #07966F;
+    --mint-soft: #E8F8F1;
+    --mint-border: #BCEBD9;
+    --amber: #D99406;
+    --amber-soft: #FFF6E2;
+    --rose: #D93B4B;
+    --rose-soft: #FDECEF;
+    --shadow: rgba(38, 22, 86, .10);
+    --glass: rgba(255,255,255,.78);
+    --glass-strong: rgba(255,255,255,.92);
+    --glass-ink: #161226;
+    --on-hero: #FFFFFF;
+  }
+  .theme-dark {
+    --bg: #0E0B18;
+    --surface: #191527;
+    --surface-2: #211B33;
+    --surface-3: #2A2340;
+    --ink: #F5F2FF;
+    --muted: #A8A1C2;
+    --faint: #7C7597;
+    --line: #2C2542;
+    --brand: #9B6BFF;
+    --brand-2: #C084FC;
+    --brand-soft: #2A2050;
+    --brand-border: #41336E;
+    --mint: #3ED9A4;
+    --mint-soft: #14352B;
+    --mint-border: #1F5644;
+    --amber: #F5B93F;
+    --amber-soft: #34280F;
+    --rose: #F87171;
+    --rose-soft: #3A1D24;
+    --shadow: rgba(0, 0, 0, .5);
+    --glass: rgba(18, 14, 30, .62);
+    --glass-strong: rgba(28, 23, 44, .9);
+    --glass-ink: #F5F2FF;
+    --on-hero: #FFFFFF;
+  }
+
+  /* ---------- Shared bits ---------- */
+  .ic {
+    width: 18px; height: 18px; flex: 0 0 auto;
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .rating-star, .stars .ic, .mini-stars .ic { fill: #F2A707; stroke: #F2A707; }
+  .ic-14 { width: 14px; height: 14px; }
+  .ic-12 { width: 12px; height: 12px; }
+  .ic-20 { width: 20px; height: 20px; }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; height: 322px; background: #1b1724; }
+  .hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hero-shade {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(8,5,18,.55) 0%, rgba(8,5,18,0) 26%, rgba(8,5,18,0) 52%, rgba(8,5,18,.64) 100%);
+  }
+  .topbar {
+    position: absolute; top: 12px; left: 12px; right: 12px;
+    display: flex; align-items: center; justify-content: space-between; z-index: 3;
+  }
+  .topbar-group { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: 0;
+    display: grid; place-items: center; cursor: pointer;
+    color: #fff; background: rgba(14, 10, 26, .34);
+    border: 1px solid rgba(255,255,255,.22);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    transition: transform .18s ease, background .18s ease;
+  }
+  .icon-btn:active { transform: scale(.94); }
+  .icon-btn:hover { background: rgba(14, 10, 26, .5); }
+  .hero-foot {
+    position: absolute; left: 14px; right: 14px; bottom: 42px;
+    display: flex; align-items: center; justify-content: space-between; z-index: 3;
+  }
+  .hero-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 30px; padding: 0 11px; border-radius: 999px;
+    background: rgba(14, 10, 26, .36); border: 1px solid rgba(255,255,255,.2);
+    backdrop-filter: blur(12px); color: #fff; font-size: 11px; font-weight: 600;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 26px; padding: 0 9px; border-radius: 8px;
+    background: rgba(255,255,255,.92); color: #2a1645;
+    font-size: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase;
+  }
+  .hero-tag.mint { background: rgba(232,248,241,.94); color: #067a5b; }
+  .hero-tags { position: absolute; top: 62px; left: 14px; display: flex; gap: 6px; z-index: 3; }
+
+  /* ---------- Summary ---------- */
+  .summary {
+    position: relative; z-index: 2;
+    margin: -30px 14px 0;
+    background: var(--surface); border-radius: 26px;
+    padding: 18px 18px 0;
+    box-shadow: 0 18px 40px -22px var(--shadow), 0 2px 10px rgba(28, 16, 58, .05);
+    border: 1px solid var(--line);
+  }
+  .summary-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .kicker {
+    font-size: 10px; font-weight: 800; letter-spacing: 1.4px;
+    color: var(--brand); text-transform: uppercase; margin-bottom: 5px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .vehicle-title {
+    font-family: var(--font-display); font-weight: 700; font-size: 23px;
+    line-height: 1.15; letter-spacing: -.3px; margin: 0 0 7px; color: var(--ink);
+  }
+  .meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--muted); font-size: 11.5px; font-weight: 500; }
+  .meta > span { display: inline-flex; align-items: center; gap: 4px; }
+  .meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--faint); }
+  .meta .rating { color: var(--ink); font-weight: 700; }
+  .rating-star { color: #F2A707; fill: #F2A707; }
+
+  .price-block { text-align: right; flex: 0 0 auto; padding-top: 4px; }
+  .price { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--brand); display: block; line-height: 1.1; letter-spacing: -.2px; }
+  .price .unit { font-family: var(--font-body); font-size: 10px; font-weight: 600; color: var(--muted); }
+  .price-note { display: block; font-size: 9.5px; color: var(--faint); margin-top: 3px; }
+
+  .facts {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    margin: 16px -18px 0; padding: 14px 10px 16px;
+    border-top: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--surface-2), var(--surface));
+    border-radius: 0 0 25px 25px;
+  }
+  .fact { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; position: relative; }
+  .fact + .fact::before {
+    content: ""; position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 1px; background: var(--line);
+  }
+  .fact-ic {
+    width: 30px; height: 30px; border-radius: 10px;
+    background: var(--brand-soft); color: var(--brand);
+    display: grid; place-items: center;
+  }
+  .fact-ic.mint { background: var(--mint-soft); color: var(--mint); }
+  .fact-label { font-size: 9px; font-weight: 600; color: var(--faint); letter-spacing: .4px; text-transform: uppercase; }
+  .fact-value { font-size: 12px; font-weight: 700; color: var(--ink); line-height: 1.1; }
+
+  /* ---------- Availability ---------- */
+  .availability {
+    margin: 12px 14px 0; border-radius: 18px;
+    background: var(--mint-soft); border: 1px solid var(--mint-border);
+    padding: 12px 13px; display: flex; align-items: center; gap: 10px;
+  }
+  .availability .status-ic {
+    width: 34px; height: 34px; border-radius: 50%; flex: 0 0 auto;
+    background: var(--surface); color: var(--mint);
+    display: grid; place-items: center; box-shadow: 0 2px 8px rgba(7, 150, 111, .12);
+  }
+  .availability .txt { flex: 1; min-width: 0; }
+  .availability strong { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink); line-height: 1.35; }
+  .availability small { display: block; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .availability .change {
+    border: 0; background: var(--surface); color: var(--mint);
+    font-family: var(--font-body); font-size: 10.5px; font-weight: 700;
+    height: 28px; padding: 0 9px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 2px; cursor: pointer;
+  }
+
+  /* ---------- Cards & sections ---------- */
+  .card {
+    margin: 12px 14px 0; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 24px; padding: 17px;
+  }
+  .section-head { display: flex; align-items: center; gap: 10px; }
+  .section-head .medal {
+    width: 34px; height: 34px; border-radius: 11px; flex: 0 0 auto;
+    background: var(--brand-soft); color: var(--brand);
+    display: grid; place-items: center;
+  }
+  .section-head .medal.mint { background: var(--mint-soft); color: var(--mint); }
+  .section-head .medal.amber { background: var(--amber-soft); color: var(--amber); }
+  .section-head h2 { flex: 1; margin: 0; font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: -.1px; }
+  .section-head .action { border: 0; background: transparent; color: var(--brand); font-family: var(--font-body); font-size: 11px; font-weight: 700; cursor: pointer; padding: 4px 0; }
+  .section-head .action.muted { color: var(--muted); }
+
+  /* ---------- Booking ---------- */
+  .date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 13px; position: relative; }
+  .date-box { background: var(--surface-2); border: 1px solid var(--line); border-radius: 15px; padding: 10px 11px; }
+  .date-box .lbl { display: flex; align-items: center; gap: 5px; font-size: 9px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+  .date-box .val { font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -.1px; }
+  .date-box .sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .swap {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--line); color: var(--brand);
+    display: grid; place-items: center; z-index: 2;
+  }
+  .price-lines { margin-top: 13px; display: grid; gap: 8px; }
+  .line { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 11.5px; color: var(--muted); }
+  .line b { color: var(--ink); font-size: 11.5px; font-weight: 600; }
+  .line .mint { color: var(--mint); font-weight: 700; }
+  .line.total { border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 2px; }
+  .line.total span { font-size: 12px; font-weight: 600; color: var(--ink); }
+  .line.total b { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--brand); }
+  .detail-link {
+    width: 100%; margin-top: 11px; height: 34px; border-radius: 11px;
+    border: 1px solid var(--brand-border); background: var(--brand-soft);
+    color: var(--brand); font-family: var(--font-body); font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer;
+  }
+  .footnote { display: flex; align-items: center; gap: 5px; margin-top: 9px; font-size: 9.5px; color: var(--faint); }
+
+  /* ---------- Owner ---------- */
+  .owner {
+    margin: 18px 20px 0; padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 11px;
+  }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto;
+    background: linear-gradient(135deg, #7C3AED, #C084FC);
+    color: #fff; display: grid; place-items: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 15px;
+    box-shadow: 0 6px 14px -6px rgba(124, 58, 237, .6);
+  }
+  .owner .who { flex: 1; min-width: 0; }
+  .owner .who strong { display: block; font-size: 13.5px; font-weight: 700; color: var(--ink); }
+  .owner .who span { display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .owner .who span .ic { color: var(--mint); }
+  .chev-btn { width: 30px; height: 30px; border-radius: 50%; background: var(--surface-2); color: var(--muted); display: grid; place-items: center; border: 1px solid var(--line); }
+
+  /* ---------- Plain sections ---------- */
+  .plain { margin: 22px 20px 0; }
+  .plain h2 { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0 0 9px; color: var(--ink); }
+  .plain p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--muted); }
+  .more { border: 0; background: transparent; color: var(--brand); font-family: var(--font-body); font-size: 11.5px; font-weight: 700; padding: 7px 0 0; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; }
+
+  .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 11px; }
+  .feature {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 13px;
+    padding: 9px 10px; font-size: 11.5px; font-weight: 600; color: var(--ink);
+  }
+  .feature .ic { color: var(--brand); }
+
+  /* ---------- Policies ---------- */
+  .policy-list { margin-top: 6px; }
+  .policy {
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 0; border-top: 1px solid var(--line);
+  }
+  .policy:first-child { border-top: 0; }
+  .policy .p-ic {
+    width: 32px; height: 32px; border-radius: 10px; flex: 0 0 auto;
+    background: var(--surface-2); color: var(--brand);
+    display: grid; place-items: center;
+  }
+  .policy .p-body { flex: 1; min-width: 0; }
+  .policy .p-body strong { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink); }
+  .policy .p-body span { display: block; font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+  .policy .p-body span.mint { color: var(--mint); font-weight: 600; }
+  .policy .ic-14 { color: var(--faint); }
+
+  /* ---------- Map ---------- */
+  .map-card {
+    margin: 12px 14px 0; border-radius: 24px; overflow: hidden;
+    background: var(--surface); border: 1px solid var(--line);
+  }
+  .map-visual { position: relative; height: 148px; background: #E9EFE8; overflow: hidden; }
+  .map-visual svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .map-pin {
+    position: absolute; left: 50%; top: 46%; transform: translate(-50%, -100%);
+    width: 34px; height: 34px; border-radius: 50% 50% 50% 6px; rotate: -45deg;
+    background: linear-gradient(135deg, #6B19FF, #A855F7);
+    box-shadow: 0 8px 18px rgba(58, 24, 130, .35);
+    display: grid; place-items: center;
+  }
+  .map-pin .ic { rotate: 45deg; color: #fff; }
+  .map-open {
+    position: absolute; right: 10px; bottom: 10px;
+    height: 30px; padding: 0 11px; border-radius: 999px; border: 0;
+    background: var(--glass-strong); color: var(--ink);
+    font-family: var(--font-body); font-size: 10.5px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(20, 12, 40, .12);
+  }
+  .map-foot { display: flex; align-items: center; gap: 9px; padding: 12px 14px; }
+  .map-foot .p-ic { width: 30px; height: 30px; border-radius: 9px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; }
+  .map-foot strong { display: block; font-size: 12px; font-weight: 700; color: var(--ink); }
+  .map-foot span { display: block; font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+
+  /* ---------- Reviews ---------- */
+  .reviews { margin: 22px 0 0; }
+  .reviews-head { margin: 0 20px; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+  .reviews-head h2 { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0; }
+  .reviews-head small { font-size: 10.5px; color: var(--muted); }
+  .rating-card {
+    margin: 11px 14px 0; background: var(--amber-soft);
+    border: 1px solid color-mix(in srgb, var(--amber) 22%, transparent);
+    border-radius: 20px; padding: 13px 15px; display: flex; align-items: center; gap: 14px;
+  }
+  .rating-score { text-align: center; flex: 0 0 auto; }
+  .rating-score b { font-family: var(--font-display); font-size: 34px; line-height: 1; font-weight: 700; color: var(--ink); letter-spacing: -1px; }
+  .stars { display: flex; gap: 2px; justify-content: center; margin-top: 4px; }
+  .stars .ic { color: #F2A707; fill: #F2A707; }
+  .rating-score small { display: block; font-size: 9.5px; color: var(--muted); margin-top: 3px; }
+  .rating-bars { flex: 1; display: grid; gap: 4px; }
+  .bar-row { display: flex; align-items: center; gap: 6px; font-size: 9px; color: var(--muted); }
+  .bar-row span { width: 8px; text-align: right; }
+  .bar { flex: 1; height: 4px; border-radius: 99px; background: rgba(217, 148, 6, .2); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 99px; background: var(--amber); }
+  .review-strip {
+    display: flex; gap: 9px; overflow-x: auto; padding: 10px 14px 4px;
+    scrollbar-width: none; scroll-snap-type: x mandatory;
+  }
+  .review-strip::-webkit-scrollbar { display: none; }
+  .review {
+    flex: 0 0 252px; scroll-snap-align: start;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+    padding: 12px 13px;
+  }
+  .review-top { display: flex; align-items: center; gap: 8px; }
+  .review .mini-avatar {
+    width: 28px; height: 28px; border-radius: 50%; flex: 0 0 auto;
+    background: var(--surface-3); color: var(--brand);
+    display: grid; place-items: center; font-size: 10px; font-weight: 800;
+  }
+  .review .who { flex: 1; min-width: 0; }
+  .review .who strong { display: block; font-size: 11px; font-weight: 700; color: var(--ink); }
+  .review .who span { display: block; font-size: 9px; color: var(--faint); }
+  .review .mini-stars { display: flex; gap: 1px; }
+  .review .mini-stars .ic { color: #F2A707; fill: #F2A707; width: 9px; height: 9px; }
+  .review p { margin: 8px 0 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
+
+  .report {
+    margin: 18px 20px 0; padding: 10px 0 16px;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    color: var(--faint); font-size: 10px; font-weight: 500;
+    background: transparent; border: 0; width: calc(100% - 40px); cursor: pointer;
+  }
+
+  /* ---------- Sticky CTA ---------- */
+  .dock {
+    position: sticky; bottom: 0; z-index: 6;
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px 12px;
+    background: var(--glass);
+    border-top: 1px solid var(--line);
+    backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  }
+  .dock-price { flex: 1; min-width: 0; }
+  .dock-price .lbl { font-size: 9px; font-weight: 600; color: var(--faint); letter-spacing: .2px; }
+  .dock-price .amount { display: flex; align-items: baseline; gap: 4px; margin-top: 1px; }
+  .dock-price .amount b { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -.4px; }
+  .dock-price .amount span { font-size: 9.5px; color: var(--muted); }
+  .dock-price .save { font-size: 9px; font-weight: 600; color: var(--mint); margin-top: 1px; }
+  .cta {
+    flex: 0 0 auto; height: 46px; padding: 0 17px; border: 0; border-radius: 15px;
+    background: linear-gradient(135deg, #7C3AED 0%, #6B19FF 48%, #A855F7 100%);
+    color: #fff; font-family: var(--font-body); font-size: 13px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+    box-shadow: 0 10px 22px -8px rgba(107, 25, 255, .7);
+    transition: transform .16s ease, box-shadow .16s ease;
+  }
+  .cta:hover { box-shadow: 0 12px 26px -8px rgba(107, 25, 255, .85); }
+  .cta:active { transform: scale(.97); }
+
+  /* ---------- Notes ---------- */
+  .notes { margin-top: 46px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .note {
+    background: rgba(255,255,255,.62); border: 1px solid rgba(255,255,255,.85);
+    border-radius: 20px; padding: 18px 18px 16px; backdrop-filter: blur(12px);
+  }
+  .note .n-ic {
+    width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center;
+    background: #f0e8ff; color: #6B19FF; margin-bottom: 10px;
+  }
+  .note h3 { margin: 0 0 5px; font-family: var(--font-display); font-size: 14px; font-weight: 700; color: #241b36; }
+  .note p { margin: 0; font-size: 11.5px; line-height: 1.65; color: #6f687f; }
+  .footer-note { margin-top: 26px; font-size: 10.5px; color: #8b839c; text-align: center; }
+
+  .theme-toggle { display: flex; gap: 4px; padding: 4px; background: rgba(255,255,255,.6); border-radius: 999px; border: 1px solid rgba(255,255,255,.9); }
+  .theme-toggle button {
+    border: 0; border-radius: 999px; height: 28px; padding: 0 12px;
+    font-family: var(--font-body); font-size: 10.5px; font-weight: 700; color: #6f687f;
+    background: transparent; cursor: pointer;
+  }
+  .theme-toggle button.on { background: #1a1526; color: #fff; }
+
+  @media (max-width: 880px) {
+    body { padding: 28px 18px 50px; }
+    .stage { justify-content: center; }
+    .notes { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></symbol>
+    <symbol id="i-images" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-5-5L5 21"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5.5-8 12-8 12s-8-6.5-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="2.6"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 10h18"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M12 14l3.5-3.5"/><path d="M3.5 18a9 9 0 1 1 17 0"/><circle cx="12" cy="14" r="1.4"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="M4.5 16.5h15M5 16.5l-1.4-5.2L6 7h12l2.4 4.3-1.4 5.2"/><path d="M6.5 12h11"/><circle cx="7.5" cy="16.5" r="1.5"/><circle cx="16.5" cy="16.5" r="1.5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.4 2.4 4.6-5"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18.5 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-2.5-1.6L14 21l-2-1.6L10 21l-2.5-1.6L5 21z"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 5l7 7-7 7"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="i-badge" viewBox="0 0 24 24"><path d="M12 3l2.2 2 3-.2.8 2.9 2.5 1.7-1.3 2.7 1.3 2.7-2.5 1.7-.8 2.9-3-.2-2.2 2-2.2-2-3 .2-.8-2.9L3.5 15l1.3-2.7L3.5 9.6l2.5-1.7.8-2.9 3 .2z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-1.5 4L16 12H5"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M16 4l4 4M14 6l4 4"/></symbol>
+    <symbol id="i-fuel" viewBox="0 0 24 24"><path d="M5 21V5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v16M3 21h13M5 10h9"/><path d="M17 8h2l2 2v7a2 2 0 0 1-4 0v-3h-2"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16 5.5a3 3 0 0 1 0 5.8M18 20c0-2.4-.8-4-2-5"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="page-head">
+    <div>
+      <div class="brandline"><div class="brandmark">M</div><span>MoveVN · Mobile concept</span></div>
+      <h1 class="page-title">Chi tiết xe, <em>nhẹ như lướt.</em></h1>
+      <p class="page-sub">Bố cục lại toàn bộ trang chi tiết xe: một điểm nhấn thị giác, ba lớp thông tin rõ ràng, một hành động chính. Bớt chữ — thêm nhịp — giữ đúng dữ liệu đang có.</p>
+    </div>
+    <div class="head-meta">
+      <div class="theme-toggle" role="group" aria-label="Chế độ màu">
+        <button id="btn-light" class="on" onclick="setTheme('light')">Sáng</button>
+        <button id="btn-dark" onclick="setTheme('dark')">Tối</button>
+      </div>
+      <span class="meta-chip">390 × 844</span>
+      <span class="meta-chip"><b>8</b> khối nội dung</span>
+      <span class="meta-chip">Light + Dark</span>
+    </div>
+  </header>
+
+  <div class="palette" aria-label="Bảng màu">
+    <span class="swatch"><i style="background:#6B19FF"></i>Brand violet</span>
+    <span class="swatch"><i style="background:#A855F7"></i>Violet light</span>
+    <span class="swatch"><i style="background:#F5F3FA"></i>Canvas</span>
+    <span class="swatch"><i style="background:#07966F"></i>Mint</span>
+    <span class="swatch"><i style="background:#F2A707"></i>Amber</span>
+    <span class="swatch"><i style="background:#161226"></i>Ink</span>
+    <span class="palette-note">Tím thương hiệu + mint trạng thái + amber đánh giá · nền lavender ấm, không dùng đen tuyệt đối</span>
+  </div>
+
+  <main class="stage">
+    <section class="frame">
+      <div class="frame-label"><span class="num">01</span><span class="txt">Ấn tượng đầu</span><span class="hint">· ảnh, giá, thông số nhanh</span></div>
+      <div class="phone theme-light">
+        <div class="screen" id="screen-1"></div>
+      </div>
+    </section>
+
+    <section class="frame">
+      <div class="frame-label"><span class="num">02</span><span class="txt">Thông tin &amp; chính sách</span><span class="hint">· cuộn giữa</span></div>
+      <div class="phone theme-light">
+        <div class="screen" id="screen-2"></div>
+      </div>
+    </section>
+
+    <section class="frame">
+      <div class="frame-label"><span class="num">03</span><span class="txt">Chính sách · đánh giá · CTA</span><span class="hint">· cuối trang</span></div>
+      <div class="phone theme-light">
+        <div class="screen" id="screen-3"></div>
+      </div>
+    </section>
+  </main>
+
+  <section class="notes">
+    <div class="note">
+      <div class="n-ic"><svg class="ic"><use href="#i-sparkles"/></svg></div>
+      <h3>Một điểm nhấn mỗi màn hình</h3>
+      <p>Ảnh lớn dẫn dắt, card tóm tắt nổi lên trên ảnh. Các khối còn lại dùng nền phẳng + đường kẻ mảnh, chỉ 3 khối được tô màu: trạng thái lịch, lịch &amp; giá, điểm đánh giá.</p>
+    </div>
+    <div class="note">
+      <div class="n-ic"><svg class="ic"><use href="#i-gauge"/></svg></div>
+      <h3>Quét 3 giây là hiểu</h3>
+      <p>Tên xe → giá → còn trống hay không → 4 thông số nhanh. Mọi thông tin phụ (mô tả, tiện ích, chính sách, bản đồ) đi theo thứ tự người thuê thật sự cần đọc.</p>
+    </div>
+    <div class="note">
+      <div class="n-ic"><svg class="ic"><use href="#i-key"/></svg></div>
+      <h3>Một CTA duy nhất</h3>
+      <p>Thanh dưới cố định giữ giá tạm tính và nút “Đặt xe”. Bỏ các nút đặt xe lặp lại trong nội dung; mọi thao tác ngày giờ đi qua một sheet duy nhất.</p>
+    </div>
+  </section>
+
+  <p class="footer-note">Mockup tĩnh · dùng icon Lucide 1.5px stroke · font Quicksand (tiêu đề) + Be Vietnam Pro (nội dung) · sẵn sàng map sang React Native + expo-linear-gradient</p>
+</div>
+
+<template id="page-template">
+  <!-- HERO -->
+  <div class="hero">
+    <img src="assets/hero-car.jpg" alt="Porsche Panamera" />
+    <div class="hero-shade"></div>
+    <div class="topbar">
+      <button class="icon-btn" aria-label="Quay lại"><svg class="ic"><use href="#i-back"/></svg></button>
+      <div class="topbar-group">
+        <button class="icon-btn" aria-label="Chia sẻ"><svg class="ic"><use href="#i-share"/></svg></button>
+        <button class="icon-btn" aria-label="Yêu thích"><svg class="ic"><use href="#i-heart"/></svg></button>
+      </div>
+    </div>
+    <div class="hero-tags">
+      <span class="hero-tag">Ô tô tự lái</span>
+      <span class="hero-tag mint">Miễn thế chấp</span>
+    </div>
+    <div class="hero-foot">
+      <span class="hero-pill"><svg class="ic ic-14"><use href="#i-images"/></svg> Xem 8 ảnh</span>
+      <span class="hero-pill">1 / 8</span>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <section class="summary">
+    <div class="summary-top">
+      <div>
+        <div class="kicker">Porsche · 4S</div>
+        <h1 class="vehicle-title">Panamera 2022</h1>
+        <div class="meta">
+          <span><svg class="ic ic-12"><use href="#i-pin"/></svg> Quận 1, TP.HCM</span>
+          <span class="dot"></span>
+          <span><svg class="ic ic-12 rating-star"><use href="#i-star"/></svg> <b class="rating">4.9</b> (38)</span>
+        </div>
+      </div>
+      <div class="price-block">
+        <span class="price">3.900.000đ <span class="unit">/ngày</span></span>
+        <span class="price-note">Chưa gồm phí</span>
+      </div>
+    </div>
+    <div class="facts">
+      <div class="fact">
+        <div class="fact-ic"><svg class="ic ic-14"><use href="#i-calendar"/></svg></div>
+        <span class="fact-label">Năm SX</span>
+        <span class="fact-value">2022</span>
+      </div>
+      <div class="fact">
+        <div class="fact-ic"><svg class="ic ic-14"><use href="#i-gauge"/></svg></div>
+        <span class="fact-label">Đã đi</span>
+        <span class="fact-value">18.500 km</span>
+      </div>
+      <div class="fact">
+        <div class="fact-ic"><svg class="ic ic-14"><use href="#i-car"/></svg></div>
+        <span class="fact-label">Loại xe</span>
+        <span class="fact-value">Ô tô</span>
+      </div>
+      <div class="fact">
+        <div class="fact-ic mint"><svg class="ic ic-14"><use href="#i-shield"/></svg></div>
+        <span class="fact-label">Thế chấp</span>
+        <span class="fact-value">Miễn</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- AVAILABILITY -->
+  <div class="availability">
+    <div class="status-ic"><svg class="ic"><use href="#i-check-circle"/></svg></div>
+    <div class="txt">
+      <strong>Còn trống · 12 – 15/11</strong>
+      <small>Không trùng lịch bận của xe</small>
+    </div>
+    <button class="change">Đổi <svg class="ic ic-12"><use href="#i-chev"/></svg></button>
+  </div>
+
+  <!-- BOOKING -->
+  <section class="card">
+    <div class="section-head">
+      <div class="medal"><svg class="ic"><use href="#i-calendar"/></svg></div>
+      <h2>Lịch &amp; giá thuê</h2>
+      <button class="action">Đổi ngày</button>
+    </div>
+    <div class="date-grid">
+      <div class="date-box">
+        <div class="lbl"><svg class="ic ic-12"><use href="#i-key"/></svg> Nhận xe</div>
+        <div class="val">12/11</div>
+        <div class="sub">Thứ Tư · 09:00</div>
+      </div>
+      <div class="date-box">
+        <div class="lbl"><svg class="ic ic-12"><use href="#i-key"/></svg> Trả xe</div>
+        <div class="val">15/11</div>
+        <div class="sub">Thứ Bảy · 09:00</div>
+      </div>
+      <div class="swap"><svg class="ic ic-14"><use href="#i-swap"/></svg></div>
+    </div>
+    <div class="price-lines">
+      <div class="line"><span>3 ngày × 3.900.000đ</span><b>11.700.000đ</b></div>
+      <div class="line"><span>Giảm thuê dài ngày · 10%</span><b class="mint">−1.170.000đ</b></div>
+      <div class="line total"><span>Tạm tính</span><b>10.530.000đ</b></div>
+    </div>
+    <button class="detail-link">Xem chi tiết giá theo ngày <svg class="ic ic-12"><use href="#i-chev"/></svg></button>
+    <div class="footnote"><svg class="ic ic-12"><use href="#i-info"/></svg> Chưa gồm phí giao xe và phụ phí phát sinh</div>
+  </section>
+
+  <!-- OWNER -->
+  <div class="owner">
+    <div class="avatar">MQ</div>
+    <div class="who">
+      <strong>Trần Minh Quân</strong>
+      <span><svg class="ic ic-12"><use href="#i-badge"/></svg> Chủ xe · Phản hồi trong 1 giờ</span>
+    </div>
+    <div class="chev-btn"><svg class="ic ic-14"><use href="#i-chev"/></svg></div>
+  </div>
+
+  <!-- ABOUT -->
+  <section class="plain">
+    <h2>Về chiếc xe</h2>
+    <p>Xe được bảo dưỡng định kỳ tại hãng, nội thất da sạch sẽ và luôn được vệ sinh trước mỗi chuyến. Phù hợp cho cả chuyến đi công tác lẫn du lịch dài ngày.</p>
+    <button class="more">Xem thêm <svg class="ic ic-12"><use href="#i-chev"/></svg></button>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="plain">
+    <h2>Tiện ích</h2>
+    <div class="feature-grid">
+      <div class="feature"><svg class="ic ic-14"><use href="#i-images"/></svg> Camera 360°</div>
+      <div class="feature"><svg class="ic ic-14"><use href="#i-sparkles"/></svg> Apple CarPlay</div>
+      <div class="feature"><svg class="ic ic-14"><use href="#i-gauge"/></svg> Cruise control</div>
+      <div class="feature"><svg class="ic ic-14"><use href="#i-shield"/></svg> Ghế sưởi</div>
+      <div class="feature"><svg class="ic ic-14"><use href="#i-star"/></svg> Cửa sổ trời</div>
+      <div class="feature"><svg class="ic ic-14"><use href="#i-share"/></svg> Bluetooth</div>
+    </div>
+  </section>
+
+  <!-- POLICIES -->
+  <section class="card">
+    <div class="section-head">
+      <div class="medal mint"><svg class="ic"><use href="#i-shield"/></svg></div>
+      <h2>Chính sách &amp; phí</h2>
+    </div>
+    <div class="policy-list">
+      <div class="policy">
+        <div class="p-ic"><svg class="ic ic-14"><use href="#i-truck"/></svg></div>
+        <div class="p-body"><strong>Giao xe tận nơi</strong><span class="mint">Miễn phí 5 km đầu · 10.000đ/km tiếp theo</span></div>
+        <svg class="ic ic-14"><use href="#i-chev"/></svg>
+      </div>
+      <div class="policy">
+        <div class="p-ic"><svg class="ic ic-14"><use href="#i-receipt"/></svg></div>
+        <div class="p-body"><strong>Đặt cọc</strong><span>30% tiền thuê · hoàn lại sau chuyến</span></div>
+        <svg class="ic ic-14"><use href="#i-chev"/></svg>
+      </div>
+      <div class="policy">
+        <div class="p-ic"><svg class="ic ic-14"><use href="#i-shield"/></svg></div>
+        <div class="p-body"><strong>Tiền thế chấp</strong><span class="mint">Không yêu cầu</span></div>
+        <svg class="ic ic-14"><use href="#i-chev"/></svg>
+      </div>
+      <div class="policy">
+        <div class="p-ic"><svg class="ic ic-14"><use href="#i-receipt"/></svg></div>
+        <div class="p-body"><strong>Phụ phí</strong><span>Quá km · trả muộn · vệ sinh</span></div>
+        <svg class="ic ic-14"><use href="#i-chev"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <section class="map-card">
+    <div class="map-visual">
+      <svg viewBox="0 0 390 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <rect width="390" height="160" fill="#E9EFE8"/>
+        <path d="M-20 44 C 60 30, 120 66, 210 48 S 340 24, 420 46" stroke="#F7FAF6" stroke-width="13" fill="none"/>
+        <path d="M-20 118 C 70 104, 150 138, 250 116 S 360 96, 420 112" stroke="#F7FAF6" stroke-width="16" fill="none"/>
+        <path d="M94 -20 C 82 40, 118 92, 98 180" stroke="#F7FAF6" stroke-width="10" fill="none"/>
+        <path d="M286 -20 C 268 44, 304 98, 282 180" stroke="#F7FAF6" stroke-width="10" fill="none"/>
+        <path d="M-20 78 C 80 72, 150 88, 220 78 S 330 64, 420 80" stroke="#DDE8DC" stroke-width="3" fill="none"/>
+        <path d="M40 10 L 70 150 M180 0 L 190 160 M340 12 L 318 150" stroke="#DDE8DC" stroke-width="2" fill="none"/>
+        <rect x="122" y="62" width="38" height="26" rx="3" fill="#DCE7DA"/>
+        <rect x="210" y="24" width="46" height="24" rx="3" fill="#DCE7DA"/>
+        <rect x="312" y="120" width="44" height="22" rx="3" fill="#DCE7DA"/>
+        <circle cx="195" cy="76" r="26" fill="#6B19FF" opacity=".08"/>
+      </svg>
+      <div class="map-pin"><svg class="ic ic-14"><use href="#i-pin"/></svg></div>
+      <button class="map-open"><svg class="ic ic-12"><use href="#i-pin"/></svg> Mở bản đồ</button>
+    </div>
+    <div class="map-foot">
+      <div class="p-ic"><svg class="ic ic-14"><use href="#i-pin"/></svg></div>
+      <div>
+        <strong>Quận 1, TP. Hồ Chí Minh</strong>
+        <span>Vị trí nhận xe · Chính xác sau khi đặt</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVIEWS -->
+  <section class="reviews">
+    <div class="reviews-head">
+      <div>
+        <h2>Đánh giá từ khách thuê</h2>
+        <small>38 lượt đánh giá đã xác thực</small>
+      </div>
+      <button class="action" style="border:0;background:transparent;color:var(--brand);font-size:11px;font-weight:700;">Xem tất cả</button>
+    </div>
+    <div class="rating-card">
+      <div class="rating-score">
+        <b>4.9</b>
+        <div class="stars">
+          <svg class="ic ic-12"><use href="#i-star"/></svg>
+          <svg class="ic ic-12"><use href="#i-star"/></svg>
+          <svg class="ic ic-12"><use href="#i-star"/></svg>
+          <svg class="ic ic-12"><use href="#i-star"/></svg>
+          <svg class="ic ic-12"><use href="#i-star"/></svg>
+        </div>
+        <small>38 đánh giá</small>
+      </div>
+      <div class="rating-bars">
+        <div class="bar-row"><span>5</span><div class="bar"><i style="width:86%"></i></div></div>
+        <div class="bar-row"><span>4</span><div class="bar"><i style="width:10%"></i></div></div>
+        <div class="bar-row"><span>3</span><div class="bar"><i style="width:3%"></i></div></div>
+        <div class="bar-row"><span>2</span><div class="bar"><i style="width:1%"></i></div></div>
+        <div class="bar-row"><span>1</span><div class="bar"><i style="width:0%"></i></div></div>
+      </div>
+    </div>
+    <div class="review-strip">
+      <article class="review">
+        <div class="review-top">
+          <div class="mini-avatar">TH</div>
+          <div class="who"><strong>Nguyễn Thu Hà</strong><span>2 ngày trước</span></div>
+          <div class="mini-stars">
+            <svg class="ic"><use href="#i-star"/></svg><svg class="ic"><use href="#i-star"/></svg><svg class="ic"><use href="#i-star"/></svg><svg class="ic"><use href="#i-star"/></svg><svg class="ic"><use href="#i-star"/></svg>
+          </div>
+        </div>
+        <p>Xe sạch, chủ xe dễ thương, giao đúng giờ. Mình sẽ thuê lại trong chuyến tới.</p>
+      </article>
+      <article class="review">
+        <div class="review-top">
+          <div class="mini-avatar">HN</div>
+          <div class="who"><strong>Đỗ Hoàng Nam</strong><span>1 tuần trước</span></div>
+          <div class="mini-stars">
+            <svg class="ic"><use href="#i-star"/></svg><svg class="ic"><use href="#i-star"/></svg><svg class="ic"><use href="#i-star"/></svg><svg class="ic"><use href="#i-star"/></svg><svg class="ic"><use href="#i-star"/></svg>
+          </div>
+        </div>
+        <p>Xe chạy êm, nội thất thơm. Thủ tục nhanh gọn, không phát sinh phí.</p>
+      </article>
+    </div>
+  </section>
+
+  <button class="report"><svg class="ic ic-12"><use href="#i-flag"/></svg> Báo cáo thông tin xe</button>
+
+  <!-- STICKY CTA -->
+  <div class="dock">
+    <div class="dock-price">
+      <div class="lbl">Tạm tính · 3 ngày</div>
+      <div class="amount"><b>10.530.000đ</b><span>/ 3 ngày</span></div>
+      <div class="save">Tiết kiệm 1.170.000đ</div>
+    </div>
+    <button class="cta">Đặt xe <svg class="ic ic-14"><use href="#i-arrow"/></svg></button>
+  </div>
+</template>
+
+<script>
+  const screens = [
+    { el: document.getElementById('screen-1'), anchor: null },
+    { el: document.getElementById('screen-2'), anchor: '.owner', offset: -26 },
+    { el: document.getElementById('screen-3'), anchor: '.map-card', offset: -18 },
+  ];
+  const tpl = document.getElementById('page-template');
+  screens.forEach(({ el }) => el.appendChild(tpl.content.cloneNode(true)));
+
+  function applyScroll() {
+    screens.forEach(({ el, anchor, offset = 0, bottom }) => {
+      const target = anchor ? el.querySelector(anchor) : null;
+      if (bottom) el.scrollTop = el.scrollHeight;
+      else el.scrollTop = target ? target.offsetTop + offset : 0;
+    });
+  }
+  // Chờ ảnh hero tải xong để chiều cao trang ổn định.
+  const heroImg = document.querySelector('.screen img');
+  if (heroImg && !heroImg.complete) heroImg.addEventListener('load', applyScroll, { once: true });
+  setTimeout(applyScroll, 300);
+  setTimeout(applyScroll, 1200);
+
+  let theme = 'light';
+  function setTheme(next) {
+    theme = next;
+    document.querySelectorAll('.phone').forEach(p => {
+      p.classList.remove('theme-light', 'theme-dark');
+      p.classList.add('theme-' + next);
+    });
+    document.getElementById('btn-light').classList.toggle('on', next === 'light');
+    document.getElementById('btn-dark').classList.toggle('on', next === 'dark');
+    requestAnimationFrame(applyScroll);
+  }
+</script>
+</body>
+</html>
