@@ -59,7 +59,7 @@ export default function ReportBookingViolation({ bookingId, bookingCode }: { boo
   }
   function inspect(id: string) { void execute(async () => setSelected((await apiClient.get<ApiResponse<Report>>(`${base}/${encodeURIComponent(id)}`)).data.data!)); }
   return <>
-    <BookingButton secondary title="Báo cáo vi phạm booking" onPress={show} />
+    <BookingButton danger regular title="Báo cáo vi phạm booking" onPress={show} />
     <Modal visible={open} animationType="slide" onRequestClose={() => { if (!busy) setOpen(false); }}>
       <View style={{ flex: 1, backgroundColor: theme.background, padding: 20, paddingTop: 48, gap: 12 }}>
         <Text style={{ color: theme.text, fontSize: 20, fontWeight: "700" }}>Báo cáo booking {bookingCode}</Text>

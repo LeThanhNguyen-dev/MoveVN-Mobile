@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
+import { detailFont as font } from "@/features/vehicles/components/detail/detailTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { formatMoney } from "../bookingDisplay";
 import { settleCheckoutSurcharges } from "../bookingService";
 import type { BookingResponse, InspectionReportResponse } from "../types";
-import { BookingButton, BookingField } from "./BookingControls";
+import { BookingField } from "./BookingControls";
+import { DetailButton, DetailNotice, DetailPill, DetailSectionHeader } from "./detail/BookingDetailUI";
 
 export default function OutstandingSurchargePayment({ booking, report, role, onUpdated, onOpenWallet }: {
   booking: BookingResponse; report?: InspectionReportResponse; role?: "Owner" | "Customer"; onUpdated?: () => void | Promise<void>; onOpenWallet?: () => void;
@@ -26,21 +28,36 @@ export default function OutstandingSurchargePayment({ booking, report, role, onU
     finally { lock.current = false; setBusy(false); }
   }
   if (amount <= 0 || !["Returned", "Completed"].includes(booking.status)) return null;
-  return <View accessibilityRole="alert" style={{ padding: 14, backgroundColor: theme.surfaceAlt, borderRadius: 12, gap: 10 }}>
-    <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 18, fontWeight: "700" }}>{role === "Owner" && external > 0 ? "Xác nhận nhận tiền phụ thu trực tiếp" : "Thanh toán phụ thu trả xe"}</Text>
-    <Text style={{ color: theme.text, fontWeight: "700" }}>Còn phụ phí chưa thanh toán: {formatMoney(amount)}</Text>
-    <Text style={{ color: theme.text }}>{external > 0 ? `Đã chọn trả trực tiếp: ${formatMoney(external)}, chờ chủ xe xác nhận đã nhận đủ tiền. Không trừ ví cho khoản này.` : "Khách chọn thanh toán qua ví MoveVN hoặc trả trực tiếp cho chủ xe."}</Text>
+  const ownerConfirm = role === "Owner" && external > 0;
+  return <View accessibilityRole="alert" style={{ backgroundColor: theme.surface, borderRadius: 24, borderWidth: 1, borderColor: theme.dangerBorder, padding: 16, gap: 12 }}>
+    <DetailSectionHeader
+      title={ownerConfirm ? "Xác nhận nhận tiền phụ thu trực tiếp" : "Thanh toán phụ thu trả xe"}
+      subtitle="Chỉ áp dụng cho phụ thu phát sinh khi trả xe"
+      right={<DetailPill label={formatMoney(amount)} tone="warn" />}
+    />
+
+    <View style={{ borderRadius: 16, borderWidth: 1, borderColor: theme.dangerBorder, backgroundColor: theme.dangerSoft, padding: 12, gap: 3 }}>
+      <Text style={{ color: theme.muted, fontFamily: font.bold, fontSize: 8.5, letterSpacing: 0.6, textTransform: "uppercase" }}>Còn phụ phí chưa thanh toán</Text>
+      <Text style={{ color: theme.danger, fontFamily: font.display, fontSize: 24, letterSpacing: -0.5 }}>{formatMoney(amount)}</Text>
+      <Text style={{ color: theme.muted, fontFamily: font.regular, fontSize: 10, lineHeight: 15 }}>
+        {external > 0 ? `Đã chọn trả trực tiếp: ${formatMoney(external)}, chờ chủ xe xác nhận đã nhận đủ tiền. Không trừ ví cho khoản này.` : "Khách chọn thanh toán qua ví MoveVN hoặc trả trực tiếp cho chủ xe."}
+      </Text>
+    </View>
+
     {role === "Customer" && report ? <>
-      <BookingButton title="Thanh toán qua ví MoveVN" busy={busy} onPress={() => void pay("Wallet")} />
-      <BookingButton secondary title="Chọn trả trực tiếp" disabled={busy || external >= amount} onPress={() => void pay("External")} />
-      {onOpenWallet && <BookingButton secondary title="Nạp tiền vào ví" disabled={busy} onPress={onOpenWallet} />}
-      <Text style={{ color: theme.muted }}>Nếu ví thiếu tiền, vào Ví MoveVN để nạp thêm rồi thanh toán khoản còn lại.</Text>
+      <DetailButton label="Thanh toán qua ví MoveVN" busy={busy} onPress={() => void pay("Wallet")} />
+      <DetailButton variant="secondary" label="Chọn trả trực tiếp" disabled={busy || external >= amount} onPress={() => void pay("External")} />
+      {onOpenWallet && <DetailButton variant="ghost" label="Nạp tiền vào ví" disabled={busy} onPress={onOpenWallet} />}
+      <Text style={{ color: theme.muted, fontFamily: font.regular, fontSize: 10, lineHeight: 15 }}>Nếu ví thiếu tiền, vào Ví MoveVN để nạp thêm rồi thanh toán khoản còn lại.</Text>
     </> : null}
-    {role === "Owner" && external > 0 && report ? <>
+    {ownerConfirm && report ? <>
       <BookingField label="Ghi chú nhận tiền trực tiếp" value={note} onChangeText={setNote} multiline editable={!busy} />
-      <BookingButton title="Xác nhận đã nhận đủ tiền phụ thu trực tiếp" busy={busy} disabled={!note.trim()} onPress={() => void pay("ConfirmExternal")} />
+      <DetailButton label="Xác nhận đã nhận đủ tiền phụ thu trực tiếp" busy={busy} disabled={!note.trim()} onPress={() => void pay("ConfirmExternal")} />
     </> : null}
-    {booking.status === "Returned" ? <Text style={{ color: theme.muted }}>{role === "Owner" ? "Xác nhận nhận tiền chỉ ghi nhận thanh toán. Sau khi kiểm tra xe, bấm Xác nhận đã nhận xe để hoàn tất chuyến." : "Bạn đã xác nhận trả xe. Sau khi thanh toán phụ thu, chờ chủ xe xác nhận nhận lại xe; bạn không cần xác nhận trả xe lần nữa."}</Text> : null}
-    {error ? <Text style={{ color: theme.danger }}>{error}</Text> : null}
+
+    {booking.status === "Returned" ? <DetailNotice title="Bước tiếp theo" tone="brand">
+      {role === "Owner" ? "Xác nhận nhận tiền chỉ ghi nhận thanh toán. Sau khi kiểm tra xe, bấm Xác nhận đã nhận xe để hoàn tất chuyến." : "Bạn đã xác nhận trả xe. Sau khi thanh toán phụ thu, chờ chủ xe xác nhận nhận lại xe; bạn không cần xác nhận trả xe lần nữa."}
+    </DetailNotice> : null}
+    {error ? <Text accessibilityRole="alert" style={{ color: theme.danger, fontFamily: font.medium, fontSize: 10.5, lineHeight: 15 }}>{error}</Text> : null}
   </View>;
 }
