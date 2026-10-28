@@ -81,6 +81,26 @@ export type GpsStatusChangedPayload = {
 
 export type GpsConnectionStatus = "offline" | "connecting" | "connected";
 
+export type GpsRoadPathResponse = {
+  bookingId: number;
+  /** true: đã map matching theo đường phố (OSRM); false: fallback nối thẳng các điểm. */
+  matched: boolean;
+  path: { latitude: number; longitude: number }[];
+};
+
+export type GpsTripSummaryResponse = {
+  bookingId: number;
+  distanceKm: number;
+  maxSpeedKmh: number;
+  avgSpeedKmh: number;
+  pointCount: number;
+  signalLostCount: number;
+  startedAt: string | null;
+  endedAt: string | null;
+  /** true: đọc từ TripSummaries; false: tính tạm từ log Mongo (chuyến chưa kết thúc). */
+  persisted: boolean;
+};
+
 export type GpsPosition = {
   latitude: number;
   longitude: number;

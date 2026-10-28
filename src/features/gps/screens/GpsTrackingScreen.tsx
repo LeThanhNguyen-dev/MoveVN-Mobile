@@ -45,13 +45,14 @@ export default function GpsTrackingScreen({
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
   const [followed, setFollowed] = useState(true);
+  const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
 
   const { position, status } = useGpsConnection(bookingId);
 
   // Vị trí + trạng thái lần đầu từ REST; sau đó SignalR (useGpsConnection) cập nhật liên tục.
   const loadInitial = useCallback(async () => {
     try {
-      const [live, routePoints] = await Promise.all([
+      const [live, history] = await Promise.all([
         getGpsLivePosition(bookingId),
         getGpsRoute(bookingId).catch(() => [] as GpsRoutePointResponse[]),
       ]);
@@ -73,13 +74,7 @@ export default function GpsTrackingScreen({
           });
         }
       }
-      if (routePoints.length >= 2) {
-        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-        await delay(400); // đợi map JS sẵn sàng
-        webRef.current?.injectJavaScript(
-          `window.setRoute(${JSON.stringify(routePoints.map((point) => [point.latitude, point.longitude]))}); true;`,
-        );
-      }
+      setRoutePoints(history.map((point) => [point.latitude, point.longitude] as [number, number]));
     } catch (error) {
       Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được vị trí xe."));
     } finally {
@@ -117,6 +112,12 @@ export default function GpsTrackingScreen({
       )}); true;`,
     );
   }, [mapReady, position?.latitude, position?.longitude, state]);
+
+  // Vệt đường lịch sử: chỉ inject khi WebView đã sẵn sàng.
+  useEffect(() => {
+    if (!mapReady || routePoints.length < 1) return;
+    webRef.current?.injectJavaScript(`window.setRoute(${JSON.stringify(routePoints)}); true;`);
+  }, [mapReady, routePoints]);
 
   useEffect(() => {
     if (!mapReady) return;

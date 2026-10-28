@@ -1,4 +1,4 @@
-import BookingSearchFilters, { EMPTY_SEARCH } from "../components/BookingSearchFilters";
+import { EMPTY_SEARCH } from "../components/BookingSearchFilters";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -32,7 +32,7 @@ export default function OwnerBookingListScreen({ navigation, onOpenUserProfile }
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [items, setItems] = useState<BookingResponse[]>([]);
   const [status, setStatus] = useState("");
-  const [search, setSearch] = useState(EMPTY_SEARCH);
+  const search = EMPTY_SEARCH;
   const requestId = useRef(0);
   const fetching = useRef(false);
   const [page, setPage] = useState(1);
@@ -80,7 +80,7 @@ export default function OwnerBookingListScreen({ navigation, onOpenUserProfile }
         }
       }
     },
-    [search],
+    [],
   );
 
   useFocusEffect(useCallback(() => {
@@ -121,7 +121,6 @@ export default function OwnerBookingListScreen({ navigation, onOpenUserProfile }
         </View>
       </View>
 
-      <BookingSearchFilters onApply={setSearch} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
