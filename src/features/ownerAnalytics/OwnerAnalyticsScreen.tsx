@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ActivityIndicator, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
-import { BarChart3, CalendarCheck, CarFront, ChevronDown, CircleHelp, Download, RefreshCw, ShieldCheck, Star, Trophy, X } from "lucide-react-native";
+import { ArrowLeft, BarChart3, CalendarCheck, CarFront, ChevronDown, ChevronUp, CircleHelp, Download, RefreshCw, SlidersHorizontal, Star, Trophy, X } from "lucide-react-native";
 import AppText from "@/components/AppText";
 import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
 import type { AuthUser } from "@/features/auth/types";
@@ -12,16 +12,17 @@ import { downloadOwnerWorkbook } from "./downloadWorkbook";
 import OwnerVehicleDetails from "./OwnerVehicleDetails";
 import { comparison, datePreset, defaultFilters, money, number, percent, presetLabels, shortDate, validateDates, type AnalyticsFilters, type OwnerAnalytics, type OwnerTrendPoint, type VehicleAnalytics } from "./types";
 
-export default function OwnerAnalyticsScreen({ user, onAvatarPress }: { user: AuthUser; onAvatarPress?: () => void }) {
+export default function OwnerAnalyticsScreen({ user, onAvatarPress, onBack }: { user: AuthUser; onAvatarPress?: () => void; onBack?: () => void }) {
   const { theme } = useTheme(); const styles = useMemo(() => createStyles(theme), [theme]);
   const [filters, setFilters] = useState(defaultFilters);
-  const [draft, setDraft] = useState({ fromDate: filters.fromDate, toDate: filters.toDate });
+  const [draft, setDraft] = useState({ fromDate: filters.fromDate, toDate: filters.toDate, granularity: filters.granularity });
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [data, setData] = useState<OwnerAnalytics | null>(null);
   const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [formError, setFormError] = useState("");
   const [reload, setReload] = useState(0); const [exporting, setExporting] = useState(false); const [exportError, setExportError] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false); const [definitionsOpen, setDefinitionsOpen] = useState(false);
   const [vehicleSearch, setVehicleSearch] = useState("");
-  useEffect(() => { setDraft({ fromDate: filters.fromDate, toDate: filters.toDate }); setFormError(""); setExportError(""); }, [filters]);
+  useEffect(() => { setDraft({ fromDate: filters.fromDate, toDate: filters.toDate, granularity: filters.granularity }); setFormError(""); setExportError(""); }, [filters]);
   useEffect(() => {
     const controller = new AbortController(); setLoading(true); setError(""); setData(null);
     getOwnerAnalytics(filters, controller.signal).then(result => { if (!controller.signal.aborted) setData(result); }).catch(e => { if (!controller.signal.aborted) setError(getApiErrorMessage(e, "Không tải được thống kê. Vui lòng thử lại.")); })
@@ -32,7 +33,14 @@ export default function OwnerAnalyticsScreen({ user, onAvatarPress }: { user: Au
     const resetDetails = ["vehicleId", "fromDate", "toDate"].some(key => key in values);
     setFilters(f => ({ ...f, ...values, ...(resetDetails ? { bookingPage: 1, disputePage: 1 } : {}), page: values.page ?? 1 }));
   }
-  function apply() { const issue = validateDates(draft.fromDate, draft.toDate); setFormError(issue); if (!issue) update(draft); }
+  function apply() {
+    const issue = validateDates(draft.fromDate, draft.toDate);
+    setFormError(issue);
+    if (!issue) {
+      update(draft);
+      setFiltersExpanded(false);
+    }
+  }
   async function download() {
     if (!data || exporting) return; setExporting(true); setExportError("");
     try { await downloadOwnerWorkbook(filters); }
@@ -43,21 +51,36 @@ export default function OwnerAnalyticsScreen({ user, onAvatarPress }: { user: Au
   const chooseVehicle = (id?: number) => { update({ vehicleId: id }); setPickerOpen(false); setVehicleSearch(""); };
   const action = (label: string, onPress: () => void, primary = false, disabled = false, child?: ReactNode) => <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={[styles.button, primary && styles.primaryButton, disabled && styles.disabled]}>{child}<AppText style={[styles.buttonText, primary && styles.primaryText]}>{label}</AppText></Pressable>;
   return <View style={styles.root}>
-    <View style={styles.header}><AppDashboardHeader user={user} onAvatarPress={onAvatarPress} /></View>
+    <View style={styles.header}>{onBack ? <View style={styles.toolbar}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={onBack} style={styles.iconButton}><ArrowLeft size={21} color={theme.text} /></Pressable>
+      <AppText numberOfLines={1} style={[styles.title, styles.flex]}>Thống kê đội xe</AppText>
+      <Pressable accessibilityRole="button" accessibilityLabel="Làm mới thống kê" accessibilityState={{ disabled: loading }} onPress={() => setReload(n => n + 1)} disabled={loading} style={[styles.iconButton, loading && styles.disabled]}><RefreshCw size={18} color={theme.brand} /></Pressable>
+    </View> : <AppDashboardHeader user={user} onAvatarPress={onAvatarPress} />}</View>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={loading} onRefresh={() => setReload(n => n + 1)} tintColor={theme.brand} colors={[theme.brand]} />}>
-      <View style={styles.hero}><View style={styles.row}><View style={styles.heroIcon}><BarChart3 size={23} color={theme.brand} /></View><AppText style={styles.eyebrow}>GÓC NHÌN CHỦ XE</AppText></View><AppText display style={styles.heading}>Hiệu quả đội xe</AppText><AppText style={styles.description}>Xe được đặt nhiều, thu nhập và cơ hội cải thiện — tất cả trong một góc nhìn.</AppText><View style={[styles.row, { marginTop: 15 }]}><ShieldCheck size={14} color={theme.brand} /><AppText style={styles.hint}>Chỉ dữ liệu của bạn · UTC+7</AppText></View></View>
-      <View style={styles.panel}><View style={styles.rowBetween}><AppText display style={styles.title}>Kỳ thống kê</AppText><Pressable accessibilityRole="button" accessibilityLabel="Làm mới thống kê" onPress={() => setReload(n => n + 1)} disabled={loading} style={styles.iconButton}><RefreshCw size={18} color={theme.brand} /></Pressable></View>
+      <View style={styles.hero}>
+        <View style={styles.heroIcon}><BarChart3 size={20} color={theme.brand} /></View>
+        <View style={styles.flex}><AppText style={styles.heroTitle}>Hiệu quả đội xe</AppText><AppText style={styles.hint}>Thu nhập, đơn thuê và đánh giá của bạn.</AppText></View>
+      </View>
+      <View style={[styles.panel, styles.filterPanel]}><View style={styles.rowBetween}>
+        <AppText style={styles.filterTitle}>Kỳ thống kê</AppText>
+        <Pressable accessibilityRole="button" accessibilityLabel="Tùy chỉnh kỳ thống kê" accessibilityState={{ expanded: filtersExpanded }} onPress={() => setFiltersExpanded(value => !value)} style={styles.filterToggle}>
+          <SlidersHorizontal size={14} color={theme.brand} /><AppText style={styles.filterToggleText}>Tùy chỉnh</AppText>{filtersExpanded ? <ChevronUp size={14} color={theme.brand} /> : <ChevronDown size={14} color={theme.brand} />}
+        </Pressable>
+      </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>{presetLabels.map(p => { const dates = datePreset(p.key); const active = dates.fromDate === filters.fromDate && dates.toDate === filters.toDate; return <Pressable key={p.key} accessibilityRole="button" accessibilityLabel={p.label} accessibilityState={{ selected: active }} onPress={() => update(dates)} style={[styles.chip, active && styles.activeChip]}><AppText style={[styles.chipText, active && styles.activeChipText]}>{p.label}</AppText></Pressable>; })}</ScrollView>
+        {filtersExpanded ? <View style={styles.advancedFilters}>
         <View style={styles.dateRow}><View style={styles.flex}><AppText style={styles.label}>Từ ngày</AppText><TextInput accessibilityLabel="Từ ngày" placeholder="YYYY-MM-DD" placeholderTextColor={theme.faint} value={draft.fromDate} onChangeText={text => setDraft(d => ({ ...d, fromDate: text }))} maxLength={10} autoCapitalize="none" style={styles.input} /></View><View style={styles.flex}><AppText style={styles.label}>Đến ngày</AppText><TextInput accessibilityLabel="Đến ngày" placeholder="YYYY-MM-DD" placeholderTextColor={theme.faint} value={draft.toDate} onChangeText={text => setDraft(d => ({ ...d, toDate: text }))} maxLength={10} autoCapitalize="none" style={styles.input} /></View></View>
-        <View style={styles.chips}>{([['day', 'Ngày'], ['week', 'Tuần'], ['month', 'Tháng']] as const).map(([key, label]) => <Pressable key={key} accessibilityRole="button" accessibilityLabel={"Nhóm theo " + label.toLowerCase()} accessibilityState={{ selected: filters.granularity === key }} onPress={() => update({ granularity: key })} style={[styles.chip, filters.granularity === key && styles.activeChip]}><AppText style={[styles.chipText, filters.granularity === key && styles.activeChipText]}>{label}</AppText></Pressable>)}</View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Chọn xe thống kê" disabled={!data || loading} onPress={() => setPickerOpen(true)} style={styles.select}><CarFront size={16} color={theme.brand} /><AppText numberOfLines={1} style={[styles.body, styles.flex]}>{selected ? selected.licensePlate + " · " + selected.name : filters.vehicleId ? "Xe #" + filters.vehicleId : "Toàn bộ đội xe"}</AppText><ChevronDown size={17} color={theme.muted} /></Pressable>
+        <View style={styles.groupRow}><AppText style={styles.label}>Nhóm biểu đồ</AppText><View style={styles.chips}>{([['day', 'Ngày'], ['week', 'Tuần'], ['month', 'Tháng']] as const).map(([key, label]) => <Pressable key={key} accessibilityRole="button" accessibilityLabel={"Nhóm theo " + label.toLowerCase()} accessibilityState={{ selected: draft.granularity === key }} onPress={() => setDraft(value => ({ ...value, granularity: key }))} style={[styles.chip, draft.granularity === key && styles.activeChip]}><AppText style={[styles.chipText, draft.granularity === key && styles.activeChipText]}>{label}</AppText></Pressable>)}</View></View>
         {formError ? <AppText accessibilityRole="alert" style={styles.error}>{formError}</AppText> : null}
         {action("Áp dụng", apply, true)}
+        </View> : null}
+        <Pressable accessibilityRole="button" accessibilityLabel="Chọn xe thống kê" disabled={!data || loading} onPress={() => setPickerOpen(true)} style={styles.select}><CarFront size={16} color={theme.brand} /><AppText numberOfLines={1} style={[styles.body, styles.flex]}>{selected ? selected.licensePlate + " · " + selected.name : filters.vehicleId ? "Xe #" + filters.vehicleId : "Toàn bộ đội xe"}</AppText><ChevronDown size={17} color={theme.muted} /></Pressable>
+        <View style={styles.rowBetween}><AppText style={styles.hint}>{shortDate(filters.fromDate)} – {shortDate(filters.toDate)}</AppText><AppText style={styles.hint}>Giờ Việt Nam</AppText></View>
         {filters.vehicleId ? action("Xem toàn bộ đội xe", () => update({ vehicleId: undefined })) : null}
       </View>
       {exportError ? <AppText accessibilityRole="alert" style={styles.errorBox}>{exportError}</AppText> : null}
       {loading ? <View style={styles.empty}><ActivityIndicator color={theme.brand} /><AppText style={styles.description}>Đang tổng hợp thống kê…</AppText></View> : error ? <View style={styles.panel}><AppText accessibilityRole="alert" style={styles.error}>{error}</AppText>{action("Thử lại", () => setReload(n => n + 1))}{action("Xóa bộ lọc", () => setFilters(defaultFilters()))}</View> : data ? <>
-        <View style={styles.period}><AppText style={styles.hint}>{shortDate(data.period.fromDate)} – {shortDate(data.period.toDate)}</AppText><AppText style={styles.hint}>Kỳ trước: {shortDate(data.comparisonPeriod.fromDate)} – {shortDate(data.comparisonPeriod.toDate)}</AppText></View>
+        <AppText style={styles.hint}>So với kỳ trước: {shortDate(data.comparisonPeriod.fromDate)} – {shortDate(data.comparisonPeriod.toDate)}</AppText>
         <View style={styles.income}><View style={styles.row}><View style={styles.heroIcon}><BarChart3 size={20} color={theme.brand} /></View><AppText style={styles.label}>Thu nhập qua ví</AppText></View><AppText display style={styles.incomeValue}>{money(data.summary.walletIncome)}</AppText><AppText style={styles.body}>{comparison(data.summary.walletIncome, data.previousSummary.walletIncome)}</AppText><AppText style={styles.hint}>Giao dịch đã ghi nhận, không phải lợi nhuận hay tiền đã chuyển vào ngân hàng.</AppText></View>
         <View style={styles.metricGrid}><Metric label="Đơn hợp lệ" value={number(data.summary.confirmedBookings)} hint={`${data.summary.bookingsCreated} yêu cầu mới`} theme={theme} /><Metric label="Chuyến hoàn tất" value={number(data.summary.completedTrips)} hint="Theo ngày hoàn tất" theme={theme} /><Metric label="Ngày có lịch thuê" value={percent(data.summary.utilizationRate)} hint={`${data.summary.bookedDays}/${data.summary.fleetDays} ngày đội xe`} theme={theme} /><Metric label="Tỷ lệ hủy" value={percent(data.summary.cancellationRate)} hint={`${data.summary.cancelledBookings} hủy · ${data.summary.rejectedBookings} từ chối`} theme={theme} /></View>
         <View style={styles.panel}><View style={styles.row}><Star size={18} color={theme.brand} /><AppText style={styles.title}>Đánh giá xe</AppText><AppText style={[styles.body, { marginLeft: 'auto' }]}>{data.summary.averageRating === null ? "Chưa có" : number(data.summary.averageRating) + " / 5"}</AppText></View><AppText style={styles.hint}>{data.summary.reviewCount} đánh giá công khai trong kỳ</AppText><View style={styles.divider} />{[["Giá trị chuyến hoàn tất", data.summary.completedTripValue], ["Thu nhập booking", data.summary.bookingEarnings], ["Tài trợ voucher đã nhận", data.summary.sponsorIncome], ["Điều chỉnh thu nhập", data.summary.incomeReversals]].map(([label, value]) => <View key={label} style={styles.rowBetween}><AppText style={[styles.hint, styles.flex]}>{label}</AppText><AppText style={styles.body}>{money(Number(value))}</AppText></View>)}</View>
@@ -103,17 +126,26 @@ function Trend({ points, theme }: { points: OwnerTrendPoint[]; theme: Theme }) {
 }
 
 const createStyles = (t: Theme) => StyleSheet.create({
-  root: { flex: 1, backgroundColor: t.background }, header: { paddingHorizontal: 20, paddingTop: 8 }, content: { padding: 18, gap: 16, paddingBottom: 36 },
+  root: { flex: 1, backgroundColor: t.background },
+  header: { paddingHorizontal: 12, backgroundColor: t.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: t.border },
+  toolbar: { minHeight: 52, flexDirection: "row", alignItems: "center", gap: 8 },
+  content: { padding: 14, gap: 12, paddingBottom: 36 },
   row: { flexDirection: "row", alignItems: "center", gap: 8 }, rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }, flex: { flex: 1, minWidth: 0 },
-  hero: { padding: 22, borderRadius: 22, backgroundColor: t.brandSoft, borderWidth: 1, borderColor: t.brandBorder }, heroIcon: { padding: 9, borderRadius: 12, backgroundColor: t.brandSoft },
-  eyebrow: { fontSize: 10, letterSpacing: 1.4, fontWeight: "700", color: t.brand }, heading: { fontSize: 29, fontWeight: "800", color: t.text, marginTop: 12 },
+  hero: { padding: 12, borderRadius: 14, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: t.brandSoft, borderWidth: StyleSheet.hairlineWidth, borderColor: t.brandBorder },
+  heroIcon: { padding: 8, borderRadius: 10, backgroundColor: t.brandSoft },
+  heroTitle: { color: t.text, fontSize: 14, lineHeight: 21, fontWeight: "600" },
   title: { color: t.text, fontSize: 16, fontWeight: "700" }, description: { color: t.muted, fontSize: 13, lineHeight: 22, marginTop: 5 }, hint: { color: t.muted, fontSize: 11, lineHeight: 18 },
-  label: { color: t.muted, fontSize: 12, lineHeight: 19 }, body: { color: t.text, fontSize: 13, fontWeight: "600", lineHeight: 22 }, panel: { backgroundColor: t.surface, padding: 18, borderRadius: 20, borderWidth: 1, borderColor: t.border, gap: 10 },
+  label: { color: t.muted, fontSize: 12, lineHeight: 19 }, body: { color: t.text, fontSize: 13, fontWeight: "600", lineHeight: 22 }, panel: { backgroundColor: t.surface, padding: 14, borderRadius: 16, borderWidth: 1, borderColor: t.border, gap: 10 },
+  filterPanel: { gap: 8 }, filterTitle: { color: t.text, fontSize: 13, fontWeight: "600" },
+  filterToggle: { minHeight: 36, flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 8, borderRadius: 9, backgroundColor: t.brandSoft },
+  filterToggleText: { color: t.brand, fontSize: 11, fontWeight: "600" },
+  advancedFilters: { gap: 8, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.border },
+  groupRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 },
   button: { minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, borderRadius: 12, borderWidth: 1, borderColor: t.brandBorder, backgroundColor: t.brandSoft, paddingVertical: 11, paddingHorizontal: 16 },
   primaryButton: { backgroundColor: t.brand, borderColor: t.brand }, buttonText: { color: t.brand, fontSize: 12, fontWeight: "700" }, primaryText: { color: t.onBrand }, disabled: { opacity: 0.45 }, iconButton: { width: 42, height: 42, alignItems: "center", justifyContent: "center" },
-  chips: { flexDirection: "row", gap: 7, paddingVertical: 5 }, chip: { minHeight: 38, paddingHorizontal: 13, paddingVertical: 10, borderRadius: 10, backgroundColor: t.surfaceAlt }, activeChip: { backgroundColor: t.brand }, chipText: { color: t.muted, fontSize: 11, fontWeight: "600" }, activeChipText: { color: t.onBrand },
+  chips: { flexDirection: "row", gap: 6, paddingVertical: 2 }, chip: { minHeight: 34, alignItems: "center", justifyContent: "center", paddingHorizontal: 11, paddingVertical: 7, borderRadius: 9, backgroundColor: t.surfaceAlt }, activeChip: { backgroundColor: t.brand }, chipText: { color: t.muted, fontSize: 11, fontWeight: "600" }, activeChipText: { color: t.onBrand },
   dateRow: { flexDirection: "row", gap: 10 }, input: { borderWidth: 1, borderColor: t.border, borderRadius: 11, backgroundColor: t.input, color: t.text, fontSize: 13, paddingHorizontal: 12, minHeight: 46, marginTop: 6 }, select: { minHeight: 46, borderRadius: 11, borderWidth: 1, borderColor: t.border, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12 },
-  period: { gap: 3 }, income: { backgroundColor: t.surface, borderRadius: 20, borderWidth: 1, borderColor: t.brandBorder, padding: 22, gap: 9 }, incomeValue: { color: t.brand, fontSize: 32, fontWeight: "800" }, metricGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 }, metric: { width: "48%", flexGrow: 1, padding: 16, borderRadius: 18, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, gap: 7 }, metricValue: { fontSize: 25, color: t.text, fontWeight: "800" },
+  income: { backgroundColor: t.surface, borderRadius: 16, borderWidth: 1, borderColor: t.brandBorder, padding: 16, gap: 6 }, incomeValue: { color: t.brand, fontSize: 25, lineHeight: 33, fontWeight: "600" }, metricGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 }, metric: { width: "47%", flexGrow: 1, padding: 13, borderRadius: 14, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, gap: 5 }, metricValue: { fontSize: 22, color: t.text, fontWeight: "600" },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: t.border, marginVertical: 4 }, vehicleCard: { padding: 15, borderRadius: 14, borderWidth: 1, borderColor: t.border, gap: 12 }, vehicleName: { fontSize: 13, fontWeight: "700", color: t.text, lineHeight: 21 }, vehicleGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 }, small: { width: "47%", gap: 2 },
   rank: { flexDirection: "row", gap: 10, paddingVertical: 9, alignItems: "center" }, rankIndex: { height: 29, width: 29, backgroundColor: t.brandSoft, borderRadius: 9, alignItems: "center", justifyContent: "center" }, rankValue: { maxWidth: "45%", fontSize: 12, fontWeight: "700", color: t.brand }, track: { height: 5, backgroundColor: t.surfaceAlt, borderRadius: 4, overflow: "hidden", marginTop: 7 }, bar: { height: 5, backgroundColor: t.brand, borderRadius: 4 },
   empty: { paddingVertical: 28, alignItems: "center", gap: 12 }, emptyText: { paddingVertical: 24, textAlign: "center", color: t.muted, fontSize: 13 }, error: { color: t.danger, fontSize: 12, lineHeight: 20 }, errorBox: { color: t.danger, backgroundColor: t.dangerSoft, padding: 15, borderRadius: 12, fontSize: 12, lineHeight: 20 }, notice: { color: t.brand, backgroundColor: t.brandSoft, borderRadius: 14, padding: 16, fontSize: 12, lineHeight: 21 },

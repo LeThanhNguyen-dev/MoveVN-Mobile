@@ -4,14 +4,14 @@ import MyVehicleDetailScreen from "@/features/vehicles/screens/MyVehicleDetailSc
 import MyVehicleWizardScreen from "@/features/vehicles/screens/MyVehicleWizardScreen";
 import MyVehiclesListScreen from "@/features/vehicles/screens/MyVehiclesListScreen";
 
-type Route =
+export type OwnerVehicleRoute =
   | { name: "list" }
   | { name: "detail"; vehicleId: number }
   | { name: "add" }
   | { name: "edit"; vehicleId: number };
 
-export default function OwnerVehiclesScreen() {
-  const [route, setRoute] = useState<Route>({ name: "list" });
+export default function OwnerVehiclesScreen({ initialRoute = { name: "list" } }: { initialRoute?: OwnerVehicleRoute } = {}) {
+  const [route, setRoute] = useState<OwnerVehicleRoute>(initialRoute);
   const [refreshToken, setRefreshToken] = useState(0);
 
   function refreshList() {
