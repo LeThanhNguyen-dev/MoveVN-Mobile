@@ -82,6 +82,16 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
           userId={profileUserId}
           onBack={() => setProfileUserId(null)}
           onOpenProfile={openUserProfile}
+          onViewVehicle={(vehicleId) => {
+            setProfileUserId(null);
+            setVehicleEntry((entry) => ({ key: entry.key + 1, route: { name: "detail", vehicleId } }));
+            setActiveTab("vehicles");
+          }}
+          onOpenBooking={(bookingId) => {
+            setProfileUserId(null);
+            setPushBooking({ bookingId, requestId: `profile-${bookingId}-${Date.now()}` });
+            setActiveTab("bookings");
+          }}
         />
       ) : showProfile ? (
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />

@@ -133,6 +133,15 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
           userId={profileUserId}
           onBack={() => setProfileUserId(null)}
           onOpenProfile={openUserProfile}
+          onViewVehicle={(vehicleId) => {
+            setProfileUserId(null);
+            setPendingVehicleId(vehicleId);
+            setActiveTab("explore");
+          }}
+          onOpenBooking={(bookingId) => {
+            setProfileUserId(null);
+            goToTrip(bookingId);
+          }}
         />
       ) : showProfile ? (
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />
