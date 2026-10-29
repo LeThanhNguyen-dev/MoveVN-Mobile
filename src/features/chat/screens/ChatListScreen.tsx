@@ -8,16 +8,16 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
-import { MessageSquare, RefreshCw } from "lucide-react-native";
+import { MessageSquare, RefreshCw, Search } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { refreshChatRooms } from "../chatActions";
 import {
   chatCounterpart,
-  chatTime,
   normalizeChatSearch,
 } from "../chatPresentation";
 import { useChatStore } from "../useChat";
+import ChatConversationRow from "../components/ChatConversationRow";
 import NotificationBell from "@/features/notifications/components/NotificationBell";
 
 export default function ChatListScreen({
@@ -41,18 +41,20 @@ export default function ChatListScreen({
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <View
         style={{
-          padding: 18,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          backgroundColor: theme.surface,
           flexDirection: "row",
           alignItems: "center",
           gap: 12,
         }}
       >
         <View style={{ flex: 1 }}>
-          <AppText style={{ color: theme.text, fontWeight: "800", fontSize: 25 }}>
+          <AppText style={{ color: theme.text, fontWeight: "800", fontSize: 23 }}>
             Tin nhắn
           </AppText>
-          <AppText style={{ color: theme.muted, marginTop: 4 }}>
-            Trao đổi theo từng booking
+          <AppText style={{ color: theme.muted, marginTop: 4, fontSize: 12 }}>
+            Trao đổi trong từng chuyến đi
           </AppText>
         </View>
         <NotificationBell />
@@ -63,28 +65,26 @@ export default function ChatListScreen({
           onPress={() => {
             void refreshChatRooms();
           }}
-          style={{ padding: 10 }}
+          style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: theme.brandSoft, alignItems: "center", justifyContent: "center" }}
         >
-          <RefreshCw size={21} color={theme.brand} />
+          <RefreshCw size={19} color={theme.brand} />
         </Pressable>
       </View>
-      <TextInput
-        accessibilityLabel="Tìm booking hoặc người trò chuyện"
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Tên, mã booking hoặc xe…"
-        placeholderTextColor={theme.placeholder}
-        style={{
-          color: theme.text,
-          backgroundColor: theme.input,
-          borderColor: theme.border,
-          borderWidth: 1,
-          borderRadius: 14,
-          padding: 12,
-          marginHorizontal: 16,
-          marginBottom: 12,
-        }}
-      />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 9,
+        marginHorizontal: 16, marginVertical: 12, paddingHorizontal: 12,
+        minHeight: 44, borderWidth: 1, borderColor: theme.border,
+        borderRadius: 14, backgroundColor: theme.surface }}>
+        <Search size={18} color={theme.muted} />
+        <TextInput
+          accessibilityLabel="Tìm người trò chuyện, mã đặt xe hoặc xe"
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Tìm tên, mã đặt xe hoặc xe…"
+          placeholderTextColor={theme.placeholder}
+          returnKeyType="search"
+          style={{ flex: 1, minWidth: 0, paddingVertical: 10, color: theme.text, fontSize: 14 }}
+        />
+      </View>
       {state.roomsError ? (
         <AppText
           accessibilityRole="alert"
@@ -126,93 +126,11 @@ export default function ChatListScreen({
             </View>
           ) : null
         }
-        renderItem={({ item: room }) => {
-          const person = chatCounterpart(room, userId);
-          return (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`${person.name}, ${room.bookingCode}, ${room.unreadCount} chưa đọc`}
-              onPress={() => onOpen(room.id)}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                marginHorizontal: 12,
-                marginBottom: 8,
-                padding: 14,
-                borderRadius: 16,
-                backgroundColor: room.unreadCount
-                  ? theme.brandSoft
-                  : theme.surface,
-                borderWidth: 1,
-                borderColor: theme.border,
-              }}
-            >
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  backgroundColor: theme.brandSoft,
-                  borderRadius: 22,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <MessageSquare size={22} color={theme.brand} />
-              </View>
-              <View style={{ flex: 1, gap: 4 }}>
-                <AppText
-                  numberOfLines={1}
-                  style={{
-                    color: theme.text,
-                    fontSize: 16,
-                    fontWeight: room.unreadCount ? "800" : "600",
-                  }}
-                >
-                  {person.name}
-                </AppText>
-                <AppText
-                  numberOfLines={1}
-                  style={{ color: theme.brand, fontSize: 11 }}
-                >
-                  {room.bookingCode} · {room.vehicleName || "Đơn thuê xe"}
-                </AppText>
-                <AppText
-                  numberOfLines={1}
-                  style={{ color: theme.muted, fontSize: 13 }}
-                >
-                  {room.lastMessage?.text || "Bắt đầu trò chuyện"}
-                </AppText>
-              </View>
-              <View style={{ alignItems: "flex-end", gap: 8 }}>
-                <AppText style={{ color: theme.muted, fontSize: 10 }}>
-                  {room.lastMessage ? chatTime(room.lastMessage.sentAt) : ""}
-                </AppText>
-                {room.unreadCount > 0 ? (
-                  <View
-                    style={{
-                      backgroundColor: theme.brand,
-                      borderRadius: 12,
-                      minWidth: 22,
-                      padding: 4,
-                    }}
-                  >
-                    <AppText
-                      style={{
-                        color: theme.onBrand,
-                        fontSize: 11,
-                        textAlign: "center",
-                        fontWeight: "700",
-                      }}
-                    >
-                      {room.unreadCount > 99 ? "99+" : room.unreadCount}
-                    </AppText>
-                  </View>
-                ) : null}
-              </View>
-            </Pressable>
-          );
-        }}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        keyboardDismissMode="on-drag"
+        renderItem={({ item }) => (
+          <ChatConversationRow room={item} userId={userId} onOpen={onOpen} />
+        )}
       />
     </View>
   );

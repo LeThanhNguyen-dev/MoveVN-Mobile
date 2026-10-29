@@ -8,7 +8,8 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import {
   canToggleStatus,
-  formatOwnerVehiclePrice,
+  formatVnd,
+  getMinPrice,
   getOwnerStatusLabel,
   vehicleTypeLabel,
 } from "@/features/vehicles/ownerDisplay";
@@ -41,6 +42,7 @@ function MyVehicleCard({ vehicle, onOpen, toggling = false, onToggleStatus }: My
   const VehicleIcon = vehicle.vehicleType === "Car" ? Car : Bike;
   const showImage = !!vehicle.featuredImage && !imageFailed;
   const showToggle = canToggleStatus(vehicle.status) && onToggleStatus;
+  const price = getMinPrice(vehicle);
 
   return (
     <Pressable onPress={() => onOpen(vehicle.id)} style={styles.card}>
@@ -101,7 +103,13 @@ function MyVehicleCard({ vehicle, onOpen, toggling = false, onToggleStatus }: My
           </View>
         ) : null}
         <View style={styles.priceRow}>
-          <AppText style={styles.price}>{formatOwnerVehiclePrice(vehicle)}</AppText>
+          <AppText style={styles.price}>
+            {price == null ? "Liên hệ" : <>
+              {vehicle.pricingMode === "Auto" ? <AppText style={styles.priceUnit}>từ </AppText> : null}
+              {formatVnd(price)}
+              <AppText style={styles.priceUnit}> /ngày</AppText>
+            </>}
+          </AppText>
           {vehicle.pricingMode === "Auto" ? (
             <View style={styles.autoTag}>
               <AppText style={styles.autoTagText}>Giá tự động</AppText>
@@ -162,7 +170,8 @@ const createStyles = (theme: Theme) =>
     metaRow: { flexDirection: "row", alignItems: "center", gap: 5 },
     area: { color: theme.muted, fontSize: 12, fontWeight: "500", flexShrink: 1 },
     priceRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 2 },
-    price: { color: theme.brand, fontSize: 16, fontWeight: "800" },
+    price: { color: theme.brand, fontSize: 15, fontWeight: "600", flexShrink: 1 },
+    priceUnit: { color: theme.muted, fontSize: 12, fontWeight: "400" },
     autoTag: {
       borderRadius: 999,
       backgroundColor: theme.brandSoft,

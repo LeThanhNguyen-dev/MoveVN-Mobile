@@ -45,8 +45,8 @@ import {
   canDeleteVehicle,
   canToggleStatus,
   canUploadReplacementDocument,
-  formatMinPrice,
   formatVnd,
+  getMinPrice,
   getOwnerStatusLabel,
   vehicleTypeLabel,
 } from "@/features/vehicles/ownerDisplay";
@@ -263,6 +263,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
   }
 
   const VehicleIcon = vehicle.vehicleType === "Car" ? Car : Bike;
+  const rentalPrice = getMinPrice(vehicle);
   const images = vehicle.images.length > 0 ? vehicle.images : [];
   const currentDoc = vehicle.documents.find((d) => d.isCurrent) ?? vehicle.documents[0];
   const showToggle = canToggleStatus(vehicle.status);
@@ -378,7 +379,13 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
 
         <View style={styles.card}>
           <AppText display style={styles.cardTitle}>Giá thuê</AppText>
-          <AppText style={styles.bigPrice}>{formatMinPrice(vehicle)}</AppText>
+          <AppText style={styles.bigPrice}>
+            {rentalPrice == null ? "Liên hệ" : <>
+              {vehicle.pricingMode === "Auto" ? <AppText style={styles.priceUnit}>từ </AppText> : null}
+              {formatVnd(rentalPrice)}
+              <AppText style={styles.priceUnit}> /ngày</AppText>
+            </>}
+          </AppText>
           <View style={styles.kvRow}>
             <AppText style={styles.kvKey}>Tiền cọc</AppText>
             <AppText style={styles.kvVal}>
@@ -971,7 +978,8 @@ const createStyles = (theme: Theme) =>
       gap: 10,
     },
     cardTitle: { color: theme.text, fontSize: 14, fontWeight: "800" },
-    bigPrice: { color: theme.brand, fontSize: 22, fontWeight: "800" },
+    bigPrice: { color: theme.brand, fontSize: 18, lineHeight: 25, fontWeight: "600" },
+    priceUnit: { color: theme.muted, fontSize: 12, fontWeight: "400" },
     kvRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
     kvKey: { color: theme.muted, fontSize: 12, fontWeight: "600" },
     kvVal: { color: theme.text, fontSize: 13, fontWeight: "600", textAlign: "right", flexShrink: 1 },

@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native"
+import { ActivityIndicator, Modal, Platform, Pressable, RefreshControl, ScrollView, SectionList, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Bell, BellOff, CalendarCheck, CarFront, CheckCheck, ChevronRight, CircleAlert, Flag, Headphones, MessageSquare, RefreshCw, Wallet } from "lucide-react-native";
+import { ArrowLeft, BellOff, CarFront, CheckCheck, CircleAlert, Flag, Headphones, RefreshCw } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import type { Theme } from "@/theme/tokens";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { loadNotificationPage, readAllNotifications, readNotification } from "../notificationActions";
-import { formatNotificationDate, notificationCategory, notificationReference } from "../notificationPresentation";
+import { formatNotificationDate, notificationDayGroup, notificationReference } from "../notificationPresentation";
+import { notificationVisuals } from "../notificationVisuals";
+import NotificationRow from "./NotificationRow";
 import { useNotificationStore } from "../useNotifications";
 import type { NotificationItem } from "../types";
 import { getAuthUser, getSessionGeneration } from "@/features/auth/hooks/useAuth";
@@ -17,16 +19,26 @@ import { openViolations } from "@/features/violations/violationNavigation";
 import { violationFromNotification } from "@/features/violations/violationModel";
 import { availabilityTarget, openAvailabilityAlerts, type AlertVehicleTarget } from "@/features/availabilityAlerts/alertNavigation";
 
-const icons = { booking: CalendarCheck, wallet: Wallet, support: Headphones, vehicle: CarFront, message: MessageSquare, system: Bell };
-
 export default function NotificationCenter({ userId }: { userId: number }) {
   const state = useNotificationStore();
   const visible = state.userId === userId && state.centerOpen;
   const [selected, setSelected] = useState<NotificationItem | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now);
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const detail = selected ? state.items.find((item) => item.id === selected.id) ?? state.updates[selected.id]?.item ?? selected : null;
+  const detailVisual = detail ? notificationVisuals(detail, theme) : null;
+  const sections = useMemo(() => {
+    const groups = new Map<string, NotificationItem[]>();
+    for (const item of state.items) {
+      const title = notificationDayGroup(item.createdAt, now);
+      const group = groups.get(title) ?? [];
+      group.push(item);
+      groups.set(title, group);
+    }
+    return [...groups].map(([title, data]) => ({ title, data }));
+  }, [state.items, now]);
   const busy = state.markingAll || state.pendingIds.length > 0;
   const pendingTicket = useRef<{ id: number; generation: number } | null>(null);
   const pendingReport = useRef<{ id: string; generation: number } | null>(null);
@@ -49,6 +61,13 @@ export default function NotificationCenter({ userId }: { userId: number }) {
       setActionError(null);
       void loadNotificationPage();
     }
+  }, [visible]);
+
+  useEffect(() => {
+    if (!visible) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
   }, [visible]);
 
   function goBack() {
@@ -94,9 +113,15 @@ export default function NotificationCenter({ userId }: { userId: number }) {
         {detail ? <ScrollView contentContainerStyle={styles.detailContent}>
           <View style={styles.detailCard}>
             <View style={styles.row}>
-              <View style={styles.category}><AppText style={styles.categoryText}>{notificationCategory(detail.type).label}</AppText></View>
+              <View style={[styles.category, { backgroundColor: detailVisual!.background }]}>
+                <AppText style={[styles.categoryText, { color: detailVisual!.color }]}>{detailVisual!.label}</AppText>
+              </View>
               <AppText style={[styles.status, { color: detail.isRead ? theme.success : theme.brand }]}>{detail.isRead ? "Đã đọc" : "Chưa đọc"}</AppText>
             </View>
+            {detailVisual?.urgent ? <View style={[styles.detailWarning, { backgroundColor: detailVisual.background }]}>
+              <CircleAlert size={15} color={detailVisual.color} />
+              <AppText style={{ color: detailVisual.color, fontSize: 12, fontWeight: "600" }}>Cảnh báo quá hạn</AppText>
+            </View> : null}
             <AppText display selectable style={styles.detailTitle}>{detail.title}</AppText>
             <AppText style={styles.date}>{formatNotificationDate(detail.createdAt)}</AppText>
             <View style={styles.rule} />
@@ -128,6 +153,13 @@ export default function NotificationCenter({ userId }: { userId: number }) {
             <View style={styles.tabs}>
               {(["all", "unread"] as const).map((filter) => <Pressable key={filter} accessibilityRole="tab" accessibilityState={{ selected: state.filter === filter }} onPress={() => { setActionError(null); void loadNotificationPage({ filter }); }} style={[styles.tab, state.filter === filter && styles.activeTab]}>
                 <AppText style={[styles.tabText, state.filter === filter && styles.activeTabText]}>{filter === "all" ? "Tất cả" : "Chưa đọc"}</AppText>
+                {filter === "unread" && state.unreadCount > 0 && !state.countError ? (
+                  <View style={[styles.tabCount, state.filter === filter && styles.activeTabCount]}>
+                    <AppText style={{ color: state.filter === filter ? theme.onBrand : theme.brand, fontSize: 10, fontWeight: "700" }}>
+                      {state.unreadCount > 99 ? "99+" : state.unreadCount}
+                    </AppText>
+                  </View>
+                ) : null}
               </Pressable>)}
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel="Đánh dấu tất cả thông báo đã đọc" disabled={busy || state.unreadCount === 0} onPress={() => { void markAll(); }} style={[styles.markAll, (busy || state.unreadCount === 0) && styles.disabled]}>
@@ -138,25 +170,17 @@ export default function NotificationCenter({ userId }: { userId: number }) {
           {state.connectionStatus !== "connected" ? <AppText style={styles.connectionHint}>{state.connectionStatus === "connecting" ? "Đang kết nối cập nhật trực tiếp…" : "Cập nhật trực tiếp gián đoạn. Kéo xuống để làm mới."}</AppText> : null}
           {actionError ? <View style={styles.notice}><ErrorNotice message={actionError} /></View> : null}
           {state.error && state.items.length > 0 ? <View style={styles.notice}><ErrorNotice message={state.error} /></View> : null}
-          <FlatList
-            data={state.items}
+          <SectionList
+            sections={sections}
+            stickySectionHeadersEnabled={false}
             keyExtractor={(item) => String(item.id)}
             contentContainerStyle={[styles.list, state.items.length === 0 && styles.emptyList]}
             refreshControl={<RefreshControl refreshing={state.refreshing} onRefresh={() => { setActionError(null); void loadNotificationPage(); }} tintColor={theme.brand} colors={[theme.brand]} />}
-            renderItem={({ item }) => {
-              const category = notificationCategory(item.type);
-              const Icon = icons[category.icon];
-              return <Pressable accessibilityRole="button" accessibilityLabel={`${item.isRead ? "Đã đọc" : "Chưa đọc"}: ${item.title}`} onPress={() => { void openItem(item); }} style={[styles.card, !item.isRead && styles.unreadCard]}>
-                <View style={[styles.itemIcon, { backgroundColor: item.isRead ? theme.surfaceAlt : theme.brandSoft }]}><Icon size={22} color={item.isRead ? theme.muted : theme.brand} /></View>
-                <View style={styles.itemContent}>
-                  <View style={styles.row}><AppText style={styles.itemCategory}>{category.label}</AppText>{!item.isRead ? <View style={styles.dot} /> : null}</View>
-                  <AppText display numberOfLines={2} style={[styles.itemTitle, !item.isRead && styles.unreadTitle]}>{item.title}</AppText>
-                  <AppText numberOfLines={2} style={styles.preview}>{item.body}</AppText>
-                  <AppText style={styles.date}>{formatNotificationDate(item.createdAt)}</AppText>
-                </View>
-                <ChevronRight size={17} color={theme.faint} />
-              </Pressable>;
-            }}
+            renderSectionHeader={({ section }) => <View style={styles.sectionHeader}>
+              <AppText style={styles.sectionTitle}>{section.title}</AppText>
+              <View style={styles.sectionRule} />
+            </View>}
+            renderItem={({ item }) => <NotificationRow item={item} now={now} onOpen={(value) => { void openItem(value); }} />}
             ListEmptyComponent={state.loading ? <View style={styles.empty}><ActivityIndicator size="large" color={theme.brand} /><AppText style={styles.emptyText}>Đang tải thông báo…</AppText></View>
               : state.error ? <View style={styles.empty}><CircleAlert size={38} color={theme.danger} /><AppText display style={styles.emptyTitle}>Chưa tải được thông báo</AppText><AppText style={styles.emptyText}>{state.error}</AppText><Pressable accessibilityRole="button" onPress={() => { void loadNotificationPage(); }} style={styles.retry}><AppText style={styles.retryText}>Thử lại</AppText></Pressable></View>
                 : <View style={styles.empty}><View style={styles.emptyIcon}><BellOff size={36} color={theme.brand} /></View><AppText display style={styles.emptyTitle}>{state.filter === "unread" ? "Không có thông báo chưa đọc" : "Chưa có thông báo"}</AppText><AppText style={styles.emptyText}>{state.filter === "unread" ? "Bạn đã xem hết các cập nhật." : "Các cập nhật về chuyến đi, thanh toán và hỗ trợ sẽ xuất hiện tại đây."}</AppText></View>}
@@ -174,30 +198,32 @@ export default function NotificationCenter({ userId }: { userId: number }) {
 
 const createStyles = (theme: Theme) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.background },
-  header: { flexDirection: "row", alignItems: "center", gap: 8, padding: 16, backgroundColor: theme.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border },
+  header: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 12, backgroundColor: theme.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border },
   heading: { flex: 1 }, title: { fontSize: 22, fontWeight: "800", color: theme.text }, subtitle: { fontSize: 12, color: theme.muted, marginTop: 4 },
-  iconButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  toolbar: { paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 },
-  tabs: { flexDirection: "row", gap: 4, padding: 4, borderRadius: 14, backgroundColor: theme.surfaceAlt },
-  tab: { minHeight: 40, paddingHorizontal: 15, justifyContent: "center", borderRadius: 10 }, activeTab: { backgroundColor: theme.surface },
+  iconButton: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.surfaceAlt, alignItems: "center", justifyContent: "center" },
+  toolbar: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 },
+  tabs: { flexDirection: "row", gap: 3, padding: 3, borderRadius: 12, backgroundColor: theme.surfaceAlt },
+  tab: { minHeight: 36, paddingHorizontal: 11, flexDirection: "row", alignItems: "center", gap: 5, justifyContent: "center", borderRadius: 9 }, activeTab: { backgroundColor: theme.surface },
   tabText: { fontSize: 13, fontWeight: "700", color: theme.muted }, activeTabText: { color: theme.brand },
-  markAll: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6 }, markAllText: { fontSize: 12, color: theme.brand, fontWeight: "700" },
+  tabCount: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, backgroundColor: theme.brandSoft, alignItems: "center", justifyContent: "center" },
+  activeTabCount: { backgroundColor: theme.brand },
+  markAll: { minHeight: 40, flexDirection: "row", alignItems: "center", gap: 4 }, markAllText: { fontSize: 11, color: theme.brand, fontWeight: "600" },
   connectionHint: { paddingHorizontal: 20, paddingBottom: 12, fontSize: 12, lineHeight: 18, color: theme.muted },
-  list: { paddingHorizontal: 16, paddingBottom: 24, gap: 10 }, emptyList: { flexGrow: 1 },
-  card: { flexDirection: "row", alignItems: "flex-start", padding: 15, gap: 12, borderRadius: 18, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border },
-  unreadCard: { borderColor: theme.brandBorder }, itemIcon: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  itemContent: { flex: 1, minWidth: 0 }, row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
-  itemCategory: { color: theme.brand, fontSize: 11, fontWeight: "700" }, dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.brand },
-  itemTitle: { color: theme.text, fontSize: 14, lineHeight: 20, fontWeight: "600", marginTop: 5 }, unreadTitle: { fontWeight: "800" },
-  preview: { color: theme.muted, fontSize: 13, lineHeight: 19, marginTop: 4 }, date: { color: theme.faint, fontSize: 11, lineHeight: 17, marginTop: 8 },
+  list: { paddingHorizontal: 16, paddingBottom: 24 }, emptyList: { flexGrow: 1 },
+  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: 12, paddingBottom: 10 },
+  sectionTitle: { color: theme.muted, fontSize: 12, fontWeight: "700" },
+  sectionRule: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: theme.border },
+  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
+  date: { color: theme.muted, fontSize: 11, lineHeight: 17, marginTop: 8 },
   empty: { flex: 1, padding: 28, alignItems: "center", justifyContent: "center", gap: 12 }, emptyIcon: { padding: 24, borderRadius: 50, backgroundColor: theme.brandSoft },
   emptyTitle: { fontSize: 18, color: theme.text, fontWeight: "800", textAlign: "center" }, emptyText: { color: theme.muted, fontSize: 14, lineHeight: 22, textAlign: "center" },
   retry: { minHeight: 44, paddingHorizontal: 22, paddingVertical: 12, backgroundColor: theme.brandSoft, borderRadius: 12, alignItems: "center" }, retryText: { color: theme.brand, fontSize: 13, fontWeight: "700" },
   footer: { paddingVertical: 18, alignItems: "center" }, footerText: { color: theme.faint, fontSize: 12 },
   notice: { paddingHorizontal: 16, paddingBottom: 12 }, error: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 12, borderRadius: 12, backgroundColor: theme.dangerSoft }, errorText: { flex: 1, fontSize: 13, lineHeight: 19, color: theme.danger },
-  detailContent: { padding: 20, gap: 16 }, detailCard: { padding: 20, borderRadius: 20, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border },
+  detailContent: { padding: 16, gap: 12 }, detailCard: { padding: 18, borderRadius: 16, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border },
   category: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: theme.brandSoft }, categoryText: { color: theme.brand, fontSize: 12, fontWeight: "700" }, status: { fontSize: 12, fontWeight: "700" },
-  detailTitle: { marginTop: 18, color: theme.text, fontSize: 23, lineHeight: 31, fontWeight: "800" }, rule: { height: StyleSheet.hairlineWidth, backgroundColor: theme.border, marginVertical: 20 },
-  body: { color: theme.text, fontSize: 16, lineHeight: 26 }, reference: { color: theme.muted, fontSize: 13, marginTop: 20 },
-  primaryButton: { minHeight: 50, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: theme.brand }, primaryText: { fontSize: 14, color: theme.onBrand, fontWeight: "700" }, disabled: { opacity: 0.5 },
+  detailWarning: { flexDirection: "row", alignSelf: "flex-start", alignItems: "center", gap: 6, marginTop: 14, paddingHorizontal: 9, paddingVertical: 6, borderRadius: 8 },
+  detailTitle: { marginTop: 14, color: theme.text, fontSize: 21, lineHeight: 29, fontWeight: "800" }, rule: { height: StyleSheet.hairlineWidth, backgroundColor: theme.border, marginVertical: 16 },
+  body: { color: theme.text, fontSize: 15, lineHeight: 24 }, reference: { color: theme.brand, fontSize: 12, marginTop: 16, padding: 10, borderRadius: 9, backgroundColor: theme.brandSoft },
+  primaryButton: { minHeight: 48, marginTop: 8, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, backgroundColor: theme.brand }, primaryText: { fontSize: 14, color: theme.onBrand, fontWeight: "700" }, disabled: { opacity: 0.5 },
 });

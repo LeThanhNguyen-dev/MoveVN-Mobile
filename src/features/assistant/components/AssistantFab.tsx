@@ -1,6 +1,6 @@
 import { useMemo, useRef } from "react";
-import { Animated, Dimensions, Modal, PanResponder, Pressable, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Animated, Dimensions, Modal, PanResponder, Pressable, StyleSheet, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Bot, X } from "lucide-react-native";
 
 import type { Theme } from "@/theme/tokens";
@@ -31,7 +31,7 @@ function dragBounds() {
   };
 }
 
-// Nút tròn nổi giống web (AssistantWidget) nhưng mở full-screen modal RN.
+// Nút tròn nổi mở khung trợ lý bên trong vùng an toàn của modal.
 // Mọi điều hướng xe/booking do parent truyền vào.
 // - Kéo-thả tự do tới bất kỳ chỗ nào trên màn hình (vị trí giữ trong phiên).
 // - Nút X để ẩn hẳn nút nổi (đỡ che giao diện); mở lại từ "Chatbot MoveVN".
@@ -111,23 +111,42 @@ export default function AssistantFab({
           </Pressable>
         </Animated.View>
       ) : null}
-      <Modal visible={chatOpen} animationType="slide" onRequestClose={() => setChatOpen(false)}>
-        {/* SafeAreaView để header không chui lên vùng giờ/pin, ô chat không cấn thanh home. */}
-        <SafeAreaView edges={["top", "bottom"]} style={styles.modal}>
-          <AssistantScreen
-            onBack={() => setChatOpen(false)}
-            onViewVehicle={onViewVehicle ? id => { setChatOpen(false); onViewVehicle(id); } : undefined}
-            onViewBooking={onViewBooking ? id => { setChatOpen(false); onViewBooking(id); } : undefined}
-            onQuickBook={onQuickBook ? (params) => {
-              setChatOpen(false);
-              onQuickBook(params);
-            } : undefined}
-            onBookingConfirmed={onBookingConfirmed ? (bookingId) => {
-              setChatOpen(false);
-              onBookingConfirmed(bookingId);
-            } : undefined}
-          />
-        </SafeAreaView>
+      <Modal
+        visible={chatOpen}
+        transparent
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
+        animationType="slide"
+        onRequestClose={() => setChatOpen(false)}
+      >
+        {/* Modal là một native root riêng, cần đo lại safe area tại đây. */}
+        <SafeAreaProvider>
+          <View style={styles.modal}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Đóng trợ lý MoveVN"
+              onPress={() => setChatOpen(false)}
+              style={StyleSheet.absoluteFill}
+            />
+            <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.sheetArea} pointerEvents="box-none">
+              <View style={styles.sheet}>
+                <AssistantScreen
+                  onBack={() => setChatOpen(false)}
+                  onViewVehicle={onViewVehicle ? id => { setChatOpen(false); onViewVehicle(id); } : undefined}
+                  onViewBooking={onViewBooking ? id => { setChatOpen(false); onViewBooking(id); } : undefined}
+                  onQuickBook={onQuickBook ? (params) => {
+                    setChatOpen(false);
+                    onQuickBook(params);
+                  } : undefined}
+                  onBookingConfirmed={onBookingConfirmed ? (bookingId) => {
+                    setChatOpen(false);
+                    onBookingConfirmed(bookingId);
+                  } : undefined}
+                />
+              </View>
+            </SafeAreaView>
+          </View>
+        </SafeAreaProvider>
       </Modal>
     </>
   );
@@ -167,5 +186,22 @@ const createStyles = (theme: Theme) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    modal: { flex: 1, backgroundColor: theme.background },
+    modal: { flex: 1, backgroundColor: "rgba(15, 23, 42, 0.35)" },
+    sheetArea: {
+      flex: 1,
+      justifyContent: "flex-end",
+      alignItems: "center",
+      padding: 8,
+    },
+    sheet: {
+      width: "100%",
+      maxWidth: 560,
+      height: "90%",
+      minHeight: 0,
+      borderRadius: 22,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      backgroundColor: theme.background,
+      overflow: "hidden",
+    },
   });

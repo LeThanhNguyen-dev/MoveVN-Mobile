@@ -563,9 +563,9 @@ function VerificationSection({
             <Pressable
               accessibilityRole="button"
               onPress={onOverview}
-              style={[styles.menuRow, styles.menuDivider, styles.subRowActive]}
+              style={[styles.menuRow, styles.menuDivider]}
             >
-              <View style={[styles.menuIcon, { backgroundColor: theme.surface }]}>
+              <View style={[styles.menuIcon, { backgroundColor: iconBackground(theme.brand) }]}>
                 <ShieldCheck color={theme.brand} size={20} strokeWidth={2.3} />
               </View>
               <View style={styles.menuContent}>
@@ -573,7 +573,7 @@ function VerificationSection({
                   <AppText numberOfLines={1} style={styles.menuLabel}>
                     Tổng quan xác minh
                   </AppText>
-                  <AppText style={[styles.menuValue, { color: theme.brand }]}>{overviewValue}</AppText>
+                  <AppText numberOfLines={1} style={styles.menuValue}>{overviewValue}</AppText>
                 </View>
               </View>
               <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
@@ -592,7 +592,7 @@ function VerificationSection({
                   <AppText numberOfLines={1} style={styles.menuLabel}>
                     CCCD / CMND
                   </AppText>
-                  {cccdValue ? <AppText style={[styles.menuValue, { color: theme.brand }]}>{cccdValue}</AppText> : null}
+                  {cccdValue ? <AppText numberOfLines={1} style={styles.menuValue}>{cccdValue}</AppText> : null}
                 </View>
               </View>
               <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
@@ -607,7 +607,7 @@ function VerificationSection({
                   <AppText numberOfLines={1} style={styles.menuLabel}>
                     Giấy phép lái xe
                   </AppText>
-                  {gplxValue ? <AppText style={[styles.menuValue, { color: theme.brand }]}>{gplxValue}</AppText> : null}
+                  {gplxValue ? <AppText numberOfLines={1} style={styles.menuValue}>{gplxValue}</AppText> : null}
                 </View>
               </View>
               <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
@@ -633,7 +633,7 @@ function MenuRow({ item, last, progress }: { item: AccountMenuItem; last: boolea
       <View style={styles.menuContent}>
         <View style={styles.menuLine}>
           <AppText numberOfLines={1} style={styles.menuLabel}>{item.label}</AppText>
-          {item.value ? <AppText style={[styles.menuValue, { color: item.accent }]}>{item.value}</AppText> : null}
+          {item.value ? <AppText numberOfLines={1} style={styles.menuValue}>{item.value}</AppText> : null}
         </View>
         {typeof progress === "number" ? (
           <View style={styles.progressTrack}>
@@ -814,9 +814,6 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.divider,
   },
-  subRowActive: {
-    backgroundColor: theme.brandSoft,
-  },
   menuIcon: {
     width: 38,
     height: 38,
@@ -851,9 +848,11 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     marginTop: 2,
   },
   menuValue: {
-    fontSize: 12,
+    color: theme.muted,
+    fontSize: 11,
     lineHeight: 16,
-    fontWeight: "900",
+    fontWeight: "500",
+    flexShrink: 0,
   },
   progressTrack: {
     height: 5,
