@@ -25,7 +25,7 @@ import {
   UserRound,
   Wallet,
 } from "lucide-react-native";
-import { Image, Pressable, ScrollView, StyleSheet, Switch, View, type DimensionValue } from "react-native"
+import { BackHandler, Image, Pressable, ScrollView, StyleSheet, Switch, View, type DimensionValue } from "react-native"
 import AppText from "@/components/AppText";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { signOut } from "@/features/auth/services/authSession";
@@ -56,6 +56,7 @@ import { openFavoriteVehicles } from "@/features/favorites/favoriteActions";
 import { openSupportTickets } from "@/features/supportTickets/ticketNavigation";
 import { openAvailabilityAlerts } from "@/features/availabilityAlerts/alertNavigation";
 import { openViolations } from "@/features/violations/violationNavigation";
+import OwnerAnalyticsScreen from "@/features/ownerAnalytics/OwnerAnalyticsScreen";
 
 type TabIcon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 
@@ -120,10 +121,25 @@ export default function AccountTabScreen({
   const [showDisputes, setShowDisputes] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { mode, theme, toggleMode } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const isDark = mode === "dark";
+  const canViewOwnerAnalytics = activeRole === "Owner" && user.roles.includes("Owner");
+
+  useEffect(() => {
+    if (!canViewOwnerAnalytics) {
+      setShowAnalytics(false);
+      return;
+    }
+    if (!showAnalytics) return;
+    const listener = BackHandler.addEventListener("hardwareBackPress", () => {
+      setShowAnalytics(false);
+      return true;
+    });
+    return () => listener.remove();
+  }, [canViewOwnerAnalytics, showAnalytics]);
 
   const disputesVisible = showDisputes || !!initialDisputes;
 
@@ -237,7 +253,7 @@ export default function AccountTabScreen({
         { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626", onPress: () => setShowDisputes(true) },
         { key: "violations", label: "Báo cáo vi phạm của tôi", icon: Flag, accent: "#EA580C", onPress: () => openViolations() },
         { key: "availability-alerts", label: "Thông báo xe trống", icon: Bell, accent: theme.brand, onPress: () => openAvailabilityAlerts() },
-        { key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB" },
+        ...(canViewOwnerAnalytics ? [{ key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB", onPress: () => setShowAnalytics(true) }] : []),
       ],
     },
     {
@@ -300,6 +316,10 @@ export default function AccountTabScreen({
       ],
     },
   ];
+
+  if (showAnalytics && canViewOwnerAnalytics) {
+    return <OwnerAnalyticsScreen key={user.userId} user={user} onBack={() => setShowAnalytics(false)} />;
+  }
 
   if (showHub) {
     return (
