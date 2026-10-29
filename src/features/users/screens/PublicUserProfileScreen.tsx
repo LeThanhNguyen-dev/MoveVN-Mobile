@@ -1,70 +1,110 @@
 import { Image } from "expo-image";
 import {
-  ArrowLeft,
+  ArrowDownUp,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
   BadgeCheck,
-  Car,
+  Bike,
+  CarFront,
+  ChevronRight,
+  Flag,
   MapPin,
-  MessageSquareOff,
+  MessageCircle,
+  RefreshCw,
   RotateCw,
-  ShieldCheck,
+  Search,
+  Share2,
+  Star,
   UserX,
 } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  BackHandler,
+  Modal,
   Pressable,
+  RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppText from "@/components/AppText";
-import ReportViolationButton from "@/features/violations/ReportViolationButton";
-import type { Theme } from "@/theme/tokens";
-import { useTheme } from "@/theme/useTheme";
+import ProfileHeader from "@/features/users/components/ProfileHeader";
 import ProfileAvatar from "@/features/users/components/ProfileAvatar";
 import ProfileStars from "@/features/users/components/ProfileStars";
+import OwnerProfileDetail from "@/features/users/components/ownerProfile/OwnerProfileDetail";
+import OwnerReviewsPanel from "@/features/users/components/ownerProfile/OwnerReviewsPanel";
 import {
   getPublicUserProfile,
-  getPublicProfileReviews,
   isPublicProfileNotFound,
-  type PublicProfileReview,
   type PublicProfileReviewRole,
-  type PublicProfileReviewSort,
   type PublicProfileVehicle,
   type PublicUserProfile,
 } from "@/features/users/services/publicUserProfileService";
-import { buildCustomerStats, buildOwnerStats } from "@/features/users/utils/profileStats";
-import { memberYear, relativeTime } from "@/features/users/utils/profileTime";
+import {
+  PROFILE_VEHICLE_GROUP_LABEL,
+  countProfileVehiclesByGroup,
+  filterProfileVehicles,
+  profileVehicleGroup,
+  profileVehicleName,
+  sortProfileVehicles,
+  type ProfileVehicleGroup,
+  type ProfileVehicleSort,
+} from "@/features/users/utils/profileVehicles";
+import { formatMoney } from "@/features/booking/utils/format";
+import { getChatRooms } from "@/features/chat/chatService";
+import ChatRoomScreen from "@/features/chat/screens/ChatRoomScreen";
+import { useAuthStore } from "@/features/auth/hooks/useAuth";
+import { canReport, openViolations } from "@/features/violations/violationNavigation";
+import type { Theme } from "@/theme/tokens";
+import { useTheme } from "@/theme/useTheme";
 
 type PublicUserProfileScreenProps = {
   onBack: () => void;
   /** Mở hồ sơ người khác (ví dụ người viết đánh giá). */
   onOpenProfile?: (userId: number) => void;
-  /** Mở chi tiết xe liên quan đến đánh giá. */
-  onOpenVehicle?: (vehicleId: number) => void;
-  userId: number;
+  /** Mở chi tiết xe liên quan. */
   onViewVehicle?: (vehicleId: number) => void;
+  /** Mở đơn thuê khi bấm "Xem đơn" trong cửa sổ chat. */
+  onOpenBooking?: (bookingId: number) => void;
+  userId: number;
 };
 
-type ProfileTab = "vehicles" | "reviews";
+type ProfileView = "main" | "detail" | "reviews" | "category";
 
-const VEHICLE_TYPE_LABEL: Record<string, string> = {
-  Car: "Ô tô",
-  Motorbike: "Xe máy",
-  Motorcycle: "Xe máy",
+type ContentTab = "products" | "categories";
+
+const CATEGORY_ORDER: ProfileVehicleGroup[] = ["motorbike", "car"];
+
+const SORT_LABEL: Record<ProfileVehicleSort, string> = {
+  popular: "Phổ biến",
+  recent: "Mới nhất",
+  priceDesc: "Giá: Cao → Thấp",
+  priceAsc: "Giá: Thấp → Cao",
 };
 
-function formatPrice(value: number): string {
-  return `${new Intl.NumberFormat("vi-VN").format(value)}đ`;
-}
-
-/** Card xe nhỏ gọn: ảnh + tên + năm/địa chỉ + giá/ngày. */
-function ProfileVehicleCard({ vehicle, onViewVehicle }: { vehicle: PublicProfileVehicle; onViewVehicle?: (vehicleId: number) => void }) {
+/** Thẻ xe 1 cột: ảnh 84px + tên + khu vực + giá thuê/ngày. */
+function ProfileVehicleCard({
+  vehicle,
+  onViewVehicle,
+}: {
+  vehicle: PublicProfileVehicle;
+  onViewVehicle?: (vehicleId: number) => void;
+}) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <Pressable style={styles.vehicleCard} accessibilityRole="link" disabled={!onViewVehicle} onPress={() => onViewVehicle?.(vehicle.id)}>
+    <Pressable
+      style={({ pressed }) => [styles.vehicleCard, pressed && styles.pressed]}
+      accessibilityRole="link"
+      accessibilityLabel={`Xem xe ${profileVehicleName(vehicle)}`}
+      disabled={!onViewVehicle}
+      onPress={() => onViewVehicle?.(vehicle.id)}
+    >
       <View style={styles.vehicleMedia}>
         {vehicle.primaryImage ? (
           <Image
@@ -74,35 +114,29 @@ function ProfileVehicleCard({ vehicle, onViewVehicle }: { vehicle: PublicProfile
             transition={150}
           />
         ) : (
-          <Car color={theme.faint} size={22} />
+          <CarFront color={theme.faint} size={22} />
         )}
       </View>
       <View style={styles.vehicleInfo}>
         <AppText style={styles.vehicleName} numberOfLines={1}>
-          {[vehicle.brandName, vehicle.modelName, vehicle.variantName].filter(Boolean).join(" ")}
+          {profileVehicleName(vehicle)}
         </AppText>
         <View style={styles.vehicleMeta}>
-          <AppText style={styles.vehicleMetaText}>{vehicle.year}</AppText>
-          {vehicle.address ? (
-            <>
-              <AppText style={styles.dot}>•</AppText>
-              <MapPin color={theme.faint} size={11} />
-              <AppText style={styles.vehicleMetaText} numberOfLines={1}>
-                {vehicle.address}
-              </AppText>
-            </>
-          ) : null}
+          <MapPin color={theme.faint} size={11} />
+          <AppText style={styles.vehicleMetaText} numberOfLines={1}>
+            {vehicle.address || "Chưa cập nhật khu vực"}
+          </AppText>
         </View>
         <View style={styles.vehicleFooter}>
-          <AppText style={styles.vehiclePrice}>{formatPrice(vehicle.pricePerDay)}</AppText>
-          <AppText style={styles.vehicleUnit}>/ngày</AppText>
-          {VEHICLE_TYPE_LABEL[vehicle.vehicleType] ? (
-            <View style={styles.vehicleTypeBadge}>
-              <AppText style={styles.vehicleTypeText}>
-                {VEHICLE_TYPE_LABEL[vehicle.vehicleType]}
-              </AppText>
-            </View>
-          ) : null}
+          <View style={styles.vehiclePriceRow}>
+            <AppText style={styles.vehiclePrice}>{formatMoney(vehicle.pricePerDay)}</AppText>
+            <AppText style={styles.vehicleUnit}>/ngày</AppText>
+          </View>
+          <View style={styles.vehicleTypeBadge}>
+            <AppText style={styles.vehicleTypeText}>
+              {vehicle.vehicleType === "Car" ? "Ô tô" : "Xe máy"}
+            </AppText>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -111,176 +145,303 @@ function ProfileVehicleCard({ vehicle, onViewVehicle }: { vehicle: PublicProfile
 
 const MemoVehicleCard = memo(ProfileVehicleCard);
 
-/** Một đánh giá: avatar + tên người viết (bấm được) + sao + thời gian + nhận xét. */
-function ProfileReviewCard({
-  review,
-  onOpenProfile,
-  onOpenVehicle,
+/** Thanh sắp xếp dùng chung cho tab Sản phẩm và trang danh mục. */
+function VehicleSortBar({
+  sort,
+  onChange,
+  styles,
 }: {
-  review: PublicProfileReview;
-  onOpenProfile?: (userId: number) => void;
-  onOpenVehicle?: (vehicleId: number) => void;
+  sort: ProfileVehicleSort;
+  onChange: (sort: ProfileVehicleSort) => void;
+  styles: ReturnType<typeof createStyles>;
 }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  const time = relativeTime(review.createdAt);
+  const priceActive = sort === "priceDesc" || sort === "priceAsc";
+  const priceIcon = priceActive
+    ? sort === "priceAsc"
+      ? ArrowUpNarrowWide
+      : ArrowDownWideNarrow
+    : ArrowDownUp;
 
   return (
-    <View style={styles.reviewItem}>
-      <View style={styles.reviewHead}>
-        <ProfileAvatar
-          avatarUrl={review.reviewerAvatar}
-          fullName={review.reviewerName}
-          size={32}
-        />
-        <View style={styles.reviewHeadText}>
-          <Pressable
-            onPress={() => onOpenProfile?.(review.reviewerId)}
-            disabled={!onOpenProfile}
-            accessibilityRole="link"
-            accessibilityLabel={`Xem hồ sơ ${review.reviewerName}`}
-          >
-            <AppText style={styles.reviewerName} numberOfLines={1}>
-              {review.reviewerName}
-            </AppText>
-          </Pressable>
-          <View style={styles.reviewMeta}>
-            <ProfileStars rating={review.rating} size={11} />
-            <AppText style={styles.reviewRating}>{review.rating}.0</AppText>
-          </View>
-        </View>
-        {time ? <AppText style={styles.reviewTime}>{time}</AppText> : null}
-      </View>
-      <AppText style={styles.reviewComment}>
-        {review.comment?.trim() || "Không có nhận xét."}
-      </AppText>
-      {review.vehicleId ? (
-        <Pressable
-          onPress={() => onOpenVehicle?.(review.vehicleId!)}
-          disabled={!onOpenVehicle}
-          style={styles.vehicleLink}
-        >
-          <Car color={theme.brand} size={12} />
-          <AppText style={styles.vehicleLinkText} numberOfLines={1}>
-            {review.vehicleName ?? "Xem xe"}
-          </AppText>
-        </Pressable>
-      ) : null}
+    <View style={styles.filterRow}>
+      <SortCell
+        label="Phổ biến"
+        active={sort === "popular"}
+        onPress={() => onChange("popular")}
+        styles={styles}
+      />
+      <SortCell
+        label="Mới nhất"
+        active={sort === "recent"}
+        onPress={() => onChange("recent")}
+        styles={styles}
+        divider
+      />
+      <SortCell
+        label="Giá"
+        active={priceActive}
+        icon={priceIcon}
+        onPress={() =>
+          onChange(priceActive && sort === "priceDesc" ? "priceAsc" : "priceDesc")
+        }
+        styles={styles}
+        divider
+      />
     </View>
   );
 }
 
-const MemoReviewCard = memo(ProfileReviewCard);
+function SortCell({
+  label,
+  active,
+  icon: Icon,
+  divider,
+  onPress,
+  styles,
+}: {
+  label: string;
+  active: boolean;
+  icon?: typeof ArrowDownUp;
+  divider?: boolean;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  const { theme } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.filterCell, divider && styles.filterCellDivider]}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={`Sắp xếp ${label}`}
+    >
+      <AppText
+        style={[styles.filterText, active && styles.filterTextActive]}
+        numberOfLines={1}
+      >
+        {label}
+      </AppText>
+      {Icon ? (
+        <Icon color={active ? theme.brand : theme.muted} size={12} strokeWidth={2.2} />
+      ) : null}
+    </Pressable>
+  );
+}
 
-/**
- * Hồ sơ công khai của người dùng (mirror web /users/:id) — bản mobile gọn:
- * thẻ hồ sơ (avatar, vai trò, số liệu) + tab xe/đánh giá.
- */
+/** Màn 1: hồ sơ công khai của chủ xe (avatar, điểm, chat, sản phẩm/danh mục). */
 export default function PublicUserProfileScreen({
   onBack,
   onOpenProfile,
   onViewVehicle,
+  onOpenBooking,
   userId,
 }: PublicUserProfileScreenProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const insets = useSafeAreaInsets();
+  const currentUserId = useAuthStore((state) => state.user?.userId ?? null);
 
   const [profile, setProfile] = useState<PublicUserProfile | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "notfound" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
-  const [tab, setTab] = useState<ProfileTab>("vehicles");
   const [reloadKey, setReloadKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Reviews state (paginated, filtered, role-aware)
-  const [reviewRole, setReviewRole] = useState<PublicProfileReviewRole>(profile?.isOwner ? "owner" : "customer");
-  const [reviewFilter, setReviewFilter] = useState<number | null>(null);
-  const [reviewSort, setReviewSort] = useState<PublicProfileReviewSort>("recent");
-  const [reviews, setReviews] = useState<PublicProfileReview[]>([]);
-  const [reviewTotal, setReviewTotal] = useState(0);
-  const [ratingCounts, setRatingCounts] = useState<Record<string, number>>({});
-  const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewError, setReviewError] = useState("");
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [reviewPage, setReviewPage] = useState(1);
+  const [view, setView] = useState<ProfileView>("main");
+  const [contentTab, setContentTab] = useState<ContentTab>("products");
+  const [vehicleSort, setVehicleSort] = useState<ProfileVehicleSort>("popular");
+  const [categoryGroup, setCategoryGroup] = useState<ProfileVehicleGroup>("motorbike");
+  const [reviewRole, setReviewRole] = useState<PublicProfileReviewRole>("owner");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const load = useCallback(async () => {
-    if (!Number.isInteger(userId) || userId <= 0) {
-      setStatus("notfound");
-      return;
-    }
-    setStatus("loading");
-    setErrorMessage("");
-    try {
-      const data = await getPublicUserProfile(userId);
-      setProfile(data);
-      setTab(data.isOwner ? "vehicles" : "reviews");
-      setStatus("ready");
-    } catch (error) {
-      if (isPublicProfileNotFound(error)) {
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatRoomId, setChatRoomId] = useState<string | null>(null);
+
+  const load = useCallback(
+    async (silent = false) => {
+      if (!Number.isInteger(userId) || userId <= 0) {
         setStatus("notfound");
         return;
       }
-      setErrorMessage("Không thể tải hồ sơ. Vui lòng thử lại.");
-      setStatus("error");
-    }
-  }, [userId]);
+      if (!silent) {
+        setStatus("loading");
+        setErrorMessage("");
+      }
+      try {
+        const data = await getPublicUserProfile(userId);
+        setProfile(data);
+        setStatus("ready");
+      } catch (error) {
+        if (isPublicProfileNotFound(error)) {
+          setStatus("notfound");
+          return;
+        }
+        if (silent) {
+          Alert.alert("Không thể làm mới hồ sơ", "Vui lòng kiểm tra kết nối và thử lại.");
+          return;
+        }
+        setErrorMessage("Không thể tải hồ sơ. Vui lòng thử lại.");
+        setStatus("error");
+      } finally {
+        if (silent) setRefreshing(false);
+      }
+    },
+    [userId],
+  );
 
   useEffect(() => {
     void load();
   }, [load, reloadKey]);
 
   useEffect(() => {
-    if (!profile) return;
-    let active = true;
-    setReviewLoading(true);
-    setReviewError("");
-    getPublicProfileReviews(profile.userId, reviewRole, reviewPage, reviewFilter, reviewSort)
-      .then((result) => {
-        if (!active) return;
-        if (reviewPage === 1) {
-          setReviews(result.reviews);
-        } else {
-          setReviews((current) => [...current, ...result.reviews]);
-        }
-        setReviewTotal(result.total);
-        setRatingCounts(result.ratingCounts);
-      })
-      .catch(() => {
-        if (active) setReviewError("Không tải được đánh giá.");
-      })
-      .finally(() => {
-        if (active) {
-          setReviewLoading(false);
-          setIsLoadingMore(false);
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [profile, reviewRole, reviewPage, reviewFilter, reviewSort]);
+    setProfile(null);
+    setView("main");
+    setContentTab("products");
+    setVehicleSort("popular");
+    setCategoryGroup("motorbike");
+    setReviewRole("owner");
+    setSearchQuery("");
+    setChatRoomId(null);
+  }, [userId]);
 
-  async function loadMore() {
-    if (isLoadingMore || reviews.length >= reviewTotal) return;
-    setIsLoadingMore(true);
-    setReviewPage((current) => current + 1);
-  }
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    void load(true);
+  }, [load]);
 
   useEffect(() => {
-    setReviewPage(1);
-    setReviews([]);
-  }, [reviewRole, reviewFilter, reviewSort]);
+    if (chatRoomId == null && view === "main") return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (chatRoomId != null) {
+        setChatRoomId(null);
+        return true;
+      }
+      if (view === "reviews") {
+        setView(profile?.isOwner ? "detail" : "main");
+        return true;
+      }
+      if (view === "detail" || view === "category") {
+        setView("main");
+        return true;
+      }
+      return false;
+    });
+    return () => subscription.remove();
+  }, [chatRoomId, view, profile?.isOwner]);
 
-  const stats = useMemo(
-    () => (profile ? (profile.isOwner ? buildOwnerStats(profile) : buildCustomerStats(profile)) : []),
-    [profile],
+  /** Đếm số đánh giá gắn với từng xe từ dữ liệu công khai của hồ sơ. */
+  const vehicleReviewCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const review of profile?.reviews ?? []) {
+      if (review.vehicleId == null) continue;
+      counts.set(review.vehicleId, (counts.get(review.vehicleId) ?? 0) + 1);
+    }
+    return counts;
+  }, [profile?.reviews]);
+
+  const sortedVehicles = useMemo(
+    () =>
+      sortProfileVehicles(
+        filterProfileVehicles(profile?.vehicles ?? [], searchQuery),
+        vehicleSort,
+        vehicleReviewCounts,
+      ),
+    [profile?.vehicles, searchQuery, vehicleSort, vehicleReviewCounts],
   );
 
-  const year = profile ? memberYear(profile.createdAt) : null;
+  const categoryCounts = useMemo(
+    () => countProfileVehiclesByGroup(profile?.vehicles ?? []),
+    [profile?.vehicles],
+  );
+
+  const categoryVehicles = useMemo(
+    () =>
+      sortProfileVehicles(
+        (profile?.vehicles ?? []).filter(
+          (vehicle) => profileVehicleGroup(vehicle) === categoryGroup,
+        ),
+        vehicleSort,
+        vehicleReviewCounts,
+      ),
+    [profile?.vehicles, categoryGroup, vehicleSort, vehicleReviewCounts],
+  );
+
+  const target = profile
+    ? { targetType: "User" as const, targetId: profile.userId, label: profile.fullName }
+    : null;
+
+  function openReviews(role: PublicProfileReviewRole) {
+    setReviewRole(role);
+    setView("reviews");
+  }
+
+  function openCategory(group: ProfileVehicleGroup) {
+    if (categoryCounts[group] === 0) return;
+    setCategoryGroup(group);
+    setSearchQuery("");
+    setView("category");
+  }
+
+  function handleSearch(value: string) {
+    setSearchQuery(value);
+    if (value) setContentTab("products");
+  }
+
+  async function handleOpenChat() {
+    if (!profile || chatLoading) return;
+    setChatLoading(true);
+    try {
+      const result = await getChatRooms({ page: 1, pageSize: 50 });
+      const me = useAuthStore.getState().user?.userId;
+      if (!me) return;
+      const room = result.items
+        .filter(
+          (item) =>
+            (item.customerId === me && item.ownerId === profile.userId) ||
+            (item.ownerId === me && item.customerId === profile.userId),
+        )
+        .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0];
+      if (room) {
+        setChatRoomId(room.id);
+        return;
+      }
+      Alert.alert(
+        "Chưa có phòng chat",
+        "Hiện chỉ hỗ trợ mở phòng chat có sẵn từ đơn thuê. Hãy đặt xe hoặc mở chi tiết chuyến đi để nhắn tin.",
+      );
+    } catch {
+      Alert.alert("Không mở được trò chuyện", "Vui lòng kiểm tra kết nối và thử lại.");
+    } finally {
+      setChatLoading(false);
+    }
+  }
+
+  async function handleShare() {
+    if (!profile) return;
+    setMenuOpen(false);
+    try {
+      const role = profile.isOwner ? "Chủ xe" : "Khách thuê";
+      await Share.share({
+        message: `${profile.fullName} · ${role} trên MoveVN${
+          profile.isOwner ? ` · ${profile.totalVehicles} xe đang cho thuê` : ""
+        }`,
+      });
+    } catch {
+      // Người dùng đóng hộp thoại chia sẻ — không cần báo lỗi.
+    }
+  }
+
+  function handleReport() {
+    if (!target) return;
+    setMenuOpen(false);
+    openViolations({ target });
+  }
 
   if (status === "loading") {
     return (
       <View style={styles.root}>
-        <Header onBack={onBack} title="Hồ sơ người dùng" />
+        <ProfileHeader onBack={onBack} title="Hồ sơ người dùng" />
         <View style={styles.centerBox}>
           <ActivityIndicator color={theme.brand} size="large" />
         </View>
@@ -291,10 +452,10 @@ export default function PublicUserProfileScreen({
   if (status === "notfound") {
     return (
       <View style={styles.root}>
-        <Header onBack={onBack} title="Hồ sơ người dùng" />
+        <ProfileHeader onBack={onBack} title="Hồ sơ người dùng" />
         <View style={styles.centerBox}>
           <View style={styles.stateIcon}>
-            <UserX color={theme.faint} size={30} />
+            <UserX color={theme.faint} size={28} />
           </View>
           <AppText display style={styles.stateTitle}>
             Không tìm thấy người dùng
@@ -310,10 +471,10 @@ export default function PublicUserProfileScreen({
   if (status === "error" || !profile) {
     return (
       <View style={styles.root}>
-        <Header onBack={onBack} title="Hồ sơ người dùng" />
+        <ProfileHeader onBack={onBack} title="Hồ sơ người dùng" />
         <View style={styles.centerBox}>
           <View style={styles.stateIcon}>
-            <RotateCw color={theme.faint} size={28} />
+            <RotateCw color={theme.faint} size={26} />
           </View>
           <AppText display style={styles.stateTitle}>
             Chưa tải được hồ sơ
@@ -324,7 +485,7 @@ export default function PublicUserProfileScreen({
             style={styles.retryButton}
             accessibilityRole="button"
           >
-            <RotateCw color="#FFFFFF" size={14} />
+            <RotateCw color={theme.onBrand} size={13} />
             <AppText style={styles.retryText}>Thử lại</AppText>
           </Pressable>
         </View>
@@ -332,223 +493,454 @@ export default function PublicUserProfileScreen({
     );
   }
 
-  const showVehicles = profile.isOwner && tab === "vehicles";
-  const hasVehicles = profile.vehicles.length > 0;
+  if (chatRoomId) {
+    return (
+      <ChatRoomScreen
+        roomId={chatRoomId}
+        onBack={() => setChatRoomId(null)}
+        onBookingPress={(bookingId) => {
+          setChatRoomId(null);
+          onOpenBooking?.(bookingId);
+        }}
+        onOpenUserProfile={onOpenProfile}
+      />
+    );
+  }
+
+  if (view === "detail" && profile.isOwner) {
+    return (
+      <View style={styles.root}>
+        <ProfileHeader onBack={() => setView("main")} title="Chi tiết Chủ xe" />
+        <OwnerProfileDetail
+          profile={profile}
+          onOpenReviews={() => openReviews("owner")}
+          onOpenVehicles={() => {
+            setContentTab("products");
+            setView("main");
+          }}
+        />
+      </View>
+    );
+  }
+
+  if (view === "reviews") {
+    return (
+      <View style={styles.root}>
+        <ProfileHeader
+          onBack={() => setView(profile.isOwner ? "detail" : "main")}
+          title={reviewRole === "owner" ? "Đánh giá chủ xe" : "Đánh giá khách thuê"}
+        />
+        <OwnerReviewsPanel
+          profile={profile}
+          initialRole={reviewRole}
+          allowRoleSwitch={profile.isOwner}
+          onRoleChange={setReviewRole}
+          onOpenProfile={onOpenProfile}
+          onOpenVehicle={onViewVehicle}
+        />
+      </View>
+    );
+  }
+
+  if (view === "category" && profile.isOwner) {
+    return (
+      <View style={styles.root}>
+        <ProfileHeader
+          onBack={() => setView("main")}
+          title={`Danh mục: ${PROFILE_VEHICLE_GROUP_LABEL[categoryGroup]}`}
+        />
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <VehicleSortBar sort={vehicleSort} onChange={setVehicleSort} styles={styles} />
+
+          <View style={styles.contentPad}>
+            <View style={styles.sectionHead}>
+              <AppText style={styles.sectionTitle} numberOfLines={1}>
+                Tổng số xe trong danh mục ({categoryVehicles.length})
+              </AppText>
+              <AppText style={styles.sectionHint} numberOfLines={1}>
+                {`Sắp xếp: ${SORT_LABEL[vehicleSort]}`}
+              </AppText>
+            </View>
+
+            {categoryVehicles.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <View style={styles.stateIcon}>
+                  <CarFront color={theme.faint} size={20} />
+                </View>
+                <AppText style={styles.emptyTitle}>Danh mục chưa có xe</AppText>
+                <AppText style={styles.emptyText}>
+                  Xe đã được duyệt thuộc danh mục này sẽ xuất hiện tại đây.
+                </AppText>
+              </View>
+            ) : (
+              <View style={styles.vehicleList}>
+                {categoryVehicles.map((vehicle) => (
+                  <MemoVehicleCard
+                    key={vehicle.id}
+                    vehicle={vehicle}
+                    onViewVehicle={onViewVehicle}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  const rating = profile.isOwner ? profile.ownerAverageRating : profile.customerAverageRating;
+  const ratingCount = profile.isOwner ? profile.ownerReviewCount : profile.customerReviewCount;
+  const tripCount = profile.isOwner
+    ? profile.completedTripsAsOwner
+    : profile.completedTripsAsCustomer;
+  const chatLabel = profile.isOwner ? "Chat với chủ xe này" : "Chat với khách thuê này";
+  const showChat = currentUserId != null && currentUserId !== profile.userId;
+  const verifiedColor = theme.mode === "dark" ? "#34D399" : "#059669";
 
   return (
     <View style={styles.root}>
-      <Header onBack={onBack} title="Hồ sơ người dùng" />
+      <ProfileHeader
+        onBack={onBack}
+        title={profile.isOwner ? undefined : "Hồ sơ người dùng"}
+        search={
+          profile.isOwner
+            ? {
+                value: searchQuery,
+                onChangeText: handleSearch,
+                placeholder: "Tìm xe trong Shop…",
+              }
+            : undefined
+        }
+        onMenuPress={() => setMenuOpen(true)}
+      />
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={theme.brand}
+            colors={[theme.brand]}
+          />
+        }
       >
-        <ReportViolationButton target={{ targetType: "User", targetId: userId, label: profile.fullName }} />
-        <View style={styles.profileCard}>
-          <View style={styles.profileTop}>
-            <ProfileAvatar avatarUrl={profile.avatarUrl} fullName={profile.fullName} size={64} />
-            <View style={styles.profileHeadText}>
-              <AppText display style={styles.profileName} numberOfLines={2}>
-                {profile.fullName}
-              </AppText>
-              <View style={styles.badgeRow}>
-                <View
-                  style={[
-                    styles.roleBadge,
-                    profile.isOwner ? styles.roleBadgeOwner : styles.roleBadgeCustomer,
-                  ]}
-                >
-                  <AppText
-                    style={[
-                      styles.roleBadgeText,
-                      profile.isOwner ? styles.roleBadgeTextOwner : styles.roleBadgeTextCustomer,
-                    ]}
-                  >
-                    {profile.isOwner ? "Chủ xe" : "Khách thuê"}
-                  </AppText>
-                </View>
+        <View style={styles.ownerCard}>
+          <Pressable
+            disabled={!profile.isOwner}
+            onPress={() => setView("detail")}
+            accessibilityRole={profile.isOwner ? "button" : undefined}
+            accessibilityLabel={profile.isOwner ? "Xem chi tiết chủ xe" : undefined}
+            style={({ pressed }) => [styles.ownerRow, pressed && styles.pressed]}
+          >
+            <View style={styles.avatarWrap}>
+              <ProfileAvatar
+                avatarUrl={profile.avatarUrl}
+                fullName={profile.fullName}
+                size={48}
+              />
+              {profile.isOnline ? <View style={styles.onlineDot} /> : null}
+            </View>
+            <View style={styles.ownerBody}>
+              <View style={styles.ownerNameRow}>
+                <AppText display style={styles.ownerName} numberOfLines={1}>
+                  {profile.fullName}
+                </AppText>
                 {profile.isVerified ? (
-                  <View style={styles.verifiedBadge}>
-                    <BadgeCheck color={theme.mode === "dark" ? "#34D399" : "#059669"} size={12} />
-                    <AppText
-                      style={[
-                        styles.verifiedText,
-                        { color: theme.mode === "dark" ? "#34D399" : "#059669" },
-                      ]}
-                    >
+                  <View style={styles.verifiedPill}>
+                    <BadgeCheck color={verifiedColor} size={10} />
+                    <AppText style={[styles.verifiedPillText, { color: verifiedColor }]}>
                       Đã xác minh
                     </AppText>
                   </View>
                 ) : null}
+                {profile.isOwner ? (
+                  <ChevronRight
+                    color={theme.faint}
+                    size={16}
+                    style={styles.ownerChevron}
+                  />
+                ) : null}
               </View>
-              <View style={styles.profileMeta}>
-                {profile.isOnline ? <View style={styles.onlineDot} /> : null}
-                <AppText style={styles.profileMetaText}>
-                  {profile.isOnline ? "Đang hoạt động" : "Không hoạt động"}
+              <View style={styles.statsRow}>
+                {rating == null ? (
+                  <AppText style={styles.statMuted}>Chưa có đánh giá</AppText>
+                ) : (
+                  <View style={styles.statGroup}>
+                    <Star color="#FBBF24" fill="#FBBF24" size={12} />
+                    <AppText style={styles.statStrong}>{rating.toFixed(1)}</AppText>
+                    <AppText style={styles.statMuted}>({ratingCount})</AppText>
+                  </View>
+                )}
+                <View style={styles.statDivider} />
+                <AppText style={styles.statMuted}>
+                  <AppText style={styles.statStrong}>{tripCount}</AppText> Chuyến
                 </AppText>
-                {year ? (
+                {profile.isOwner ? (
                   <>
-                    <AppText style={styles.dot}>•</AppText>
-                    <AppText style={styles.profileMetaText}>Thành viên từ {year}</AppText>
+                    <View style={styles.statDivider} />
+                    <AppText style={styles.statMuted}>
+                      <AppText style={styles.statStrong}>{profile.totalVehicles}</AppText> Xe
+                    </AppText>
                   </>
                 ) : null}
               </View>
             </View>
-          </View>
+          </Pressable>
 
-          <View style={styles.statGrid}>
-            {stats.map((stat) => (
-              <View key={stat.label} style={styles.statTile}>
-                <View style={styles.statValueRow}>
-                  <AppText display style={styles.statValue}>
-                    {stat.value}
-                  </AppText>
-                  {stat.star ? <AppText style={styles.statStar}>★</AppText> : null}
-                </View>
-                <AppText style={styles.statLabel}>{stat.label}</AppText>
-              </View>
-            ))}
-          </View>
+          {showChat ? (
+            <Pressable
+              onPress={handleOpenChat}
+              disabled={chatLoading}
+              style={({ pressed }) => [styles.chatBar, pressed && styles.pressed]}
+              accessibilityRole="button"
+              accessibilityLabel={chatLabel}
+            >
+              <MessageCircle color={theme.brand} size={15} />
+              <AppText style={styles.chatLabel}>{chatLabel}</AppText>
+              {chatLoading ? (
+                <ActivityIndicator color={theme.brand} size="small" />
+              ) : (
+                <ChevronRight color={theme.brand} size={14} />
+              )}
+            </Pressable>
+          ) : null}
         </View>
 
         {profile.isOwner ? (
-          <View style={styles.verifiedNote}>
-            <ShieldCheck color={theme.brand} size={16} />
-            <AppText style={styles.verifiedNoteText}>
-              MoveVN đã xác minh hồ sơ của chủ xe này.
-            </AppText>
-          </View>
-        ) : null}
-
-        {profile.isOwner ? (
-          <View style={styles.tabRow}>
-            <Pressable
-              onPress={() => setTab("vehicles")}
-              style={[styles.tab, tab === "vehicles" && styles.tabActive]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: tab === "vehicles" }}
-            >
-              <AppText style={[styles.tabText, tab === "vehicles" && styles.tabTextActive]}>
-                Xe đang cho thuê ({profile.vehicles.length})
-              </AppText>
-            </Pressable>
-            <Pressable
-              onPress={() => setTab("reviews")}
-              style={[styles.tab, tab === "reviews" && styles.tabActive]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: tab === "reviews" }}
-            >
-              <AppText style={[styles.tabText, tab === "reviews" && styles.tabTextActive]}>
-                Đánh giá ({profile.totalReviewsReceived})
-              </AppText>
-            </Pressable>
-          </View>
-        ) : null}
-
-        {showVehicles ? (
-          hasVehicles ? (
-            <View style={styles.section}>
-              {profile.vehicles.map((vehicle) => (
-                <MemoVehicleCard key={vehicle.id} vehicle={vehicle} onViewVehicle={onViewVehicle} />
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyBox}>
-              <Car color={theme.faint} size={24} />
-              <AppText style={styles.emptyText}>Chưa có xe được công khai</AppText>
-            </View>
-          )
-        ) : (
-            <View style={styles.section}>
-              <View style={styles.reviewRoleRow}>
+          <>
+            <View style={styles.shopBar}>
+              <View style={styles.tabRow}>
                 <Pressable
-                  onPress={() => setReviewRole("owner")}
-                  style={[styles.reviewRoleButton, reviewRole === "owner" && styles.reviewRoleButtonActive]}
+                  onPress={() => setContentTab("products")}
+                  style={styles.tabItem}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: contentTab === "products" }}
                 >
-                  <AppText style={[styles.reviewRoleText, reviewRole === "owner" && styles.reviewRoleTextActive]}>
-                    Chủ xe ({profile.ownerReviewCount})
+                  <AppText
+                    style={[
+                      styles.tabText,
+                      contentTab === "products" && styles.tabTextActive,
+                    ]}
+                  >
+                    Sản phẩm
                   </AppText>
+                  {contentTab === "products" ? <View style={styles.tabIndicator} /> : null}
                 </Pressable>
                 <Pressable
-                  onPress={() => setReviewRole("customer")}
-                  style={[styles.reviewRoleButton, reviewRole === "customer" && styles.reviewRoleButtonActive]}
+                  onPress={() => setContentTab("categories")}
+                  style={styles.tabItem}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: contentTab === "categories" }}
                 >
-                  <AppText style={[styles.reviewRoleText, reviewRole === "customer" && styles.reviewRoleTextActive]}>
-                    Khách thuê ({profile.customerReviewCount})
+                  <AppText
+                    style={[
+                      styles.tabText,
+                      contentTab === "categories" && styles.tabTextActive,
+                    ]}
+                  >
+                    Danh mục
                   </AppText>
+                  {contentTab === "categories" ? <View style={styles.tabIndicator} /> : null}
                 </Pressable>
               </View>
-              <AppText style={styles.reviewRoleDesc}>
-                {reviewRole === "owner" ? "Đánh giá từ khách thuê sau chuyến thuê xe." : "Đánh giá từ chủ xe sau chuyến thuê."}
-              </AppText>
-              {(reviewRole === "owner" ? profile.ownerAverageRating : profile.customerAverageRating) != null ? (
-                <View style={styles.ratingSummary}>
-                  <View style={styles.ratingScoreCol}>
-                    <AppText display style={styles.ratingScore}>
-                      {(reviewRole === "owner" ? profile.ownerAverageRating! : profile.customerAverageRating!).toFixed(1)}
-                    </AppText>
-                    <ProfileStars
-                      rating={(reviewRole === "owner" ? profile.ownerAverageRating : profile.customerAverageRating) ?? 0}
-                      size={13}
-                    />
-                  <AppText style={styles.ratingCount}>
-                      {reviewTotal} đánh giá
+
+              {contentTab === "products" ? (
+                <VehicleSortBar sort={vehicleSort} onChange={setVehicleSort} styles={styles} />
+              ) : null}
+            </View>
+
+            {contentTab === "products" ? (
+              <View style={styles.contentPad}>
+                <View style={styles.sectionHead}>
+                  <AppText style={styles.sectionTitle}>
+                    Tổng số xe ({profile.totalVehicles})
+                  </AppText>
+                  <AppText style={styles.sectionHint}>
+                    {searchQuery.trim()
+                      ? `${sortedVehicles.length} kết quả`
+                      : `Sắp xếp: ${SORT_LABEL[vehicleSort]}`}
                   </AppText>
                 </View>
-              </View>
-            ) : null}
 
-            {reviews.length === 0 ? (
-              <View style={styles.emptyBox}>
-                <MessageSquareOff color={theme.faint} size={24} />
-                <AppText style={styles.emptyText}>
-                  Chưa có đánh giá với vai trò {reviewRole === "owner" ? "chủ xe" : "khách thuê"}.
-                </AppText>
+                {sortedVehicles.length === 0 ? (
+                  <View style={styles.emptyBox}>
+                    <View style={styles.stateIcon}>
+                      <Search color={theme.faint} size={20} />
+                    </View>
+                    <AppText style={styles.emptyTitle}>
+                      {searchQuery.trim()
+                        ? "Không tìm thấy xe phù hợp"
+                        : "Chưa có xe được công khai"}
+                    </AppText>
+                    <AppText style={styles.emptyText}>
+                      {searchQuery.trim()
+                        ? `Không có kết quả cho "${searchQuery.trim()}".`
+                        : "Các xe đã được duyệt sẽ xuất hiện tại đây."}
+                    </AppText>
+                    {searchQuery.trim() ? (
+                      <Pressable onPress={() => setSearchQuery("")} accessibilityRole="button">
+                        <AppText style={styles.clearSearchText}>Xoá tìm kiếm</AppText>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ) : (
+                  <View style={styles.vehicleList}>
+                    {sortedVehicles.map((vehicle) => (
+                      <MemoVehicleCard
+                        key={vehicle.id}
+                        vehicle={vehicle}
+                        onViewVehicle={onViewVehicle}
+                      />
+                    ))}
+                  </View>
+                )}
               </View>
             ) : (
-              reviews.map((review) => (
-                <MemoReviewCard
-                  key={review.id}
-                  review={review}
-                  onOpenProfile={onOpenProfile}
-                />
-              ))
+              <View style={styles.contentPad}>
+                <View style={styles.categoryList}>
+                  {CATEGORY_ORDER.map((group) => {
+                    const count = categoryCounts[group];
+                    const empty = count === 0;
+                    return (
+                      <Pressable
+                        key={group}
+                        onPress={() => openCategory(group)}
+                        disabled={empty}
+                        style={({ pressed }) => [
+                          styles.categoryCard,
+                          empty && styles.categoryCardEmpty,
+                          pressed && styles.pressed,
+                        ]}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${PROFILE_VEHICLE_GROUP_LABEL[group]} ${count} xe`}
+                      >
+                        <View style={[styles.categoryIcon, empty && styles.categoryIconEmpty]}>
+                          {group === "car" ? (
+                            <CarFront color={empty ? theme.faint : theme.brand} size={17} />
+                          ) : (
+                            <Bike color={empty ? theme.faint : theme.brand} size={17} />
+                          )}
+                        </View>
+                        <View style={styles.categoryBody}>
+                          <AppText style={styles.categoryLabel}>
+                            {PROFILE_VEHICLE_GROUP_LABEL[group]}
+                          </AppText>
+                          <AppText style={styles.categoryCount}>
+                            {empty ? "0 xe" : `${count} xe đang cho thuê`}
+                          </AppText>
+                        </View>
+                        <ChevronRight color={theme.faint} size={16} />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
             )}
-            {reviews.length > 0 && reviews.length < reviewTotal && (
-              <Pressable
-                onPress={loadMore}
-                disabled={isLoadingMore}
-                style={styles.loadMoreButton}
-              >
-                <AppText style={styles.loadMoreText}>
-                  {isLoadingMore ? "Đang tải…" : `Xem thêm đánh giá (+${reviewTotal - reviews.length})`}
+          </>
+        ) : (
+          <View style={styles.contentPad}>
+            <View style={styles.sectionHead}>
+              <AppText style={styles.sectionTitle}>Đánh giá nhận được</AppText>
+            </View>
+            <Pressable
+              onPress={() => openReviews("customer")}
+              style={({ pressed }) => [styles.reviewEntry, pressed && styles.pressed]}
+              accessibilityRole="button"
+              accessibilityLabel={`Xem ${profile.customerReviewCount} đánh giá`}
+            >
+              <View style={styles.reviewEntryIcon}>
+                <Star color="#F59E0B" fill="#F59E0B" size={15} />
+              </View>
+              <View style={styles.reviewEntryBody}>
+                <AppText style={styles.reviewEntryTitle}>Đánh giá từ chủ xe</AppText>
+                <AppText style={styles.reviewEntryHint}>
+                  {profile.customerReviewCount > 0
+                    ? `${profile.customerReviewCount} đánh giá sau các chuyến thuê`
+                    : "Chưa có đánh giá nào"}
                 </AppText>
-              </Pressable>
-            )}
+              </View>
+              {profile.customerAverageRating != null ? (
+                <View style={styles.reviewEntryScore}>
+                  <AppText style={styles.reviewEntryScoreValue}>
+                    {profile.customerAverageRating.toFixed(1)}
+                  </AppText>
+                  <ProfileStars rating={profile.customerAverageRating} size={9} />
+                </View>
+              ) : null}
+              <ChevronRight color={theme.faint} size={16} />
+            </Pressable>
           </View>
         )}
       </ScrollView>
+
+      <Modal
+        visible={menuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuOpen(false)}
+      >
+        <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
+          <View style={[styles.menuCard, { top: insets.top + 52 }]}>
+            <MenuItem
+              icon={RefreshCw}
+              label="Làm mới hồ sơ"
+              onPress={() => {
+                setMenuOpen(false);
+                handleRefresh();
+              }}
+              theme={theme}
+            />
+            <MenuItem icon={Share2} label="Chia sẻ hồ sơ" onPress={handleShare} theme={theme} />
+            {target && canReport(target) ? (
+              <MenuItem
+                icon={Flag}
+                label="Báo cáo vi phạm"
+                onPress={handleReport}
+                danger
+                theme={theme}
+              />
+            ) : null}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
-function Header({ onBack, title }: { onBack: () => void; title: string }) {
-  const { theme } = useTheme();
+function MenuItem({
+  icon: Icon,
+  label,
+  onPress,
+  danger,
+  theme,
+}: {
+  icon: typeof RefreshCw;
+  label: string;
+  onPress: () => void;
+  danger?: boolean;
+  theme: Theme;
+}) {
   const styles = useMemo(() => createStyles(theme), [theme]);
-
+  const color = danger ? theme.danger : theme.text;
   return (
-    <View style={styles.header}>
-      <Pressable
-        onPress={onBack}
-        style={styles.backButton}
-        accessibilityRole="button"
-        accessibilityLabel="Quay lại"
-        hitSlop={8}
-      >
-        <ArrowLeft color={theme.text} size={20} />
-      </Pressable>
-      <AppText style={styles.headerTitle}>{title}</AppText>
-    </View>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <Icon color={color} size={16} />
+      <AppText style={[styles.menuItemText, { color }]}>{label}</AppText>
+    </Pressable>
   );
 }
 
@@ -556,230 +948,403 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: theme.background },
     scroll: { flex: 1 },
-    scrollContent: { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.border,
-      backgroundColor: theme.surface,
-    },
-    backButton: {
-      width: 34,
-      height: 34,
-      borderRadius: 17,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: theme.surfaceAlt,
-    },
-    headerTitle: { color: theme.text, fontSize: 15, fontWeight: "800" },
+    scrollContent: { paddingBottom: 24 },
+    pressed: { opacity: 0.7 },
 
-    profileCard: {
-      borderRadius: 18,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
+    ownerCard: {
       backgroundColor: theme.surface,
-      padding: 14,
-      gap: 14,
-      overflow: "hidden",
+      paddingHorizontal: 14,
+      paddingTop: 12,
+      paddingBottom: 12,
+      marginBottom: 6,
     },
-    profileTop: { flexDirection: "row", alignItems: "center", gap: 12 },
-    profileHeadText: { flex: 1, minWidth: 0, gap: 6 },
-    profileName: { color: theme.text, fontSize: 18, fontWeight: "900", letterSpacing: -0.3 },
-    badgeRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 },
-    roleBadge: {
-      borderRadius: 999,
-      borderWidth: 1,
-      paddingHorizontal: 9,
-      paddingVertical: 3,
+    ownerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+    avatarWrap: { width: 48, height: 48 },
+    onlineDot: {
+      position: "absolute",
+      right: 0,
+      bottom: 0,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      borderWidth: 2,
+      borderColor: theme.surface,
+      backgroundColor: theme.success,
     },
-    roleBadgeOwner: { backgroundColor: theme.brandSoft, borderColor: theme.brandBorder },
-    roleBadgeCustomer: { backgroundColor: theme.surfaceAlt, borderColor: theme.border },
-    roleBadgeText: { fontSize: 11, fontWeight: "800" },
-    roleBadgeTextOwner: { color: theme.brand },
-    roleBadgeTextCustomer: { color: theme.muted },
-    verifiedBadge: {
+    ownerBody: { flex: 1, minWidth: 0, gap: 4 },
+    ownerNameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+    ownerName: {
+      flexShrink: 1,
+      color: theme.text,
+      fontFamily: "Quicksand_700Bold",
+      fontSize: 15,
+      lineHeight: 20,
+    },
+    ownerChevron: { marginLeft: "auto" },
+    verifiedPill: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 4,
+      gap: 2,
       borderRadius: 999,
       borderWidth: 1,
       borderColor: theme.mode === "dark" ? "rgba(52,211,153,0.3)" : "#A7F3D0",
       backgroundColor: theme.mode === "dark" ? "rgba(52,211,153,0.12)" : "#ECFDF5",
-      paddingHorizontal: 9,
-      paddingVertical: 3,
+      paddingHorizontal: 6,
+      paddingVertical: 1,
     },
-    verifiedText: { fontSize: 11, fontWeight: "800" },
-    profileMeta: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 },
-    onlineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#10B981" },
-    profileMetaText: { color: theme.muted, fontSize: 11 },
-    dot: { color: theme.faint, fontSize: 11 },
-
-    statGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-    statTile: {
-      flexGrow: 1,
-      flexBasis: "46%",
-      borderRadius: 12,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F8FAFC",
-      paddingVertical: 10,
-      paddingHorizontal: 12,
-      gap: 2,
+    verifiedPillText: {
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 9.5,
     },
-    statValueRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-    statValue: { color: theme.text, fontSize: 18, fontWeight: "900" },
-    statStar: { color: "#FBBF24", fontSize: 13 },
-    statLabel: { color: theme.muted, fontSize: 11, fontWeight: "600" },
+    statsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: 6,
+    },
+    statGroup: { flexDirection: "row", alignItems: "center", gap: 3 },
+    statStrong: {
+      color: theme.text,
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 12,
+    },
+    statMuted: {
+      color: theme.muted,
+      fontFamily: "BeVietnamPro_500Medium",
+      fontSize: 11,
+    },
+    statDivider: {
+      width: StyleSheet.hairlineWidth,
+      height: 10,
+      marginHorizontal: 1,
+      backgroundColor: theme.border,
+    },
 
-    verifiedNote: {
+    chatBar: {
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
-      borderRadius: 12,
+      height: 34,
+      marginTop: 10,
+      paddingHorizontal: 12,
+      borderRadius: 8,
       borderWidth: 1,
       borderColor: theme.brandBorder,
       backgroundColor: theme.brandSoft,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
     },
-    verifiedNoteText: { flex: 1, color: theme.brand, fontSize: 11, lineHeight: 16, fontWeight: "600" },
+    chatLabel: {
+      flex: 1,
+      color: theme.brand,
+      fontFamily: "BeVietnamPro_600SemiBold",
+      fontSize: 12,
+    },
 
+    shopBar: { backgroundColor: theme.surface },
     tabRow: {
       flexDirection: "row",
-      gap: 6,
-      borderRadius: 14,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      backgroundColor: theme.surface,
-      padding: 4,
-    },
-    tab: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 10,
-      paddingVertical: 8,
-      paddingHorizontal: 6,
-    },
-    tabActive: { backgroundColor: theme.brand },
-    tabText: { color: theme.muted, fontSize: 12, fontWeight: "700", textAlign: "center" },
-    tabTextActive: { color: "#FFFFFF" },
-
-    section: {
-      borderRadius: 18,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      backgroundColor: theme.surface,
-      overflow: "hidden",
-    },
-    ratingSummary: {
-      flexDirection: "row",
+      height: 40,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: theme.border,
-      backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F8FAFC",
     },
-    ratingScoreCol: { flex: 1, alignItems: "center", gap: 4, paddingVertical: 14 },
-    ratingScore: { color: theme.text, fontSize: 30, fontWeight: "900" },
-    ratingCount: { color: theme.muted, fontSize: 11 },
+    tabItem: { flex: 1, alignItems: "center", justifyContent: "center" },
+    tabText: {
+      color: theme.muted,
+      fontFamily: "BeVietnamPro_500Medium",
+      fontSize: 12,
+    },
+    tabTextActive: {
+      color: theme.brand,
+      fontFamily: "BeVietnamPro_700Bold",
+    },
+    tabIndicator: {
+      position: "absolute",
+      bottom: 0,
+      width: 56,
+      height: 2.5,
+      borderTopLeftRadius: 2,
+      borderTopRightRadius: 2,
+      backgroundColor: theme.brand,
+    },
 
+    filterRow: {
+      flexDirection: "row",
+      height: 36,
+      alignItems: "center",
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+      backgroundColor: theme.surface,
+    },
+    filterCell: {
+      flex: 1,
+      height: "100%",
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 4,
+    },
+    filterCellDivider: {
+      borderLeftWidth: StyleSheet.hairlineWidth,
+      borderLeftColor: theme.border,
+    },
+    filterText: {
+      color: theme.muted,
+      fontFamily: "BeVietnamPro_500Medium",
+      fontSize: 12,
+    },
+    filterTextActive: {
+      color: theme.brand,
+      fontFamily: "BeVietnamPro_700Bold",
+    },
+
+    contentPad: { paddingHorizontal: 12, paddingTop: 10, gap: 10 },
+    sectionHead: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      paddingHorizontal: 2,
+    },
+    sectionTitle: {
+      flexShrink: 1,
+      color: theme.text,
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 12,
+    },
+    sectionHint: {
+      color: theme.muted,
+      fontFamily: "BeVietnamPro_500Medium",
+      fontSize: 11,
+    },
+
+    categoryList: { gap: 8 },
+    categoryCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      padding: 12,
+    },
+    categoryCardEmpty: { opacity: 0.6 },
+    categoryIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 9,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.brandSoft,
+    },
+    categoryIconEmpty: { backgroundColor: theme.surfaceAlt },
+    categoryBody: { flex: 1, minWidth: 0, gap: 1 },
+    categoryLabel: {
+      color: theme.text,
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 12,
+    },
+    categoryCount: {
+      color: theme.muted,
+      fontFamily: "BeVietnamPro_400Regular",
+      fontSize: 11,
+    },
+
+    vehicleList: { gap: 8 },
     vehicleCard: {
       flexDirection: "row",
       gap: 10,
-      padding: 10,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.border,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      padding: 8,
     },
     vehicleMedia: {
       width: 84,
-      height: 66,
-      borderRadius: 10,
+      height: 84,
+      borderRadius: 8,
       overflow: "hidden",
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: theme.surfaceAlt,
     },
     vehicleInfo: { flex: 1, minWidth: 0, justifyContent: "center", gap: 4 },
-    vehicleName: { color: theme.text, fontSize: 13, fontWeight: "800" },
+    vehicleName: {
+      color: theme.text,
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 13,
+      lineHeight: 17,
+    },
     vehicleMeta: { flexDirection: "row", alignItems: "center", gap: 4 },
-    vehicleMetaText: { color: theme.muted, fontSize: 11, flexShrink: 1 },
-    vehicleFooter: { flexDirection: "row", alignItems: "baseline", gap: 3 },
-    vehiclePrice: { color: theme.brand, fontSize: 14, fontWeight: "900" },
-    vehicleUnit: { color: theme.muted, fontSize: 11 },
+    vehicleMetaText: {
+      flexShrink: 1,
+      color: theme.muted,
+      fontFamily: "BeVietnamPro_400Regular",
+      fontSize: 11,
+    },
+    vehicleFooter: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 6,
+    },
+    vehiclePriceRow: { flexDirection: "row", alignItems: "baseline", gap: 2, flexShrink: 1 },
+    vehiclePrice: {
+      color: theme.brand,
+      fontFamily: "BeVietnamPro_800ExtraBold",
+      fontSize: 14,
+    },
+    vehicleUnit: {
+      color: theme.muted,
+      fontFamily: "BeVietnamPro_400Regular",
+      fontSize: 11,
+    },
     vehicleTypeBadge: {
-      marginLeft: "auto",
       borderRadius: 999,
       borderWidth: 1,
       borderColor: theme.brandBorder,
       backgroundColor: theme.brandSoft,
-      paddingHorizontal: 7,
-      paddingVertical: 2,
+      paddingHorizontal: 6,
+      paddingVertical: 1,
     },
-    vehicleTypeText: { color: theme.brand, fontSize: 10, fontWeight: "800" },
-
-    reviewItem: {
-      padding: 12,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.border,
-      gap: 8,
+    vehicleTypeText: {
+      color: theme.brand,
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 10,
     },
-    reviewHead: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
-    reviewHeadText: { flex: 1, minWidth: 0, gap: 2 },
-    reviewerName: { color: theme.text, fontSize: 13, fontWeight: "800" },
-    reviewMeta: { flexDirection: "row", alignItems: "center", gap: 6 },
-    reviewRating: { color: "#F59E0B", fontSize: 11, fontWeight: "700" },
-    reviewTime: { color: theme.faint, fontSize: 10 },
-    reviewComment: { color: theme.muted, fontSize: 12, lineHeight: 17 },
-    vehicleLink: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
-    vehicleLinkText: { color: theme.brand, fontSize: 11, fontWeight: "700" },
 
     emptyBox: {
       alignItems: "center",
       gap: 8,
-      paddingVertical: 28,
-      paddingHorizontal: 16,
-    },
-    emptyText: { color: theme.muted, fontSize: 12, textAlign: "center" },
-
-    loadMoreButton: {
-      alignItems: "center",
-      paddingVertical: 10,
-      borderRadius: 10,
+      borderRadius: 12,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.border,
       backgroundColor: theme.surface,
+      paddingVertical: 24,
+      paddingHorizontal: 16,
     },
-    loadMoreText: { color: theme.brand, fontSize: 12, fontWeight: "700" },
+    emptyTitle: {
+      color: theme.text,
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 12,
+      textAlign: "center",
+    },
+    emptyText: {
+      color: theme.muted,
+      fontFamily: "BeVietnamPro_400Regular",
+      fontSize: 11,
+      lineHeight: 15,
+      textAlign: "center",
+    },
+    clearSearchText: {
+      color: theme.brand,
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 11,
+    },
+
+    reviewEntry: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      padding: 12,
+    },
+    reviewEntryIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 9,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.mode === "dark" ? "#34280F" : "#FFF6E2",
+    },
+    reviewEntryBody: { flex: 1, minWidth: 0, gap: 2 },
+    reviewEntryTitle: {
+      color: theme.text,
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 12,
+    },
+    reviewEntryHint: {
+      color: theme.muted,
+      fontFamily: "BeVietnamPro_400Regular",
+      fontSize: 11,
+    },
+    reviewEntryScore: { alignItems: "flex-end", gap: 2 },
+    reviewEntryScoreValue: {
+      color: theme.text,
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 12,
+    },
 
     centerBox: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8, padding: 24 },
     stateIcon: {
-      width: 56,
-      height: 56,
-      borderRadius: 18,
+      width: 48,
+      height: 48,
+      borderRadius: 14,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: theme.surfaceAlt,
     },
-    stateTitle: { color: theme.text, fontSize: 15, fontWeight: "900", textAlign: "center" },
-    stateDesc: { color: theme.muted, fontSize: 13, textAlign: "center" },
+    stateTitle: {
+      color: theme.text,
+      fontFamily: "Quicksand_700Bold",
+      fontSize: 16,
+      textAlign: "center",
+    },
+    stateDesc: {
+      color: theme.muted,
+      fontFamily: "BeVietnamPro_400Regular",
+      fontSize: 12,
+      lineHeight: 17,
+      textAlign: "center",
+    },
     retryButton: {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
       marginTop: 6,
-      borderRadius: 10,
+      borderRadius: 9,
       backgroundColor: theme.brand,
-      paddingHorizontal: 14,
-      paddingVertical: 9,
+      paddingHorizontal: 13,
+      paddingVertical: 8,
     },
-    retryText: { color: "#FFFFFF", fontSize: 12, fontWeight: "800" },
-    reviewRoleRow: { flexDirection: "row", gap: 8, marginBottom: 8 },
-    reviewRoleButton: { flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: theme.surface, alignItems: "center" },
-    reviewRoleButtonActive: { backgroundColor: theme.brand },
-    reviewRoleText: { fontSize: 13, fontWeight: "600", color: theme.text },
-    reviewRoleTextActive: { color: "#fff" },
-    reviewRoleDesc: { fontSize: 12, color: theme.faint, marginBottom: 8 },
+    retryText: {
+      color: theme.onBrand,
+      fontFamily: "BeVietnamPro_700Bold",
+      fontSize: 12,
+    },
+
+    menuBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(16, 25, 54, 0.18)",
+    },
+    menuCard: {
+      position: "absolute",
+      right: 12,
+      minWidth: 200,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      paddingVertical: 4,
+      shadowColor: theme.shadow,
+      shadowOpacity: 0.16,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 8,
+    },
+    menuItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingHorizontal: 13,
+      paddingVertical: 10,
+    },
+    menuItemPressed: { backgroundColor: theme.surfaceAlt },
+    menuItemText: {
+      fontFamily: "BeVietnamPro_600SemiBold",
+      fontSize: 12,
+    },
   });

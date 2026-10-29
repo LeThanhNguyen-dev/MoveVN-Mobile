@@ -23,3 +23,18 @@ export function memberYear(value?: string | null): string | null {
   if (Number.isNaN(date.getTime())) return null;
   return String(date.getFullYear());
 }
+
+/** Số năm đã tham gia, làm tròn xuống: "3 năm" hoặc "Dưới 1 năm". */
+export function membershipLabel(value?: string | null, nowMs = Date.now()): string {
+  if (!value) return "Chưa rõ";
+  const time = new Date(value).getTime();
+  if (Number.isNaN(time) || time > nowMs) return "Chưa rõ";
+  const start = new Date(time);
+  const today = new Date(nowMs);
+  let years = today.getFullYear() - start.getFullYear();
+  const beforeAnniversary =
+    today.getMonth() < start.getMonth() ||
+    (today.getMonth() === start.getMonth() && today.getDate() < start.getDate());
+  if (beforeAnniversary) years -= 1;
+  return years >= 1 ? `${years} năm` : "Dưới 1 năm";
+}

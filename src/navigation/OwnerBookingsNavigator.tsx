@@ -57,7 +57,7 @@ export default function OwnerBookingsNavigator({
       <Stack.Screen name="OwnerTracking" component={GpsTrackingScreen} />
       <Stack.Screen name="OwnerPlayback" component={GpsPlaybackScreen} />
       <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} />
-      <Stack.Screen name="BookingUserProfile">{({ route, navigation }) => <PublicUserProfileScreen userId={route.params.userId} onBack={() => navigation.goBack()} onOpenProfile={userId => navigation.push("BookingUserProfile", { userId })} onViewVehicle={vehicleId => navigation.navigate("VehicleDetail", { vehicleId })} />}</Stack.Screen>
+      <Stack.Screen name="BookingUserProfile">{({ route, navigation }) => <PublicUserProfileScreen userId={route.params.userId} onBack={() => navigation.goBack()} onOpenProfile={userId => navigation.push("BookingUserProfile", { userId })} onViewVehicle={vehicleId => navigation.navigate("VehicleDetail", { vehicleId })} onOpenBooking={bookingId => navigation.navigate("OwnerBookingDetail", { bookingId })} />}</Stack.Screen>
       <Stack.Screen name="BookingChat">{({ route, navigation }) => <ChatRoomScreen bookingId={route.params.bookingId} onBack={() => navigation.goBack()} onBookingPress={() => navigation.goBack()} onOpenUserProfile={onOpenUserProfile} />}</Stack.Screen>
     </Stack.Navigator>
   );
