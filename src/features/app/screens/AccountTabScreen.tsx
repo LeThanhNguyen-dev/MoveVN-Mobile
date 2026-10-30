@@ -9,6 +9,7 @@ import {
   ChevronUp,
   FileBadge,
   FileText,
+  Flag,
   Headphones,
   Heart,
   IdCard,
@@ -24,7 +25,7 @@ import {
   UserRound,
   Wallet,
 } from "lucide-react-native";
-import { Image, Pressable, ScrollView, StyleSheet, Switch, View, type DimensionValue } from "react-native"
+import { BackHandler, Image, Pressable, ScrollView, StyleSheet, Switch, View, type DimensionValue } from "react-native"
 import AppText from "@/components/AppText";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { signOut } from "@/features/auth/services/authSession";
@@ -52,6 +53,10 @@ import { useTheme } from "@/theme/useTheme";
 import { useNotificationStore } from "@/features/notifications/useNotifications";
 import { useAssistantUi } from "@/features/assistant/useAssistantUi";
 import { openFavoriteVehicles } from "@/features/favorites/favoriteActions";
+import { openSupportTickets } from "@/features/supportTickets/ticketNavigation";
+import { openAvailabilityAlerts } from "@/features/availabilityAlerts/alertNavigation";
+import { openViolations } from "@/features/violations/violationNavigation";
+import OwnerAnalyticsScreen from "@/features/ownerAnalytics/OwnerAnalyticsScreen";
 
 type TabIcon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 
@@ -116,10 +121,25 @@ export default function AccountTabScreen({
   const [showDisputes, setShowDisputes] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { mode, theme, toggleMode } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const isDark = mode === "dark";
+  const canViewOwnerAnalytics = activeRole === "Owner" && user.roles.includes("Owner");
+
+  useEffect(() => {
+    if (!canViewOwnerAnalytics) {
+      setShowAnalytics(false);
+      return;
+    }
+    if (!showAnalytics) return;
+    const listener = BackHandler.addEventListener("hardwareBackPress", () => {
+      setShowAnalytics(false);
+      return true;
+    });
+    return () => listener.remove();
+  }, [canViewOwnerAnalytics, showAnalytics]);
 
   const disputesVisible = showDisputes || !!initialDisputes;
 
@@ -231,12 +251,15 @@ export default function AccountTabScreen({
         ...(activeRole === "Customer" && user.roles.includes("Customer") ? [{ key: "favorites", label: "Yêu thích", icon: Heart, accent: "#E11D48", onPress: openFavoriteVehicles }] : []),
         { key: "deals", label: "Ưu đãi", icon: BadgePercent, accent: "#D97706" },
         { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626", onPress: () => setShowDisputes(true) },
-        { key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB" },
+        { key: "violations", label: "Báo cáo vi phạm của tôi", icon: Flag, accent: "#EA580C", onPress: () => openViolations() },
+        { key: "availability-alerts", label: "Thông báo xe trống", icon: Bell, accent: theme.brand, onPress: () => openAvailabilityAlerts() },
+        ...(canViewOwnerAnalytics ? [{ key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB", onPress: () => setShowAnalytics(true) }] : []),
       ],
     },
     {
       title: "Hỗ trợ",
       items: [
+        { key: "support-tickets", label: "Yêu cầu hỗ trợ của tôi", icon: Headphones, accent: "#7C3AED", onPress: () => openSupportTickets() },
         {
           key: "chatbot",
           label: "Chatbot MoveVN",
@@ -293,6 +316,10 @@ export default function AccountTabScreen({
       ],
     },
   ];
+
+  if (showAnalytics && canViewOwnerAnalytics) {
+    return <OwnerAnalyticsScreen key={user.userId} user={user} onBack={() => setShowAnalytics(false)} />;
+  }
 
   if (showHub) {
     return (
@@ -556,9 +583,9 @@ function VerificationSection({
             <Pressable
               accessibilityRole="button"
               onPress={onOverview}
-              style={[styles.menuRow, styles.menuDivider, styles.subRowActive]}
+              style={[styles.menuRow, styles.menuDivider]}
             >
-              <View style={[styles.menuIcon, { backgroundColor: theme.surface }]}>
+              <View style={[styles.menuIcon, { backgroundColor: iconBackground(theme.brand) }]}>
                 <ShieldCheck color={theme.brand} size={20} strokeWidth={2.3} />
               </View>
               <View style={styles.menuContent}>
@@ -566,7 +593,7 @@ function VerificationSection({
                   <AppText numberOfLines={1} style={styles.menuLabel}>
                     Tổng quan xác minh
                   </AppText>
-                  <AppText style={[styles.menuValue, { color: theme.brand }]}>{overviewValue}</AppText>
+                  <AppText numberOfLines={1} style={styles.menuValue}>{overviewValue}</AppText>
                 </View>
               </View>
               <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
@@ -585,7 +612,7 @@ function VerificationSection({
                   <AppText numberOfLines={1} style={styles.menuLabel}>
                     CCCD / CMND
                   </AppText>
-                  {cccdValue ? <AppText style={[styles.menuValue, { color: theme.brand }]}>{cccdValue}</AppText> : null}
+                  {cccdValue ? <AppText numberOfLines={1} style={styles.menuValue}>{cccdValue}</AppText> : null}
                 </View>
               </View>
               <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
@@ -600,7 +627,7 @@ function VerificationSection({
                   <AppText numberOfLines={1} style={styles.menuLabel}>
                     Giấy phép lái xe
                   </AppText>
-                  {gplxValue ? <AppText style={[styles.menuValue, { color: theme.brand }]}>{gplxValue}</AppText> : null}
+                  {gplxValue ? <AppText numberOfLines={1} style={styles.menuValue}>{gplxValue}</AppText> : null}
                 </View>
               </View>
               <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
@@ -626,7 +653,7 @@ function MenuRow({ item, last, progress }: { item: AccountMenuItem; last: boolea
       <View style={styles.menuContent}>
         <View style={styles.menuLine}>
           <AppText numberOfLines={1} style={styles.menuLabel}>{item.label}</AppText>
-          {item.value ? <AppText style={[styles.menuValue, { color: item.accent }]}>{item.value}</AppText> : null}
+          {item.value ? <AppText numberOfLines={1} style={styles.menuValue}>{item.value}</AppText> : null}
         </View>
         {typeof progress === "number" ? (
           <View style={styles.progressTrack}>
@@ -807,9 +834,6 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.divider,
   },
-  subRowActive: {
-    backgroundColor: theme.brandSoft,
-  },
   menuIcon: {
     width: 38,
     height: 38,
@@ -844,9 +868,11 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     marginTop: 2,
   },
   menuValue: {
-    fontSize: 12,
+    color: theme.muted,
+    fontSize: 11,
     lineHeight: 16,
-    fontWeight: "900",
+    fontWeight: "500",
+    flexShrink: 0,
   },
   progressTrack: {
     height: 5,

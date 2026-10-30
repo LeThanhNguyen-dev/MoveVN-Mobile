@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Clipboard from "expo-clipboard";
-import { Check, Clock, Copy, CircleCheck, Wallet } from "lucide-react-native";
+import { Clock, Wallet } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -15,139 +15,153 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { DealsStackParamList } from "@/navigation/types";
 import { showToast } from "@/features/notifications/toastStore";
+import DealsFilterBar from "@/features/vouchers/components/DealsFilterBar";
 import DealsSegmentedNav from "@/features/vouchers/components/DealsSegmentedNav";
-import VoucherTicketStub from "@/features/vouchers/components/VoucherTicketStub";
-import { formatEndDate, formatVehicleLabel, formatVnd, getDaysLeft } from "@/features/vouchers/voucherFormat";
+import PromotionDetailSheet, {
+  type PromotionDetailSlide,
+} from "@/features/vouchers/components/PromotionDetailSheet";
+import VoucherTicketCard, {
+  type VoucherCardData,
+} from "@/features/vouchers/components/VoucherTicketCard";
+import { getDaysLeft, isExpiringSoon } from "@/features/vouchers/voucherFormat";
 import { getVoucherWallet } from "@/features/voucherClaims/services/voucherClaimService";
 import type { VoucherClaimResponse } from "@/features/voucherClaims/types";
 
 type DealsNav = NativeStackNavigationProp<DealsStackParamList>;
-type WalletTab = "available" | "used";
+type WalletFilter = "all" | "available" | "used" | "expiring";
+type WalletSort = "newest" | "ending" | "value";
 
-function WalletVoucherCard({ voucher }: { voucher: VoucherClaimResponse }) {
+const WALLET_FILTERS: { value: WalletFilter; label: string }[] = [
+  { value: "all", label: "Tất cả" },
+  { value: "available", label: "Chưa dùng" },
+  { value: "used", label: "Đã dùng" },
+  { value: "expiring", label: "Sắp hết hạn" },
+];
+
+const SORT_OPTIONS = [
+  { value: "newest", label: "Mới nhận nhất" },
+  { value: "ending", label: "Hạn gần nhất" },
+  { value: "value", label: "Giảm nhiều nhất" },
+];
+
+function isUsed(voucher: VoucherClaimResponse) {
+  return Boolean(voucher.usedAt);
+}
+
+function isEnded(voucher: VoucherClaimResponse) {
+  if (!voucher.endAt) return false;
+  return new Date(voucher.endAt).getTime() < Date.now();
+}
+
+function toCardData(voucher: VoucherClaimResponse): VoucherCardData {
+  const usedVoucher = isUsed(voucher);
+  return {
+    key: String(voucher.id),
+    code: voucher.code,
+    name: voucher.name,
+    description: voucher.description,
+    discountType: voucher.discountType,
+    discountValue: voucher.discountValue,
+    maxDiscountAmount: voucher.maxDiscountAmount,
+    minOrderAmount: voucher.minOrderAmount,
+    vehicleType: voucher.vehicleType,
+    endAt: voucher.endAt,
+    usageCount: voucher.usageCount,
+    maxUsageCount: voucher.maxUsageCount,
+    status: usedVoucher ? "used" : isEnded(voucher) ? "ended" : "active",
+    usedAt: voucher.usedAt,
+  };
+}
+
+function toDetailSlide(voucher: VoucherClaimResponse): PromotionDetailSlide {
+  return {
+    id: voucher.id,
+    promotionId: voucher.promotionId,
+    title: voucher.name,
+    caption: voucher.description,
+    code: voucher.code,
+    popupTitle: voucher.name,
+    popupDescription: voucher.description ?? null,
+    popupCtaLabel: "Dùng ngay",
+    promotionName: voucher.name,
+    discountType: voucher.discountType,
+    discountValue: voucher.discountValue,
+    vehicleType: voucher.vehicleType,
+    endAt: voucher.endAt,
+    minOrderAmount: voucher.minOrderAmount,
+    maxDiscountAmount: voucher.maxDiscountAmount,
+    usageCount: voucher.usageCount,
+    maxUsageCount: voucher.maxUsageCount,
+  };
+}
+
+type WalletCardProps = {
+  voucher: VoucherClaimResponse;
+  copied: boolean;
+  onCopy: () => void;
+  onUseNow: () => void;
+  onOpenDetail: () => void;
+};
+
+function WalletCard({ voucher, copied, onCopy, onUseNow, onOpenDetail }: WalletCardProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [copied, setCopied] = useState(false);
-
-  const daysLeft = getDaysLeft(voucher.endAt);
-  const isUsed = !!voucher.usedAt;
-
-  function handleCopy() {
-    void Clipboard.setStringAsync(voucher.code).then(() => {
-      setCopied(true);
-      showToast({ type: "success", title: "Đã copy mã!", message: voucher.code });
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
+  const days = getDaysLeft(voucher.endAt);
+  const usedVoucher = isUsed(voucher);
+  const showDaysBadge = !usedVoucher && days !== null && days <= 7;
 
   return (
-    <View style={[styles.ticket, isUsed && styles.ticketUsed]}>
-      <VoucherTicketStub
-        discountType={voucher.discountType}
-        discountValue={voucher.discountValue}
-        dimmed={isUsed}
-      />
-      <View style={styles.ticketDivider} />
-
-      <View style={styles.ticketBody}>
-        <View style={styles.nameRow}>
-          <View style={styles.nameWrap}>
-            <AppText style={styles.ticketName} numberOfLines={1}>
-              {voucher.name}
-            </AppText>
-            {!!voucher.description && (
-              <AppText style={styles.ticketDesc} numberOfLines={2}>
-                {voucher.description}
-              </AppText>
-            )}
-          </View>
-          {isUsed ? (
-            <View style={styles.usedBadge}>
-              <CircleCheck color={theme.muted} size={11} />
-              <AppText style={styles.usedBadgeText}>Đã sử dụng</AppText>
-            </View>
-          ) : daysLeft !== null ? (
-            <View
-              style={[
-                styles.daysBadge,
-                daysLeft <= 3 ? styles.daysBadgeUrgent : styles.daysBadgeFresh,
-              ]}
-            >
-              <Clock
-                color={
-                  daysLeft <= 3
-                    ? theme.mode === "dark"
-                      ? "#FB7185"
-                      : "#B91C1C"
-                    : theme.mode === "dark"
-                      ? "#34D399"
-                      : "#059669"
-                }
-                size={11}
-              />
-              <AppText
-                style={[
-                  styles.daysBadgeText,
-                  daysLeft <= 3
-                    ? { color: theme.mode === "dark" ? "#FB7185" : "#B91C1C" }
-                    : { color: theme.mode === "dark" ? "#34D399" : "#059669" },
-                ]}
-              >
-                🟢 {daysLeft > 0 ? `Còn ${daysLeft} ngày` : "Hết hôm nay!"}
-              </AppText>
-            </View>
-          ) : null}
-        </View>
-
-        <View style={styles.metaRow}>
-          <AppText style={styles.metaText}>{formatVehicleLabel(voucher.vehicleType)}</AppText>
-          {!!voucher.minOrderAmount && (
-            <AppText style={[styles.metaText, styles.metaAmber]}>
-              Đơn từ {formatVnd(voucher.minOrderAmount)}
-            </AppText>
-          )}
-          {!!formatEndDate(voucher.endAt) && (
-            <AppText style={styles.metaText}>📅 HSD: {formatEndDate(voucher.endAt)}</AppText>
-          )}
-        </View>
-
-        <View style={styles.copyRow}>
-          <View style={styles.codeBox}>
-            <AppText style={styles.codeText} numberOfLines={1}>
-              {voucher.code}
+    <VoucherTicketCard
+      data={toCardData(voucher)}
+      showCode
+      copied={copied}
+      onCopyCode={onCopy}
+      onOpenDetail={onOpenDetail}
+      badge={
+        showDaysBadge ? (
+          <View
+            style={[
+              styles.daysBadge,
+              {
+                backgroundColor: theme.mode === "dark" ? "rgba(245,158,11,0.15)" : "#FFFBEB",
+                borderColor: theme.mode === "dark" ? "rgba(245,158,11,0.35)" : "#FDE68A",
+              },
+            ]}
+          >
+            <Clock color={theme.mode === "dark" ? "#FBBF24" : "#B45309"} size={11} />
+            <AppText style={[styles.daysBadgeText, { color: theme.mode === "dark" ? "#FBBF24" : "#B45309" }]}>
+              Còn {days} ngày
             </AppText>
           </View>
-          {!isUsed ? (
-            <Pressable
-              onPress={handleCopy}
-              style={styles.copyButton}
-              accessibilityRole="button"
-              accessibilityLabel="Copy mã voucher"
-            >
-              {copied ? (
-                <Check color="#FFFFFF" size={13} />
-              ) : (
-                <Copy color="#FFFFFF" size={13} />
-              )}
-              <AppText style={styles.copyButtonText}>{copied ? "Đã copy!" : "Copy"}</AppText>
-            </Pressable>
-          ) : null}
-        </View>
-      </View>
-    </View>
+        ) : null
+      }
+      action={
+        usedVoucher
+          ? undefined
+          : {
+              label: "Dùng ngay",
+              icon: <Wallet color="#FFFFFF" size={14} />,
+              onClick: onUseNow,
+            }
+      }
+    />
   );
 }
 
-const MemoWalletCard = memo(WalletVoucherCard);
+const MemoWalletCard = memo(WalletCard);
 
-export default function VoucherWalletScreen() {
+export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => void }) {
   const navigation = useNavigation<DealsNav>();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [vouchers, setVouchers] = useState<VoucherClaimResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<WalletTab>("available");
+  const [filter, setFilter] = useState<WalletFilter>("all");
+  const [sort, setSort] = useState<WalletSort>("newest");
+  const [search, setSearch] = useState("");
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [selected, setSelected] = useState<PromotionDetailSlide | null>(null);
 
   const fetchWallet = useCallback(async () => {
     setLoading(true);
@@ -165,9 +179,82 @@ export default function VoucherWalletScreen() {
     void fetchWallet();
   }, [fetchWallet]);
 
-  const available = useMemo(() => vouchers.filter((v) => !v.usedAt), [vouchers]);
-  const used = useMemo(() => vouchers.filter((v) => !!v.usedAt), [vouchers]);
-  const displayed = tab === "available" ? available : used;
+  const available = useMemo(
+    () => vouchers.filter((v) => !isUsed(v) && !isEnded(v)),
+    [vouchers],
+  );
+  const used = useMemo(() => vouchers.filter(isUsed), [vouchers]);
+  const expiring = useMemo(() => available.filter((v) => isExpiringSoon(v.endAt)), [available]);
+
+  const filters = useMemo(
+    () => [
+      { value: "all", label: "Tất cả", count: vouchers.length },
+      { value: "available", label: "Chưa dùng", count: available.length },
+      { value: "used", label: "Đã dùng", count: used.length },
+      { value: "expiring", label: "Sắp hết hạn", count: expiring.length, tone: "amber" as const },
+    ],
+    [vouchers.length, available.length, used.length, expiring.length],
+  );
+
+  const displayed = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const result = vouchers.filter((voucher) => {
+      if (filter === "available" && (isUsed(voucher) || isEnded(voucher))) return false;
+      if (filter === "used" && !isUsed(voucher)) return false;
+      if (filter === "expiring" && !isExpiringSoon(voucher.endAt)) return false;
+      if (!query) return true;
+      return (
+        voucher.name.toLowerCase().includes(query) ||
+        voucher.code.toLowerCase().includes(query) ||
+        (voucher.description ?? "").toLowerCase().includes(query)
+      );
+    });
+
+    return result.sort((first, second) => {
+      if (sort === "value") return second.discountValue - first.discountValue;
+      if (sort === "ending") {
+        const firstEnd = first.endAt ? new Date(first.endAt).getTime() : Number.MAX_SAFE_INTEGER;
+        const secondEnd = second.endAt ? new Date(second.endAt).getTime() : Number.MAX_SAFE_INTEGER;
+        return firstEnd - secondEnd;
+      }
+      return new Date(second.claimedAt).getTime() - new Date(first.claimedAt).getTime();
+    });
+  }, [vouchers, filter, sort, search]);
+
+  const filterDesc = useMemo(() => {
+    if (filter === "available") return "Các voucher bạn có thể dùng ngay.";
+    if (filter === "used") return "Lịch sử các voucher đã áp dụng.";
+    if (filter === "expiring") return "Những voucher sắp hết hạn, dùng sớm thôi!";
+    return "Chọn một voucher để sao chép mã hoặc dùng ngay.";
+  }, [filter]);
+
+  async function handleCopy(voucher: VoucherClaimResponse) {
+    try {
+      await Clipboard.setStringAsync(voucher.code);
+      setCopiedId(voucher.id);
+      showToast({ type: "success", title: "Đã sao chép mã", message: voucher.code });
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      showToast({ type: "error", title: "Lỗi", message: "Không sao chép được mã voucher." });
+    }
+  }
+
+  function handleUseNow() {
+    if (onUseNow) {
+      onUseNow();
+      return;
+    }
+    showToast({
+      type: "info",
+      title: "Đặt xe ngay",
+      message: "Mở tab Khám phá để chọn xe và dùng voucher khi đặt.",
+    });
+  }
+
+  function handleSheetCta() {
+    setSelected(null);
+    handleUseNow();
+  }
 
   return (
     <View style={styles.root}>
@@ -176,58 +263,92 @@ export default function VoucherWalletScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <AppText display style={styles.pageTitle}>Ví voucher</AppText>
-        <AppText style={styles.pageDesc}>Quản lý voucher đã nhận và sử dụng khi đặt xe.</AppText>
+        <AppText display style={styles.pageTitle}>
+          Ví voucher
+        </AppText>
 
         <DealsSegmentedNav />
 
-        <View style={styles.tabRow}>
-          <Pressable
-            onPress={() => setTab("available")}
-            style={[styles.tab, tab === "available" && styles.tabActive]}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: tab === "available" }}
-          >
-            <AppText style={[styles.tabText, tab === "available" && styles.tabTextActive]}>
-              Chưa dùng ({available.length})
-            </AppText>
-          </Pressable>
-          <Pressable
-            onPress={() => setTab("used")}
-            style={[styles.tab, tab === "used" && styles.tabActive]}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: tab === "used" }}
-          >
-            <AppText style={[styles.tabText, tab === "used" && styles.tabTextActive]}>
-              Đã dùng ({used.length})
-            </AppText>
-          </Pressable>
-        </View>
+        <DealsFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Tìm voucher, mã ưu đãi..."
+          filters={filters}
+          activeFilter={filter}
+          onFilterChange={(value) => setFilter(value as WalletFilter)}
+          sortValue={sort}
+          sortOptions={SORT_OPTIONS}
+          onSortChange={(value) => setSort(value as WalletSort)}
+        />
 
         {loading ? (
           <View style={styles.centerBox}>
             <ActivityIndicator color={theme.brand} size="large" />
           </View>
-        ) : displayed.length === 0 ? (
+        ) : vouchers.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Wallet color={theme.faint} size={44} />
+            <View style={styles.emptyIcon}>
+              <Wallet color={theme.brand} size={26} />
+            </View>
             <AppText display style={styles.emptyTitle}>
-              {tab === "available" ? "Chưa có voucher nào." : "Chưa sử dụng voucher nào."}
+              Ví voucher còn trống
             </AppText>
-            {tab === "available" ? (
-              <Pressable onPress={() => navigation.navigate("VoucherHunt")} style={styles.emptyLinkTouch}>
-                <AppText style={styles.emptyLink}>Đi săn mã ngay! →</AppText>
-              </Pressable>
-            ) : null}
+            <AppText style={styles.emptyDesc}>
+              Hãy săn thêm voucher từ trung tâm ưu đãi, voucher đã nhận sẽ xuất hiện ở đây để dùng khi đặt xe.
+            </AppText>
+            <Pressable
+              onPress={() => navigation.navigate("VoucherHunt")}
+              style={styles.emptyLinkTouch}
+            >
+              <AppText style={styles.emptyLink}>Săn voucher ngay →</AppText>
+            </Pressable>
           </View>
         ) : (
-          <View style={styles.cardList}>
-            {displayed.map((v) => (
-              <MemoWalletCard key={v.id} voucher={v} />
-            ))}
-          </View>
+          <>
+            <View style={styles.sectionHead}>
+              <View style={styles.sectionTitleRow}>
+                <AppText display style={styles.sectionTitle}>
+                  Voucher trong ví
+                </AppText>
+                <View style={styles.countBadge}>
+                  <AppText style={styles.countBadgeText}>{displayed.length}</AppText>
+                </View>
+              </View>
+              <AppText style={styles.sectionDesc}>{filterDesc}</AppText>
+            </View>
+
+            {displayed.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <AppText display style={styles.emptyTitle}>
+                  Không có voucher phù hợp
+                </AppText>
+                <AppText style={styles.emptyDesc}>
+                  Thử đổi bộ lọc hoặc từ khoá tìm kiếm.
+                </AppText>
+              </View>
+            ) : (
+              <View style={styles.ticketList}>
+                {displayed.map((voucher) => (
+                  <MemoWalletCard
+                    key={voucher.id}
+                    voucher={voucher}
+                    copied={copiedId === voucher.id}
+                    onCopy={() => void handleCopy(voucher)}
+                    onUseNow={handleUseNow}
+                    onOpenDetail={() => setSelected(toDetailSlide(voucher))}
+                  />
+                ))}
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
+
+      <PromotionDetailSheet
+        slide={selected}
+        onClose={() => setSelected(null)}
+        onCta={handleSheetCta}
+      />
     </View>
   );
 }
@@ -236,116 +357,52 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: theme.background },
     scroll: { flex: 1 },
-    scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 96, gap: 12 },
-    pageTitle: { color: theme.text, fontSize: 22, fontWeight: "800" },
-    pageDesc: { color: theme.muted, fontSize: 13, marginTop: -8 },
-
-    tabRow: {
-      flexDirection: "row",
-      gap: 4,
-      padding: 4,
-      borderRadius: 12,
-      backgroundColor: theme.mode === "dark" ? "#16161D" : "#F1F5F9",
-    },
-    tab: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: 9,
-      borderRadius: 9,
-    },
-    tabActive: {
-      backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#FFFFFF",
-      shadowColor: "#000000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.08,
-      shadowRadius: 3,
-      elevation: 2,
-    },
-    tabText: { color: theme.muted, fontSize: 13, fontWeight: "600" },
-    tabTextActive: { color: theme.mode === "dark" ? theme.text : theme.brand, fontWeight: "800" },
-
-    centerBox: { paddingVertical: 64, alignItems: "center" },
-    emptyBox: { alignItems: "center", paddingVertical: 40, gap: 6 },
-    emptyTitle: { color: theme.muted, fontSize: 14, fontWeight: "600", marginTop: 8, textAlign: "center" },
-    emptyLinkTouch: { marginTop: 4, padding: 6 },
-    emptyLink: { color: theme.brand, fontSize: 13, fontWeight: "800" },
-
-    cardList: { gap: 12 },
-    ticket: {
-      flexDirection: "row",
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: theme.brandBorder,
-      backgroundColor: theme.surface,
-      overflow: "hidden",
-    },
-    ticketUsed: { opacity: 0.75 },
-    ticketDivider: {
-      width: 0,
-      borderLeftWidth: 2,
-      borderStyle: "dashed",
-      borderColor: theme.mode === "dark" ? "#3F3F46" : "#DDD6FE",
-      marginVertical: 10,
-    },
-    ticketBody: { flex: 1, minWidth: 0, padding: 14, gap: 8 },
-    nameRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
-    nameWrap: { flex: 1, minWidth: 0, gap: 2 },
-    ticketName: { color: theme.text, fontSize: 14, fontWeight: "800", lineHeight: 19 },
-    ticketDesc: { color: theme.muted, fontSize: 12, lineHeight: 17 },
-    usedBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
+    scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 96, gap: 14 },
+    pageTitle: { color: theme.text, fontSize: 21, fontWeight: "900", letterSpacing: -0.4 },
+    sectionHead: { gap: 4 },
+    sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    sectionTitle: { color: theme.text, fontSize: 17, fontWeight: "900", flexShrink: 1 },
+    countBadge: {
       borderRadius: 999,
-      backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F1F5F9",
+      backgroundColor: theme.brandSoft,
       paddingHorizontal: 8,
-      paddingVertical: 4,
-      flexShrink: 0,
+      paddingVertical: 3,
     },
-    usedBadgeText: { color: theme.muted, fontSize: 11, fontWeight: "700" },
+    countBadgeText: { color: theme.brand, fontSize: 11, fontWeight: "900" },
+    sectionDesc: { color: theme.muted, fontSize: 12 },
     daysBadge: {
       flexDirection: "row",
       alignItems: "center",
       gap: 4,
       borderRadius: 999,
+      borderWidth: 1,
       paddingHorizontal: 8,
-      paddingVertical: 4,
-      flexShrink: 0,
+      paddingVertical: 3,
     },
-    daysBadgeFresh: {
-      backgroundColor: theme.mode === "dark" ? "rgba(52,211,153,0.15)" : "#ECFDF5",
-    },
-    daysBadgeUrgent: {
-      backgroundColor: theme.mode === "dark" ? "rgba(244,63,94,0.15)" : "#FEE2E2",
-    },
-    daysBadgeText: { fontSize: 11, fontWeight: "700" },
-
-    metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-    metaText: { color: theme.muted, fontSize: 12 },
-    metaAmber: { color: theme.mode === "dark" ? "#FBBF24" : "#B45309" },
-
-    copyRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
-    codeBox: {
-      flex: 1,
-      borderRadius: 10,
+    daysBadgeText: { fontSize: 10, fontWeight: "800" },
+    ticketList: { gap: 14 },
+    centerBox: { paddingVertical: 64, alignItems: "center" },
+    emptyBox: {
+      alignItems: "center",
+      paddingVertical: 40,
+      paddingHorizontal: 16,
+      gap: 6,
+      borderRadius: 18,
       borderWidth: 1,
       borderStyle: "dashed",
-      borderColor: theme.mode === "dark" ? "rgba(139,92,255,0.4)" : "#C4B5FD",
-      backgroundColor: theme.mode === "dark" ? "rgba(139,92,255,0.1)" : "rgba(245,243,255,0.7)",
-      paddingHorizontal: 10,
-      paddingVertical: 7,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
     },
-    codeText: { color: theme.brand, fontSize: 12, fontWeight: "800", fontFamily: "monospace" },
-    copyButton: {
-      flexDirection: "row",
+    emptyIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: 18,
       alignItems: "center",
-      gap: 4,
-      borderRadius: 10,
-      backgroundColor: "#7C3AED",
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      flexShrink: 0,
+      justifyContent: "center",
+      backgroundColor: theme.brandSoft,
     },
-    copyButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
+    emptyTitle: { color: theme.text, fontSize: 15, fontWeight: "900", marginTop: 8, textAlign: "center" },
+    emptyDesc: { color: theme.muted, fontSize: 13, textAlign: "center", lineHeight: 19 },
+    emptyLinkTouch: { marginTop: 6, padding: 6 },
+    emptyLink: { color: theme.brand, fontSize: 13, fontWeight: "800" },
   });

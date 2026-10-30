@@ -21,6 +21,9 @@ export default function ExploreNavigator({
   onBookingCreated,
   quickBook,  onConsumedQuickBook,
   onGoDeals,
+  pendingVehicleId,
+  onConsumedVehicle,
+  onOpenUserProfile,
 }: {
   user: AuthUser;
   onAvatarPress: () => void;
@@ -29,6 +32,9 @@ export default function ExploreNavigator({
   quickBook?: QuickBookParams | null;
   onConsumedQuickBook?: () => void;
   onGoDeals?: () => void;
+  pendingVehicleId?: number | null;
+  onConsumedVehicle?: () => void;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
   // Giữ navigation của stack để điều hướng đặt xe nhanh từ chatbot
@@ -54,6 +60,12 @@ export default function ExploreNavigator({
     }
     onConsumedQuickBook?.();
   }, [quickBook, onConsumedQuickBook]);
+
+  useEffect(() => {
+    if (!pendingVehicleId || !exploreNavRef.current) return;
+    exploreNavRef.current.navigate("VehicleDetail", { vehicleId: pendingVehicleId });
+    onConsumedVehicle?.();
+  }, [pendingVehicleId, onConsumedVehicle]);
 
   return (
     <Stack.Navigator
@@ -83,7 +95,13 @@ export default function ExploreNavigator({
       </Stack.Screen>
       <Stack.Screen name="VehicleList" component={VehicleListScreen} />
       <Stack.Screen name="VehicleDetail">
-        {(props) => <VehicleDetailScreen {...props} onBookPress={(p) => props.navigation.navigate("CreateBooking", p)} />}
+        {(props) => (
+          <VehicleDetailScreen
+            {...props}
+            onBookPress={(p) => props.navigation.navigate("CreateBooking", p)}
+            onOpenUserProfile={onOpenUserProfile}
+          />
+        )}
       </Stack.Screen>
       <Stack.Screen name="CreateBooking">
         {(props) => <CreateBookingScreen {...props} onCreated={(bookingId) => onBookingCreated?.(bookingId)} />}

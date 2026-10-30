@@ -12,9 +12,9 @@ export function validateSearchFilters(filters: SearchFilters): string | null {
   return filters.fromDate && filters.toDate && filters.fromDate > filters.toDate ? "Ngày bắt đầu không được sau ngày kết thúc." : null;
 }
 
-export default function BookingSearchFilters({ onApply }: { onApply: (filters: SearchFilters) => void }) {
+export default function BookingSearchFilters({ onApply, initial = EMPTY_SEARCH }: { onApply: (filters: SearchFilters) => void; initial?: SearchFilters }) {
   const { theme } = useTheme();
-  const [draft, setDraft] = useState(EMPTY_SEARCH), [error, setError] = useState("");
+  const [draft, setDraft] = useState(initial), [error, setError] = useState("");
   return <View style={{ paddingHorizontal: 16, gap: 4 }}>
     <BookingField label="Tìm đơn thuê" value={draft.keyword} onChangeText={keyword => setDraft({ ...draft, keyword })} placeholder="Mã đơn, tên xe…" />
     <View style={{ flexDirection: "row", gap: 8 }}>

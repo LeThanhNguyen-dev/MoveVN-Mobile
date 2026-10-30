@@ -7,57 +7,6 @@ export type WebStampedPhoto = {
   capturedAt: string;
 };
 
-export type WebPickedPhoto = {
-  file: Blob;
-  name: string;
-  previewUrl: string;
-  capturedAt: string;
-};
-
-/**
- * Chọn ảnh thư viện trên web rồi đóng dấu từng ảnh (dùng chung cho các màn
- * biên bản để web hành xử như app: ảnh nào cũng có watermark + giờ hệ thống).
- */
-export async function pickAndStampPhotosWeb(options: {
-  bookingCode: string;
-  type: InspectionType;
-  maxCount: number;
-}): Promise<{ photos: WebPickedPhoto[]; skipped: number; canceled: boolean }> {
-  // Import động để môi trường test/native không cần nạp expo-image-picker.
-  const ImagePicker = await import("expo-image-picker");
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsMultipleSelection: true,
-    quality: 1,
-    selectionLimit: options.maxCount,
-  });
-  if (result.canceled) return { photos: [], skipped: 0, canceled: true };
-  const kind = options.type === "CheckIn" ? "CHECK-IN" : "CHECK-OUT";
-  const photos: WebPickedPhoto[] = [];
-  let skipped = 0;
-  for (const asset of result.assets.slice(0, options.maxCount)) {
-    try {
-      const source: Blob | null =
-        asset.file ?? (await fetch(asset.uri).then((res) => res.blob()).catch(() => null));
-      if (!source) {
-        skipped += 1;
-        continue;
-      }
-      const stamped = await stampWebPhoto(source, [`MoveVN | ${options.bookingCode} | ${kind}`]);
-      const name = `${(asset.fileName ?? "photo.jpg").replace(/\.[^.]+$/, "")}-stamped.jpg`;
-      photos.push({
-        file: new File([stamped.blob], name, { type: "image/jpeg" }),
-        name,
-        previewUrl: stamped.previewUrl,
-        capturedAt: stamped.capturedAt,
-      });
-    } catch {
-      skipped += 1;
-    }
-  }
-  return { photos, skipped, canceled: false };
-}
-
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -73,7 +22,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  */
 export async function stampWebPhoto(source: Blob, lines: string[]): Promise<WebStampedPhoto> {
   const capturedAt = await getServerTimeISO();
-  const timeLine = `THÊM ẢNH: ${formatVietnamDateTime(capturedAt)} (UTC+07:00)`;
+  const timeLine = `CHỤP ẢNH: ${formatVietnamDateTime(capturedAt)} (UTC+07:00)`;
   const url = URL.createObjectURL(source);
   try {
     const img = await loadImage(url);

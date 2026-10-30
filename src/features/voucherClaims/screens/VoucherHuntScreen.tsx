@@ -1,8 +1,7 @@
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Clipboard from "expo-clipboard";
-import { LinearGradient } from "expo-linear-gradient";
-import { Clock, Copy, Sparkles, TicketPercent } from "lucide-react-native";
+import { Sparkles, TicketPercent } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -16,167 +15,137 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { DealsStackParamList } from "@/navigation/types";
 import { showToast } from "@/features/notifications/toastStore";
+import DealsFilterBar from "@/features/vouchers/components/DealsFilterBar";
 import DealsSegmentedNav from "@/features/vouchers/components/DealsSegmentedNav";
-import VoucherTicketStub from "@/features/vouchers/components/VoucherTicketStub";
-import {
-  CTA_GRADIENT,
-  formatVehicleLabel,
-  formatVnd,
-  getDaysLeft,
-  getUsageStats,
-} from "@/features/vouchers/voucherFormat";
+import PromotionDetailSheet, {
+  type PromotionDetailSlide,
+} from "@/features/vouchers/components/PromotionDetailSheet";
+import VoucherTicketCard, {
+  type VoucherCardData,
+} from "@/features/vouchers/components/VoucherTicketCard";
+import { getDaysLeft, isExpiringSoon } from "@/features/vouchers/voucherFormat";
 import { claimVoucher, getVoucherHunt } from "@/features/voucherClaims/services/voucherClaimService";
 import type { VoucherHuntItem } from "@/features/voucherClaims/types";
 
 type DealsNav = NativeStackNavigationProp<DealsStackParamList>;
 type HuntRoute = RouteProp<DealsStackParamList, "VoucherHunt">;
+type HuntFilter = "All" | "Car" | "Motorbike" | "expiring" | "deep";
+type HuntSort = "value" | "ending" | "remaining";
 
-function HuntVoucherCard({
-  item,
-  highlighted,
-  onClaimed,
-  onLayoutY,
-}: {
+const SORT_OPTIONS = [
+  { value: "value", label: "Giảm nhiều nhất" },
+  { value: "ending", label: "Hạn gần nhất" },
+  { value: "remaining", label: "Còn nhiều lượt" },
+];
+
+function toDetailSlide(item: VoucherHuntItem): PromotionDetailSlide {
+  return {
+    id: item.promotionId,
+    promotionId: item.promotionId,
+    title: item.name,
+    caption: item.description,
+    code: item.code,
+    popupTitle: item.name,
+    popupDescription: item.description ?? null,
+    popupCtaLabel: "Nhận voucher ngay",
+    promotionName: item.name,
+    discountType: item.discountType,
+    discountValue: item.discountValue,
+    vehicleType: item.vehicleType,
+    endAt: item.endAt,
+    minOrderAmount: item.minOrderAmount,
+    maxDiscountAmount: item.maxDiscountAmount,
+    usageCount: item.usageCount,
+    maxUsageCount: item.maxUsageCount,
+  };
+}
+
+function toCardData(item: VoucherHuntItem): VoucherCardData {
+  return {
+    key: String(item.promotionId),
+    code: item.code,
+    name: item.name,
+    description: item.description,
+    discountType: item.discountType,
+    discountValue: item.discountValue,
+    maxDiscountAmount: item.maxDiscountAmount,
+    minOrderAmount: item.minOrderAmount,
+    vehicleType: item.vehicleType,
+    endAt: item.endAt,
+    usageCount: item.usageCount,
+    maxUsageCount: item.maxUsageCount,
+    status: "active",
+  };
+}
+
+type HuntCardProps = {
   item: VoucherHuntItem;
   highlighted: boolean;
-  onClaimed: (promotionId: number) => void;
+  claiming: boolean;
+  copied: boolean;
+  onClaim: () => void;
+  onCopy: () => void;
+  onOpenDetail: () => void;
   onLayoutY: (promotionId: number, y: number) => void;
-}) {
+};
+
+function HuntCard({
+  item,
+  highlighted,
+  claiming,
+  copied,
+  onClaim,
+  onCopy,
+  onOpenDetail,
+  onLayoutY,
+}: HuntCardProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [claiming, setClaiming] = useState(false);
-
   const daysLeft = getDaysLeft(item.endAt);
-  const { percent, almostGone, remaining } = getUsageStats(item.maxUsageCount, item.usageCount);
-
-  async function handleClaim() {
-    if (claiming) return;
-    setClaiming(true);
-    try {
-      await claimVoucher(item.promotionId);
-      showToast({
-        type: "success",
-        title: "Nhận thành công!",
-        message: `${item.name} đã thêm vào ví voucher.`,
-      });
-      onClaimed(item.promotionId);
-    } catch (err: unknown) {
-      const response = (err as { response?: { data?: { message?: string; errors?: string[] } } })
-        ?.response?.data;
-      showToast({
-        type: "error",
-        title: "Lỗi",
-        message: response?.message || response?.errors?.[0] || "Không thể nhận voucher.",
-      });
-    } finally {
-      setClaiming(false);
-    }
-  }
-
-  function handleCopyCode() {
-    void Clipboard.setStringAsync(item.code);
-  }
 
   return (
     <View onLayout={(e) => onLayoutY(item.promotionId, e.nativeEvent.layout.y)}>
-      <View style={[styles.ticket, highlighted && styles.ticketHighlighted]}>
-        <VoucherTicketStub discountType={item.discountType} discountValue={item.discountValue} />
-        <View style={styles.ticketDivider} />
-
-        <View style={styles.ticketBody}>
-          <View style={styles.nameRow}>
-            <AppText style={styles.ticketName} numberOfLines={1}>
-              {item.name}
-            </AppText>
-            {daysLeft !== null ? (
-              <View
-                style={[
-                  styles.daysBadge,
-                  daysLeft <= 3 ? styles.daysBadgeUrgent : styles.daysBadgeNormal,
-                ]}
-              >
-                <Clock
-                  color={daysLeft <= 3 ? (theme.mode === "dark" ? "#FB7185" : "#B91C1C") : theme.muted}
-                  size={11}
-                />
-                <AppText
-                  style={[
-                    styles.daysBadgeText,
-                    daysLeft <= 3
-                      ? { color: theme.mode === "dark" ? "#FB7185" : "#B91C1C" }
-                      : { color: theme.muted },
-                  ]}
-                >
-                  ⏰ {daysLeft > 0 ? `Còn ${daysLeft} ngày` : "Hôm nay!"}
-                </AppText>
-              </View>
-            ) : null}
-          </View>
-
-          <View style={styles.tagRow}>
-            <View style={styles.tag}>
-              <AppText style={styles.tagText}>{formatVehicleLabel(item.vehicleType)}</AppText>
+      <VoucherTicketCard
+        data={toCardData(item)}
+        highlight={highlighted}
+        showCode
+        copied={copied}
+        onCopyCode={onCopy}
+        onOpenDetail={onOpenDetail}
+        badge={
+          highlighted ? (
+            <View style={styles.highlightBadge}>
+              <Sparkles color={theme.brand} size={11} />
+              <AppText style={styles.highlightBadgeText}>Voucher bạn đang tìm</AppText>
             </View>
-            {!!item.minOrderAmount && (
-              <View style={styles.tag}>
-                <AppText style={[styles.tagText, styles.tagAmber]}>Đơn từ {formatVnd(item.minOrderAmount)}</AppText>
-              </View>
-            )}
-            <Pressable
-              onPress={handleCopyCode}
-              style={styles.codeTag}
-              accessibilityRole="button"
-              accessibilityLabel={`Sao chép mã ${item.code}`}
+          ) : daysLeft !== null && daysLeft <= 3 ? (
+            <View
+              style={[
+                styles.urgentBadge,
+                {
+                  backgroundColor: theme.mode === "dark" ? "rgba(244,63,94,0.15)" : "#FEE2E2",
+                  borderColor: theme.mode === "dark" ? "rgba(244,63,94,0.35)" : "#FECACA",
+                },
+              ]}
             >
-              <Copy color={theme.brand} size={11} />
-              <AppText style={styles.codeTagText}>🎟️ {item.code}</AppText>
-            </Pressable>
-          </View>
-
-          <View style={styles.progressRow}>
-            <View style={styles.progressTrack}>
-              <LinearGradient
-                colors={almostGone ? (["#FB923C", "#EF4444"] as const) : [CTA_GRADIENT[1], CTA_GRADIENT[2]]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.progressFill, { width: `${percent}%` }]}
-              />
+              <AppText style={[styles.urgentBadgeText, { color: theme.mode === "dark" ? "#FB7185" : "#B91C1C" }]}>
+                Hết hạn sau {daysLeft} ngày
+              </AppText>
             </View>
-            <AppText style={[styles.remainingText, almostGone && styles.remainingUrgent]}>
-              Còn {remaining} lượt
-            </AppText>
-          </View>
-
-          <Pressable
-            onPress={handleClaim}
-            disabled={claiming}
-            style={[styles.claimTouch, claiming && styles.claimDisabled]}
-            accessibilityRole="button"
-            accessibilityLabel="Nhận voucher"
-          >
-            <LinearGradient
-              colors={[CTA_GRADIENT[0], CTA_GRADIENT[1], CTA_GRADIENT[2]]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.claimBg}
-            >
-              {claiming ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <>
-                  <AppText style={styles.claimText}>✨ Nhận voucher</AppText>
-                  <Sparkles color="#FFFFFF" size={14} />
-                </>
-              )}
-            </LinearGradient>
-          </Pressable>
-        </View>
-      </View>
+          ) : null
+        }
+        action={{
+          label: "Nhận voucher",
+          icon: claiming ? null : <Sparkles color="#FFFFFF" size={14} />,
+          pending: claiming,
+          onClick: onClaim,
+        }}
+      />
     </View>
   );
 }
 
-const MemoHuntCard = memo(HuntVoucherCard);
+const MemoHuntCard = memo(HuntCard);
 
 export default function VoucherHuntScreen() {
   const navigation = useNavigation<DealsNav>();
@@ -187,6 +156,12 @@ export default function VoucherHuntScreen() {
   const [vouchers, setVouchers] = useState<VoucherHuntItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [highlightId, setHighlightId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<HuntFilter>("All");
+  const [sort, setSort] = useState<HuntSort>("value");
+  const [search, setSearch] = useState("");
+  const [claimingId, setClaimingId] = useState<number | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [selected, setSelected] = useState<PromotionDetailSlide | null>(null);
 
   const scrollRef = useRef<ScrollView>(null);
   const yMap = useRef(new Map<number, number>());
@@ -223,6 +198,65 @@ export default function VoucherHuntScreen() {
     };
   }, [loading, vouchers, deepPromotionId]);
 
+  const carCount = useMemo(
+    () => vouchers.filter((v) => v.vehicleType === "Car" || v.vehicleType === "All").length,
+    [vouchers],
+  );
+  const motorbikeCount = useMemo(
+    () => vouchers.filter((v) => v.vehicleType === "Motorbike" || v.vehicleType === "All").length,
+    [vouchers],
+  );
+  const expiringCount = useMemo(
+    () => vouchers.filter((v) => isExpiringSoon(v.endAt)).length,
+    [vouchers],
+  );
+  const deepCount = useMemo(
+    () => vouchers.filter((v) => v.discountType === "Percentage" && v.discountValue > 30).length,
+    [vouchers],
+  );
+
+  const filters = useMemo(
+    () => [
+      { value: "All", label: "Tất cả", count: vouchers.length },
+      { value: "Car", label: "Ô tô", count: carCount },
+      { value: "Motorbike", label: "Xe máy", count: motorbikeCount },
+      { value: "expiring", label: "Sắp hết hạn", count: expiringCount, tone: "amber" as const },
+      { value: "deep", label: "Giảm sâu >30%", count: deepCount },
+    ],
+    [vouchers.length, carCount, motorbikeCount, expiringCount, deepCount],
+  );
+
+  const displayed = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const result = vouchers.filter((voucher) => {
+      if (filter === "Car" && voucher.vehicleType === "Motorbike") return false;
+      if (filter === "Motorbike" && voucher.vehicleType === "Car") return false;
+      if (filter === "expiring" && !isExpiringSoon(voucher.endAt)) return false;
+      if (filter === "deep" && !(voucher.discountType === "Percentage" && voucher.discountValue > 30))
+        return false;
+      if (!query) return true;
+      return (
+        voucher.name.toLowerCase().includes(query) ||
+        voucher.code.toLowerCase().includes(query) ||
+        (voucher.description ?? "").toLowerCase().includes(query)
+      );
+    });
+
+    return result.sort((first, second) => {
+      if (sort === "ending") {
+        const firstEnd = first.endAt ? new Date(first.endAt).getTime() : Number.MAX_SAFE_INTEGER;
+        const secondEnd = second.endAt ? new Date(second.endAt).getTime() : Number.MAX_SAFE_INTEGER;
+        return firstEnd - secondEnd;
+      }
+      if (sort === "remaining") {
+        return (
+          second.maxUsageCount - second.usageCount - (first.maxUsageCount - first.usageCount)
+        );
+      }
+      return second.discountValue - first.discountValue;
+    });
+  }, [vouchers, filter, sort, search]);
+
   const handleClaimed = useCallback((promotionId: number) => {
     setVouchers((prev) => prev.filter((v) => v.promotionId !== promotionId));
   }, []);
@@ -230,6 +264,48 @@ export default function VoucherHuntScreen() {
   const handleLayoutY = useCallback((promotionId: number, y: number) => {
     yMap.current.set(promotionId, y);
   }, []);
+
+  async function handleClaim(item: VoucherHuntItem) {
+    setClaimingId(item.promotionId);
+    try {
+      await claimVoucher(item.promotionId);
+      showToast({
+        type: "success",
+        title: "Nhận thành công!",
+        message: `${item.name} đã thêm vào ví voucher.`,
+      });
+      handleClaimed(item.promotionId);
+    } catch (err: unknown) {
+      const response = (err as { response?: { data?: { message?: string; errors?: string[] } } })
+        ?.response?.data;
+      showToast({
+        type: "error",
+        title: "Lỗi",
+        message: response?.message || response?.errors?.[0] || "Không thể nhận voucher.",
+      });
+    } finally {
+      setClaimingId(null);
+    }
+  }
+
+  async function handleCopy(item: VoucherHuntItem) {
+    try {
+      await Clipboard.setStringAsync(item.code);
+      setCopiedId(item.promotionId);
+      showToast({ type: "success", title: "Đã sao chép mã", message: item.code });
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      showToast({ type: "error", title: "Lỗi", message: "Không sao chép được mã voucher." });
+    }
+  }
+
+  const handleSheetCta = useCallback(
+    (promotionId: number) => {
+      setSelected(null);
+      navigation.navigate("VoucherHunt", { promotionId });
+    },
+    [navigation],
+  );
 
   const deepMissed =
     !loading && deepPromotionId !== null && !vouchers.some((v) => v.promotionId === deepPromotionId);
@@ -242,8 +318,9 @@ export default function VoucherHuntScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <AppText display style={styles.pageTitle}>Săn voucher</AppText>
-        <AppText style={styles.pageDesc}>Nhận voucher và lưu vào ví để dùng khi đặt xe.</AppText>
+        <AppText display style={styles.pageTitle}>
+          Săn voucher
+        </AppText>
 
         <DealsSegmentedNav />
 
@@ -258,34 +335,95 @@ export default function VoucherHuntScreen() {
           </View>
         ) : null}
 
+        <DealsFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Tìm tên ưu đãi, mã voucher..."
+          filters={filters}
+          activeFilter={filter}
+          onFilterChange={(value) => setFilter(value as HuntFilter)}
+          sortValue={sort}
+          sortOptions={SORT_OPTIONS}
+          onSortChange={(value) => setSort(value as HuntSort)}
+        />
+
         {loading ? (
           <View style={styles.centerBox}>
             <ActivityIndicator color={theme.brand} size="large" />
           </View>
         ) : vouchers.length === 0 && deepPromotionId === null ? (
           <View style={styles.emptyBox}>
-            <TicketPercent color={theme.faint} size={44} />
-            <AppText display style={styles.emptyTitle}>Tất cả voucher đã được nhận hết.</AppText>
-            <AppText style={styles.emptyDesc}>Quay lại sau nhé!</AppText>
+            <View style={styles.emptyIcon}>
+              <TicketPercent color={theme.brand} size={26} />
+            </View>
+            <AppText display style={styles.emptyTitle}>
+              Tất cả voucher đã được nhận hết
+            </AppText>
+            <AppText style={styles.emptyDesc}>
+              Quay lại sau nhé, các đợt săn mã mới sẽ xuất hiện ở đây.
+            </AppText>
+            <Pressable
+              onPress={() => navigation.navigate("Promotions")}
+              style={styles.emptyLinkTouch}
+            >
+              <AppText style={styles.emptyLink}>Xem trung tâm ưu đãi →</AppText>
+            </Pressable>
           </View>
         ) : vouchers.length === 0 ? (
           <View style={styles.emptyBox}>
             <AppText style={styles.emptyDesc}>Hiện không có voucher nào khác để nhận.</AppText>
           </View>
         ) : (
-          <View style={styles.cardList}>
-            {vouchers.map((v) => (
-              <MemoHuntCard
-                key={v.promotionId}
-                item={v}
-                highlighted={v.promotionId === highlightId}
-                onClaimed={handleClaimed}
-                onLayoutY={handleLayoutY}
-              />
-            ))}
-          </View>
+          <>
+            <View style={styles.sectionHead}>
+              <View style={styles.sectionTitleRow}>
+                <AppText display style={styles.sectionTitle}>
+                  Voucher khả dụng
+                </AppText>
+                <View style={styles.countBadge}>
+                  <AppText style={styles.countBadgeText}>{displayed.length}</AppText>
+                </View>
+              </View>
+              <AppText style={styles.sectionDesc}>
+                Nhận voucher để lưu vào ví và dùng khi đặt xe.
+              </AppText>
+            </View>
+
+            {displayed.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <AppText display style={styles.emptyTitle}>
+                  Không có voucher phù hợp
+                </AppText>
+                <AppText style={styles.emptyDesc}>
+                  Thử đổi bộ lọc hoặc từ khoá tìm kiếm.
+                </AppText>
+              </View>
+            ) : (
+              <View style={styles.cardList}>
+                {displayed.map((v) => (
+                  <MemoHuntCard
+                    key={v.promotionId}
+                    item={v}
+                    highlighted={v.promotionId === highlightId}
+                    claiming={claimingId === v.promotionId}
+                    copied={copiedId === v.promotionId}
+                    onClaim={() => void handleClaim(v)}
+                    onCopy={() => void handleCopy(v)}
+                    onOpenDetail={() => setSelected(toDetailSlide(v))}
+                    onLayoutY={handleLayoutY}
+                  />
+                ))}
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
+
+      <PromotionDetailSheet
+        slide={selected}
+        onClose={() => setSelected(null)}
+        onCta={handleSheetCta}
+      />
     </View>
   );
 }
@@ -294,10 +432,8 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: theme.background },
     scroll: { flex: 1 },
-    scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 96, gap: 12 },
-    pageTitle: { color: theme.text, fontSize: 22, fontWeight: "800" },
-    pageDesc: { color: theme.muted, fontSize: 13, marginTop: -8 },
-
+    scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 96, gap: 14 },
+    pageTitle: { color: theme.text, fontSize: 21, fontWeight: "900", letterSpacing: -0.4 },
     warnBox: {
       borderRadius: 16,
       borderWidth: 1,
@@ -313,97 +449,59 @@ const createStyles = (theme: Theme) =>
     },
     warnButton: { alignSelf: "flex-start", paddingVertical: 4 },
     warnButtonText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
-
-    centerBox: { paddingVertical: 64, alignItems: "center" },
-    emptyBox: { alignItems: "center", paddingVertical: 40, gap: 6 },
-    emptyTitle: { color: theme.text, fontSize: 15, fontWeight: "800", marginTop: 8, textAlign: "center" },
-    emptyDesc: { color: theme.muted, fontSize: 13, textAlign: "center" },
-
-    cardList: { gap: 14 },
-    ticket: {
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: theme.mode === "dark" ? theme.border : "#E2E8F0",
-      backgroundColor: theme.surface,
-      overflow: "hidden",
-      flexDirection: "row",
+    sectionHead: { gap: 4 },
+    sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    sectionTitle: { color: theme.text, fontSize: 17, fontWeight: "900", flexShrink: 1 },
+    countBadge: {
+      borderRadius: 999,
+      backgroundColor: theme.brandSoft,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
     },
-    ticketHighlighted: {
-      borderColor: theme.brand,
-      borderWidth: 2,
-      backgroundColor: theme.mode === "dark" ? "rgba(139,92,255,0.12)" : "rgba(124,58,237,0.06)",
-    },
-    ticketDivider: {
-      width: 0,
-      borderLeftWidth: 2,
-      borderStyle: "dashed",
-      borderColor: theme.mode === "dark" ? "#3F3F46" : "#DDD6FE",
-      marginVertical: 10,
-    },
-    ticketBody: { flex: 1, minWidth: 0, padding: 14, gap: 8 },
-    nameRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
-    ticketName: { flex: 1, color: theme.text, fontSize: 14, fontWeight: "800", lineHeight: 19 },
-    daysBadge: {
+    countBadgeText: { color: theme.brand, fontSize: 11, fontWeight: "900" },
+    sectionDesc: { color: theme.muted, fontSize: 12 },
+    highlightBadge: {
       flexDirection: "row",
       alignItems: "center",
       gap: 4,
       borderRadius: 999,
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      flexShrink: 0,
-    },
-    daysBadgeNormal: {
-      backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F1F5F9",
-    },
-    daysBadgeUrgent: {
-      backgroundColor: theme.mode === "dark" ? "rgba(244,63,94,0.15)" : "#FEE2E2",
-    },
-    daysBadgeText: { fontSize: 11, fontWeight: "700" },
-
-    tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginVertical: 2 },
-    tag: {
-      borderRadius: 8,
-      backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F1F5F9",
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-    },
-    tagText: { color: theme.muted, fontSize: 11, fontWeight: "600" },
-    tagAmber: { color: theme.mode === "dark" ? "#FBBF24" : "#B45309" },
-    codeTag: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      borderRadius: 8,
       borderWidth: 1,
-      borderColor: theme.mode === "dark" ? "rgba(139,92,255,0.35)" : "#DDD6FE",
-      backgroundColor: theme.mode === "dark" ? "rgba(139,92,255,0.12)" : "#F5F3FF",
+      borderColor: theme.brandBorder,
+      backgroundColor: theme.brandSoft,
       paddingHorizontal: 8,
-      paddingVertical: 4,
+      paddingVertical: 3,
     },
-    codeTagText: { color: theme.brand, fontSize: 11, fontWeight: "800", fontFamily: "monospace" },
-
-    progressRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-    progressTrack: {
-      flex: 1,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F3F4F6",
-      overflow: "hidden",
+    highlightBadgeText: { color: theme.brand, fontSize: 10, fontWeight: "800" },
+    urgentBadge: {
+      borderRadius: 999,
+      borderWidth: 1,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
     },
-    progressFill: { height: "100%", borderRadius: 4 },
-    remainingText: { color: theme.muted, fontSize: 11, fontWeight: "500", flexShrink: 0 },
-    remainingUrgent: { color: theme.mode === "dark" ? "#FB7185" : "#DC2626", fontWeight: "700" },
-
-    claimTouch: { borderRadius: 12, marginTop: 4 },
-    claimDisabled: { opacity: 0.7 },
-    claimBg: {
-      flexDirection: "row",
+    urgentBadgeText: { fontSize: 10, fontWeight: "800" },
+    cardList: { gap: 14 },
+    centerBox: { paddingVertical: 64, alignItems: "center" },
+    emptyBox: {
+      alignItems: "center",
+      paddingVertical: 40,
+      paddingHorizontal: 16,
+      gap: 6,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+    },
+    emptyIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: 18,
       alignItems: "center",
       justifyContent: "center",
-      gap: 6,
-      width: "100%",
-      paddingVertical: 10,
-      borderRadius: 12,
+      backgroundColor: theme.brandSoft,
     },
-    claimText: { color: "#FFFFFF", fontSize: 13, fontWeight: "700" },
+    emptyTitle: { color: theme.text, fontSize: 15, fontWeight: "900", marginTop: 8, textAlign: "center" },
+    emptyDesc: { color: theme.muted, fontSize: 13, textAlign: "center", lineHeight: 19 },
+    emptyLinkTouch: { marginTop: 6, padding: 6 },
+    emptyLink: { color: theme.brand, fontSize: 13, fontWeight: "800" },
   });

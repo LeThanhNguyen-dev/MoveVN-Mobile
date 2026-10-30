@@ -27,7 +27,7 @@ describe("selected checkout fees", () => {
   });
   it("includes selected fees with mileage and late fees in the confirmation total", () => {
     const report = { type: "CheckOut", lateReturnFee: 20000, excessMileageFee: 50000, additionalSurcharges: [{ amount: 100000 }] } as InspectionReportResponse;
-    expect(inspectionBalance(booking, report)).toMatchObject({ pending: 170000, totalRemaining: 570000 });
-    expect(inspectionBalance(booking, { ...report, isCustomerConfirmed: true, pendingSurchargeAmount: 0, outstandingSurchargeAmount: 170000 })).toMatchObject({ pending: 0, totalRemaining: 570000 });
+    expect(inspectionBalance(booking, report)).toMatchObject({ pending: 170000, rentalRemaining: 400000, surchargeRemaining: 170000 });
+    expect(inspectionBalance(booking, { ...report, isCustomerConfirmed: true, pendingSurchargeAmount: 0, outstandingSurchargeAmount: 170000 })).toMatchObject({ pending: 0, rentalRemaining: 400000, surchargeRemaining: 170000 });
   });
 });

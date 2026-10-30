@@ -16,6 +16,11 @@ import { useChatConnection } from "@/features/chat/useChatConnection";
 import { useFavoriteSession } from "@/features/favorites/useFavoriteSession";
 import ToastHost from "@/features/notifications/components/ToastHost";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
+import { usePushNotifications } from "@/features/notifications/usePushNotifications";
+import { usePushNavigation } from "@/features/notifications/pushNavigation";
+import SupportTicketCenter from "@/features/supportTickets/SupportTicketCenter";
+import AvailabilityAlertCenter from "@/features/availabilityAlerts/AvailabilityAlertCenter";
+import ViolationCenter from "@/features/violations/ViolationCenter";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { initializeTheme } from "@/theme/useThemeStore";
@@ -32,12 +37,19 @@ function getActiveLandingRole(roles: UserRole[], activeRole: UserRole | null): U
 export default function RootNavigator() {
   usePresenceConnection();
   useNotificationConnection();
+  usePushNotifications();
   useChatConnection();
   useFavoriteSession();
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const activeRole = useAuthStore((state) => state.activeRole);
   const hydrated = useAuthStore((state) => state.isHydrated);
+  const pendingPush = usePushNavigation(state => state.pending);
+  useEffect(() => {
+    if (pendingPush && user?.userId === pendingPush.userId && user.roles.includes(pendingPush.roleTarget) && activeRole !== pendingPush.roleTarget) {
+      void useAuthStore.getState().setActiveRole(pendingPush.roleTarget);
+    }
+  }, [pendingPush, user, activeRole]);
   const [startupError, setStartupError] = useState("");
   const { mode, theme } = useTheme();
 
@@ -77,6 +89,9 @@ export default function RootNavigator() {
         : role === "Owner" ? <OwnerNavigator key={`owner-${user.userId}`} user={user} />
           : <RoleNotSupportedScreen role={role ?? "Staff"} />}
     {token && user ? <NotificationCenter key={user.userId} userId={user.userId} /> : null}
+    {token && user ? <SupportTicketCenter key={`support-${user.userId}`} userId={user.userId} /> : null}
+    {token && user ? <AvailabilityAlertCenter key={`availability-${user.userId}`} userId={user.userId} /> : null}
+    {token && user ? <ViolationCenter key={`violations-${user.userId}`} userId={user.userId} /> : null}
     <ToastHost />
   </NavigationContainer>;
 }

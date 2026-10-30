@@ -1,0 +1,23 @@
+diff --git a/node_modules/expo-notifications/build/TopicSubscriptionModule.android.js b/node_modules/expo-notifications/build/TopicSubscriptionModule.android.js
+index 4ad9aff..3f0244c 100644
+--- a/node_modules/expo-notifications/build/TopicSubscriptionModule.android.js
++++ b/node_modules/expo-notifications/build/TopicSubscriptionModule.android.js
+@@ -1,4 +1,14 @@
+-import { requireNativeModule } from 'expo';
+-export default requireNativeModule('ExpoTopicSubscriptionModule');
+-
+-//# sourceMappingURL=TopicSubscriptionModule.android.js.map
++// Patched for Expo Go (SDK 58): the ExpoTopicSubscriptionModule native module is not
++// present in every Expo Go binary, and this file is evaluated on import, which crashed
++// the whole app. Use the same JS stub as the generic build; topic APIs are unused here.
++const module = {
++    addListener: ()=>{},
++    removeListeners: ()=>{},
++    subscribeToTopicAsync: ()=>{
++        return Promise.resolve(null);
++    },
++    unsubscribeFromTopicAsync: ()=>{
++        return Promise.resolve(null);
++    }
++};
++export default module;

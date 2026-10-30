@@ -1,3 +1,6 @@
+import ReportBookingViolation from "../components/ReportBookingViolation";
+import { bookingActions } from "../bookingActions";
+import InspectionSummaryLink from "../components/InspectionSummaryLink";
 import { goBackOrFallback } from "@/navigation/goBackOrFallback";
 import { checkoutStartDate } from "../bookingDisplay";
 import { getPendingTopUp, type BookingTopUpPendingResponse } from "@/features/payments/services/paymentService";
@@ -21,7 +24,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ArrowLeft, MessageSquare } from "lucide-react-native";
+import { CalendarDays, Camera, CircleCheck, ClipboardCheck, Clock3, KeyRound, MapPin, MessageSquare, PackageCheck, ReceiptText, RotateCcw, Star, TriangleAlert, Wallet, XCircle } from "lucide-react-native";
+import { detailFont as font, useDetailTheme } from "@/features/vehicles/components/detail/detailTheme";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OwnerBookingsStackParamList } from "@/navigation/OwnerBookingsNavigator";
@@ -39,7 +43,7 @@ import {
   getInspectionReports,
 } from "@/features/booking/bookingService";
 import type { BookingResponse, InspectionReportResponse } from "@/features/booking/types";
-import { bookingStatusLabel, escrowHoldInfo, formatDateTime, formatMoney, rentalProgress } from "@/features/booking/utils/format";
+import { escrowHoldInfo, formatDateTime, formatMoney, rentalProgress } from "@/features/booking/utils/format";
 import RiskScoreBadge from "@/features/booking/components/RiskScoreBadge";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
@@ -49,27 +53,32 @@ import { createOwnerReview, getBookingReviews, hasReviewed, type ReviewResponse 
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { useFocusEffect } from "@react-navigation/native";
-import { BookingButton } from "../components/BookingControls";
 import { OutstandingSurcharge } from "../components/CheckoutSummary";
-import { canOwnerCancel, parseServerDate } from "../bookingDisplay";
+import { DetailButton, DetailCard, DetailHeader, DetailNotice, DetailPill, DetailRow, DetailSectionHeader } from "../components/detail/BookingDetailUI";
+import BookingSummaryCard from "../components/detail/BookingSummaryCard";
+import { parseServerDate } from "../bookingDisplay";
 import { getPendingAutoCancelHours } from "@/features/systemConfig/configService";
 import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
 
-type DetailRoute = RouteProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
-type DetailNav = NativeStackNavigationProp<OwnerBookingsStackParamList, "OwnerBookingDetail">;
+type DetailRoute = RouteProp<OwnerBookingsStackParamList, "OwnerBookingDetail" | "OwnerBookingHandover">;
+type DetailNav = NativeStackNavigationProp<OwnerBookingsStackParamList>;
 
 export default function OwnerBookingDetailScreen({
   route,
   navigation,
   onOpenDisputes,
+  onOpenUserProfile,
 }: {
   route: DetailRoute;
   navigation: DetailNav;
   onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
+  onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
+  const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId } = route.params;
+  const handover = "inspectionType" in route.params ? route.params.inspectionType : null;
   const handleBack = () => goBackOrFallback(navigation, () => navigation.replace("OwnerBookingList"));
   const userId = useAuthStore((s) => s.user?.userId ?? 0);
 
@@ -85,6 +94,7 @@ export default function OwnerBookingDetailScreen({
   const [alreadyReviewed, setAlreadyReviewed] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   const [reasonModal, setReasonModal] = useState<null | { mode: "reject" | "cancel" }>(null);
   const [reason, setReason] = useState("");
@@ -185,13 +195,11 @@ export default function OwnerBookingDetailScreen({
   if (loading || !booking) {
     return (
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <Pressable onPress={handleBack} style={styles.backButton}>
-            <ArrowLeft color={theme.text} size={20} />
-          </Pressable>
-          <Text style={styles.headerTitle}>Chi tiết đơn thuê</Text>
-          <View style={styles.backButton} />
-        </View>
+        <DetailHeader
+          kicker={handover ? "Đơn cho thuê" : undefined}
+          title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Đơn cho thuê"}
+          onBack={handleBack}
+        />
         <View style={styles.center}>
           {loading ? <ActivityIndicator color={theme.brand} /> : <Text style={styles.muted}>Không tải được.</Text>}
         </View>
@@ -200,6 +208,7 @@ export default function OwnerBookingDetailScreen({
   }
 
   const status = booking.status;
+  const actions = bookingActions(booking, reports, "Owner", now);
   const pickupReached = parseServerDate(checkoutStartDate(booking)).getTime() <= now;
   const checkInReport = reports.find((r) => r.type === "CheckIn");
   const checkOutReport = reports.find((r) => r.type === "CheckOut");
@@ -207,220 +216,343 @@ export default function OwnerBookingDetailScreen({
   const progress = status === "InProgress" || status === "Returning"
     ? rentalProgress(booking.startDate, booking.endDate)
     : null;
+  const progressPercent = progress ? Math.min(100, Math.max(0, Math.round((progress.elapsedDays / progress.totalDays) * 100))) : 0;
+  const remainingAmount = Math.max(0, booking.totalAmount - booking.depositAmount);
+  const activeHandoverReport = handover === "CheckIn" ? checkInReport : checkOutReport;
 
-  return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <Pressable onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft color={theme.text} size={20} />
-        </Pressable>
-        <Text numberOfLines={1} style={styles.headerTitle}>
-          {booking.bookingCode}
-        </Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với khách thuê" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.backButton}><MessageSquare color={theme.brand} size={22} /></Pressable>
-      </View>
-      <ScrollView contentContainerStyle={styles.body}>
-        <View style={styles.vehicleCard}>
-          {vehiclePhoto ? <Image source={{ uri: vehiclePhoto }} style={styles.vehiclePhoto} resizeMode="cover" /> : <View style={styles.vehiclePhotoPlaceholder}><Text style={styles.vehiclePhotoPlaceholderText}>Xe MoveVN</Text></View>}
-          <View style={styles.vehicleInfo}>
-            <Text style={styles.vehicleName}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text>
-            <Text style={styles.muted}>Khách thuê: {booking.customerName || `#${booking.customerId}`}</Text>
-            <Text style={styles.muted}>Ngày yêu cầu: {formatDateTime(booking.createdAt)}</Text>
-          </View>
-        </View>
-        <BookingButton secondary title="Tải lại đơn thuê" disabled={busy !== null} onPress={() => void load()} />
-        {!dataReady ? <Text accessibilityRole="alert" style={styles.muted}>Không tải được dữ liệu mới. Quay lại màn hoặc tải lại trước khi thao tác.</Text> : null}
-        <View style={styles.statusRow}>
-          <Text style={styles.status}>{bookingStatusLabel(status)}</Text>
-          {booking.escrowStatus === "Held" && <Text style={styles.escrow}>Giữ cọc {formatMoney(booking.escrowAmount)}</Text>}
-        </View>
-        <ReturnProgress booking={booking} report={checkOutReport} role="Owner" />
-        <OutstandingSurcharge booking={booking} report={checkOutReport} role="Owner" onUpdated={load} />
-        {progress && (
-          <View style={[styles.progressStrip, progress.overdue && styles.progressOverdue]}>
-            <Text style={styles.progressText}>{progress.summary}</Text>
-          </View>
-        )}
-
-        <View style={styles.statusRow}>
-          <RiskScoreBadge score={booking.riskScore} />
-          {onOpenDisputes ? (
-            <Pressable onPress={() => onOpenDisputes({ bookingId: booking.id })}>
-              <Text style={styles.disputeLink}>Tranh chấp / khiếu nại</Text>
-            </Pressable>
-          ) : null}
-        </View>
-
-        {status === "Pending" && (booking.riskFactors ?? []).length > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Yếu tố rủi ro khách thuê</Text>
-            {(booking.riskFactors ?? []).map((f) => (
-              <Text key={f} style={styles.muted}>
-                • {f}
-              </Text>
-            ))}
-          </View>
-        )}
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Lịch trình & địa điểm</Text>
-          <Row label="Nhận xe" value={formatDateTime(booking.startDate)} />
-          <Text style={styles.address}>{booking.pickupAddress}</Text>
-          {booking.deliveryDistanceKm != null ? (
-            <Text style={styles.muted}>
-              Cách vị trí xe {booking.deliveryDistanceKm} km{booking.deliveryFee > 0 ? ` · Phí giao xe ${formatMoney(booking.deliveryFee)}` : " · Miễn phí giao xe"}
-            </Text>
-          ) : null}
-          <Row label="Trả xe" value={formatDateTime(booking.endDate)} />
-          <Text style={styles.address}>{booking.returnAddress || booking.pickupAddress}</Text>
-          <Row label="Khách thuê" value={booking.customerName || `#${booking.customerId}`} />
-          {booking.customerNote ? <Text style={styles.note}>Ghi chú khách: {booking.customerNote}</Text> : null}
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Chi tiết chi phí</Text>
-          <Row label={`Giá thuê (${booking.totalDays} ngày)`} value={formatMoney(booking.basePrice)} />
-          {booking.discountPercent > 0 ? (
-            <Row label={`Giảm giá (${booking.discountPercent}%)`} value={`-${formatMoney(booking.discountAmount)}`} tone="success" />
-          ) : null}
-          {booking.promotionDiscount > 0 ? (
-            <Row
-              label={`Mã ${booking.promotionCode ?? ""}`}
-              value={`-${formatMoney(booking.promotionDiscount)}`}
-              tone="success"
-            />
-          ) : null}
-          {booking.deliveryFee > 0 ? (
-            <Row
-              label={`Phí giao xe tận nơi${booking.deliveryDistanceKm != null ? ` (${booking.deliveryDistanceKm} km)` : ""}`}
-              value={`+${formatMoney(booking.deliveryFee)}`}
-            />
-          ) : null}
-          <Row label="Phí nền tảng" value={formatMoney(booking.platformFee)} />
-          <Row label="Tổng cộng" value={formatMoney(booking.totalAmount)} strong />
-          <Row label="Tiền cọc giữ" value={formatMoney(booking.depositAmount)} />
-        </View>
-        <BookingPricingDetails booking={booking} />
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Lịch thanh toán</Text>
-          <Row
-            label={(["DepositPaid", "Confirmed", "InProgress", "Completed"].includes(status)) ? "Đã chuyển tiền cọc" : "Cần chuyển tiền cọc"}
-            value={formatMoney(booking.depositAmount)}
-          />
-          {booking.totalAmount > booking.depositAmount ? (
-            <Row label="Khách trả khi nhận xe" value={formatMoney(booking.totalAmount - booking.depositAmount)} />
-          ) : null}
-          {booking.paymentDueAt && status === "Approved" ? <Text style={styles.muted}>Hạn thanh toán cọc: {formatDateTime(booking.paymentDueAt)}</Text> : null}
-          {booking.securityDepositAmount > 0 ? (
-            <Row label="Tiền thế chấp hoàn lại khi trả xe" value={formatMoney(booking.securityDepositAmount)} />
-          ) : null}
-        </View>
-
-        {status === "Pending" && autoCancelHours != null && booking.createdAt ? (
-          <Text style={styles.muted}>
-            Vui lòng phản hồi trước {formatDateTime(new Date(new Date(booking.createdAt).getTime() + autoCancelHours * 3600000).toISOString())}. Quá {autoCancelHours} giờ hệ thống sẽ tự động từ chối.
-          </Text>
-        ) : null}
-
-        {status === "Pending" && (
-          <View style={styles.actionRow}>
-            <Pressable
-              onPress={() => runAction("approve", () => approveBooking(bookingId).then(() => undefined), "Đã duyệt. Hợp đồng tự tạo để 2 bên ký.")}
-              disabled={!dataReady || busy !== null}
-              style={[styles.flexButton, styles.primaryButton, busy !== null && styles.disabled]}
-            >
-              <Text style={styles.primaryText}>{busy === "approve" ? "..." : "Duyệt"}</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => { setReason(""); setReasonModal({ mode: "reject" }); }}
-              disabled={!dataReady || busy !== null}
-              style={[styles.flexButton, styles.dangerButton, busy !== null && styles.disabled]}
-            >
-              <Text style={styles.primaryText}>Từ chối</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {canOwnerCancel(booking, now) && (
-          <ActionButton theme={theme} label="Hủy booking (hoàn 100% cọc)" onPress={() => { setReason(""); setReasonModal({ mode: "cancel" }); }} disabled={!dataReady || busy !== null} danger />
-        )}
-
-        {status === "DepositPaid" && (!checkInReport || checkInReport.requiresRevision) && booking.canCheckInNow === true && (
-          <ActionButton theme={theme} label={checkInReport?.requiresRevision ? "Lập lại và gửi biên bản nhận xe" : "Lập biên bản nhận xe"} onPress={() => setForm("CheckIn")} disabled={!dataReady || busy !== null} />
+  const checkInActions = <>
+        {actions.createCheckIn && (
+          <DetailButton icon={ClipboardCheck} label={checkInReport?.requiresRevision ? "Lập lại và gửi biên bản nhận xe" : "Lập biên bản nhận xe"} onPress={() => setForm("CheckIn")} disabled={!dataReady || busy !== null} />
         )}
         {status === "DepositPaid" && !checkInReport && !pickupReached && booking.canCheckInNow === true ? (
-          <Text style={styles.muted}>Xe trống: có thể nhận sớm tối đa 2 tiếng. Bạn có thể lập biên bản nhận xe ngay. Giờ trả và giá thuê giữ theo booking.</Text>
+          <Text style={styles.hint}>Xe trống: có thể nhận sớm tối đa 2 tiếng. Bạn có thể lập biên bản nhận xe ngay. Giờ trả và giá thuê giữ theo booking.</Text>
         ) : null}
 
-        {(status === "InProgress" || status === "Returning") && !checkOutReport && parseServerDate(checkoutStartDate(booking)).getTime() <= now && (
-          <ActionButton theme={theme} label="Lập biên bản trả xe" onPress={() => setForm("CheckOut")} disabled={!dataReady || busy !== null} />
+        {status === "DepositPaid" && !checkInReport && booking.canCheckInNow !== true ? <Text style={styles.hint}>{booking.checkInUnavailableReason || "Tải lại để kiểm tra khả năng nhận xe."}{booking.checkInOpensAt ? ` Mở nhận sớm từ ${formatDateTime(booking.checkInOpensAt)}.` : ""}</Text> : null}
+  </>;
+  const checkOutActions = <>
+    <ReturnProgress booking={booking} report={checkOutReport} role="Owner" />
+    <OutstandingSurcharge booking={booking} report={checkOutReport} role="Owner" onUpdated={load} />
+        {actions.createCheckOut && (
+          <DetailButton icon={PackageCheck} label="Lập biên bản trả xe" onPress={() => setForm("CheckOut")} disabled={!dataReady || busy !== null} />
         )}
 
         {checkOutReport ? <CheckoutEditor booking={booking} report={checkOutReport} initialKm={checkInReport?.odometerKm} onSaved={load} /> : null}
 
-        {status === "Returned" && (
-          <ActionButton theme={theme} label="Xác nhận đã nhận xe" onPress={() => runAction("receipt", () => confirmReceipt(bookingId, {}).then(() => undefined), "Đã xác nhận nhận xe.")} disabled={!dataReady || busy !== null} />
+        {actions.confirmReceipt && (
+          <DetailButton icon={CircleCheck} label="Xác nhận đã nhận xe" onPress={() => runAction("receipt", () => confirmReceipt(bookingId, {}).then(() => undefined), "Đã xác nhận nhận xe.")} disabled={!dataReady || busy !== null} />
         )}
 
-        {status === "Completed" && booking.escrowStatus === "Held" && (
-          hold.withinHoldWindow ? (
-            <Text style={styles.muted}>Tiền cọc đang giữ để đối soát. Còn khoảng {hold.remainingHours} giờ nữa mới được giải ngân.</Text>
-          ) : (
-            <ActionButton theme={theme} label="Giải ngân tiền cọc" onPress={() => runAction("settle", () => requestSettlement(bookingId).then(() => undefined), "Đã giải ngân escrow.")} disabled={!dataReady || busy !== null} />
-          )
-        )}
 
-        {status === "DepositPaid" && !checkInReport && booking.canCheckInNow !== true ? <Text style={styles.muted}>{booking.checkInUnavailableReason || "Tải lại để kiểm tra khả năng nhận xe."}{booking.checkInOpensAt ? ` Mở nhận sớm từ ${formatDateTime(booking.checkInOpensAt)}.` : ""}</Text> : null}
-        {reports.map(report => <InspectionReportCard key={report.id} booking={booking} report={report} />)}
+  </>;
 
-        {pendingTopUp && pendingTopUp.amount > 0 ? <View style={styles.card}><Text style={styles.cardTitle}>Chờ cọc bổ sung để gia hạn</Text><Text style={styles.muted}>Khách cần thanh toán {formatMoney(pendingTopUp.amount)}{pendingTopUp.dueAt ? ` trước ${formatDateTime(pendingTopUp.dueAt)}` : ""}. Nếu quá hạn, yêu cầu gia hạn bị hủy và hợp đồng cũ tiếp tục hiệu lực.</Text></View> : null}
-        <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage onChanged={() => load()} />
+  return (
+    <View style={styles.screen}>
+      <DetailHeader
+        kicker={handover ? "Đơn cho thuê" : undefined}
+        title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Đơn cho thuê"}
+        onBack={handleBack}
+        right={
+          <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với khách thuê" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.headerChat}>
+            <MessageSquare color={theme.brand} size={18} strokeWidth={2.1} />
+          </Pressable>
+        }
+      />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {handover ? (
+          <View style={styles.body}>
+            <DetailCard>
+              <View style={styles.handoverHead}>
+                <View style={[styles.handoverIcon, { backgroundColor: handover === "CheckIn" ? p.brandSoft : p.mintSoft }]}>
+                  {handover === "CheckIn"
+                    ? <KeyRound color={p.brand} size={20} strokeWidth={2.1} />
+                    : <PackageCheck color={p.mint} size={20} strokeWidth={2.1} />}
+                </View>
+                <View style={styles.handoverBody}>
+                  <Text style={styles.handoverCode}>{booking.bookingCode}</Text>
+                  <Text style={styles.handoverVehicle} numberOfLines={1}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text>
+                </View>
+                <DetailPill
+                  label={activeHandoverReport ? (activeHandoverReport.isCustomerConfirmed ? "Đã xác nhận" : activeHandoverReport.requiresRevision ? "Cần lập lại" : "Chờ khách xác nhận") : "Chưa có biên bản"}
+                  tone={activeHandoverReport ? (activeHandoverReport.isCustomerConfirmed ? "mint" : activeHandoverReport.requiresRevision ? "danger" : "warn") : "neutral"}
+                />
+              </View>
+              <DetailButton variant="ghost" icon={RotateCcw} label="Tải lại biên bản" disabled={busy !== null} onPress={() => void load()} />
+            </DetailCard>
 
-        {(status === "Cancelled" || status === "Rejected") && booking.cancelReason ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Lý do {status === "Rejected" ? "từ chối" : "hủy"}</Text>
-            <Text style={styles.muted}>{booking.cancelReason}</Text>
+            {!dataReady ? <DetailNotice icon={TriangleAlert} title="Chưa tải được dữ liệu mới" tone="warn">Tải lại trước khi thao tác.</DetailNotice> : null}
+
+            {activeHandoverReport ? (
+              <InspectionReportCard booking={booking} report={activeHandoverReport} />
+            ) : (
+              <DetailCard>
+                <DetailSectionHeader
+                  icon={handover === "CheckIn" ? KeyRound : PackageCheck}
+                  title="Chưa có biên bản"
+                  subtitle="Biên bản sẽ xuất hiện khi bạn lập"
+                />
+                <Text style={styles.hint}>Thao tác khả dụng sẽ xuất hiện theo trạng thái chuyến đi.</Text>
+              </DetailCard>
+            )}
+
+            <DetailCard>
+              <DetailSectionHeader
+                icon={handover === "CheckIn" ? KeyRound : PackageCheck}
+                tone={handover === "CheckIn" ? "brand" : "mint"}
+                title={handover === "CheckIn" ? "Xác nhận nhận xe" : "Xác nhận trả xe"}
+                subtitle="Kiểm tra biên bản, ảnh xe và các khoản thanh toán trước khi xác nhận"
+              />
+              {handover === "CheckIn" ? checkInActions : checkOutActions}
+            </DetailCard>
           </View>
+        ) : <>
+
+        <BookingSummaryCard
+          booking={booking}
+          imageUri={vehiclePhoto}
+          onOpenVehicle={() => navigation.navigate("VehicleDetail", { vehicleId: booking.vehicleId })}
+          onOpenUserProfile={(id) => (onOpenUserProfile ? onOpenUserProfile(id) : navigation.navigate("BookingUserProfile", { userId: id }))}
+        />
+        <View style={styles.body}>
+        {!dataReady ? <DetailNotice icon={TriangleAlert} title="Chưa tải được dữ liệu mới" tone="warn">Quay lại màn hoặc tải lại trước khi thao tác.</DetailNotice> : null}
+
+        <View style={styles.toolbarRow}>
+          <DetailButton variant="ghost" icon={RotateCcw} label="Tải lại" disabled={busy !== null} onPress={() => void load()} style={styles.toolbarButton} />
+          {onOpenDisputes ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onOpenDisputes({ bookingId: booking.id })}
+              style={({ pressed }) => [styles.disputeButton, pressed && styles.pressed]}
+            >
+              <TriangleAlert color={p.danger} size={15} strokeWidth={2.1} />
+              <Text style={styles.disputeLink}>Tranh chấp</Text>
+            </Pressable>
+          ) : null}
+        </View>
+
+        <View style={styles.statusChips}>
+          {booking.escrowStatus === "Held" ? <DetailPill label={`Giữ cọc ${formatMoney(booking.escrowAmount)}`} tone="mint" /> : null}
+          <RiskScoreBadge score={booking.riskScore} />
+        </View>
+
+        {progress && (
+          <DetailCard style={styles.progressCard}>
+            <View style={styles.progressHead}>
+              <View style={styles.progressTitleWrap}>
+                <View style={styles.progressIcon}>
+                  <Clock3 color={p.brand} size={15} strokeWidth={2.1} />
+                </View>
+                <Text style={styles.progressTitle}>{progress.overdue ? "Khách đã quá hạn trả xe" : "Đang trong chuyến"}</Text>
+              </View>
+              <DetailPill label={progress.overdue ? "Quá hạn" : `Ngày ${progress.currentDay}/${progress.totalDays}`} tone={progress.overdue ? "danger" : "brand"} />
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${progressPercent}%` }, progress.overdue && styles.progressFillOverdue]} />
+            </View>
+            <Text style={styles.progressText}>{progress.summary}</Text>
+          </DetailCard>
+        )}
+
+        {(status === "InProgress" || status === "Returning") && (
+          <DetailButton variant="secondary" icon={MapPin} label="Xem vị trí xe (GPS)" disabled={busy !== null} onPress={() => navigation.navigate("OwnerTracking", { bookingId, vehicleName: booking.vehicleName })} />
+        )}
+        {status === "Completed" && (
+          <DetailButton variant="secondary" icon={CalendarDays} label="Xem hành trình chuyến đi" disabled={busy !== null} onPress={() => navigation.navigate("OwnerPlayback", { bookingId, vehicleName: booking.vehicleName })} />
+        )}
+
+        <ReturnProgress booking={booking} report={checkOutReport} role="Owner" />
+
+        {status === "Pending" ? (
+          <DetailCard>
+            <DetailSectionHeader
+              icon={CircleCheck}
+              title="Yêu cầu thuê đang chờ duyệt"
+              subtitle="Phản hồi sớm để khách kịp đặt cọc"
+            />
+            {autoCancelHours != null && booking.createdAt ? (
+              <DetailNotice icon={Clock3} title="Hạn phản hồi" tone="warn">
+                Vui lòng phản hồi trước {formatDateTime(new Date(new Date(booking.createdAt).getTime() + autoCancelHours * 3600000).toISOString())}. Quá {autoCancelHours} giờ hệ thống sẽ tự động từ chối đơn.
+              </DetailNotice>
+            ) : null}
+            {(booking.riskFactors ?? []).length > 0 ? (
+              <View style={styles.riskBlock}>
+                <Text style={styles.riskTitle}>Yếu tố rủi ro khách thuê</Text>
+                {(booking.riskFactors ?? []).map((f) => (
+                  <Text key={f} style={styles.bullet}>
+                    • {f}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
+            {actions.approve && userId === booking.ownerId ? (
+              <View style={styles.actionRow}>
+                <DetailButton
+                  icon={CircleCheck}
+                  label={busy === "approve" ? "Đang duyệt..." : "Duyệt đơn thuê"}
+                  onPress={() => void runAction("approve", () => approveBooking(bookingId).then(() => undefined), "Đã duyệt. Hợp đồng tự tạo để 2 bên ký.")}
+                  disabled={!dataReady || busy !== null}
+                  style={styles.flexButton}
+                />
+                <DetailButton
+                  variant="secondary"
+                  icon={XCircle}
+                  label="Từ chối"
+                  onPress={() => { setReason(""); setReasonModal({ mode: "reject" }); }}
+                  disabled={!dataReady || busy !== null}
+                  style={styles.flexButton}
+                />
+              </View>
+            ) : null}
+          </DetailCard>
         ) : null}
 
-        <BookingAssistance key={booking.id} bookingId={booking.id} bookingCode={booking.bookingCode} />
-        <BookingTimeline history={booking.statusHistory} />
-
-        {status === "Completed" && !alreadyReviewed && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Đánh giá khách thuê</Text>
-            <Text style={styles.muted}>Chọn số sao tổng quan (bắt buộc)</Text>
-            <View style={styles.stars}>
-              {[1, 2, 3, 4, 5].map((s) => (
-                <Pressable key={s} accessibilityRole="button" accessibilityLabel={`${s} sao`} onPress={() => setRating(s)} style={styles.star}>
-                  <Text style={[styles.starText, s <= rating && styles.starActive]}>★</Text>
-                </Pressable>
-              ))}
+        <DetailCard>
+          <DetailSectionHeader icon={MapPin} title="Nhận & trả xe" subtitle="Địa điểm bàn giao" />
+          <View style={styles.placeBlock}>
+            <View style={styles.placeRail}><View style={styles.placeDotBrand} /><View style={styles.placeLine} /></View>
+            <View style={styles.placeBody}>
+              <Text style={styles.placeLabel}>Điểm nhận xe</Text>
+              <Text style={styles.placeAddress}>{booking.pickupAddress}</Text>
+              <Text style={styles.hint}>Dự kiến {formatDateTime(booking.startDate)}</Text>
+              {booking.deliveryDistanceKm != null ? (
+                <Text style={styles.hint}>
+                  Cách vị trí xe {booking.deliveryDistanceKm} km{booking.deliveryFee > 0 ? ` · Phí giao xe ${formatMoney(booking.deliveryFee)}` : " · Miễn phí giao xe"}
+                </Text>
+              ) : null}
             </View>
-            <TextInput
-              value={comment}
-              onChangeText={setComment}
-              placeholder="Nhận xét về khách..."
-              placeholderTextColor={theme.placeholder}
-              multiline
-              style={[styles.input, styles.multiline]}
-            />
-            <ActionButton
-              theme={theme}
-              label="Gửi đánh giá"
-              onPress={() =>
-                rating < 1
-                  ? Alert.alert("Thiếu đánh giá", "Vui lòng chọn từ 1 đến 5 sao.")
-                  : runAction("review", () => createOwnerReview({ bookingId, rating, comment: comment.trim() || undefined }).then(() => undefined), "Cảm ơn đánh giá của bạn.")
-              }
-              disabled={!dataReady || busy !== null}
-            />
           </View>
+          <View style={styles.placeBlock}>
+            <View style={styles.placeRail}><View style={styles.placeDotInk} /></View>
+            <View style={styles.placeBody}>
+              <Text style={styles.placeLabel}>Điểm trả xe</Text>
+              <Text style={styles.placeAddress}>{booking.returnAddress || booking.pickupAddress}</Text>
+              <Text style={styles.hint}>Dự kiến {formatDateTime(booking.endDate)}</Text>
+            </View>
+          </View>
+          {booking.customerNote ? (
+            <View style={styles.noteBox}>
+              <Text style={styles.noteLabel}>Ghi chú của khách</Text>
+              <Text style={styles.noteText}>{booking.customerNote}</Text>
+            </View>
+          ) : null}
+        </DetailCard>
+
+        <DetailCard>
+          <DetailSectionHeader icon={ReceiptText} title="Chi phí & thanh toán" subtitle="Đã gồm phí nền tảng" right={<DetailPill label={formatMoney(booking.totalAmount)} tone="brand" />} />
+          <View style={styles.rows}>
+            <DetailRow label={`Giá thuê (${booking.totalDays} ngày)`} value={formatMoney(booking.basePrice)} />
+            {booking.discountPercent > 0 ? (
+              <DetailRow label={`Giảm giá (${booking.discountPercent}%)`} value={`-${formatMoney(booking.discountAmount)}`} tone="success" />
+            ) : null}
+            {booking.promotionDiscount > 0 ? (
+              <DetailRow label={`Mã ${booking.promotionCode ?? ""}`} value={`-${formatMoney(booking.promotionDiscount)}`} tone="success" />
+            ) : null}
+            {booking.deliveryFee > 0 ? (
+              <DetailRow
+                label={`Phí giao xe tận nơi${booking.deliveryDistanceKm != null ? ` (${booking.deliveryDistanceKm} km)` : ""}`}
+                value={`+${formatMoney(booking.deliveryFee)}`}
+              />
+            ) : null}
+            <DetailRow label="Phí nền tảng (đã gồm trong tổng)" value={formatMoney(booking.platformFee)} tone="muted" />
+          </View>
+          <View style={styles.totalRow}>
+            <View style={styles.totalBody}>
+              <Text style={styles.totalLabel}>Tổng cộng</Text>
+              <Text style={styles.totalHint}>Đã trừ ưu đãi, chưa gồm thế chấp</Text>
+            </View>
+            <Text style={styles.totalValue}>{formatMoney(booking.totalAmount)}</Text>
+          </View>
+          <View style={styles.scheduleBox}>
+            <Text style={styles.scheduleTitle}>Lịch thanh toán</Text>
+            <View style={styles.scheduleRow}>
+              <Text style={styles.scheduleLabel}>
+                {["DepositPaid", "Confirmed", "InProgress", "Completed"].includes(status) ? "Đã chuyển tiền cọc" : "Cần chuyển tiền cọc"}
+              </Text>
+              <Text style={styles.scheduleValue}>{formatMoney(booking.depositAmount)}</Text>
+            </View>
+            {remainingAmount > 0 ? (
+              <View style={styles.scheduleRow}>
+                <Text style={styles.scheduleLabel}>Khách trả khi nhận xe</Text>
+                <Text style={styles.scheduleValue}>{formatMoney(remainingAmount)}</Text>
+              </View>
+            ) : null}
+            {booking.securityDepositAmount > 0 ? (
+              <View style={styles.scheduleRow}>
+                <Text style={styles.scheduleLabel}>Thế chấp (hoàn khi trả xe)</Text>
+                <Text style={styles.scheduleValue}>{formatMoney(booking.securityDepositAmount)}</Text>
+              </View>
+            ) : null}
+          </View>
+          {booking.paymentDueAt && status === "Approved" ? <Text style={styles.hint}>Hạn thanh toán cọc: {formatDateTime(booking.paymentDueAt)}</Text> : null}
+          <BookingPricingDetails booking={booking} />
+        </DetailCard>
+
+        <OutstandingSurcharge booking={booking} report={checkOutReport} role="Owner" onUpdated={load} />
+
+        {actions.cancel && (
+          <DetailButton
+            variant="danger"
+            icon={TriangleAlert}
+            label="Hủy booking (hoàn 100% cọc)"
+            onPress={() => { setReason(""); setReasonModal({ mode: "cancel" }); }}
+            disabled={!dataReady || busy !== null}
+          />
         )}
-        {status === "Completed" && alreadyReviewed && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Đánh giá khách thuê</Text>
+
+        <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage onChanged={() => load()} />
+
+        <DetailCard>
+          <DetailSectionHeader icon={Camera} title="Bàn giao xe" subtitle="Biên bản nhận xe và trả xe" />
+          <InspectionSummaryLink booking={booking} type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckIn" })} />
+          <InspectionSummaryLink booking={booking} type="CheckOut" report={checkOutReport} divider onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckOut" })} />
+        </DetailCard>
+
+        {status === "Completed" && booking.escrowStatus === "Held" ? (
+          hold.withinHoldWindow ? (
+            <Text style={styles.hint}>Tiền cọc đang giữ để đối soát. Còn khoảng {hold.remainingHours} giờ nữa mới được giải ngân.</Text>
+          ) : (
+            <DetailButton
+              icon={Wallet}
+              label="Giải ngân tiền cọc"
+              onPress={() => void runAction("settle", () => requestSettlement(bookingId).then(() => undefined), "Đã giải ngân escrow.")}
+              disabled={!dataReady || busy !== null || !actions.settle}
+            />
+          )
+        ) : null}
+
+        {pendingTopUp && pendingTopUp.amount > 0 ? (
+          <DetailCard>
+            <DetailSectionHeader
+              icon={Wallet}
+              title="Chờ cọc bổ sung để gia hạn"
+              subtitle="Yêu cầu gia hạn của khách"
+              right={<DetailPill label={formatMoney(pendingTopUp.amount)} tone="warn" />}
+            />
+            <Text style={styles.hint}>Khách cần thanh toán {formatMoney(pendingTopUp.amount)}{pendingTopUp.dueAt ? ` trước ${formatDateTime(pendingTopUp.dueAt)}` : ""}. Nếu quá hạn, yêu cầu gia hạn bị hủy và hợp đồng cũ tiếp tục hiệu lực.</Text>
+          </DetailCard>
+        ) : null}
+
+        {(status === "Cancelled" || status === "Rejected") && booking.cancelReason ? (
+          <DetailCard>
+            <DetailSectionHeader icon={TriangleAlert} title={`Lý do ${status === "Rejected" ? "từ chối" : "hủy"}`} subtitle="Ghi nhận từ hệ thống" />
+            <Text style={styles.muted}>{booking.cancelReason}</Text>
+          </DetailCard>
+        ) : null}
+
+        {status === "Completed" && (
+          <DetailCard>
+            <DetailSectionHeader
+              icon={Star}
+              title="Đánh giá khách thuê"
+              subtitle={alreadyReviewed ? "Cảm ơn bạn đã chia sẻ trải nghiệm" : "Chia sẻ trải nghiệm của bạn"}
+            />
+            {!alreadyReviewed ? (
+              <View style={styles.reviewPrompt}>
+                <Text style={[styles.reviewPromptStars, { color: theme.brand }]}>★★★★★</Text>
+                <Text style={styles.muted}>Bạn chưa đánh giá khách thuê cho đơn này.</Text>
+                <DetailButton icon={Star} label="Viết đánh giá" onPress={() => setReviewOpen(true)} disabled={!dataReady || busy !== null} />
+              </View>
+            ) : null}
             {bookingReviews.filter((review) => review.reviewType === "Owner").map((review) => (
               <View key={review.id} style={styles.reviewItem}>
                 <View style={styles.reviewHeader}>
@@ -434,9 +566,15 @@ export default function OwnerBookingDetailScreen({
                 {review.comment ? <Text style={styles.reviewComment}>{review.comment}</Text> : null}
               </View>
             ))}
-            {bookingReviews.filter((review) => review.reviewType === "Owner").length === 0 ? <Text style={styles.muted}>Bạn đã gửi đánh giá cho booking này.</Text> : null}
-          </View>
+            {alreadyReviewed && bookingReviews.filter((review) => review.reviewType === "Owner").length === 0 ? <Text style={styles.muted}>Bạn đã gửi đánh giá cho booking này.</Text> : null}
+          </DetailCard>
         )}
+
+        <ReportBookingViolation key={`violation-${booking.id}`} bookingId={booking.id} bookingCode={booking.bookingCode} />
+        <BookingAssistance key={booking.id} bookingId={booking.id} bookingCode={booking.bookingCode} />
+        <BookingTimeline history={booking.statusHistory} />
+        </View>
+        </>}
       </ScrollView>
 
       <Modal visible={reasonModal !== null} transparent animationType="fade" onRequestClose={() => setReasonModal(null)}>
@@ -466,6 +604,51 @@ export default function OwnerBookingDetailScreen({
         </View>
       </Modal>
 
+      <Modal visible={reviewOpen} transparent animationType="fade" onRequestClose={() => { if (busy === null) setReviewOpen(false); }}>
+        <View style={styles.backdrop}>
+          <View style={styles.modal}>
+            <View style={styles.modalHead}>
+              <View style={styles.modalIcon}><Star color={theme.brand} size={18} strokeWidth={2.1} /></View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.modalTitle}>Đánh giá khách thuê</Text>
+                <Text style={styles.modalHint}>Chọn số sao tổng quan (bắt buộc)</Text>
+              </View>
+            </View>
+            <View style={styles.stars}>
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Pressable key={s} accessibilityRole="button" accessibilityLabel={`${s} sao`} onPress={() => setRating(s)} style={styles.star}>
+                  <Text style={[styles.starText, s <= rating && styles.starActive]}>★</Text>
+                </Pressable>
+              ))}
+            </View>
+            <TextInput
+              value={comment}
+              onChangeText={setComment}
+              placeholder="Nhận xét về khách..."
+              placeholderTextColor={theme.placeholder}
+              multiline
+              style={[styles.input, styles.multiline]}
+            />
+            <View style={styles.modalActions}>
+              <DetailButton variant="ghost" label="Đóng" disabled={busy !== null} onPress={() => setReviewOpen(false)} style={styles.flexButton} />
+              <DetailButton
+                icon={Star}
+                label={busy === "review" ? "Đang gửi..." : "Gửi đánh giá"}
+                disabled={!dataReady || busy !== null}
+                onPress={() => {
+                  if (rating < 1) {
+                    Alert.alert("Thiếu đánh giá", "Vui lòng chọn từ 1 đến 5 sao.");
+                    return;
+                  }
+                  void runAction("review", () => createOwnerReview({ bookingId, rating, comment: comment.trim() || undefined }).then(() => undefined), "Cảm ơn đánh giá của bạn.").then((ok) => { if (ok) setReviewOpen(false); });
+                }}
+                style={styles.flexButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={viewingImage !== null} transparent animationType="fade" onRequestClose={() => setViewingImage(null)}>
         <Pressable style={styles.fullBackdrop} onPress={() => setViewingImage(null)}>
           {viewingImage ? (
@@ -480,154 +663,189 @@ export default function OwnerBookingDetailScreen({
 
 }
 
-function Row({
-  label,
-  value,
-  tone,
-  strong,
-}: {
-  label: string;
-  value: string;
-  tone?: "success";
-  strong?: boolean;
-}) {
-  return (
-    <View style={rowStyles.row}>
-      <Text style={[rowStyles.label, strong && rowStyles.strongLabel]}>{label}</Text>
-      <Text style={[rowStyles.value, tone === "success" && rowStyles.success, strong && rowStyles.strong]}>
-        {value}
-      </Text>
-    </View>
-  );
-}
-
-const rowStyles = StyleSheet.create({
-  row: { flexDirection: "row", justifyContent: "space-between", gap: 12, paddingVertical: 3 },
-  label: { color: "#6b7280", fontSize: 13, flexShrink: 0 },
-  value: { color: "#111827", fontSize: 13, fontWeight: "600", textAlign: "right", flex: 1 },
-  success: { color: "#059669" },
-  strongLabel: { color: "#111827", fontWeight: "800" },
-  strong: { color: "#6B19FF", fontSize: 15, fontWeight: "800" },
-});
-
-function ActionButton({
-  theme,
-  label,
-  onPress,
-  disabled,
-  danger,
-}: {
-  theme: Theme;
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-  danger?: boolean;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={[
-        {
-          borderRadius: 12,
-          paddingVertical: 13,
-          alignItems: "center",
-          marginTop: 8,
-          backgroundColor: danger ? theme.danger : theme.brand,
-          opacity: disabled ? 0.5 : 1,
-        },
-      ]}
-    >
-      <Text style={{ fontWeight: "800", fontSize: 15, color: "#fff" }}>{label}</Text>
-    </Pressable>
-  );
-}
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.background },
-    header: {
+    headerChat: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.brandSoft,
+      borderWidth: 1,
+      borderColor: theme.brandBorder,
+    },
+    center: { flex: 1, alignItems: "center", justifyContent: "center" },
+    scrollContent: { paddingBottom: 40 },
+    body: { paddingHorizontal: 8, paddingTop: 12, paddingBottom: 40, gap: 10 },
+
+    // Toolbar
+    toolbarRow: { flexDirection: "row", alignItems: "stretch", gap: 8 },
+    toolbarButton: { flex: 1 },
+    disputeButton: {
+      flex: 1,
+      minHeight: 46,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.dangerBorder,
+      backgroundColor: theme.dangerSoft,
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.border,
+      justifyContent: "center",
+      gap: 6,
+      paddingHorizontal: 12,
     },
-    backButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: theme.surfaceAlt,
+    disputeLink: { color: theme.danger, fontFamily: font.bold, fontSize: 12 },
+    statusChips: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 },
+    pressed: { opacity: 0.72 },
+
+    // Progress
+    progressCard: { gap: 11 },
+    progressHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
+    progressTitleWrap: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1, minWidth: 0 },
+    progressIcon: {
+      width: 30,
+      height: 30,
+      borderRadius: 10,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.brandSoft,
+    },
+    progressTitle: { color: theme.text, fontFamily: font.display, fontSize: 14.5, lineHeight: 19, letterSpacing: -0.2, flexShrink: 1 },
+    progressTrack: { height: 7, borderRadius: 999, backgroundColor: theme.surfaceAlt, overflow: "hidden" },
+    progressFill: { height: "100%", borderRadius: 999, backgroundColor: theme.brand },
+    progressFillOverdue: { backgroundColor: theme.danger },
+    progressText: { color: theme.muted, fontFamily: font.regular, fontSize: 10.5, lineHeight: 16 },
+
+    // Handover header
+    handoverHead: { flexDirection: "row", alignItems: "center", gap: 12 },
+    handoverIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 14,
       alignItems: "center",
       justifyContent: "center",
     },
-    headerTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
-    center: { flex: 1, alignItems: "center", justifyContent: "center" },
-    body: { padding: 16, gap: 12, paddingBottom: 32 },
-    vehicleCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: theme.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, borderRadius: 12, padding: 12 },
-    vehiclePhoto: { width: 120, height: 92, borderRadius: 9, backgroundColor: theme.surfaceAlt },
-    vehiclePhotoPlaceholder: { width: 120, height: 92, borderRadius: 9, backgroundColor: theme.brandSoft, alignItems: "center", justifyContent: "center" },
-    vehiclePhotoPlaceholderText: { color: theme.brand, fontSize: 12, fontWeight: "800" },
-    vehicleInfo: { flex: 1, gap: 4 },
-    vehicleName: { color: theme.text, fontSize: 16, fontWeight: "800" },
-    reviewItem: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border, paddingVertical: 8, gap: 6 },
+    handoverBody: { flex: 1, minWidth: 0, gap: 2 },
+    handoverCode: { color: theme.text, fontFamily: font.display, fontSize: 14.5, lineHeight: 19, letterSpacing: -0.2 },
+    handoverVehicle: { color: theme.muted, fontFamily: font.regular, fontSize: 10.5 },
+
+    // Schedule
+    placeBlock: { flexDirection: "row", gap: 10 },
+    placeRail: { width: 12, alignItems: "center", paddingTop: 5 },
+    placeDotBrand: { width: 9, height: 9, borderRadius: 5, backgroundColor: theme.brand },
+    placeLine: { flex: 1, width: 1.5, backgroundColor: theme.border, marginTop: 4 },
+    placeDotInk: { width: 9, height: 9, borderRadius: 5, backgroundColor: theme.faint },
+    placeBody: { flex: 1, minWidth: 0, gap: 2, paddingBottom: 10 },
+    placeLabel: {
+      color: theme.faint,
+      fontFamily: font.bold,
+      fontSize: 8.5,
+      letterSpacing: 0.6,
+      textTransform: "uppercase",
+    },
+    placeAddress: { color: theme.text, fontFamily: font.medium, fontSize: 11.5, lineHeight: 17 },
+    hint: { color: theme.muted, fontFamily: font.regular, fontSize: 10.5, lineHeight: 15 },
+    bullet: { color: theme.muted, fontFamily: font.regular, fontSize: 11.5, lineHeight: 17 },
+    riskBlock: {
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.input,
+      padding: 12,
+      gap: 3,
+    },
+    riskTitle: { color: theme.text, fontFamily: font.semibold, fontSize: 11.5, marginBottom: 2 },
+    reviewItem: { borderTopWidth: 1, borderTopColor: theme.border, paddingTop: 10, gap: 6 },
     reviewHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
     reviewAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.surfaceAlt },
     reviewAvatarFallback: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.brandSoft, alignItems: "center", justifyContent: "center" },
-    reviewAvatarText: { color: theme.brand, fontWeight: "800" },
-    reviewName: { color: theme.text, fontSize: 13, fontWeight: "700" },
-    reviewStars: { color: "#f59e0b", fontSize: 14 },
-    reviewDate: { color: theme.muted, fontSize: 11 },
-    reviewComment: { color: theme.text, fontSize: 13, marginLeft: 42 },
-    statusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    disputeLink: { color: "#DC2626", fontSize: 13, fontWeight: "700" },
-    status: { color: theme.brand, fontSize: 18, fontWeight: "800" },
-    escrow: { color: theme.muted, fontSize: 12, fontWeight: "700" },
-    progressStrip: {
-      borderRadius: 10,
+    reviewAvatarText: { color: theme.brand, fontFamily: font.bold, fontSize: 12 },
+    reviewName: { color: theme.text, fontFamily: font.semibold, fontSize: 12.5 },
+    reviewStars: { color: theme.success, fontSize: 12 },
+    reviewDate: { color: theme.faint, fontFamily: font.regular, fontSize: 10 },
+    reviewComment: { color: theme.text, fontFamily: font.regular, fontSize: 11.5, lineHeight: 17, marginLeft: 42 },
+    // Cost
+    rows: { gap: 9 },
+    totalRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 10,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+      paddingTop: 12,
+    },
+    totalBody: { flex: 1, minWidth: 0 },
+    totalLabel: { color: theme.text, fontFamily: font.bold, fontSize: 13 },
+    totalHint: { color: theme.faint, fontFamily: font.regular, fontSize: 9.5, marginTop: 1 },
+    totalValue: {
+      color: theme.text,
+      fontFamily: font.display,
+      fontSize: 18,
+      lineHeight: 22,
+      letterSpacing: -0.3,
+      fontVariant: ["tabular-nums"],
+    },
+    scheduleBox: {
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.brandBorder,
       backgroundColor: theme.brandSoft,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
+      padding: 12,
+      gap: 7,
     },
-    progressOverdue: { backgroundColor: theme.dangerSoft },
-    progressText: { color: theme.text, fontSize: 13, fontWeight: "700" },
-    riskScore: { color: theme.text, fontSize: 16, fontWeight: "800", marginBottom: 4 },
-    card: {
-      backgroundColor: theme.surface,
-      borderWidth: StyleSheet.hairlineWidth,
+    scheduleTitle: {
+      color: theme.brand,
+      fontFamily: font.bold,
+      fontSize: 10,
+      letterSpacing: 0.3,
+      textTransform: "uppercase",
+    },
+    scheduleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
+    scheduleLabel: { color: theme.muted, fontFamily: font.regular, fontSize: 11, flexShrink: 1 },
+    scheduleValue: { color: theme.text, fontFamily: font.semibold, fontSize: 11.5, fontVariant: ["tabular-nums"] },
+    cardTitle: { color: theme.text, fontFamily: font.display, fontSize: 14.5, lineHeight: 19, letterSpacing: -0.2, marginBottom: 6 },
+    muted: { color: theme.muted, fontFamily: font.regular, fontSize: 11.5, lineHeight: 17 },
+    noteBox: {
+      borderRadius: 16,
+      borderWidth: 1,
       borderColor: theme.border,
-      borderRadius: 12,
-      padding: 14,
-      gap: 4,
+      backgroundColor: theme.input,
+      padding: 12,
+      gap: 3,
     },
-    cardTitle: { color: theme.text, fontSize: 15, fontWeight: "800", marginBottom: 4 },
-    muted: { color: theme.muted, fontSize: 13 },
-    address: { color: theme.text, fontSize: 13, marginBottom: 4 },
-    note: { color: theme.muted, fontSize: 13, fontStyle: "italic" },
-    actionRow: { flexDirection: "row", gap: 10 },
-    flexButton: { flex: 1, borderRadius: 12, paddingVertical: 13, alignItems: "center" },
-    primaryButton: { borderRadius: 10, backgroundColor: theme.brand, paddingHorizontal: 18, paddingVertical: 10, minWidth: 110, alignItems: "center" },
-    dangerButton: { backgroundColor: theme.danger },
-    primaryText: { color: "#fff", fontWeight: "800" },
-    disabled: { opacity: 0.5 },
-    stars: { flexDirection: "row", gap: 4, marginVertical: 6 },
-    star: { padding: 4 },
-    starText: { fontSize: 32, color: theme.border },
-    starActive: { color: "#f59e0b" },
+    noteLabel: {
+      color: theme.faint,
+      fontFamily: font.bold,
+      fontSize: 8.5,
+      letterSpacing: 0.6,
+      textTransform: "uppercase",
+    },
+    noteText: { color: theme.text, fontFamily: font.regular, fontSize: 11, lineHeight: 17 },
+    actionRow: { flexDirection: "row", gap: 8 },
+    flexButton: { flex: 1, borderRadius: 16, minHeight: 48, alignItems: "center", justifyContent: "center" },
+    primaryButton: { borderRadius: 16, minHeight: 48, backgroundColor: theme.brand, paddingHorizontal: 18, paddingVertical: 10, minWidth: 110, alignItems: "center", justifyContent: "center" },
+    primaryText: { color: theme.onBrand, fontFamily: font.bold, fontSize: 13 },
+    stars: { flexDirection: "row", gap: 2, marginVertical: 4 },
+    star: { padding: 2 },
+    starText: { fontSize: 24, color: theme.border },
+    starActive: { color: theme.success },
     input: {
       backgroundColor: theme.input,
-      borderWidth: StyleSheet.hairlineWidth,
+      borderWidth: 1,
       borderColor: theme.border,
-      borderRadius: 10,
+      borderRadius: 14,
       paddingHorizontal: 12,
-      paddingVertical: 10,
+      paddingVertical: 11,
       color: theme.text,
-      fontSize: 14,
+      fontFamily: font.regular,
+      fontSize: 12.5,
     },
-    multiline: { minHeight: 70, textAlignVertical: "top" },
-    fieldLabel: { color: theme.text, fontSize: 13, fontWeight: "700", marginTop: 8, marginBottom: 2 },
+    multiline: { minHeight: 80, textAlignVertical: "top" },
+    fieldLabel: { color: theme.text, fontFamily: font.semibold, fontSize: 11.5, marginTop: 8, marginBottom: 2 },
     switchRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 6 },
     photoButton: {
       marginTop: 10,
@@ -677,16 +895,22 @@ const createStyles = (theme: Theme) =>
     damage: { color: theme.danger, fontSize: 13, fontWeight: "600" },
     backdrop: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
+      backgroundColor: "rgba(11,7,20,0.55)",
       alignItems: "center",
       justifyContent: "center",
       padding: 20,
     },
-    modal: { width: "100%", backgroundColor: theme.surface, borderRadius: 14, padding: 18, gap: 10 },
+    modal: { width: "100%", backgroundColor: theme.surface, borderRadius: 24, borderWidth: 1, borderColor: theme.border, padding: 18, gap: 12 },
+    modalHead: { flexDirection: "row", alignItems: "center", gap: 10 },
+    modalIcon: { width: 34, height: 34, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: theme.brandSoft },
+    modalTitle: { color: theme.text, fontFamily: font.display, fontSize: 17, letterSpacing: -0.2 },
+    modalHint: { color: theme.muted, fontFamily: font.regular, fontSize: 10, marginTop: 1 },
+    reviewPrompt: { gap: 8 },
+    reviewPromptStars: { fontSize: 18, letterSpacing: 2 },
     tallModal: { maxHeight: "88%" },
-    modalActions: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 },
+    modalActions: { flexDirection: "row", gap: 8, marginTop: 2 },
     ghostButton: { paddingHorizontal: 14, paddingVertical: 10 },
-    ghostText: { color: theme.muted, fontWeight: "700" },
+    ghostText: { color: theme.muted, fontFamily: font.semibold, fontSize: 12 },
     fullBackdrop: {
       flex: 1,
       backgroundColor: "rgba(0,0,0,0.92)",

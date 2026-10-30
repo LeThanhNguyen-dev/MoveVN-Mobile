@@ -14,6 +14,7 @@ export type CapturedInspectionPhoto = {
 };
 
 export function deleteInspectionPhoto(uri: string) {
+  if (uri.startsWith("blob:")) { URL.revokeObjectURL(uri); return; }
   try {
     const file = new File(uri);
     if (file.exists) file.delete();

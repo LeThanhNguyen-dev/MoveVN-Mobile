@@ -52,6 +52,54 @@
     }
   },
   {
+    "name": "four day rental gets five percent tier",
+    "days": 4,
+    "vehicle": {
+      "pricePerDay": 500000,
+      "depositPercent": 20,
+      "platformFeeType": "Percent",
+      "platformFeeValue": 10
+    },
+    "quote": null,
+    "promo": 0,
+    "delivery": 0,
+    "expected": {
+      "base": 2000000,
+      "discPct": 5,
+      "discAmt": 100000,
+      "fee": 190000,
+      "deposit": 380000,
+      "depositPercent": 20,
+      "remaining": 1520000,
+      "total": 1900000,
+      "deliveryFee": 0
+    }
+  },
+  {
+    "name": "platform fee ignores voucher and delivery",
+    "days": 2,
+    "vehicle": {
+      "pricePerDay": 500000,
+      "depositPercent": 20,
+      "platformFeeType": "Percent",
+      "platformFeeValue": 10
+    },
+    "quote": null,
+    "promo": 100000,
+    "delivery": 30000,
+    "expected": {
+      "base": 1000000,
+      "discPct": 0,
+      "discAmt": 0,
+      "fee": 100000,
+      "deposit": 186000,
+      "depositPercent": 20,
+      "remaining": 744000,
+      "total": 930000,
+      "deliveryFee": 30000
+    }
+  },
+  {
     "name": "weekly fixed fee",
     "days": 7,
     "vehicle": {

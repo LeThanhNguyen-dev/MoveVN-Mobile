@@ -1,7 +1,9 @@
+import BookingDisclosure from "./BookingDisclosure";
 import { StyleSheet, Text, View } from "react-native";
 import type { BookingResponse } from "../types";
 import { formatMoney } from "../utils/format";
 import { useTheme } from "@/theme/useTheme";
+import { detailFont as font } from "@/features/vehicles/components/detail/detailTheme";
 
 function formatRentalDate(value: string) {
   const [year, month, day] = value.slice(0, 10).split("-");
@@ -11,23 +13,21 @@ function formatRentalDate(value: string) {
 export default function BookingPricingDetails({ booking }: { booking: BookingResponse }) {
   const { theme } = useTheme();
   const styles = StyleSheet.create({
-    card: { backgroundColor: theme.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, borderRadius: 12, padding: 14, gap: 10 },
-    title: { color: theme.text, fontSize: 15, fontWeight: "800" },
-    intro: { color: theme.muted, fontSize: 12, lineHeight: 18 },
-    day: { borderTopWidth: StyleSheet.hairlineWidth, borderColor: theme.border, paddingTop: 9, gap: 3 },
+    title: { color: theme.text, fontFamily: font.display, fontSize: 15 },
+    intro: { color: theme.muted, fontFamily: font.regular, fontSize: 10.5, lineHeight: 16 },
+    day: { borderTopWidth: 1, borderColor: theme.divider, paddingTop: 9, gap: 3 },
     dayTop: { flexDirection: "row", justifyContent: "space-between", gap: 10 },
-    label: { color: theme.text, fontSize: 13, fontWeight: "700", flexShrink: 1 },
-    price: { color: theme.text, fontSize: 13, fontWeight: "700" },
-    muted: { color: theme.muted, fontSize: 12 },
-    term: { borderTopWidth: StyleSheet.hairlineWidth, borderColor: theme.border, paddingTop: 9, gap: 3 },
+    label: { color: theme.text, fontFamily: font.semibold, fontSize: 11.5, flexShrink: 1 },
+    price: { color: theme.text, fontFamily: font.semibold, fontSize: 11.5, fontVariant: ["tabular-nums"] },
+    muted: { color: theme.muted, fontFamily: font.regular, fontSize: 10.5, lineHeight: 15 },
+    term: { borderTopWidth: 1, borderColor: theme.divider, paddingTop: 9, gap: 3 },
   });
   const days = booking.pricingDetails ?? [];
   const terms = booking.surchargeTerms ?? [];
 
   return <>
     {days.length > 0 ? (
-      <View style={styles.card}>
-        <Text style={styles.title}>Giá thuê theo từng ngày</Text>
+      <BookingDisclosure title="Giá thuê theo từng ngày">
         {days.map((day) => (
           <View key={day.rentalDate} style={styles.day}>
             <View style={styles.dayTop}>
@@ -37,11 +37,10 @@ export default function BookingPricingDetails({ booking }: { booking: BookingRes
             {day.appliedRuleNames.length > 0 ? <Text style={styles.muted}>{day.appliedRuleNames.join(", ")}</Text> : null}
           </View>
         ))}
-      </View>
+      </BookingDisclosure>
     ) : null}
 
-    <View style={styles.card}>
-      <Text style={styles.title}>Quy định phí phụ thu</Text>
+    <BookingDisclosure title="Quy định phí phụ thu">
       <Text style={styles.intro}>Mức phí được chốt tại thời điểm đặt xe. Phí phát sinh thực tế sẽ được đối chiếu với quy định này.</Text>
       {terms.length === 0 ? <Text style={styles.muted}>Không có quy định phí phụ thu cho booking này.</Text> : terms.map((term) => (
         <View key={term.id} style={styles.term}>
@@ -57,6 +56,6 @@ export default function BookingPricingDetails({ booking }: { booking: BookingRes
           {term.description ? <Text style={styles.muted}>{term.description}</Text> : null}
         </View>
       ))}
-    </View>
+    </BookingDisclosure>
   </>;
 }

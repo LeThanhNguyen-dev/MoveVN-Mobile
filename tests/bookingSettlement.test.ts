@@ -7,15 +7,15 @@ const booking = { totalAmount: 2000000, escrowAmount: 500000, totalDays: 3, outs
 describe("checkout money shown before consent", () => {
   it("includes pending mileage and late fees, without subtracting unrecorded cash", () => {
     const report = { type: "CheckOut", lateReturnFee: 20000, excessMileageFee: 250000, pendingSurchargeAmount: 270000, outstandingSurchargeAmount: 0 } as InspectionReportResponse;
-    expect(inspectionBalance(booking, report)).toEqual({ rentalRemaining: 1500000, pending: 270000, outstanding: 0, totalRemaining: 1770000 });
+    expect(inspectionBalance(booking, report)).toEqual({ rentalRemaining: 1500000, pending: 270000, outstanding: 0, surchargeRemaining: 270000 });
   });
   it("does not collect a paid surcharge twice or count it as still due", () => {
     const report = { type: "CheckOut", isCustomerConfirmed: true, excessMileageFee: 250000, paidSurchargeAmount: 250000, pendingSurchargeAmount: 0, outstandingSurchargeAmount: 0 } as InspectionReportResponse;
-    expect(inspectionBalance(booking, report).totalRemaining).toBe(1500000);
-    expect(inspectionBalance(booking, { ...report, outstandingSurchargeAmount: 250000, paidSurchargeAmount: 0 }).totalRemaining).toBe(1750000);
+    expect(inspectionBalance(booking, report).surchargeRemaining).toBe(0);
+    expect(inspectionBalance(booking, { ...report, outstandingSurchargeAmount: 250000, paidSurchargeAmount: 0 }).surchargeRemaining).toBe(250000);
   });
   it("does not attach checkout debt to the check-in report", () => {
-    expect(inspectionBalance(booking, { type: "CheckIn" } as InspectionReportResponse).totalRemaining).toBe(1500000);
+    expect(inspectionBalance(booking, { type: "CheckIn" } as InspectionReportResponse).surchargeRemaining).toBe(0);
   });
 });
 

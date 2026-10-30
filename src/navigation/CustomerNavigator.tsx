@@ -1,4 +1,5 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { usePushNavigation } from "@/features/notifications/pushNavigation";
 import { CalendarCheck, Gift, LayoutGrid, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,6 +9,7 @@ import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import AssistantFab from "@/features/assistant/components/AssistantFab";
 import type { QuickBookParams } from "@/features/assistant/screens/AssistantScreen";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
+import PublicUserProfileScreen from "@/features/users/screens/PublicUserProfileScreen";
 import type { AuthUser } from "@/features/auth/types";
 import DealsNavigator from "./DealsNavigator";
 import ExploreNavigator from "./ExploreNavigator";
@@ -16,6 +18,7 @@ import ChatNavigator from "./ChatNavigator";
 import FavoritesNavigator from "./FavoritesNavigator";
 import { useFavoriteStore } from "@/features/favorites/useFavorites";
 import { useChatStore } from "@/features/chat/useChat";
+import { useGpsPublisher } from "@/features/gps/useGpsPublisher";
 import MobileBottomBar, { type MobileTabItem } from "./MobileBottomBar";
 import { useTheme } from "@/theme/useTheme";
 
@@ -30,14 +33,20 @@ const customerTabs: MobileTabItem<CustomerTabKey>[] = [
 ];
 
 export default function CustomerNavigator({ user }: { user: AuthUser }) {
+  // Publish GPS khi khách có chuyến InProgress/Returning (đăng ký từ TripDetail).
+  useGpsPublisher();
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const showFavorites = useFavoriteStore((state) => state.open && state.userId === user.userId);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
   const [tripsRoute, setTripsRoute] = useState("TripList");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
+  const [tripRequest, setTripRequest] = useState(0);
+  const pendingPush = usePushNavigation(state => state.pending);
   const [chatRoute, setChatRoute] = useState("ChatList");
+  const [pendingVehicleId, setPendingVehicleId] = useState<number | null>(null);
   const [quickBook, setQuickBook] = useState<QuickBookParams | null>(null);
   const [pendingDispute, setPendingDispute] = useState<DisputeCreatePrefill | null>(null);
   const [disputeOrigin, setDisputeOrigin] = useState<{ tab: "trips" } | null>(null);
@@ -50,13 +59,27 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   }, []);
 
   const goToTrip = useCallback((bookingId: number) => {
+    setTripRequest(value => value + 1);
     setPendingTripId(bookingId);
     setTripsRoute("TripDetail");
     setActiveTab("trips");
   }, []);
 
+  useEffect(() => {
+    if (!pendingPush || pendingPush.userId !== user.userId || pendingPush.roleTarget !== "Customer") return;
+    setShowProfile(false); setShowWallet(false); setProfileUserId(null);
+    useFavoriteStore.setState({ open: false });
+    goToTrip(pendingPush.bookingId);
+    usePushNavigation.getState().clear();
+  }, [pendingPush, user.userId, goToTrip]);
+
   const consumePendingTrip = useCallback(() => {
     setPendingTripId(null);
+  }, []);
+
+  // Mở hồ sơ công khai của người dùng (chủ xe / khách / người đánh giá).
+  const openUserProfile = useCallback((userId: number) => {
+    setProfileUserId(userId);
   }, []);
 
   const handleQuickBook = useCallback((params: QuickBookParams) => {
@@ -105,6 +128,21 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
           onExplore={() => { useFavoriteStore.setState({ open: false }); setActiveTab("explore"); }}
           onBookingCreated={(bookingId) => { useFavoriteStore.setState({ open: false }); goToTrip(bookingId); }}
         />
+      ) : profileUserId != null ? (
+        <PublicUserProfileScreen
+          userId={profileUserId}
+          onBack={() => setProfileUserId(null)}
+          onOpenProfile={openUserProfile}
+          onViewVehicle={(vehicleId) => {
+            setProfileUserId(null);
+            setPendingVehicleId(vehicleId);
+            setActiveTab("explore");
+          }}
+          onOpenBooking={(bookingId) => {
+            setProfileUserId(null);
+            goToTrip(bookingId);
+          }}
+        />
       ) : showProfile ? (
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />
       ) : showWallet ? (
@@ -120,21 +158,26 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onAvatarPress={() => setShowProfile(true)}
                 onRouteChange={handleExploreRouteChange}
                 onBookingCreated={goToTrip}
+                pendingVehicleId={pendingVehicleId}
+                onConsumedVehicle={() => setPendingVehicleId(null)}
                 quickBook={quickBook}
                 onConsumedQuickBook={consumeQuickBook}
                 onGoDeals={() => setActiveTab("deals")}
+                onOpenUserProfile={openUserProfile}
               />
             ) : activeTab === "trips" ? (
               <TripsNavigator
+                key={tripRequest}
                 pendingBookingId={pendingTripId}
                 onConsumedPending={consumePendingTrip}
                 onRouteChange={setTripsRoute}
                 onOpenDisputes={openDisputes}
+                onOpenUserProfile={openUserProfile}
               />
             ) : activeTab === "deals" ? (
-              <DealsNavigator />
+              <DealsNavigator onGoExplore={() => setActiveTab("explore")} />
             ) : activeTab === "messages" ? (
-              <ChatNavigator onRouteChange={setChatRoute} />
+              <ChatNavigator onRouteChange={setChatRoute} onOpenUserProfile={openUserProfile} />
             ) : (
               <AccountTabScreen
                 onProfilePress={() => setShowProfile(true)}
@@ -150,8 +193,8 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
           {showBottomBar ? (
             <MobileBottomBar activeKey={activeTab} items={customerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} />
           ) : null}
-          {/* ChatbotAI đặt xe nhanh: mở form đặt xe điền sẵn, xác nhận xong qua chuyến đi */}
-          <AssistantFab onQuickBook={handleQuickBook} onBookingConfirmed={goToTrip} />
+          {/* Giữ xác nhận và thanh toán trong chat; mở chi tiết khi khách chọn. */}
+          {!(activeTab === "trips" && (tripsRoute === "TripHandover" || tripsRoute === "ContractDetail")) && <AssistantFab key={user.userId} onViewVehicle={id => { setPendingVehicleId(id); setActiveTab("explore"); }} onViewBooking={goToTrip} onQuickBook={handleQuickBook} />}
         </>
       )}
     </SafeAreaView>

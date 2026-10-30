@@ -98,43 +98,10 @@ it("posts selected checkout fees and requires a reason before uploading", async 
 });
 
 
-it("allows selecting an existing photo without opening the camera", async () => {
+it("only exposes camera capture and never opens the image library", async () => {
   await mount();
-  mocks.library.mockResolvedValueOnce({ canceled: false, assets: [{ uri: "file:///library.jpg", width: 1200, height: 1600 }] });
-  mocks.resize.mockResolvedValueOnce({ uri: "file:///library-resized.jpg", width: 1200, height: 1600 });
-  await act(async () => button("Chọn ảnh từ thư viện").props.onPress());
-  expect(mocks.library).toHaveBeenCalledOnce();
-  const stamp = tree!.root.find(n => (n.type as unknown) === "CameraCapture");
-  expect(stamp.props.sourcePhoto.uri).toBe("file:///library-resized.jpg");
-  await act(async () => { stamp.props.onCaptured({ ...photo, source: "library", uri: "file:///library-stamped.jpg" }); stamp.props.onClose(); });
-  expect(tree!.root.findAll(n => (n.type as unknown) === "Image" && n.props.source.uri === "file:///library-stamped.jpg")).toHaveLength(1);
-  mocks.checkIn.mockResolvedValueOnce({ id: 12, type: "CheckIn" });
-  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
-  expect(mocks.saved).toHaveBeenCalledWith({ id: 12, type: "CheckIn" });
-});
-
-it("selects multiple library photos, stamps each and appends them to existing photos", async () => {
-  await mount(); await addPhoto();
-  mocks.library.mockResolvedValueOnce({ canceled: false, assets: [
-    { uri: "file:///one.jpg", width: 1200, height: 1600 },
-    { uri: "file:///two.jpg", width: 1600, height: 1200 },
-  ] });
-  mocks.resize.mockImplementation(async (uri, width, height) => ({ uri: uri.replace(".jpg", "-resized.jpg"), width, height }));
-  await act(async () => button("Chọn ảnh từ thư viện").props.onPress());
-  expect(mocks.library).toHaveBeenCalledWith(expect.objectContaining({ allowsMultipleSelection: true, selectionLimit: 11 }));
-  for (const name of ["one", "two"]) {
-    const stamp = tree!.root.find(n => (n.type as unknown) === "CameraCapture");
-    expect(stamp.props.sourcePhoto.uri).toBe(`file:///${name}-resized.jpg`);
-    await act(async () => {
-      stamp.props.onCaptured({ ...photo, id: name, source: "library", uri: `file:///${name}-stamped.jpg` });
-      stamp.props.onClose();
-    });
-  }
-  expect(tree!.root.findAll(n => (n.type as unknown) === "CameraCapture")).toHaveLength(0);
-  expect(tree!.root.findAll(n => (n.type as unknown) === "Image")).toHaveLength(3);
-  mocks.checkIn.mockResolvedValueOnce({ id: 13 });
-  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
-  const data = mocks.checkIn.mock.calls[0]![1] as FormData;
-  expect(data.getAll("images")).toHaveLength(3);
-  expect(data.getAll("capturedAts")).toHaveLength(3);
+  expect(JSON.stringify(tree!.toJSON())).not.toContain("Chọn ảnh từ thư viện");
+  await addPhoto();
+  expect(mocks.library).not.toHaveBeenCalled();
+  expect(tree!.root.findAll(n => (n.type as unknown) === "Image")).toHaveLength(1);
 });

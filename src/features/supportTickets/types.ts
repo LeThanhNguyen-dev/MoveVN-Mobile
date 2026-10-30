@@ -66,3 +66,9 @@ export interface PagedResult<T> {
   pageSize: number;
   totalPages?: number;
 }
+
+export type TicketFeedback = { id: string; cycleNumber: number; rating: number; comment: string; createdAt: string };
+export type TicketSlaCycle = { id: string; number: number; priority: string; startedAt: string; responseDueAt: string; resolutionDueAt: string; firstResponseAt: string | null; resolvedAt: string | null; responseState: string; resolutionState: string; responseMinutes: number | null; resolutionMinutes: number | null };
+export type TicketQuality = { ticketId: number; generatedAt: string; tracked: boolean; canRate: boolean; cycles: TicketSlaCycle[]; feedback: TicketFeedback[] };
+
+export type TicketEntry = { ticketId?: number; bookingId?: number; bookingCode?: string; create?: boolean };

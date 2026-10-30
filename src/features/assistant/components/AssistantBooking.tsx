@@ -1,5 +1,6 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import QRCode from "react-native-qrcode-svg";
 
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -27,6 +28,11 @@ const money = (value: number) =>
 
 const formatDateTime = (value: string) => new Date(value).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 
+function checkoutUrl(value?: string) {
+  try { const url = new URL(value ?? ""); return url.protocol === "https:" ? url.href : null; }
+  catch { return null; }
+}
+
 export function QuoteCard({ quote }: { quote: AssistantQuote }) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
@@ -51,36 +57,46 @@ export function BookingPaymentCard({
   conversationId,
   bookingId,
   initial,
+  onViewBooking,
 }: {
   conversationId: string;
   bookingId: number;
   initial?: PaymentLink;
+  onViewBooking?: (id: number) => void;
 }) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const [payment, setPayment] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const actionLock = useRef(false);
+  const safeCheckout = checkoutUrl(payment?.checkoutUrl);
 
   async function openCheckout() {
+    if (actionLock.current) return;
+    actionLock.current = true;
     setBusy(true);
     setMessage("");
     try {
-      const link = await getDraftPaymentLink(conversationId);
+      const link = safeCheckout && payment ? payment : await getDraftPaymentLink(conversationId);
       setPayment(link);
-      if (/^https:\/\//i.test(link.checkoutUrl)) {
-        await Linking.openURL(link.checkoutUrl);
+      const url = checkoutUrl(link.checkoutUrl);
+      if (url) {
+        await Linking.openURL(url);
       } else {
         setMessage("Đường dẫn thanh toán không hợp lệ.");
       }
     } catch (err) {
       setMessage(getApiErrorMessage(err, "Chưa kết nối được thanh toán. Bạn có thể mở đơn để thử lại."));
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
 
   async function checkPaid() {
+    if (actionLock.current) return;
+    actionLock.current = true;
     setBusy(true);
     try {
       const result = await getAssistantPaymentStatus(bookingId);
@@ -94,14 +110,15 @@ export function BookingPaymentCard({
     } catch (err) {
       setMessage(getApiErrorMessage(err, "Chưa kiểm tra được thanh toán."));
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
 
   return (
     <View style={styles.paymentCard}>
-      <Text style={styles.cardTitle}>Đơn #{bookingId}</Text>
-      {payment ? (
+      <Pressable disabled={!onViewBooking} onPress={() => onViewBooking?.(bookingId)}><Text style={styles.cardTitle}>Xem đơn #{bookingId}</Text></Pressable>
+      {safeCheckout ? (
         <Pressable disabled={busy} onPress={openCheckout} style={styles.primaryButton}>
           <Text style={styles.primaryText}>Mở trang thanh toán</Text>
         </Pressable>
@@ -110,6 +127,7 @@ export function BookingPaymentCard({
           {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>Lấy đường dẫn thanh toán</Text>}
         </Pressable>
       )}
+      {!!safeCheckout && !!payment?.qrCode && <View accessibilityLabel="Mã QR thanh toán" style={{ alignItems: "center", padding: 8 }}><QRCode value={payment.qrCode} size={160} quietZone={8} /></View>}
       <Pressable disabled={busy} onPress={checkPaid}>
         <Text style={styles.link}>Tôi đã thanh toán — kiểm tra</Text>
       </Pressable>
@@ -123,11 +141,13 @@ export function ConfirmationCard({
   proposal,
   onChanged,
   onBooked,
+  onViewBooking,
 }: {
   conversationId: string;
   proposal: BookingDraft | CancellationProposal;
   onChanged?: () => void;
   onBooked?: (bookingId: number) => void;
+  onViewBooking?: (bookingId: number) => void;
 }) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
@@ -136,6 +156,7 @@ export function ConfirmationCard({
   const [ack, setAck] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const actionLock = useRef(false);
 
   useEffect(() => {
     setCurrent(proposal);
@@ -148,7 +169,8 @@ export function ConfirmationCard({
   const rose = !!bookingDraft?.quote && bookingDraft.previousTotal != null && bookingDraft.quote.total > bookingDraft.previousTotal;
 
   async function confirm() {
-    if (!current.confirmToken) return;
+    if (!current.confirmToken || actionLock.current || Boolean(rose && !ack)) return;
+    actionLock.current = true;
     setBusy(true);
     setError("");
     try {
@@ -159,17 +181,20 @@ export function ConfirmationCard({
         setError(response.message ?? "Giá thay đổi, vui lòng xác nhận lại.");
       } else {
         setResult(response);
-        if (response.bookingId) onBooked?.(response.bookingId);
+        if (response.bookingId && response.status === "PaymentPending") onBooked?.(response.bookingId);
       }
       onChanged?.();
     } catch (err) {
       setError(getApiErrorMessage(err, "Xác nhận đã hết hạn hoặc thông tin đã thay đổi. Vui lòng báo giá lại."));
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
 
   async function requote() {
+    if (actionLock.current) return;
+    actionLock.current = true;
     setBusy(true);
     setError("");
     try {
@@ -182,6 +207,7 @@ export function ConfirmationCard({
     } catch (err) {
       setError(getApiErrorMessage(err, "Chưa thể báo giá lại."));
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
@@ -200,8 +226,8 @@ export function ConfirmationCard({
       ) : (
         bookingDraft?.quote && <QuoteCard quote={bookingDraft.quote} />
       )}
-      {rose && !result ? <Text style={styles.warn}>Giá tăng so với báo giá trước. Bấm xác nhận là bạn đồng ý giá mới.</Text> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {rose && !result ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: ack }} disabled={busy} onPress={() => setAck(value => !value)}><Text style={styles.warn}>{ack ? "✓ " : "☐ "}Giá tăng so với báo giá trước. Tôi đồng ý giá mới.</Text></Pressable> : null}
+      {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       {result ? (
         <>
           <Text style={styles.cardTitle}>
@@ -209,26 +235,20 @@ export function ConfirmationCard({
           </Text>
           {result.message ? <Text style={styles.body}>{result.message}</Text> : null}
           {result.status === "PaymentPending" && result.bookingId ? (
-            <BookingPaymentCard conversationId={conversationId} bookingId={result.bookingId} initial={result.payment} />
+            <BookingPaymentCard conversationId={conversationId} bookingId={result.bookingId} initial={result.payment} onViewBooking={onViewBooking} />
           ) : null}
         </>
       ) : (
         <>
           <Pressable
             disabled={busy || !current.confirmToken || Boolean(rose && !ack)}
-            onPress={() => {
-              if (rose && !ack) {
-                setAck(true);
-                return;
-              }
-              void confirm();
-            }}
-            style={[styles.primaryButton, (busy || !current.confirmToken) && styles.disabled]}
+            onPress={() => void confirm()}
+            style={[styles.primaryButton, (busy || !current.confirmToken || Boolean(rose && !ack)) && styles.disabled]}
           >
             {busy ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={styles.primaryText}>{cancel ? "Xác nhận hủy đơn" : rose && !ack ? "Tôi đồng ý giá mới" : "Xác nhận đặt xe"}</Text>
+              <Text style={styles.primaryText}>{cancel ? "Xác nhận hủy đơn" : "Xác nhận đặt xe"}</Text>
             )}
           </Pressable>
           {!cancel ? (
@@ -247,11 +267,13 @@ export const AgentBlocks = memo(function AgentBlocks({
   conversationId,
   onChanged,
   onBooked,
+  onViewBooking,
 }: {
   blocks: AssistantBlock[];
   conversationId: string;
   onChanged: () => void;
   onBooked?: (bookingId: number) => void;
+  onViewBooking?: (bookingId: number) => void;
 }) {
   return (
     <>
@@ -264,6 +286,7 @@ export const AgentBlocks = memo(function AgentBlocks({
               proposal={block.data as unknown as BookingDraft | CancellationProposal}
               onChanged={onChanged}
               onBooked={onBooked}
+              onViewBooking={onViewBooking}
             />
           );
         if (block.type === "quoteCard") return <QuoteCard key={index} quote={block.data as unknown as AssistantQuote} />;

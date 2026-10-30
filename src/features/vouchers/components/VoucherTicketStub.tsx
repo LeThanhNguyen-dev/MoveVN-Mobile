@@ -5,17 +5,30 @@ import { StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
-import { CTA_GRADIENT, formatDiscountShort } from "@/features/vouchers/voucherFormat";
+import { CTA_GRADIENT, formatVoucherStub } from "@/features/vouchers/voucherFormat";
 
 type VoucherTicketStubProps = {
   discountType: string;
   discountValue: number;
   /** Tab Đã dùng: cuống vé xám + mờ (mobile không có filter grayscale). */
   dimmed?: boolean;
+  /** Nhãn nhỏ phía trên (web: "VOUCHER"). */
+  topLabel?: string;
+  /** Nhãn phụ cuối cuống vé (web: "Tối đa 50.000đ" / "Đơn từ ..."). */
+  caption?: string | null;
+  /** Ẩn icon TicketPercent mờ nền. */
+  hideIcon?: boolean;
 };
 
-/** Cuống vé trái w-24: "GIẢM" + giá trị lớn + icon TicketPercent mờ nền. */
-function VoucherTicketStub({ discountType, discountValue, dimmed = false }: VoucherTicketStubProps) {
+/** Cuống vé trái: nhãn + giá trị giảm lớn + icon mờ + caption (mirror web VoucherTicketCard). */
+function VoucherTicketStub({
+  discountType,
+  discountValue,
+  dimmed = false,
+  topLabel = "VOUCHER",
+  caption = null,
+  hideIcon = false,
+}: VoucherTicketStubProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -29,11 +42,19 @@ function VoucherTicketStub({ discountType, discountValue, dimmed = false }: Vouc
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <AppText style={styles.stubLabel}>GIẢM</AppText>
+      <AppText style={styles.stubLabel}>{topLabel}</AppText>
+      <AppText style={styles.stubHint}>GIẢM</AppText>
       <AppText style={styles.stubValue} numberOfLines={1}>
-        {formatDiscountShort(discountType, discountValue)}
+        {formatVoucherStub(discountType, discountValue)}
       </AppText>
-      <TicketPercent color="rgba(255,255,255,0.6)" size={16} />
+      {hideIcon ? null : <TicketPercent color="rgba(255,255,255,0.55)" size={16} />}
+      {caption ? (
+        <View style={styles.captionWrap}>
+          <AppText style={styles.captionText} numberOfLines={2}>
+            {caption}
+          </AppText>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -48,7 +69,7 @@ const createStyles = (theme: Theme) =>
       alignItems: "center",
       justifyContent: "center",
       gap: 2,
-      paddingVertical: 16,
+      paddingVertical: 14,
       paddingHorizontal: 6,
       overflow: "hidden",
     },
@@ -56,10 +77,32 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.mode === "dark" ? "#3F3F46" : "#94A3B8",
     },
     stubLabel: {
-      color: "rgba(255,255,255,0.7)",
-      fontSize: 10,
+      color: "rgba(255,255,255,0.72)",
+      fontSize: 9,
       fontWeight: "800",
-      letterSpacing: 2,
+      letterSpacing: 1.6,
     },
-    stubValue: { color: "#FFFFFF", fontSize: 22, fontWeight: "900" },
+    stubHint: {
+      color: "rgba(255,255,255,0.8)",
+      fontSize: 9,
+      fontWeight: "700",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+    },
+    stubValue: { color: "#FFFFFF", fontSize: 22, fontWeight: "900", letterSpacing: -0.6 },
+    captionWrap: {
+      alignSelf: "stretch",
+      marginTop: 6,
+      borderTopWidth: 1,
+      borderTopColor: "rgba(255,255,255,0.45)",
+      paddingTop: 6,
+      alignItems: "center",
+    },
+    captionText: {
+      color: "rgba(255,255,255,0.88)",
+      fontSize: 9,
+      fontWeight: "700",
+      lineHeight: 12,
+      textAlign: "center",
+    },
   });

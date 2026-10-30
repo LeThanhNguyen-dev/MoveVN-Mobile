@@ -38,8 +38,22 @@ export function chatCounterpart(room: ChatRoom, userId: number) {
   return {
     id,
     name: name || `${owner ? "Khách thuê" : "Chủ xe"} #${id}`,
+    avatarUrl: participant?.avatarUrl,
     isOnline: participant?.isOnline ?? false,
+    lastSeenAt: participant?.lastSeenAt,
   };
+}
+
+export function chatPresenceLabel(isOnline: boolean, lastSeenAt?: string | null) {
+  if (isOnline) return "Đang hoạt động";
+  const lastSeen = lastSeenAt ? Date.parse(lastSeenAt) : NaN;
+  if (!Number.isFinite(lastSeen)) return "Hiện không hoạt động";
+  const minutes = Math.max(0, Math.floor((Date.now() - lastSeen) / 60_000));
+  if (minutes < 1) return "Vừa hoạt động";
+  if (minutes < 60) return `Hoạt động ${minutes} phút trước`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Hoạt động ${hours} giờ trước`;
+  return `Hoạt động ${Math.floor(hours / 24)} ngày trước`;
 }
 
 export function normalizeChatSearch(value: string) {

@@ -1,3 +1,5 @@
+import type { ContractSummary } from "@/features/contracts/types";
+
 export type AuthStackParamList = {
   Login: { notice?: string } | undefined;
   Register: undefined;
@@ -46,5 +48,10 @@ export type TripsStackParamList = {
   TripDetail: {
     bookingId: number;
   };
+  TripHandover: { bookingId: number; inspectionType: "CheckIn" | "CheckOut" };
+  BookingWallet: undefined;
+  VehicleDetail: { vehicleId: number; startDate?: string; endDate?: string };
+  BookingUserProfile: { userId: number };
   BookingChat: { bookingId: number };
+  ContractDetail: { contract: ContractSummary };
 };

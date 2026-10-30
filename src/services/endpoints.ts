@@ -203,12 +203,23 @@ export const endpoints = {
     updateProfile: "/api/users/me/profile",
     uploadAvatar: "/api/users/me/avatar",
     profile: (id: number) => `/api/users/${id}/profile`,
+    profileReviews: (id: number) => `/api/users/${id}/profile/reviews`,
   },
   notifications: {
     base: "/api/notifications",
     unreadCount: "/api/notifications/unread-count",
     markRead: (id: number) => `/api/notifications/${id}/read`,
     markAllRead: "/api/notifications/read-all",
+  },
+  tracking: {
+    postLocation: (bookingId: number) => `/api/tracking/${bookingId}/location`,
+    live: (bookingId: number) => `/api/tracking/${bookingId}/live`,
+    route: (bookingId: number) => `/api/tracking/${bookingId}/route`,
+    routeRoad: (bookingId: number) => `/api/tracking/${bookingId}/route/road`,
+    summary: (bookingId: number) => `/api/tracking/${bookingId}/summary`,
+    session: (bookingId: number) => `/api/tracking/${bookingId}/session`,
+    requestGps: (bookingId: number) => `/api/tracking/${bookingId}/request-gps`,
+    address: (bookingId: number) => `/api/tracking/${bookingId}/address`,
   },
   publicCmsPages: {
     navigation: "/api/cms-pages/navigation",

@@ -3,22 +3,19 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
-  Text,
-  TextInput,
   View,
 } from "react-native";
-import { ArrowLeft, TicketPercent, X } from "lucide-react-native";
+import { ChevronLeft, ShieldCheck } from "lucide-react-native";
+import type { ScrollViewInstance } from "react-native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AppText from "@/components/AppText";
 import type { ExploreStackParamList } from "@/navigation/types";
-import type { Theme } from "@/theme/tokens";
-import { useTheme } from "@/theme/useTheme";
 import {
   createPricingQuote,
   getDeliveryConfig,
@@ -27,12 +24,20 @@ import {
 } from "@/features/vehicles/services/publicVehicleService";
 import type { BusyPeriod, PricingQuoteResponse, VehicleResponse } from "@/features/vehicles/types";
 import { getMinPrice } from "@/features/vehicles/ownerDisplay";
-import { calculateRentalDays, formatPeriodSummary } from "@/features/vehicles/utils/rentalPeriod";
-import AddressAutocomplete, {
-  type SelectedAddress,
-} from "@/features/locations/components/AddressAutocomplete";
+import { calculateRentalDays } from "@/features/vehicles/utils/rentalPeriod";
+import RentalPeriodSheet from "@/features/vehicles/components/RentalPeriodSheet";
+import type { SelectedAddress } from "@/features/locations/components/AddressAutocomplete";
 import { createBooking } from "@/features/booking/bookingService";
-import { formatDateTime, formatMoney, parseDisplayDateTime } from "@/features/booking/utils/format";
+import {
+  fromRentalSheetValue,
+  toRentalSheetValue,
+} from "@/features/booking/utils/checkoutFormat";
+import CheckoutHandoverCard from "@/features/booking/components/createBooking/CheckoutHandoverCard";
+import CheckoutPaymentCard from "@/features/booking/components/createBooking/CheckoutPaymentCard";
+import CheckoutSubmitDock from "@/features/booking/components/createBooking/CheckoutSubmitDock";
+import CheckoutTripCard from "@/features/booking/components/createBooking/CheckoutTripCard";
+import CheckoutVoucherSheet from "@/features/booking/components/createBooking/CheckoutVoucherSheet";
+import { checkoutFont, useCheckoutTheme } from "@/features/booking/components/createBooking/checkoutTheme";
 import {
   calcDeliveryPreview,
   calcPricePreview,
@@ -57,20 +62,21 @@ export default function CreateBookingScreen({
   navigation: CreateNav;
   onCreated?: (bookingId: number) => void;
 }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { p } = useCheckoutTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(() => createStyles(p), [p]);
   const { vehicleId, startDate: initialStart, endDate: initialEnd } = route.params;
   // Cho phép sửa ngày giờ nhận/trả (PayHandmade) nhưng vẫn giữ giá trị chatbot điền sẵn.
   const [startDate, setStartDate] = useState(initialStart);
   const [endDate, setEndDate] = useState(initialEnd);
-  const [startText, setStartText] = useState(() => formatDateTime(initialStart ?? ""));
-  const [endText, setEndText] = useState(() => formatDateTime(initialEnd ?? ""));
+  const [periodOpen, setPeriodOpen] = useState(false);
   const [nextAvailableDate, setNextAvailableDate] = useState<string | null>(null);
 
   const [vehicle, setVehicle] = useState<VehicleResponse | null | undefined>(undefined);
   const [busyPeriods, setBusyPeriods] = useState<BusyPeriod[]>([]);
   const [availabilityLoading, setAvailabilityLoading] = useState(true);
   const [availabilityError, setAvailabilityError] = useState(false);
+  const [availabilityRetry, setAvailabilityRetry] = useState(0);
   const [quote, setQuote] = useState<PricingQuoteResponse | null>(null);
   const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig>({ freeKm: 5, perKm: 10000, maxKm: 50 });
 
@@ -92,7 +98,7 @@ export default function CreateBookingScreen({
   const [voucherModal, setVoucherModal] = useState(false);
   const [vouchers, setVouchers] = useState<VoucherClaimResponse[]>([]);
   const [vouchersLoading, setVouchersLoading] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const fieldY = useRef<Record<string, number>>({});
 
   function scrollToField(key: string) {
@@ -114,38 +120,19 @@ export default function CreateBookingScreen({
     }
   }
 
-  function voucherUsable(v: VoucherClaimResponse): boolean {
-    const vt = vehicle?.vehicleType;
-    return !vt || v.vehicleType === "All" || v.vehicleType === vt;
-  }
-
-  function describeVoucher(v: VoucherClaimResponse): string {
-    const off = v.discountType === "Percentage" ? `${v.discountValue}%` : formatMoney(v.discountValue);
-    const cap = v.maxDiscountAmount ? ` (tối đa ${formatMoney(v.maxDiscountAmount)})` : "";
-    return `Giảm ${off}${cap}`;
-  }
-
   function getNextAvailableFromError(err: unknown): string | null {
     const data = (err as { response?: { data?: { data?: { nextAvailable?: unknown } } } })?.response?.data?.data;
     return typeof data?.nextAvailable === "string" ? data.nextAvailable : null;
   }
 
-  function handleStartText(v: string) {
-    setStartText(v);
-    const iso = parseDisplayDateTime(v);
-    if (iso) {
-      setStartDate(iso);
-      setNextAvailableDate(null);
-    }
+  function handleStartPeriod(value: string) {
+    setStartDate(fromRentalSheetValue(value) || undefined);
+    setNextAvailableDate(null);
   }
 
-  function handleEndText(v: string) {
-    setEndText(v);
-    const iso = parseDisplayDateTime(v);
-    if (iso) {
-      setEndDate(iso);
-      setNextAvailableDate(null);
-    }
+  function handleEndPeriod(value: string) {
+    setEndDate(fromRentalSheetValue(value) || undefined);
+    setNextAvailableDate(null);
   }
 
   function applyNextAvailable(dateStr: string) {
@@ -158,8 +145,6 @@ export default function CreateBookingScreen({
     const newEnd = new Date(base.getTime() + keepDays * 86400000).toISOString();
     setStartDate(newStart);
     setEndDate(newEnd);
-    setStartText(formatDateTime(newStart));
-    setEndText(formatDateTime(newEnd));
     setNextAvailableDate(null);
   }
 
@@ -201,7 +186,7 @@ export default function CreateBookingScreen({
     return () => {
       cancelled = true;
     };
-  }, [vehicleId]);
+  }, [vehicleId, availabilityRetry]);
 
   useEffect(() => {
     getDeliveryConfig().then(setDeliveryConfig).catch(() => undefined);
@@ -375,460 +360,241 @@ export default function CreateBookingScreen({
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ArrowLeft color={theme.text} size={20} />
+        <Pressable
+          accessibilityLabel="Quay lại"
+          hitSlop={6}
+          onPress={() => navigation.goBack()}
+          style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+        >
+          <ChevronLeft color={p.ink} size={21} strokeWidth={2.2} />
         </Pressable>
-        <Text numberOfLines={1} style={styles.headerTitle}>
-          Xác nhận đặt xe
-        </Text>
-        <View style={styles.backButton} />
+        <View style={styles.headerBody}>
+          <AppText style={styles.headerKicker}>Kiểm tra lại</AppText>
+          <AppText numberOfLines={1} style={styles.headerTitle}>
+            Xác nhận đặt xe
+          </AppText>
+        </View>
+        <View style={styles.payPill}>
+          <ShieldCheck color={p.mint} size={12} strokeWidth={2.2} />
+          <AppText style={styles.payPillText}>Chưa thanh toán</AppText>
+        </View>
       </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.flex}
         keyboardVerticalOffset={80}
+        style={styles.flex}
       >
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.body}
-        keyboardShouldPersistTaps="handled"
-      >
-        {vehicle === undefined ? (
-          <ActivityIndicator color={theme.brand} />
-        ) : vehicle === null ? (
-          <Text style={styles.muted}>Không tải được thông tin xe.</Text>
-        ) : (
-          <>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>
-                {[vehicle.brandName, vehicle.modelName, vehicle.year].filter(Boolean).join(" ")}
-              </Text>
-              <Text style={styles.muted}>{formatPeriodSummary(startDate ?? "", endDate ?? "")}</Text>
-              <Text style={styles.muted}>
-                {days > 0 ? `${days} ngày` : "Thời gian chưa hợp lệ"}
-                {pricePreview ? ` · tạm tính ${formatMoney(pricePreview.total)}` : ""}
-              </Text>
-              {availabilityLoading ? (
-                <Text style={styles.muted}>Đang kiểm tra lịch trống của xe…</Text>
-              ) : availabilityError ? (
-                <Text style={styles.error}>Không tải được lịch xe. Vui lòng thử lại.</Text>
-              ) : overlapped ? (
-                <Text style={styles.error}>Khoảng thời gian này trùng lịch bận của xe. Vui lòng chọn ngày khác.</Text>
-              ) : (
-                <Text style={styles.ok}>Xe trống trong thời gian bạn chọn.</Text>
-              )}
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.body}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          style={styles.flex}
+        >
+          {vehicle === undefined ? (
+            <View style={styles.state}>
+              <ActivityIndicator color={p.brand} />
+              <AppText style={styles.stateText}>Đang chuẩn bị thông tin đặt xe…</AppText>
             </View>
+          ) : vehicle === null ? (
+            <View style={styles.state}>
+              <AppText style={styles.stateTitle}>Không tải được thông tin xe</AppText>
+              <AppText style={styles.stateText}>Vui lòng quay lại và thử lại.</AppText>
+            </View>
+          ) : (
+            <>
+              <CheckoutTripCard
+                availabilityError={availabilityError}
+                availabilityLoading={availabilityLoading}
+                dailyPrice={pricePerDay}
+                days={days}
+                endDate={endDate ?? ""}
+                nextAvailableDate={nextAvailableDate}
+                onApplyNextAvailable={() => {
+                  if (nextAvailableDate) applyNextAvailable(nextAvailableDate);
+                }}
+                onOpenPeriod={() => setPeriodOpen(true)}
+                overlapped={overlapped}
+                startDate={startDate ?? ""}
+                vehicle={vehicle}
+              />
 
-            <Text style={styles.label}>Nhận xe lúc (DD/MM/YYYY HH:mm)</Text>
-            <TextInput
-              value={startText}
-              onChangeText={handleStartText}
-              placeholder="DD/MM/YYYY HH:mm"
-              placeholderTextColor={theme.placeholder}
-              style={styles.input}
-            />
-            {nextAvailableDate ? (
-              <View style={styles.card}>
-                <Text style={styles.muted}>Xe có thể thuê từ ngày {new Date(nextAvailableDate).toLocaleDateString("vi-VN")}.</Text>
-                <Pressable onPress={() => applyNextAvailable(nextAvailableDate)} style={styles.submit}>
-                  <Text style={styles.submitText}>Dùng ngày này</Text>
-                </Pressable>
-              </View>
-            ) : null}
-            <View onLayout={(e) => { fieldY.current.pickup = e.nativeEvent.layout.y; }}>
-            <AddressAutocomplete
-              label="Địa điểm nhận xe"
-              value={pickupAddress}
-              onChange={setPickupAddress}
-              onSelect={handleSelectPickup}
-              onFocusInput={() => scrollToField("pickup")}
-              onManualChange={() => {
-                setPickupLat(null);
-                setPickupLng(null);
-              }}
-            />
-            </View>
-            {pickupAddress.trim() && (pickupLat == null || pickupLng == null) ? (
-              <Text style={styles.warn}>Vui lòng chọn địa chỉ từ danh sách gợi ý để xác định khoảng cách giao xe.</Text>
-            ) : null}
-            {vehicle.latitude != null && vehicle.longitude != null && deliveryPreview ? (
-              deliveryPreview.overMax ? (
-                <Text style={styles.error}>
-                  Điểm nhận xe cách vị trí xe {deliveryPreview.distanceKm} km, vượt quá {effectiveConfig.maxKm} km cho phép.
-                </Text>
-              ) : (
-                <Text style={styles.muted}>
-                  Cách vị trí xe {deliveryPreview.distanceKm} km
-                  {deliveryPreview.fee > 0 ? ` · phí giao xe ${formatMoney(deliveryPreview.fee)}` : ` · miễn phí giao (trong ${effectiveConfig.freeKm} km)`}
-                </Text>
-              )
-            ) : null}
-
-            <View style={styles.switchRow}>
-              <Text style={styles.label}>Trả xe tại điểm nhận</Text>
-              <Switch value={sameReturn} onValueChange={setSameReturn} />
-            </View>
-            {!sameReturn && (
-              <>
-                <Text style={styles.label}>Trả xe lúc (DD/MM/YYYY HH:mm)</Text>
-                <TextInput
-                  value={endText}
-                  onChangeText={handleEndText}
-                  placeholder="DD/MM/YYYY HH:mm"
-                  placeholderTextColor={theme.placeholder}
-                  style={styles.input}
-                />
-                <View onLayout={(e) => { fieldY.current.ret = e.nativeEvent.layout.y; }}>
-                <AddressAutocomplete
-                  label="Địa điểm trả xe"
-                  value={returnAddress}
-                  onChange={setReturnAddress}
-                  onSelect={handleSelectReturn}
-                  onFocusInput={() => scrollToField("ret")}
-                  onManualChange={() => {
+              <View onLayout={(event) => { fieldY.current.handover = event.nativeEvent.layout.y; }}>
+                <CheckoutHandoverCard
+                  config={effectiveConfig}
+                  deliveryPreview={deliveryPreview}
+                  note={note}
+                  onChangeNote={setNote}
+                  onChangePickup={setPickupAddress}
+                  onChangeReturn={setReturnAddress}
+                  onFocusNote={() => scrollToField("handover")}
+                  onFocusPickup={() => scrollToField("handover")}
+                  onFocusReturn={() => scrollToField("handover")}
+                  onManualPickup={() => {
+                    setPickupLat(null);
+                    setPickupLng(null);
+                  }}
+                  onManualReturn={() => {
                     setReturnLat(null);
                     setReturnLng(null);
                   }}
+                  onSelectPickup={handleSelectPickup}
+                  onSelectReturn={handleSelectReturn}
+                  onToggleSameReturn={setSameReturn}
+                  pickupAddress={pickupAddress}
+                  pickupUnpinned={pickupLat == null || pickupLng == null}
+                  returnAddress={returnAddress}
+                  returnUnpinned={returnLat == null || returnLng == null}
+                  sameReturn={sameReturn}
                 />
-                </View>
-              </>
-            )}
+              </View>
 
-            <Text style={styles.label}>Ghi chú cho chủ xe</Text>
-            <View onLayout={(e) => { fieldY.current.note = e.nativeEvent.layout.y; }}>
-            <TextInput
-              value={note}
-              onChangeText={setNote}
-              onFocus={() => scrollToField("note")}
-              placeholder="Giờ giấc, nhu cầu đặc biệt..."
-              placeholderTextColor={theme.placeholder}
-              multiline
-              style={[styles.input, styles.multiline]}
-            />
-            </View>
-            <View onLayout={(e) => { fieldY.current.promo = e.nativeEvent.layout.y; }} />
-
-            <Text style={styles.label}>Mã khuyến mãi (nếu có)</Text>
-            <View style={styles.promoRow}>
-              <TextInput
-                value={promoCode}
-                onChangeText={(text) => {
-                  setPromoCode(text.toUpperCase());
-                  setPromoResult(null);
-                  setPromoError(null);
-                }}
-                placeholder="Nhập mã"
-                placeholderTextColor={theme.placeholder}
-                autoCapitalize="characters"
-                style={[styles.input, styles.promoInput]}
-              />
-              <Pressable onPress={openVoucherPicker} style={styles.voucherButton}>
-                <Text style={styles.voucherButtonText}>Ví</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => void validateCode(promoCode)}
-                disabled={promoLoading || !promoCode.trim() || days <= 0}
-                style={[styles.promoButton, (promoLoading || !promoCode.trim() || days <= 0) && styles.submitDisabled]}
-              >
-                {promoLoading ? <ActivityIndicator color={theme.onBrand} size="small" /> : <Text style={styles.submitText}>Áp dụng</Text>}
-              </Pressable>
-            </View>
-            {promoError ? <Text style={styles.error}>{promoError}</Text> : null}
-            {promoResult ? (
-              <View style={styles.promoApplied}>
-                <Text style={styles.promoAppliedText}>
-                  {promoResult.code} · -{formatMoney(promoResult.discountAmount)}
-                </Text>
-                <Pressable
-                  onPress={() => {
+              <View onLayout={(event) => { fieldY.current.payment = event.nativeEvent.layout.y; }}>
+                <CheckoutPaymentCard
+                  appliedPromo={promoResult}
+                  canApply={promoCode.trim().length > 0 && days > 0}
+                  dailyPrices={quote?.dailyPrices ?? []}
+                  days={days}
+                  deliveryDistanceKm={deliveryPreview?.distanceKm ?? null}
+                  onChangeCode={(text) => {
+                    setPromoCode(text.toUpperCase());
+                    setPromoResult(null);
+                    setPromoError(null);
+                  }}
+                  onApply={() => void validateCode(promoCode)}
+                  onClearPromo={() => {
                     setPromoResult(null);
                     setPromoCode("");
                   }}
-                >
-                  <X color={theme.muted} size={16} />
-                </Pressable>
+                  onFocusPromo={() => scrollToField("payment")}
+                  onOpenWallet={() => void openVoucherPicker()}
+                  preview={pricePreview}
+                  promoCode={promoCode}
+                  promoError={promoError}
+                  promoLoading={promoLoading}
+                  security={{
+                    required: Boolean(vehicle.securityRequiresDeposit),
+                    amount: vehicle.securityDepositAmount ?? 0,
+                  }}
+                />
               </View>
-            ) : null}
+            </>
+          )}
+        </ScrollView>
 
-            {pricePreview ? (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Dự kiến chi phí</Text>
-                <View style={styles.row}>
-                  <Text style={styles.muted}>
-                    {[vehicle.brandName, vehicle.modelName].filter(Boolean).join(" ")} · {days} ngày
-                  </Text>
-                  <Text style={styles.value}>{formatMoney(pricePreview.base)}</Text>
-                </View>
-                {quote?.dailyPrices.map((day) => (
-                  <View key={day.rentalDate} style={styles.row}>
-                    <Text style={styles.small}>{new Date(`${day.rentalDate}T00:00:00`).toLocaleDateString("vi-VN")}</Text>
-                    <Text style={styles.small}>{formatMoney(day.finalDailyPrice)}</Text>
-                  </View>
-                ))}
-                {pricePreview.discPct > 0 ? (
-                  <View style={styles.row}>
-                    <Text style={styles.discount}>Giảm giá thuê dài ({pricePreview.discPct}%)</Text>
-                    <Text style={styles.discount}>-{formatMoney(pricePreview.discAmt)}</Text>
-                  </View>
-                ) : null}
-                {promoResult ? (
-                  <View style={styles.row}>
-                    <Text style={styles.discount}>Mã {promoResult.code}</Text>
-                    <Text style={styles.discount}>-{formatMoney(promoResult.discountAmount)}</Text>
-                  </View>
-                ) : null}
-                {pricePreview.deliveryFee > 0 ? (
-                  <View style={styles.row}>
-                    <Text style={styles.muted}>Phí giao xe ({deliveryPreview?.distanceKm ?? "-"} km)</Text>
-                    <Text style={styles.value}>+{formatMoney(pricePreview.deliveryFee)}</Text>
-                  </View>
-                ) : null}
-                <View style={styles.row}>
-                  <Text style={styles.muted}>Phí nền tảng (đã gồm trong giá)</Text>
-                  <Text style={styles.value}>{formatMoney(pricePreview.fee)}</Text>
-                </View>
-                <View style={[styles.row, styles.totalRow]}>
-                  <Text style={styles.totalLabel}>Tổng cộng</Text>
-                  <Text style={styles.totalValue}>{formatMoney(pricePreview.total)}</Text>
-                </View>
-                <View style={styles.scheduleBox}>
-                  <Text style={styles.scheduleTitle}>Lịch thanh toán</Text>
-                  <View style={styles.row}>
-                    <Text style={styles.scheduleText}>Cọc ngay ({pricePreview.depositPercent}%)</Text>
-                    <Text style={styles.scheduleValue}>{formatMoney(pricePreview.deposit)}</Text>
-                  </View>
-                  <View style={styles.row}>
-                    <Text style={styles.scheduleText}>Còn lại khi nhận xe</Text>
-                    <Text style={styles.scheduleValue}>{formatMoney(pricePreview.remaining)}</Text>
-                  </View>
-                </View>
-                {vehicle?.securityRequiresDeposit ? (
-                  <Text style={styles.muted}>Cần thế chấp {formatMoney(vehicle.securityDepositAmount)} khi nhận xe (hoàn lại khi trả xe).</Text>
-                ) : null}
-              </View>
-            ) : null}
-
-            {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
-            <Pressable
-              onPress={handleSubmit}
-              disabled={submitting}
-              style={({ pressed }) => [styles.submit, (submitting || pressed) && styles.submitDisabled]}
-            >
-              {submitting ? (
-                <ActivityIndicator color={theme.onBrand} />
-              ) : (
-                <Text style={styles.submitText}>Gửi yêu cầu thuê xe</Text>
-              )}
-            </Pressable>
-          </>
-        )}
-      </ScrollView>
+        {vehicle ? (
+          <CheckoutSubmitDock
+            bottomInset={insets.bottom}
+            days={days}
+            deposit={pricePreview?.deposit ?? null}
+            error={submitError}
+            onSubmit={() => void handleSubmit()}
+            submitting={submitting}
+            total={pricePreview?.total ?? null}
+          />
+        ) : null}
       </KeyboardAvoidingView>
 
-      <Modal visible={voucherModal} transparent animationType="fade" onRequestClose={() => setVoucherModal(false)}>
-        <View style={styles.backdrop}>
-          <View style={[styles.modal, styles.tallModal]}>
-            <Text style={styles.cardTitle}>Ví voucher của bạn</Text>
-            {vouchersLoading ? (
-              <ActivityIndicator color={theme.brand} />
-            ) : vouchers.length === 0 ? (
-              <Text style={styles.muted}>Chưa có voucher nào dùng được. Săn mã ở tab Ưu đãi.</Text>
-            ) : (
-              <ScrollView style={styles.voucherList}>
-                {vouchers.map((v) => {
-                  const ok = voucherUsable(v);
-                  return (
-                    <Pressable
-                      key={v.id}
-                      disabled={!ok}
-                      onPress={() => {
-                        setPromoCode(v.code);
-                        setVoucherModal(false);
-                        void validateCode(v.code);
-                      }}
-                      style={[styles.voucherItem, !ok && styles.voucherDisabled]}
-                    >
-                      <View style={styles.voucherInfo}>
-                        <Text style={styles.voucherCode}>{v.code}</Text>
-                        <Text style={styles.muted}>{v.name}</Text>
-                        <Text style={styles.muted}>{describeVoucher(v)}</Text>
-                        {!ok && <Text style={styles.warnText}>Không áp dụng cho loại xe này</Text>}
-                      </View>
-                      <Text style={styles.useText}>{ok ? "Dùng" : ""}</Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            )}
-            <Pressable onPress={() => setVoucherModal(false)} style={styles.ghostButton}>
-              <Text style={styles.ghostText}>Đóng</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      <RentalPeriodSheet
+        availabilityError={availabilityError}
+        availabilityLoading={availabilityLoading}
+        busyPeriods={busyPeriods}
+        endDate={toRentalSheetValue(endDate ?? "")}
+        onClose={() => setPeriodOpen(false)}
+        onEndDateChange={handleEndPeriod}
+        onRetryAvailability={() => setAvailabilityRetry((value) => value + 1)}
+        onStartDateChange={handleStartPeriod}
+        startDate={toRentalSheetValue(startDate ?? "")}
+        visible={periodOpen}
+      />
+
+      <CheckoutVoucherSheet
+        bottomInset={insets.bottom}
+        loading={vouchersLoading}
+        onClose={() => setVoucherModal(false)}
+        onSelect={(code) => {
+          setPromoCode(code);
+          setVoucherModal(false);
+          void validateCode(code);
+        }}
+        vehicleType={vehicle?.vehicleType}
+        visible={voucherModal}
+        vouchers={vouchers}
+      />
     </View>
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
   StyleSheet.create({
-    screen: { flex: 1, backgroundColor: theme.background },
+    screen: { flex: 1, backgroundColor: p.canvas },
+    flex: { flex: 1 },
     header: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
+      gap: 11,
       paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.border,
+      paddingTop: 4,
+      paddingBottom: 10,
     },
     backButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: theme.surfaceAlt,
+      width: 38,
+      height: 38,
+      borderRadius: 19,
       alignItems: "center",
       justifyContent: "center",
+      backgroundColor: p.surface,
+      borderWidth: 1,
+      borderColor: p.line,
     },
-    headerTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
-    body: { padding: 16, gap: 10, paddingBottom: 32 },
-    card: {
-      backgroundColor: theme.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      borderRadius: 12,
-      padding: 14,
-      gap: 6,
+    pressed: { opacity: 0.7 },
+    headerBody: { flex: 1, minWidth: 0 },
+    headerKicker: {
+      color: p.brand,
+      fontFamily: checkoutFont.extraBold,
+      fontSize: 8.5,
+      letterSpacing: 0.9,
+      textTransform: "uppercase",
     },
-    cardTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
-    sectionTitle: { color: theme.text, fontSize: 14, fontWeight: "800" },
-    muted: { color: theme.muted, fontSize: 13 },
-    small: { color: theme.muted, fontSize: 12 },
-    ok: { color: theme.success, fontSize: 13, fontWeight: "700" },
-    error: { color: theme.danger, fontSize: 13, fontWeight: "600" },
-    warn: { color: "#D97706", fontSize: 12, fontWeight: "600" },
-    hint: { color: theme.placeholder, fontSize: 12, fontStyle: "italic" },
-    label: { color: theme.text, fontSize: 13, fontWeight: "700", marginTop: 6 },
-    link: { color: theme.brand, fontSize: 13, fontWeight: "700" },
-    input: {
-      backgroundColor: theme.input,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      color: theme.text,
+    headerTitle: {
+      color: p.ink,
+      fontFamily: checkoutFont.display,
+      fontSize: 19,
+      letterSpacing: -0.3,
+    },
+    payPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      borderRadius: 999,
+      paddingHorizontal: 8,
+      paddingVertical: 5,
+      backgroundColor: p.mintSoft,
+      borderWidth: 1,
+      borderColor: p.mintBorder,
+      flexShrink: 0,
+    },
+    payPillText: { color: p.mint, fontFamily: checkoutFont.bold, fontSize: 9 },
+    body: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 20, gap: 13 },
+    state: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 60,
+      paddingHorizontal: 24,
+      gap: 8,
+    },
+    stateTitle: {
+      color: p.ink,
+      fontFamily: checkoutFont.semibold,
       fontSize: 14,
+      textAlign: "center",
     },
-    multiline: { minHeight: 70, textAlignVertical: "top" },
-    switchRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginTop: 6,
+    stateText: {
+      color: p.muted,
+      fontFamily: checkoutFont.regular,
+      fontSize: 11,
+      lineHeight: 16,
+      textAlign: "center",
     },
-    promoRow: { flexDirection: "row", gap: 8 },
-    promoInput: { flex: 1 },
-    promoButton: {
-      borderRadius: 10,
-      backgroundColor: theme.brand,
-      paddingHorizontal: 16,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    walletBox: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      borderRadius: 10,
-      backgroundColor: theme.surfaceAlt,
-      padding: 8,
-      gap: 6,
-      maxHeight: 220,
-    },
-    voucherRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      backgroundColor: theme.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      borderRadius: 8,
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-    },
-    voucherInfo: { flex: 1, gap: 2 },
-    voucherCode: { color: theme.text, fontSize: 13, fontWeight: "800" },
-    voucherDiscount: { color: theme.brand, fontSize: 13, fontWeight: "800" },
-    promoApplied: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.success,
-      backgroundColor: theme.successSoft,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-    },
-    promoAppliedText: { color: theme.success, fontSize: 13, fontWeight: "800" },
-    row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-    value: { color: theme.text, fontSize: 13, fontWeight: "700" },
-    discount: { color: theme.success, fontSize: 13, fontWeight: "700" },
-    totalRow: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border, paddingTop: 8, marginTop: 4 },
-    totalLabel: { color: theme.text, fontSize: 14, fontWeight: "800" },
-    totalValue: { color: theme.brand, fontSize: 18, fontWeight: "800" },
-    scheduleBox: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.brandBorder,
-      backgroundColor: theme.brandSoft,
-      borderRadius: 10,
-      padding: 10,
-      gap: 6,
-    },
-    scheduleTitle: { color: theme.brand, fontSize: 12, fontWeight: "800" },
-    scheduleText: { color: theme.brand, fontSize: 13, fontWeight: "600" },
-    scheduleValue: { color: theme.brand, fontSize: 13, fontWeight: "800" },
-    submit: {
-      marginTop: 14,
-      borderRadius: 12,
-      backgroundColor: theme.brand,
-      paddingVertical: 14,
-      alignItems: "center",
-    },
-    submitDisabled: { opacity: 0.6 },
-    submitText: { color: theme.onBrand, fontSize: 16, fontWeight: "800" },
-    flex: { flex: 1 },
-    voucherButton: {
-      borderRadius: 10,
-      backgroundColor: theme.surfaceAlt,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-    },
-    voucherButtonText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
-    backdrop: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 20,
-    },
-    modal: { width: "100%", backgroundColor: theme.surface, borderRadius: 14, padding: 18, gap: 10 },
-    tallModal: { maxHeight: "80%" },
-    voucherList: { maxHeight: 380 },
-    voucherItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 10,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      borderRadius: 10,
-      padding: 12,
-      marginBottom: 8,
-    },
-    voucherDisabled: { opacity: 0.5 },
-    warnText: { color: theme.danger, fontSize: 12, fontWeight: "600" },
-    useText: { color: theme.brand, fontSize: 14, fontWeight: "800" },
-    ghostButton: { paddingHorizontal: 14, paddingVertical: 10, alignItems: "center" },
-    ghostText: { color: theme.muted, fontWeight: "700" },
   });
