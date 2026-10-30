@@ -297,8 +297,8 @@ const createStyles = (p: ReturnType<typeof useDetailTheme>["p"]) =>
     score: {
       color: p.ink,
       fontFamily: detailFont.display,
-      fontSize: 33,
-      lineHeight: 37,
+      fontSize: 28,
+      lineHeight: 32,
       letterSpacing: -1,
     },
     scoreCount: { color: p.muted, fontFamily: detailFont.regular, fontSize: 9, marginTop: 3 },

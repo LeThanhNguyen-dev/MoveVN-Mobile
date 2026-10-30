@@ -375,15 +375,17 @@ export const createStyles = (p: DetailPalette) =>
     headerKicker: {
       color: p.brand,
       fontFamily: font.extraBold,
-      fontSize: 8.5,
-      letterSpacing: 0.9,
+      fontSize: 9,
+      lineHeight: 12,
+      letterSpacing: 0.7,
       textTransform: "uppercase",
     },
     headerTitle: {
       color: p.ink,
       fontFamily: font.display,
-      fontSize: 19,
-      letterSpacing: -0.3,
+      fontSize: 16,
+      lineHeight: 21,
+      letterSpacing: -0.2,
     },
     card: {
       backgroundColor: p.surface,
@@ -438,7 +440,7 @@ export const createStyles = (p: DetailPalette) =>
     sectionTitle: {
       color: p.ink,
       fontFamily: font.display,
-      fontSize: 15.5,
+      fontSize: 15,
       lineHeight: 20,
       letterSpacing: -0.2,
     },
@@ -457,7 +459,7 @@ export const createStyles = (p: DetailPalette) =>
     rowValue: {
       color: p.ink,
       fontFamily: font.semibold,
-      fontSize: 12,
+      fontSize: 11.5,
       fontVariant: ["tabular-nums"],
       textAlign: "right",
       maxWidth: "58%",
@@ -503,7 +505,7 @@ export const createStyles = (p: DetailPalette) =>
     },
     noticeBody: { flex: 1, minWidth: 0, gap: 3 },
     noticeTitle: { color: p.ink, fontFamily: font.semibold, fontSize: 11.5 },
-    noticeText: { color: p.muted, fontFamily: font.regular, fontSize: 10.5, lineHeight: 16 },
+    noticeText: { color: p.muted, fontFamily: font.regular, fontSize: 10.5, lineHeight: 15 },
     stat: { flex: 1, alignItems: "center", justifyContent: "center", gap: 5, paddingHorizontal: 3 },
     statIcon: {
       width: 30,

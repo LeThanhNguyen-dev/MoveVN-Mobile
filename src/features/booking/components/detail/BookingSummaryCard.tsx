@@ -120,7 +120,7 @@ export default function BookingSummaryCard({
 const createStyles = (p: DetailPalette) =>
   StyleSheet.create({
     // Rộng hơn các card nội dung một chút để card nhận/trả xe nổi bật hơn.
-    card: { marginTop: 12, marginHorizontal: 10 },
+    card: { marginTop: 12, marginHorizontal: 8 },
     top: { flexDirection: "row", gap: 12 },
     photoWrap: { flexShrink: 0 },
     photo: { width: 104, height: 104, borderRadius: 18, backgroundColor: p.surfaceAlt },
@@ -130,20 +130,20 @@ const createStyles = (p: DetailPalette) =>
     kicker: {
       color: p.brand,
       fontFamily: font.extraBold,
-      fontSize: 9.5,
-      letterSpacing: 1.2,
+      fontSize: 9,
+      letterSpacing: 0.8,
       textTransform: "uppercase",
     },
     title: {
       color: p.ink,
       fontFamily: font.display,
-      fontSize: 20,
-      lineHeight: 24,
-      letterSpacing: -0.4,
+      fontSize: 17,
+      lineHeight: 21,
+      letterSpacing: -0.3,
     },
     meta: { gap: 3, marginTop: 2 },
     metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-    metaText: { color: p.muted, fontFamily: font.medium, fontSize: 11, flexShrink: 1 },
+    metaText: { color: p.muted, fontFamily: font.medium, fontSize: 10.5, flexShrink: 1 },
     priceRow: {
       flexDirection: "row",
       alignItems: "flex-end",
@@ -166,6 +166,7 @@ const createStyles = (p: DetailPalette) =>
       color: p.brand,
       fontFamily: font.display,
       fontSize: 18,
+      lineHeight: 22,
       letterSpacing: -0.4,
       fontVariant: ["tabular-nums"],
     },

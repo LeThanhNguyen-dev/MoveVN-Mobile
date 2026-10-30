@@ -50,7 +50,7 @@ export default function DetailSectionHeader({
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 10 },
   medal: { width: 34, height: 34, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-  title: { flex: 1, fontFamily: detailFont.display, fontSize: 17.5, lineHeight: 23, letterSpacing: -0.2 },
+  title: { flex: 1, fontFamily: detailFont.display, fontSize: 15.5, lineHeight: 20, letterSpacing: -0.1 },
   action: { minHeight: 32, justifyContent: "center", paddingLeft: 8 },
   actionText: { fontFamily: detailFont.bold, fontSize: 11.5 },
   pressed: { opacity: 0.6 },

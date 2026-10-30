@@ -62,14 +62,14 @@ export default function ReportBookingViolation({ bookingId, bookingCode }: { boo
     <BookingButton danger regular title="Báo cáo vi phạm booking" onPress={show} />
     <Modal visible={open} animationType="slide" onRequestClose={() => { if (!busy) setOpen(false); }}>
       <View style={{ flex: 1, backgroundColor: theme.background, padding: 20, paddingTop: 48, gap: 12 }}>
-        <Text style={{ color: theme.text, fontSize: 20, fontWeight: "700" }}>Báo cáo booking {bookingCode}</Text>
+        <Text style={{ color: theme.text, fontSize: 17, lineHeight: 22, fontWeight: "700" }}>Báo cáo booking {bookingCode}</Text>
         <ScrollView contentContainerStyle={{ gap: 12 }} keyboardShouldPersistTaps="handled">
-          <Text style={{ color: theme.muted }}>Báo cáo hành vi vi phạm để bộ phận kiểm duyệt xác minh. Yêu cầu hoàn tiền hoặc xử lý phụ thu cần mở tranh chấp riêng.</Text>
+          <Text style={{ color: theme.muted, fontSize: 11.5, lineHeight: 16 }}>Báo cáo hành vi vi phạm để bộ phận kiểm duyệt xác minh. Yêu cầu hoàn tiền hoặc xử lý phụ thu cần mở tranh chấp riêng.</Text>
           {selected ? <>
-            <Text style={{ color: theme.brand, fontWeight: "700" }}>{statuses[selected.status] ?? selected.status}</Text>
-            <Text style={{ color: theme.text }}>{selected.description}</Text>
-            {!!selected.resolution && <Text style={{ color: theme.text }}>Kết luận: {selected.resolution}</Text>}
-            {selected.history?.map(item => <Text key={item.id} style={{ color: theme.text }}>{item.actorName}: {item.note}</Text>)}
+            <Text style={{ color: theme.brand, fontSize: 11.5, lineHeight: 16, fontWeight: "700" }}>{statuses[selected.status] ?? selected.status}</Text>
+            <Text style={{ color: theme.text, fontSize: 11.5, lineHeight: 16 }}>{selected.description}</Text>
+            {!!selected.resolution && <Text style={{ color: theme.text, fontSize: 11.5, lineHeight: 16 }}>Kết luận: {selected.resolution}</Text>}
+            {selected.history?.map(item => <Text key={item.id} style={{ color: theme.text, fontSize: 11.5, lineHeight: 16 }}>{item.actorName}: {item.note}</Text>)}
             <BookingButton title="Tải trạng thái báo cáo" disabled={busy} onPress={() => inspect(selected.id)} />
             <BookingButton secondary title="Quay lại báo cáo" disabled={busy} onPress={() => { setSelected(null); show(); }} />
           </> : <>
@@ -80,7 +80,7 @@ export default function ReportBookingViolation({ bookingId, bookingCode }: { boo
             {evidence.map((url, index) => <View key={url} style={{ gap: 6 }}><Image source={{ uri: url }} style={{ width: 120, height: 120 }} /><BookingButton secondary title={`Xóa ảnh ${index + 1}`} disabled={busy} onPress={() => setEvidence(current => current.filter(value => value !== url))} /></View>)}
             <BookingButton title="Gửi báo cáo vi phạm" busy={busy} disabled={!reason || description.trim().length < 20} onPress={submit} />
           </>}
-          {!!error && <Text accessibilityRole="alert" style={{ color: theme.danger }}>{error}</Text>}
+          {!!error && <Text accessibilityRole="alert" style={{ color: theme.danger, fontSize: 11.5, lineHeight: 16 }}>{error}</Text>}
         </ScrollView>
         <BookingButton secondary title="Đóng báo cáo" disabled={busy} onPress={() => setOpen(false)} />
       </View>

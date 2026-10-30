@@ -185,7 +185,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
             <MobileBottomBar activeKey={activeTab} items={customerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} />
           ) : null}
           {/* Giữ xác nhận và thanh toán trong chat; mở chi tiết khi khách chọn. */}
-          {!(activeTab === "trips" && tripsRoute === "TripHandover") && <AssistantFab key={user.userId} onViewVehicle={id => { setPendingVehicleId(id); setActiveTab("explore"); }} onViewBooking={goToTrip} onQuickBook={handleQuickBook} />}
+          {!(activeTab === "trips" && (tripsRoute === "TripHandover" || tripsRoute === "ContractDetail")) && <AssistantFab key={user.userId} onViewVehicle={id => { setPendingVehicleId(id); setActiveTab("explore"); }} onViewBooking={goToTrip} onQuickBook={handleQuickBook} />}
         </>
       )}
     </SafeAreaView>

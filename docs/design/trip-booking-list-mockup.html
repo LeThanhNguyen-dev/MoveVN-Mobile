@@ -1,0 +1,1235 @@
+<!doctype html>
+<html lang="vi" data-theme="light"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MoveVN · Danh sách chuyến đi &amp; đơn thuê — UI concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;family=Quicksand:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF6FF; --surface:#FFFFFF; --surface-alt:#F1F5F9;
+    --border:#E8E1F2; --text:#101936; --muted:#746F7E; --faint:#94A3B8;
+    --brand:#6B19FF; --brand-soft:#F1E7FF; --brand-border:#DACBFF;
+    --success:#059669; --success-soft:#D1FAE5; --success-border:#BCEBD9;
+    --info:#0284C7; --info-soft:#E0F2FE; --info-border:#BAE6FD;
+    --danger:#DC2626; --danger-soft:#FFE4E6; --danger-border:#FECACA;
+    --warning:#D97706; --warning-soft:#FFF7E6; --warning-border:#F5E0B8;
+    --rating:#E9A100; --rating-soft:#FFF6E2; --rating-border:#F5E0B8;
+    --page:#F4EEFB; --page-2:#EBE3F7;
+    --shadow-card:0 6px 16px rgba(44,23,76,.06);
+    --shadow-float:0 12px 24px rgba(44,23,76,.12);
+    --bezel:linear-gradient(160deg,#3B3159,#171122 60%,#0E0A1A);
+  }
+  html[data-theme="dark"]{
+    --bg:#131022; --surface:#1E1930; --surface-alt:#2A2442;
+    --border:#342C52; --text:#F3F0FB; --muted:#ABA2C9; --faint:#6E6591;
+    --brand:#8B5CFF; --brand-soft:#2E2757; --brand-border:#4C4180;
+    --success:#34D399; --success-soft:#123B2E; --success-border:#1F5644;
+    --info:#38BDF8; --info-soft:#0C2E3F; --info-border:#155069;
+    --danger:#F87171; --danger-soft:#3B2230; --danger-border:#5B2B3A;
+    --warning:#FBBF24; --warning-soft:#3A2A0F; --warning-border:#5A4318;
+    --rating:#F5B93F; --rating-soft:#34280F; --rating-border:#5A4318;
+    --page:#0C0A16; --page-2:#151024;
+    --shadow-card:0 6px 16px rgba(0,0,0,.35);
+    --shadow-float:0 12px 24px rgba(0,0,0,.45);
+    --bezel:linear-gradient(160deg,#2A2440,#0D0A16 60%,#050309);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:
+      radial-gradient(900px 500px at 12% -8%, var(--page-2), transparent 70%),
+      radial-gradient(800px 600px at 92% 4%, var(--page-2), transparent 65%),
+      var(--page);
+    color:var(--text);-webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{font-family:Quicksand,"Be Vietnam Pro",system-ui,sans-serif;margin:0;letter-spacing:-.02em}
+  p{margin:0}
+  b,strong{font-weight:700}
+
+  .topbar{
+    position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;
+    padding:14px 28px;backdrop-filter:blur(14px);
+    background:color-mix(in srgb, var(--bg) 80%, transparent);
+    border-bottom:1px solid var(--border);
+  }
+  .logo{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
+    background:linear-gradient(135deg,#6B19FF,#A855F7);color:#fff;flex:none;
+    box-shadow:0 6px 14px rgba(107,25,255,.32)}
+  .brandwrap{display:flex;flex-direction:column;line-height:1.15}
+  .brandwrap b{font-family:Quicksand;font-size:15px}
+  .brandwrap span{font-size:10.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+  .spacer{flex:1}
+  .switch,.seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--surface-alt);border:1px solid var(--border)}
+  .switch button,.seg button{
+    border:0;cursor:pointer;background:transparent;color:var(--muted);
+    font:600 12px/1 "Be Vietnam Pro";padding:9px 16px;border-radius:11px;transition:.18s ease;
+  }
+  .switch button[aria-pressed="true"],.seg button[aria-pressed="true"]{
+    background:var(--surface);color:var(--brand);box-shadow:0 2px 8px rgba(44,23,76,.10)}
+  html[data-theme="dark"] .switch button[aria-pressed="true"],
+  html[data-theme="dark"] .seg button[aria-pressed="true"]{box-shadow:0 2px 8px rgba(0,0,0,.5)}
+
+  .wrap{max-width:1320px;margin:0 auto;padding:34px 28px 80px}
+  .hero-head{max-width:820px;margin-bottom:26px}
+  .eyebrow{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;
+    background:var(--brand-soft);border:1px solid var(--brand-border);color:var(--brand);
+    font:800 9.5px/1 "Be Vietnam Pro";letter-spacing:.12em;text-transform:uppercase}
+  .hero-head h1{font-size:36px;line-height:1.14;margin:16px 0 12px}
+  .hero-head p{color:var(--muted);font-size:14.5px;line-height:1.65;max-width:700px}
+
+  .seg{margin:0 0 26px;width:max-content}
+  .group[hidden]{display:none}
+
+  .frames{display:flex;flex-wrap:wrap;gap:34px;justify-content:center;align-items:flex-start}
+  .frame{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .frame-label{display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--muted);text-align:center}
+  .frame-label b{width:22px;height:22px;border-radius:8px;display:grid;place-items:center;
+    background:var(--brand-soft);color:var(--brand);font-size:11px;font-weight:800;flex:none}
+
+  .device{width:376px;height:792px;padding:9px;border-radius:46px;background:var(--bezel);
+    box-shadow:0 30px 60px rgba(20,8,40,.28),0 2px 0 rgba(255,255,255,.06) inset;flex:none}
+  html[data-theme="dark"] .device{box-shadow:0 30px 60px rgba(0,0,0,.6),0 2px 0 rgba(255,255,255,.05) inset}
+  .screen{width:100%;height:100%;border-radius:38px;overflow:hidden;position:relative;
+    background:var(--bg);display:flex;flex-direction:column}
+  .scroll{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+  .scroll::-webkit-scrollbar{display:none}
+
+  .sb{display:flex;align-items:center;justify-content:space-between;padding:12px 22px 4px;flex:none}
+  .sb b{font-size:12px;font-weight:700}
+  .sb-icons{display:flex;align-items:center;gap:5px}
+  .bar{width:3px;border-radius:2px;background:var(--text)}
+  .bar.b1{height:5px}.bar.b2{height:7px}.bar.b3{height:9px}.bar.b4{height:11px}
+  .battery{width:20px;height:10px;border:1.4px solid var(--text);border-radius:3px;position:relative;margin-left:3px}
+  .battery::after{content:"";position:absolute;inset:1.6px;background:var(--text);border-radius:1px;width:70%}
+
+  /* ---------- list header ---------- */
+  .listhead{padding:6px 16px 10px;flex:none}
+  .lh-top{display:flex;align-items:flex-start;gap:10px}
+  .lh-copy{flex:1;min-width:0}
+  .kick{font:800 8.5px/1 "Be Vietnam Pro";letter-spacing:.1em;text-transform:uppercase;color:var(--brand)}
+  .lh-copy h2{font-size:20px;line-height:1.2;margin-top:3px}
+  .lh-meta{display:flex;align-items:center;gap:6px;margin-top:5px;font:500 10.5px/1 "Be Vietnam Pro";color:var(--muted)}
+  .lh-meta .mdot{width:3px;height:3px;border-radius:50%;background:var(--faint)}
+  .lh-actions{display:flex;gap:7px;flex:none;padding-top:2px}
+  .iconbtn{width:36px;height:36px;border-radius:18px;display:grid;place-items:center;
+    background:var(--surface);border:1px solid var(--border);color:var(--text);flex:none;cursor:pointer}
+  .iconbtn svg{width:17px;height:17px}
+  .iconbtn .dotflag{position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--brand)}
+  .iconbtn{position:relative}
+
+  /* ---------- reminder band ---------- */
+  .alertband{display:flex;align-items:center;gap:10px;margin:0 16px 10px;padding:11px 12px;
+    border-radius:18px;border:1px solid var(--brand-border);
+    background:linear-gradient(135deg,var(--brand-soft),var(--surface))}
+  .alertband.warn{border-color:var(--warning-border);background:linear-gradient(135deg,var(--warning-soft),var(--surface))}
+  .ab-ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;
+    background:var(--surface);color:var(--brand);border:1px solid var(--brand-border)}
+  .alertband.warn .ab-ic{color:var(--warning);border-color:var(--warning-border)}
+  .ab-ic svg{width:15px;height:15px}
+  .ab-txt{flex:1;min-width:0}
+  .ab-txt b{display:block;font:600 11.5px/1.35 "Be Vietnam Pro";color:var(--text)}
+  .ab-txt span{display:block;font:400 10px/1.4 "Be Vietnam Pro";color:var(--muted);margin-top:1px}
+  .ab-link{font:700 10.5px/1 "Be Vietnam Pro";color:var(--brand);background:none;border:0;padding:6px 2px;cursor:pointer;flex:none}
+  .alertband.warn .ab-link{color:var(--warning)}
+
+  /* ---------- filter chips ---------- */
+  .chipbar{display:flex;align-items:center;gap:7px;padding:2px 16px 12px;flex:none}
+  .chipbar .chips{display:flex;align-items:center;gap:7px;flex:1;min-width:0;
+    overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 16px),transparent);
+    mask-image:linear-gradient(90deg,#000 calc(100% - 16px),transparent)}
+  .chipbar .chips::-webkit-scrollbar{display:none}
+  .chipbar.wrap{flex-wrap:wrap}
+  .chipbar.wrap .chips{flex-wrap:wrap;overflow:visible;-webkit-mask-image:none;mask-image:none;flex:1 1 auto}
+  .chip{flex:none;display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 13px;border-radius:999px;
+    border:1px solid var(--border);background:var(--surface);color:var(--muted);
+    font:700 11px/1 "Be Vietnam Pro";white-space:nowrap;cursor:pointer}
+  .chip svg{width:13px;height:13px}
+  .chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .chip.filter{color:var(--brand);border-color:var(--brand-border);background:var(--brand-soft)}
+  .chip .num{font-size:9.5px;opacity:.8}
+
+  /* ---------- group header ---------- */
+  .grouphead{display:flex;align-items:center;gap:8px;padding:0 18px;margin:4px 0 8px}
+  .grouphead span{font:800 9px/1 "Be Vietnam Pro";letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .grouphead b{min-width:18px;height:18px;padding:0 5px;border-radius:9px;display:grid;place-items:center;
+    background:var(--surface-alt);color:var(--muted);font:700 9.5px/1 "Be Vietnam Pro"}
+  .grouphead .line{flex:1;height:1px;background:var(--border)}
+
+  /* ---------- booking card ---------- */
+  .bcard{margin:0 16px 11px;padding:13px;background:var(--surface);border:1px solid var(--border);
+    border-radius:24px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;gap:10px}
+  .bcard.flat{box-shadow:none;background:color-mix(in srgb, var(--surface) 72%, var(--surface-alt))}
+  .brow{display:flex;gap:11px}
+  .bthumb{position:relative;width:86px;height:86px;border-radius:18px;flex:none;overflow:hidden;
+    background:radial-gradient(120% 90% at 20% 10%,rgba(255,255,255,.28),transparent 60%),linear-gradient(150deg,#7C3AED,#6B19FF 55%,#4A0FAE);
+    display:grid;place-items:center;color:#fff}
+  .bthumb svg{width:42px;height:42px;opacity:.9}
+  .bthumb .daysbadge{position:absolute;left:6px;bottom:6px;display:inline-flex;align-items:center;gap:3px;
+    min-height:18px;padding:0 6px;border-radius:999px;background:rgba(12,8,24,.55);
+    border:1px solid rgba(255,255,255,.22);color:#fff;font:700 8.5px/1 "Be Vietnam Pro";backdrop-filter:blur(6px)}
+  .bthumb .daysbadge svg{width:9px;height:9px;opacity:1}
+  .binfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .bcode-row{display:flex;align-items:center;gap:7px;justify-content:space-between}
+  .bcode{font:800 8.5px/1 "Be Vietnam Pro";letter-spacing:.08em;text-transform:uppercase;color:var(--faint);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bname{font-family:Quicksand;font-weight:700;font-size:15px;line-height:1.2;letter-spacing:-.3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bowner{display:flex;align-items:center;gap:5px;font:400 10.5px/1.3 "Be Vietnam Pro";color:var(--muted);min-width:0}
+  .bowner svg{width:11px;height:11px;flex:none;color:var(--faint)}
+  .bowner .mdot{width:3px;height:3px;border-radius:50%;background:var(--faint);flex:none}
+  .bowner b{color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .btime{display:flex;align-items:center;gap:6px;font:500 10.5px/1.3 "Be Vietnam Pro";color:var(--muted);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .btime svg{width:12px;height:12px;color:var(--faint);flex:none}
+  .btime b{color:var(--text);font-weight:600}
+  .btime .arrow{color:var(--faint);flex:none}
+  .baddr{display:flex;align-items:flex-start;gap:5px;font:400 9.5px/1.35 "Be Vietnam Pro";color:var(--faint);min-width:0}
+  .baddr svg{width:10px;height:10px;flex:none;margin-top:1px;color:var(--faint)}
+  .baddr span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+  .ownerrow{display:flex;align-items:center;gap:7px;min-width:0}
+  .avatar{width:22px;height:22px;border-radius:8px;display:grid;place-items:center;flex:none;
+    background:var(--brand-soft);color:var(--brand);font:800 9px/1 "Be Vietnam Pro"}
+  .ownerrow b{font:600 11px/1.3 "Be Vietnam Pro";color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ownerrow .go{margin-left:auto;color:var(--brand);display:inline-flex;align-items:center;gap:2px;font:600 9.5px/1 "Be Vietnam Pro";flex:none}
+  .ownerrow .go svg{width:11px;height:11px}
+
+  /* progress / countdown */
+  .bstate{display:flex;flex-direction:column;gap:6px;padding-top:2px}
+  .bs-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .bs-meta{font:500 10px/1 "Be Vietnam Pro";color:var(--muted);font-variant-numeric:tabular-nums}
+  .track{height:6px;border-radius:999px;background:var(--surface-alt);border:1px solid var(--border);overflow:hidden}
+  .track .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#6B19FF,#A855F7)}
+  .track.warn .fill{background:linear-gradient(90deg,#D97706,#FBBF24)}
+  .track.mint .fill{background:linear-gradient(90deg,#059669,#34D399)}
+
+  .bfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding-top:10px;border-top:1px solid var(--border)}
+  .bprice{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .bprice .amount{font-family:Quicksand;font-weight:700;font-size:16px;line-height:1.15;letter-spacing:-.3px;
+    color:var(--text);font-variant-numeric:tabular-nums}
+  .bprice .amount small{font-size:10.5px}
+  .bprice .note{font:500 9.5px/1 "Be Vietnam Pro";color:var(--muted)}
+  .bprice .note.ok{color:var(--success)}
+  .minibtn{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;
+    min-height:36px;padding:0 13px;border-radius:12px;border:1px solid var(--brand);cursor:pointer;
+    background:var(--brand);color:#fff;font:700 11px/1 "Be Vietnam Pro";white-space:nowrap}
+  .minibtn svg{width:13px;height:13px}
+  .minibtn.soft{background:var(--brand-soft);border-color:var(--brand-border);color:var(--brand)}
+  .minibtn.ghost{background:var(--surface-alt);border-color:var(--border);color:var(--muted)}
+  .minibtn.dgr{background:var(--danger-soft);border-color:var(--danger-border);color:var(--danger);font-weight:600}
+  .minibtn.warn{background:var(--warning-soft);border-color:var(--warning-border);color:var(--warning);font-weight:600}
+  .bfoot .actions{display:flex;gap:6px;flex:none}
+
+  .urgent{display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:11px;
+    background:var(--warning-soft);border:1px solid var(--warning-border);
+    font:600 10px/1.2 "Be Vietnam Pro";color:var(--warning)}
+  .urgent svg{width:12px;height:12px;flex:none}
+  .urgent b{font-variant-numeric:tabular-nums}
+
+  /* ---------- pills ---------- */
+  .pill{display:inline-flex;align-items:center;gap:5px;min-height:23px;padding:0 8px;border-radius:999px;
+    font:700 9px/1 "Be Vietnam Pro";border:1px solid transparent;white-space:nowrap;flex:none}
+  .pill i{width:5px;height:5px;border-radius:50%}
+  .pill.brand{background:var(--brand-soft);border-color:var(--brand-border);color:var(--brand)}
+  .pill.brand i{background:var(--brand)}
+  .pill.mint{background:var(--success-soft);border-color:var(--success-border);color:var(--success)}
+  .pill.mint i{background:var(--success)}
+  .pill.info{background:var(--info-soft);border-color:var(--info-border);color:var(--info)}
+  .pill.info i{background:var(--info)}
+  .pill.neutral{background:var(--surface-alt);border-color:var(--border);color:var(--muted)}
+  .pill.neutral i{background:var(--faint)}
+  .pill.warn{background:var(--warning-soft);border-color:var(--warning-border);color:var(--warning)}
+  .pill.warn i{background:var(--warning)}
+  .pill.dgr{background:var(--danger-soft);border-color:var(--danger-border);color:var(--danger)}
+  .pill.dgr i{background:var(--danger)}
+
+  /* ---------- empty / footer ---------- */
+  .emptycard{margin:8px 16px 0;padding:26px 18px;border-radius:24px;border:1px dashed var(--border);
+    background:var(--surface);display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
+  .empty-ic{width:58px;height:58px;border-radius:20px;display:grid;place-items:center;
+    background:var(--brand-soft);color:var(--brand);margin-bottom:4px}
+  .empty-ic svg{width:26px;height:26px}
+  .emptycard h4{font-size:15px}
+  .emptycard p{font:400 10.5px/1.55 "Be Vietnam Pro";color:var(--muted);max-width:240px}
+  .emptycard .cta{margin-top:8px;min-height:38px;padding:0 15px;border-radius:12px;
+    border:1px solid var(--brand-border);background:var(--brand-soft);color:var(--brand);
+    font:700 11px/1 "Be Vietnam Pro";display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+  .emptycard .cta svg{width:13px;height:13px}
+
+  .morewrap{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 16px 18px}
+  .morebtn{min-height:38px;padding:0 18px;border-radius:12px;border:1px solid var(--brand-border);
+    background:var(--brand-soft);color:var(--brand);font:700 11px/1 "Be Vietnam Pro";cursor:pointer}
+  .endnote{font:400 9.5px/1.4 "Be Vietnam Pro";color:var(--faint)}
+
+  /* ---------- bottom tab bar ---------- */
+  .tabbar{flex:none;display:flex;align-items:flex-end;justify-content:space-around;
+    margin:0 12px 10px;padding:7px 4px 9px;border-radius:22px;border:1px solid var(--border);
+    background:var(--surface);box-shadow:0 -6px 18px rgba(44,23,76,.08)}
+  html[data-theme="dark"] .tabbar{box-shadow:0 -6px 18px rgba(0,0,0,.4)}
+  .tb-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    width:20%;min-height:44px;color:var(--muted)}
+  .tb-item svg{width:19px;height:19px}
+  .tb-item span{font:700 8px/1 "Be Vietnam Pro";max-width:64px;text-align:center}
+  .tb-item.active{color:var(--brand)}
+  .tb-item.prominent{margin-top:-16px;color:var(--brand)}
+  .tb-fab{width:44px;height:44px;border-radius:22px;display:grid;place-items:center;
+    background:var(--brand-soft);border:1px solid var(--brand);box-shadow:0 5px 12px rgba(107,25,255,.2)}
+  .tb-fab svg{width:21px;height:21px}
+
+  /* ---------- gallery ---------- */
+  .sec-title{margin:58px 0 8px;font-size:23px}
+  .sec-sub{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:22px;max-width:680px}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+  .gcard{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:18px;box-shadow:var(--shadow-card)}
+  .gcard h4{font-size:13px;margin-bottom:4px}
+  .gcard .hint{font:400 10.5px/1.5 "Be Vietnam Pro";color:var(--faint);margin-bottom:14px}
+  .gcard .bcard{margin:0}
+  .gcard .alertband{margin:0}
+  .gcard .chipbar{padding:0}
+  .gcard .chipbar .chips{flex-wrap:wrap;overflow:visible;-webkit-mask-image:none;mask-image:none}
+  .sheet{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .sheet .grab{width:34px;height:4px;border-radius:2px;background:var(--border);align-self:center;margin-bottom:2px}
+  .sheet h5{margin:0;font-family:Quicksand;font-size:14px}
+  .sheet .sub{font:400 10px/1.4 "Be Vietnam Pro";color:var(--muted);margin-top:-6px}
+  .sheet .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .sheet .chips .chip{min-height:30px;font-size:10.5px}
+  .sheet .row{display:flex;gap:8px;margin-top:2px}
+  .sheet .row button{flex:1;min-height:36px;border-radius:12px;font:700 11px/1 "Be Vietnam Pro";cursor:pointer}
+  .sheet .row .primary{background:var(--brand);border:1px solid var(--brand);color:#fff}
+  .sheet .row .ghost{background:var(--surface-alt);border:1px solid var(--border);color:var(--muted)}
+
+  table.map{width:100%;border-collapse:collapse;margin-top:10px;font-size:11.5px}
+  table.map th{text-align:left;font:600 9.5px/1 "Be Vietnam Pro";letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint);padding:0 0 9px;border-bottom:1px solid var(--border)}
+  table.map td{padding:9px 0;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+  table.map td:first-child{color:var(--text);font-weight:600}
+
+  .footnote{margin:26px 20px 16px;font:400 10.5px/1.6 "Be Vietnam Pro";color:var(--faint);text-align:center}
+
+  @media (max-width:900px){
+    .wrap{padding:24px 16px 60px}
+    .hero-head h1{font-size:27px}
+    .device{transform:scale(.92);transform-origin:top center;margin-bottom:-60px}
+    .topbar{flex-wrap:wrap}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="i-car" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></g>
+    <g id="i-calendar" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></g>
+    <g id="i-clock" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></g>
+    <g id="i-user" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4.5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></g>
+    <g id="i-search" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.4-3.4"></path></g>
+    <g id="i-sliders" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"></path><path d="M1 14h6M9 8h6M17 16h6"></path></g>
+    <g id="i-bell" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></g>
+    <g id="i-chev" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></g>
+    <g id="i-arrow" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></g>
+    <g id="i-check" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></g>
+    <g id="i-x" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"></path></g>
+    <g id="i-wallet" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M16 12h4"></path></g>
+    <g id="i-star" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.5 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.3l6.5-.9z"></path></g>
+    <g id="i-gift" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"></rect><path d="M12 8v13M3 12h18"></path><path d="M12 8s-1.5-5-4.5-5S5 8 12 8s4.5-5 7.5-5S12 8 12 8Z"></path></g>
+    <g id="i-grid" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></g>
+    <g id="i-chat" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></g>
+    <g id="i-carfront" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17v2M18 17v2"></path><path d="m6 17 1.2-5.2A2 2 0 0 1 9.1 10h5.8a2 2 0 0 1 1.9 1.8L18 17"></path><path d="M5 9 6 5h12l1 4"></path><circle cx="8.5" cy="14" r="1"></circle><circle cx="15.5" cy="14" r="1"></circle></g>
+    <g id="i-dashboard" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="10" rx="2"></rect><rect x="13" y="3" width="8" height="6" rx="2"></rect><rect x="13" y="11" width="8" height="10" rx="2"></rect><rect x="3" y="15" width="8" height="6" rx="2"></rect></g>
+    <g id="i-alert" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"></path><path d="M12 9v4M12 17h.01"></path></g>
+    <g id="i-pin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></g>
+    <g id="i-receipt" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M8 7h8M8 11h6"></path></g>
+  </defs>
+</svg>
+
+<div class="topbar">
+  <div class="logo"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-car" stroke-width="2"></use></svg></div>
+  <div class="brandwrap"><b>MoveVN · List UI</b><span>Chuyến đi &amp; Đơn thuê</span></div>
+  <div class="spacer"></div>
+  <div class="switch" role="group" aria-label="Chế độ màu">
+    <button type="button" id="btn-light" aria-pressed="true">Sáng</button>
+    <button type="button" id="btn-dark" aria-pressed="false">Tối</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="hero-head">
+    <span class="eyebrow"><svg width="11" height="11" viewBox="0 0 24 24"><use href="#i-grid"></use></svg> UI concept · 2 màn danh sách</span>
+    <h1>Danh sách tự sắp theo việc cần làm</h1>
+    <p>
+      Không đổi API: vẫn lọc theo một trạng thái, nhưng danh sách <b>tự nhóm theo giai đoạn</b>
+      (Cần xử lý → Sắp tới → Đang diễn ra → Đã kết thúc). Mỗi thẻ chỉ giữ <b>một hành động chính</b>,
+      tiến độ hoặc hạn chót hiển thị ngay trên thẻ. Khách nhìn thời gian, chủ xe nhìn việc phải duyệt.
+    </p>
+  </div>
+
+  <div class="seg" role="group" aria-label="Chọn màn">
+    <button type="button" id="tab-trip" aria-pressed="true">Chuyến đi của tôi</button>
+    <button type="button" id="tab-booking" aria-pressed="false">Đơn thuê của tôi</button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- GROUP: TRIP (khách) -->
+  <!-- ============================================================ -->
+  <div class="group" id="group-trip">
+    <div class="frames">
+
+      <!-- TRIP LIST 1 -->
+      <div class="frame">
+        <div class="frame-label"><b>1</b> Đầu trang · việc gì đang chờ</div>
+        <div class="device">
+          <div class="screen">
+            <div class="scroll">
+              <div class="sb"><b>9:41</b><div class="sb-icons">
+                <span class="bar b1"></span><span class="bar b2"></span><span class="bar b3"></span><span class="bar b4"></span><span class="battery"></span>
+              </div></div>
+
+              <div class="listhead">
+                <div class="lh-top">
+                  <div class="lh-copy">
+                    <div class="kick">Chuyến đi</div>
+                    <h2>Chuyến đi của tôi</h2>
+                    <div class="lh-meta"><span>12 chuyến</span><span class="mdot"></span><span>1 đang diễn ra</span></div>
+                  </div>
+                  <div class="lh-actions">
+                    <button class="iconbtn" aria-label="Tìm chuyến đi"><svg viewBox="0 0 24 24"><use href="#i-search"></use></svg></button>
+                    <button class="iconbtn" aria-label="Bộ lọc"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg></button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="alertband">
+                <span class="ab-ic"><svg viewBox="0 0 24 24"><use href="#i-bell"></use></svg></span>
+                <div class="ab-txt">
+                  <b>VF 9 sắp bắt đầu sau 2 giờ</b>
+                  <span>Nhớ mang CCCD và bằng lái khi nhận xe.</span>
+                </div>
+                <button class="ab-link">Xem</button>
+              </div>
+
+              <div class="chipbar">
+                <div class="chips">
+  <button class="chip on">Tất cả</button>
+                  <button class="chip">Chờ duyệt</button>
+                  <button class="chip">Đã cọc</button>
+                  <button class="chip">Đang thuê</button>
+                  <button class="chip filter"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg>Bộ lọc</button>
+                </div>
+              </div>
+
+              <div class="grouphead"><span>Đang diễn ra</span><b>1</b><span class="line"></span></div>
+
+              <article class="bcard">
+                <div class="brow">
+                  <div class="bthumb">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                    <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>3 ngày</span>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0842</span>
+                      <span class="pill brand"><i></i>Đang chạy</span>
+                    </div>
+                    <div class="bname">VF 8 Plus 2024</div>
+                    <div class="bowner"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><b>Nguyễn Minh Anh</b><span class="mdot"></span><span>Quận 7</span></div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>29/10 09:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>31/10 09:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"></use></svg><span>Bãi xe Vincom Mega Mall, 161 Xa lộ Hà Nội, Thảo Điền, TP. Thủ Đức</span></div>
+                  </div>
+                </div>
+                <div class="bstate">
+                  <div class="bs-top"><span class="pill brand"><i></i>Còn 1 ngày 4 giờ</span><span class="bs-meta">Ngày 2/3</span></div>
+                  <div class="track"><div class="fill" style="width:62%"></div></div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">2.400.000<small>đ</small></span><span class="note">Cọc 720.000đ</span></div>
+                  <button class="minibtn">Trả xe <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></button>
+                </div>
+              </article>
+
+              <div class="grouphead"><span>Sắp tới</span><b>3</b><span class="line"></span></div>
+
+              <article class="bcard">
+                <div class="brow">
+                  <div class="bthumb">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                    <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>3 ngày</span>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0901</span>
+                      <span class="pill warn"><i></i>Chờ cọc</span>
+                    </div>
+                    <div class="bname">VinFast VF 9 2023</div>
+                    <div class="bowner"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><b>Trần Quốc Bảo</b><span class="mdot"></span><span>Thủ Đức</span></div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>01/11 08:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>04/11 08:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"></use></svg><span>Sân bay Tân Sơn Nhất, ga Quốc nội, P. 2, Q. Tân Bình</span></div>
+                  </div>
+                </div>
+                <div class="bstate">
+                  <div class="bs-top"><span class="pill warn"><i></i>Còn 11:42:08 để giữ xe</span><span class="bs-meta">Cọc 30%</span></div>
+                  <div class="track warn"><div class="fill" style="width:34%"></div></div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">2.700.000<small>đ</small></span><span class="note">Cọc 810.000đ</span></div>
+                  <button class="minibtn warn">Thanh toán cọc</button>
+                </div>
+              </article>
+
+              <div style="height:8px"></div>
+            </div>
+
+            <div class="tabbar">
+              <div class="tb-item active"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><span>Chuyến đi</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-gift"></use></svg><span>Ưu đãi</span></div>
+              <div class="tb-item prominent"><div class="tb-fab"><svg viewBox="0 0 24 24"><use href="#i-grid"></use></svg></div><span>Khám phá</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-chat"></use></svg><span>Tin nhắn</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><span>Tài khoản</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRIP LIST 2 -->
+      <div class="frame">
+        <div class="frame-label"><b>2</b> Giữa trang · thẻ chuyến đi</div>
+        <div class="device">
+          <div class="screen">
+            <div class="scroll">
+              <div class="sb"><b>9:41</b><div class="sb-icons">
+                <span class="bar b1"></span><span class="bar b2"></span><span class="bar b3"></span><span class="bar b4"></span><span class="battery"></span>
+              </div></div>
+
+              <div class="listhead" style="padding-bottom:6px">
+                <div class="lh-top">
+                  <div class="lh-copy">
+                    <div class="kick">Chuyến đi</div>
+                    <h2>Chuyến đi của tôi</h2>
+                    <div class="lh-meta"><span>12 chuyến</span><span class="mdot"></span><span>1 đang diễn ra</span></div>
+                  </div>
+                  <div class="lh-actions">
+                    <button class="iconbtn" aria-label="Tìm chuyến đi"><svg viewBox="0 0 24 24"><use href="#i-search"></use></svg></button>
+                    <button class="iconbtn" aria-label="Bộ lọc"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg></button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chipbar">
+                <div class="chips">
+  <button class="chip">Tất cả</button>
+                  <button class="chip">Chờ duyệt</button>
+                  <button class="chip on">Đã cọc</button>
+                  <button class="chip">Đang thuê</button>
+                  <button class="chip filter"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg>Bộ lọc</button>
+                </div>
+              </div>
+
+              <div class="grouphead"><span>Sắp tới</span><b>3</b><span class="line"></span></div>
+
+              <article class="bcard">
+                <div class="brow">
+                  <div class="bthumb">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                    <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>2 ngày</span>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0934</span>
+                      <span class="pill brand"><i></i>Đã cọc</span>
+                    </div>
+                    <div class="bname">Hyundai Accent 2023</div>
+                    <div class="bowner"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><b>Lê Hoàng Nam</b><span class="mdot"></span><span>Bình Thạnh</span></div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>02/11 09:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>04/11 09:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"></use></svg><span>12 Nguyễn Hữu Cảnh, P. 22, Q. Bình Thạnh</span></div>
+                  </div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">1.500.000<small>đ</small></span><span class="note ok">Đã cọc 450.000đ</span></div>
+                  <button class="minibtn soft">Xem biên bản</button>
+                </div>
+              </article>
+
+              <article class="bcard">
+                <div class="brow">
+                  <div class="bthumb">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                    <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>5 ngày</span>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0952</span>
+                      <span class="pill neutral"><i></i>Chờ duyệt</span>
+                    </div>
+                    <div class="bname">Mitsubishi Xpander 2022</div>
+                    <div class="bowner"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><b>Phạm Thu Hà</b><span class="mdot"></span><span>Quận 7</span></div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>06/11 07:30</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>11/11 07:30</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"></use></svg><span>Khu đô thị Phú Mỹ Hưng, đường Nguyễn Lương Bằng, Q. 7</span></div>
+                  </div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">4.750.000<small>đ</small></span><span class="note">Chờ chủ xe duyệt</span></div>
+                  <button class="minibtn ghost">Nhắn chủ xe</button>
+                </div>
+              </article>
+
+              <div class="grouphead"><span>Đã kết thúc</span><b>8</b><span class="line"></span></div>
+
+              <article class="bcard flat">
+                <div class="brow">
+                  <div class="bthumb" style="background:linear-gradient(150deg,#64748B,#475569 60%,#334155)">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                    <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>3 ngày</span>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0711</span>
+                      <span class="pill mint"><i></i>Hoàn thành</span>
+                    </div>
+                    <div class="bname">Kia Seltos 2022</div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>20/10 10:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>23/10 10:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"/></svg><span>Bãi xe Vincom Mega Mall, 161 Xa lộ Hà Nội, Thảo Điền, TP. Thủ Đức</span></div>
+                  </div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">2.100.000<small>đ</small></span><span class="note">Đã thanh toán đủ</span></div>
+                  <button class="minibtn soft"><svg viewBox="0 0 24 24"><use href="#i-star"></use></svg>Đánh giá</button>
+                </div>
+              </article>
+
+              <div style="height:8px"></div>
+            </div>
+
+            <div class="tabbar">
+              <div class="tb-item active"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><span>Chuyến đi</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-gift"></use></svg><span>Ưu đãi</span></div>
+              <div class="tb-item prominent"><div class="tb-fab"><svg viewBox="0 0 24 24"><use href="#i-grid"></use></svg></div><span>Khám phá</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-chat"></use></svg><span>Tin nhắn</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><span>Tài khoản</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRIP LIST 3 -->
+      <div class="frame">
+        <div class="frame-label"><b>3</b> Cuối trang · đã xong &amp; tải thêm</div>
+        <div class="device">
+          <div class="screen">
+            <div class="scroll">
+              <div class="sb"><b>9:41</b><div class="sb-icons">
+                <span class="bar b1"></span><span class="bar b2"></span><span class="bar b3"></span><span class="bar b4"></span><span class="battery"></span>
+              </div></div>
+
+              <div class="chipbar" style="padding-top:10px">
+                <div class="chips">
+  <button class="chip">Tất cả</button>
+                  <button class="chip">Chờ duyệt</button>
+                  <button class="chip">Đã cọc</button>
+                  <button class="chip">Đang thuê</button>
+                  <button class="chip on filter"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg>Đã xong</button>
+                </div>
+              </div>
+
+              <div class="grouphead"><span>Đã kết thúc</span><b>8</b><span class="line"></span></div>
+
+              <article class="bcard flat">
+                <div class="brow">
+                  <div class="bthumb" style="background:linear-gradient(150deg,#64748B,#475569 60%,#334155)">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0654</span>
+                      <span class="pill mint"><i></i>Hoàn thành</span>
+                    </div>
+                    <div class="bname">Toyota Vios 2021</div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>12/10 08:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>14/10 08:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"/></svg><span>Sân bay Tân Sơn Nhất, ga Quốc nội, P. 2, Q. Tân Bình</span></div>
+                  </div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">1.200.000<small>đ</small></span><span class="note ok">Đã đánh giá 5★</span></div>
+                  <button class="minibtn ghost">Xem lại</button>
+                </div>
+              </article>
+
+              <article class="bcard flat">
+                <div class="brow">
+                  <div class="bthumb" style="background:linear-gradient(150deg,#94A3B8,#64748B 60%,#475569)">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2409-0412</span>
+                      <span class="pill dgr"><i></i>Đã hủy</span>
+                    </div>
+                    <div class="bname">Ford Ranger 2020</div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>28/09 09:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>30/09 09:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"/></svg><span>12 Nguyễn Hữu Cảnh, P. 22, Q. Bình Thạnh</span></div>
+                  </div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">1.800.000<small>đ</small></span><span class="note">Đã hoàn cọc</span></div>
+                  <button class="minibtn ghost">Chi tiết</button>
+                </div>
+              </article>
+
+              <div class="morewrap">
+                <button class="morebtn">Xem thêm (6)</button>
+                <span class="endnote">Đã hiển thị 6/12 chuyến</span>
+              </div>
+            </div>
+
+            <div class="tabbar">
+              <div class="tb-item active"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><span>Chuyến đi</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-gift"></use></svg><span>Ưu đãi</span></div>
+              <div class="tb-item prominent"><div class="tb-fab"><svg viewBox="0 0 24 24"><use href="#i-grid"></use></svg></div><span>Khám phá</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-chat"></use></svg><span>Tin nhắn</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><span>Tài khoản</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- GROUP: OWNER -->
+  <!-- ============================================================ -->
+  <div class="group" id="group-booking" hidden="">
+    <div class="frames">
+
+      <!-- OWNER 1 -->
+      <div class="frame">
+        <div class="frame-label"><b>1</b> Đầu trang · đơn cần duyệt</div>
+        <div class="device">
+          <div class="screen">
+            <div class="scroll">
+              <div class="sb"><b>9:41</b><div class="sb-icons">
+                <span class="bar b1"></span><span class="bar b2"></span><span class="bar b3"></span><span class="bar b4"></span><span class="battery"></span>
+              </div></div>
+
+              <div class="listhead">
+                <div class="lh-top">
+                  <div class="lh-copy">
+                    <div class="kick">Cho thuê</div>
+                    <h2>Đơn thuê của tôi</h2>
+                    <div class="lh-meta"><span>18 đơn</span><span class="mdot"></span><span>2 chờ duyệt</span></div>
+                  </div>
+                  <div class="lh-actions">
+                    <button class="iconbtn" aria-label="Tìm đơn thuê"><svg viewBox="0 0 24 24"><use href="#i-search"></use></svg></button>
+                    <button class="iconbtn" aria-label="Bộ lọc"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg></button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="alertband warn">
+                <span class="ab-ic"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg></span>
+                <div class="ab-txt">
+                  <b>MVN-2410-0842 · chờ bạn duyệt</b>
+                  <span>Còn 11:42 để phản hồi trước khi đơn tự hủy.</span>
+                </div>
+                <button class="ab-link">Duyệt ngay</button>
+              </div>
+
+              <div class="chipbar">
+                <div class="chips">
+  <button class="chip on">Tất cả</button>
+                  <button class="chip">Chờ duyệt</button>
+                  <button class="chip">Đã cọc</button>
+                  <button class="chip">Đang thuê</button>
+                  <button class="chip filter"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg>Bộ lọc</button>
+                </div>
+              </div>
+
+              <div class="grouphead"><span>Cần xử lý</span><b>2</b><span class="line"></span></div>
+
+              <article class="bcard">
+                <div class="brow">
+                  <div class="bthumb">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                    <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>3 ngày</span>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0842</span>
+                      <span class="pill warn"><i></i>Chờ duyệt</span>
+                    </div>
+                    <div class="bname">VF 8 Plus 2024</div>
+                    <div class="ownerrow">
+                      <span class="avatar">MA</span>
+                      <b>Nguyễn Minh Anh</b>
+                      <span class="go">Hồ sơ <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></span>
+                    </div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>29/10 09:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>31/10 09:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"/></svg><span>Khu đô thị Phú Mỹ Hưng, đường Nguyễn Lương Bằng, Q. 7</span></div>
+                  </div>
+                </div>
+                <div class="urgent"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg><span>Còn <b>11:42</b> để duyệt trước khi đơn tự hủy</span></div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">2.400.000<small>đ</small></span><span class="note">Cọc dự kiến 720.000đ</span></div>
+                  <div class="actions">
+                    <button class="minibtn ghost">Từ chối</button>
+                    <button class="minibtn">Duyệt</button>
+                  </div>
+                </div>
+              </article>
+
+              <article class="bcard">
+                <div class="brow">
+                  <div class="bthumb">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                    <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>5 ngày</span>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0908</span>
+                      <span class="pill warn"><i></i>Chờ duyệt</span>
+                    </div>
+                    <div class="bname">VinFast VF 9 2023</div>
+                    <div class="ownerrow">
+                      <span class="avatar">TH</span>
+                      <b>Phạm Thu Hà</b>
+                      <span class="go">Hồ sơ <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></span>
+                    </div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>05/11 08:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>10/11 08:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"></use></svg><span>25 Lý Tự Trọng, P. Bến Nghé, Q. 1</span></div>
+                  </div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">7.500.000<small>đ</small></span><span class="note">Cọc dự kiến 2.250.000đ</span></div>
+                  <div class="actions">
+                    <button class="minibtn ghost">Từ chối</button>
+                    <button class="minibtn">Duyệt</button>
+                  </div>
+                </div>
+              </article>
+
+              <div style="height:8px"></div>
+            </div>
+
+            <div class="tabbar">
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-carfront"></use></svg><span>Xe của tôi</span></div>
+              <div class="tb-item active"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><span>Đơn thuê</span></div>
+              <div class="tb-item prominent"><div class="tb-fab"><svg viewBox="0 0 24 24"><use href="#i-dashboard"></use></svg></div><span>Tổng quan</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-chat"></use></svg><span>Tin nhắn</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><span>Tài khoản</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OWNER 2 -->
+      <div class="frame">
+        <div class="frame-label"><b>2</b> Giữa trang · đã cọc &amp; đang thuê</div>
+        <div class="device">
+          <div class="screen">
+            <div class="scroll">
+              <div class="sb"><b>9:41</b><div class="sb-icons">
+                <span class="bar b1"></span><span class="bar b2"></span><span class="bar b3"></span><span class="bar b4"></span><span class="battery"></span>
+              </div></div>
+
+              <div class="listhead" style="padding-bottom:6px">
+                <div class="lh-top">
+                  <div class="lh-copy">
+                    <div class="kick">Cho thuê</div>
+                    <h2>Đơn thuê của tôi</h2>
+                    <div class="lh-meta"><span>18 đơn</span><span class="mdot"></span><span>2 chờ duyệt</span></div>
+                  </div>
+                  <div class="lh-actions">
+                    <button class="iconbtn" aria-label="Tìm đơn thuê"><svg viewBox="0 0 24 24"><use href="#i-search"></use></svg></button>
+                    <button class="iconbtn" aria-label="Bộ lọc"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg></button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chipbar">
+                <div class="chips">
+  <button class="chip">Tất cả</button>
+                  <button class="chip">Chờ duyệt</button>
+                  <button class="chip on">Đã cọc</button>
+                  <button class="chip">Đang thuê</button>
+                  <button class="chip filter"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg>Bộ lọc</button>
+                </div>
+              </div>
+
+              <div class="grouphead"><span>Sắp tới</span><b>3</b><span class="line"></span></div>
+
+              <article class="bcard">
+                <div class="brow">
+                  <div class="bthumb">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                    <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>2 ngày</span>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0934</span>
+                      <span class="pill brand"><i></i>Đã cọc</span>
+                    </div>
+                    <div class="bname">Hyundai Accent 2023</div>
+                    <div class="ownerrow">
+                      <span class="avatar">HN</span>
+                      <b>Lê Hoàng Nam</b>
+                      <span class="go">Hồ sơ <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></span>
+                    </div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>02/11 09:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>04/11 09:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"/></svg><span>25 Lý Tự Trọng, P. Bến Nghé, Q. 1</span></div>
+                  </div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">1.500.000<small>đ</small></span><span class="note ok">Đã cọc 450.000đ</span></div>
+                  <button class="minibtn soft"><svg viewBox="0 0 24 24"><use href="#i-chat"></use></svg>Nhắn khách</button>
+                </div>
+              </article>
+
+              <div class="grouphead"><span>Đang diễn ra</span><b>1</b><span class="line"></span></div>
+
+              <article class="bcard">
+                <div class="brow">
+                  <div class="bthumb">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                    <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>3 ngày</span>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0777</span>
+                      <span class="pill info"><i></i>Đang thuê</span>
+                    </div>
+                    <div class="bname">Kia Seltos 2022</div>
+                    <div class="ownerrow">
+                      <span class="avatar">QB</span>
+                      <b>Trần Quốc Bảo</b>
+                      <span class="go">Hồ sơ <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></span>
+                    </div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>27/10 10:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>30/10 10:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"></use></svg><span>88 Đồng Khởi, P. Bến Nghé, Q. 1</span></div>
+                  </div>
+                </div>
+                <div class="bstate">
+                  <div class="bs-top"><span class="pill info"><i></i>Còn 1 ngày 4 giờ</span><span class="bs-meta">Ngày 2/3</span></div>
+                  <div class="track"><div class="fill" style="width:62%"></div></div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">2.100.000<small>đ</small></span><span class="note">Đã cọc 630.000đ</span></div>
+                  <button class="minibtn soft">Chi tiết</button>
+                </div>
+              </article>
+
+              <div style="height:8px"></div>
+            </div>
+
+            <div class="tabbar">
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-carfront"></use></svg><span>Xe của tôi</span></div>
+              <div class="tb-item active"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><span>Đơn thuê</span></div>
+              <div class="tb-item prominent"><div class="tb-fab"><svg viewBox="0 0 24 24"><use href="#i-dashboard"></use></svg></div><span>Tổng quan</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-chat"></use></svg><span>Tin nhắn</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><span>Tài khoản</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OWNER 3 -->
+      <div class="frame">
+        <div class="frame-label"><b>3</b> Cuối trang · đã xong &amp; rỗng</div>
+        <div class="device">
+          <div class="screen">
+            <div class="scroll">
+              <div class="sb"><b>9:41</b><div class="sb-icons">
+                <span class="bar b1"></span><span class="bar b2"></span><span class="bar b3"></span><span class="bar b4"></span><span class="battery"></span>
+              </div></div>
+
+              <div class="chipbar" style="padding-top:10px">
+                <div class="chips">
+  <button class="chip">Tất cả</button>
+                  <button class="chip">Chờ duyệt</button>
+                  <button class="chip">Đã cọc</button>
+                  <button class="chip">Đang thuê</button>
+                  <button class="chip on filter"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg>Đã xong</button>
+                </div>
+              </div>
+
+              <div class="grouphead"><span>Đã kết thúc</span><b>12</b><span class="line"></span></div>
+
+              <article class="bcard flat">
+                <div class="brow">
+                  <div class="bthumb" style="background:linear-gradient(150deg,#64748B,#475569 60%,#334155)">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2410-0654</span>
+                      <span class="pill mint"><i></i>Hoàn thành</span>
+                    </div>
+                    <div class="bname">Toyota Vios 2021</div>
+                    <div class="ownerrow">
+                      <span class="avatar">MA</span>
+                      <b>Nguyễn Minh Anh</b>
+                      <span class="go">Hồ sơ <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></span>
+                    </div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>12/10 08:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>14/10 08:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"/></svg><span>88 Đồng Khởi, P. Bến Nghé, Q. 1</span></div>
+                  </div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">1.200.000<small>đ</small></span><span class="note ok">Đã tất toán · 5★</span></div>
+                  <button class="minibtn ghost">Xem lại</button>
+                </div>
+              </article>
+
+              <article class="bcard flat">
+                <div class="brow">
+                  <div class="bthumb" style="background:linear-gradient(150deg,#94A3B8,#64748B 60%,#475569)">
+                    <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+                  </div>
+                  <div class="binfo">
+                    <div class="bcode-row">
+                      <span class="bcode">MVN-2409-0412</span>
+                      <span class="pill dgr"><i></i>Đã hủy</span>
+                    </div>
+                    <div class="bname">Ford Ranger 2020</div>
+                    <div class="ownerrow">
+                      <span class="avatar">TH</span>
+                      <b>Phạm Thu Hà</b>
+                      <span class="go">Hồ sơ <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></span>
+                    </div>
+                    <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>28/09 09:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>30/09 09:00</b></div>
+                    <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"/></svg><span>Bãi xe Vincom Mega Mall, 161 Xa lộ Hà Nội, Thảo Điền, TP. Thủ Đức</span></div>
+                  </div>
+                </div>
+                <div class="bfoot">
+                  <div class="bprice"><span class="amount">1.800.000<small>đ</small></span><span class="note">Khách đã hủy</span></div>
+                  <button class="minibtn ghost">Chi tiết</button>
+                </div>
+              </article>
+
+              <div class="morewrap">
+                <button class="morebtn">Xem thêm (10)</button>
+                <span class="endnote">Đã hiển thị 2/12 đơn</span>
+              </div>
+
+              <div class="emptycard">
+                <div class="empty-ic"><svg viewBox="0 0 24 24"><use href="#i-receipt"></use></svg></div>
+                <h4>Chưa có đơn thuê nào</h4>
+                <p>Khi khách đặt xe của bạn, đơn sẽ hiện ở đây để bạn duyệt và bàn giao.</p>
+                <button class="cta">Quản lý xe cho thuê <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></button>
+              </div>
+
+              <div style="height:8px"></div>
+            </div>
+
+            <div class="tabbar">
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-carfront"></use></svg><span>Xe của tôi</span></div>
+              <div class="tb-item active"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><span>Đơn thuê</span></div>
+              <div class="tb-item prominent"><div class="tb-fab"><svg viewBox="0 0 24 24"><use href="#i-dashboard"></use></svg></div><span>Tổng quan</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-chat"></use></svg><span>Tin nhắn</span></div>
+              <div class="tb-item"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><span>Tài khoản</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- GALLERY -->
+  <!-- ============================================================ -->
+  <h2 class="sec-title">Khối dùng chung</h2>
+  <p class="sec-sub">Chỉ cần 5 khối mới; card cũ được nâng cấp chứ không thay bằng component khác.</p>
+
+  <div class="gallery">
+    <div class="gcard">
+      <h4>Header + tìm kiếm</h4>
+      <div class="hint">Kicker nhỏ, tiêu đề 20, đếm ở dưới. Tìm kiếm mở sheet (đã có BookingSearchFilters).</div>
+      <div class="listhead" style="padding:0">
+        <div class="lh-top">
+          <div class="lh-copy">
+            <div class="kick">Chuyến đi</div>
+            <h2 style="font-size:19px">Chuyến đi của tôi</h2>
+            <div class="lh-meta"><span>12 chuyến</span><span class="mdot"></span><span>1 đang diễn ra</span></div>
+          </div>
+          <div class="lh-actions">
+            <button class="iconbtn"><svg viewBox="0 0 24 24"><use href="#i-search"></use></svg></button>
+            <button class="iconbtn"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gcard">
+      <h4>Dải nhắc việc</h4>
+      <div class="hint">Chỉ 1 dải, chỉ hiện khi có việc thật. Khách: giờ nhận xe. Chủ: đơn chờ duyệt.</div>
+      <div class="alertband" style="margin-bottom:10px">
+        <span class="ab-ic"><svg viewBox="0 0 24 24"><use href="#i-bell"></use></svg></span>
+        <div class="ab-txt"><b>VF 9 sắp bắt đầu sau 2 giờ</b><span>Nhớ mang CCCD và bằng lái khi nhận xe.</span></div>
+        <button class="ab-link">Xem</button>
+      </div>
+      <div class="alertband warn" style="margin:0">
+        <span class="ab-ic"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg></span>
+        <div class="ab-txt"><b>MVN-2410-0842 · chờ bạn duyệt</b><span>Còn 11:42 để phản hồi trước khi đơn tự hủy.</span></div>
+        <button class="ab-link">Duyệt ngay</button>
+      </div>
+    </div>
+
+    <div class="gcard">
+      <h4>Chip lọc + sheet</h4>
+      <div class="hint">4 chip dùng nhiều + “Bộ lọc” mở sheet đủ 11 trạng thái (giữ nguyên API lọc 1 trạng thái).</div>
+      <div class="chipbar" style="margin-bottom:12px">
+                <div class="chips">
+  <button class="chip on">Tất cả</button>
+          <button class="chip">Chờ duyệt</button>
+          <button class="chip">Đã cọc</button>
+          <button class="chip">Đang thuê</button>
+          <button class="chip filter"><svg viewBox="0 0 24 24"><use href="#i-sliders"></use></svg>Bộ lọc</button>
+                </div>
+              </div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h5>Bộ lọc đơn thuê</h5>
+        <div class="sub">Chọn một trạng thái · áp dụng ngay</div>
+        <div class="chips">
+          <button class="chip on">Tất cả</button>
+          <button class="chip">Chờ duyệt</button>
+          <button class="chip">Đã duyệt</button>
+          <button class="chip">Đã cọc</button>
+          <button class="chip">Đã xác nhận</button>
+          <button class="chip">Đang thuê</button>
+          <button class="chip">Đang trả</button>
+          <button class="chip">Đã trả, chờ nhận</button>
+          <button class="chip">Hoàn thành</button>
+          <button class="chip">Đã hủy</button>
+          <button class="chip">Đã từ chối</button>
+        </div>
+        <div class="row">
+          <button class="ghost">Xóa lọc</button>
+          <button class="primary">Áp dụng</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="gcard">
+      <h4>Nhóm theo giai đoạn</h4>
+      <div class="hint">Tính từ status + ngày của item đã tải; không cần API mới, không đổi thứ tự server trả.</div>
+      <div class="grouphead" style="padding:0;margin:0 0 8px"><span>Cần xử lý</span><b>2</b><span class="line"></span></div>
+      <div class="grouphead" style="padding:0;margin:0 0 8px"><span>Sắp tới</span><b>3</b><span class="line"></span></div>
+      <div class="grouphead" style="padding:0;margin:0 0 8px"><span>Đang diễn ra</span><b>1</b><span class="line"></span></div>
+      <div class="grouphead" style="padding:0;margin:0"><span>Đã kết thúc</span><b>12</b><span class="line"></span></div>
+    </div>
+
+    <div class="gcard">
+      <h4>Thẻ chuyến đi (khách)</h4>
+      <div class="hint">Ảnh 86 · pill trạng thái · 1 dòng thời gian · địa điểm nhận xe 9.5px ngay dưới thời gian · tiến độ · 1 CTA chính.</div>
+      <article class="bcard">
+        <div class="brow">
+          <div class="bthumb">
+            <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+            <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>3 ngày</span>
+          </div>
+          <div class="binfo">
+            <div class="bcode-row"><span class="bcode">MVN-2410-0842</span><span class="pill brand"><i></i>Đang chạy</span></div>
+            <div class="bname">VF 8 Plus 2024</div>
+            <div class="bowner"><svg viewBox="0 0 24 24"><use href="#i-user"></use></svg><b>Nguyễn Minh Anh</b><span class="mdot"></span><span>Quận 7</span></div>
+            <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>29/10 09:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>31/10 09:00</b></div>
+            <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"/></svg><span>Sân bay Tân Sơn Nhất, ga Quốc nội, P. 2, Q. Tân Bình</span></div>
+          </div>
+        </div>
+        <div class="bstate">
+          <div class="bs-top"><span class="pill brand"><i></i>Còn 1 ngày 4 giờ</span><span class="bs-meta">Ngày 2/3</span></div>
+          <div class="track"><div class="fill" style="width:62%"></div></div>
+        </div>
+        <div class="bfoot">
+          <div class="bprice"><span class="amount">2.400.000<small>đ</small></span><span class="note">Cọc 720.000đ</span></div>
+          <button class="minibtn">Trả xe <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></button>
+        </div>
+      </article>
+    </div>
+
+    <div class="gcard">
+      <h4>Thẻ đơn thuê (chủ)</h4>
+      <div class="hint">Thêm hàng khách + hồ sơ, dải hạn duyệt và 2 nút chỉ khi đơn đang chờ.</div>
+      <article class="bcard">
+        <div class="brow">
+          <div class="bthumb">
+            <svg viewBox="0 0 24 24"><use href="#i-car"></use></svg>
+            <span class="daysbadge"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg>3 ngày</span>
+          </div>
+          <div class="binfo">
+            <div class="bcode-row"><span class="bcode">MVN-2410-0842</span><span class="pill warn"><i></i>Chờ duyệt</span></div>
+            <div class="bname">VF 8 Plus 2024</div>
+            <div class="ownerrow"><span class="avatar">MA</span><b>Nguyễn Minh Anh</b><span class="go">Hồ sơ <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></span></div>
+            <div class="btime"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg><b>29/10 09:00</b><svg class="arrow" viewBox="0 0 24 24"><use href="#i-arrow"></use></svg><b>31/10 09:00</b></div>
+            <div class="baddr"><svg viewBox="0 0 24 24"><use href="#i-pin"/></svg><span>12 Nguyễn Hữu Cảnh, P. 22, Q. Bình Thạnh</span></div>
+          </div>
+        </div>
+        <div class="urgent"><svg viewBox="0 0 24 24"><use href="#i-clock"></use></svg><span>Còn <b>11:42</b> để duyệt trước khi đơn tự hủy</span></div>
+        <div class="bfoot">
+          <div class="bprice"><span class="amount">2.400.000<small>đ</small></span><span class="note">Cọc dự kiến 720.000đ</span></div>
+          <div class="actions">
+            <button class="minibtn ghost">Từ chối</button>
+            <button class="minibtn">Duyệt</button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="gcard">
+      <h4>Trạng thái rỗng</h4>
+      <div class="hint">Giữ nguyên câu chữ hiện tại; chỉ đổi khung và thêm CTA đúng ngữ cảnh.</div>
+      <div class="emptycard" style="margin:0">
+        <div class="empty-ic"><svg viewBox="0 0 24 24"><use href="#i-calendar"></use></svg></div>
+        <h4>Chưa có chuyến đi nào</h4>
+        <p>Các chuyến bạn đặt sẽ hiện ở đây để dễ theo dõi.</p>
+        <button class="cta">Khám phá xe <svg viewBox="0 0 24 24"><use href="#i-chev"></use></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec-title">Khác nhau ở đâu</h2>
+  <table class="map">
+    <tbody><tr><th>Yếu tố</th><th>Chuyến đi của tôi (khách)</th><th>Đơn thuê của tôi (chủ)</th></tr>
+    <tr><td>Nhóm đầu tiên</td><td>Đang diễn ra</td><td>Cần xử lý (Pending)</td></tr>
+    <tr><td>Thông tin phụ</td><td>Chủ xe + khu vực</td><td>Khách + link hồ sơ</td></tr>
+    <tr><td>Điểm nhấn</td><td>Tiến độ &amp; giờ trả xe</td><td>Hạn duyệt &amp; cọc dự kiến</td></tr>
+    <tr><td>CTA trên thẻ</td><td>Trả xe · Thanh toán cọc · Đánh giá</td><td>Duyệt · Từ chối · Nhắn khách</td></tr>
+    <tr><td>Dải nhắc</td><td>Chuyến sắp bắt đầu</td><td>Đơn sắp hết hạn duyệt</td></tr>
+    <tr><td>Trạng thái rỗng</td><td>“Khám phá xe”</td><td>“Quản lý xe cho thuê”</td></tr>
+  </tbody></table>
+
+  <p class="footnote">Concept danh sách · dùng chung token với màn chi tiết (card 24, pill, track, header trong suốt). Không đổi API/DTO.</p>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    function pair(a, b, on, off) {
+      a.addEventListener("click", function () {
+        a.setAttribute("aria-pressed", "true"); b.setAttribute("aria-pressed", "false");
+        on();
+      });
+      b.addEventListener("click", function () {
+        b.setAttribute("aria-pressed", "true"); a.setAttribute("aria-pressed", "false");
+        off();
+      });
+    }
+    pair(
+      document.getElementById("btn-light"), document.getElementById("btn-dark"),
+      function () { root.setAttribute("data-theme", "light"); },
+      function () { root.setAttribute("data-theme", "dark"); }
+    );
+    var gt = document.getElementById("group-trip");
+    var gb = document.getElementById("group-booking");
+    pair(
+      document.getElementById("tab-trip"), document.getElementById("tab-booking"),
+      function () { gt.hidden = false; gb.hidden = true; },
+      function () { gt.hidden = true; gb.hidden = false; }
+    );
+  })();
+</script>
+
+
+</body></html>

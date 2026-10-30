@@ -187,7 +187,7 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
       backgroundColor: p.brandSoft,
     },
     headBody: { flex: 1, minWidth: 0 },
-    title: { color: p.ink, fontFamily: checkoutFont.display, fontSize: 19, letterSpacing: -0.3 },
+    title: { color: p.ink, fontFamily: checkoutFont.display, fontSize: 17, lineHeight: 22, letterSpacing: -0.25 },
     subtitle: { color: p.muted, fontFamily: checkoutFont.regular, fontSize: 10.5, marginTop: 1 },
     close: {
       width: 32,
@@ -226,7 +226,7 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
     code: {
       color: p.ink,
       fontFamily: checkoutFont.extraBold,
-      fontSize: 12.5,
+      fontSize: 12,
       letterSpacing: 0.7,
     },
     name: { color: p.muted, fontFamily: checkoutFont.medium, fontSize: 10.5, marginTop: 1 },

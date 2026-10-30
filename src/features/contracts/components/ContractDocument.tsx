@@ -1,8 +1,11 @@
 import { useMemo } from "react";
 import { StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
-import type { Theme } from "@/theme/tokens";
-import { useTheme } from "@/theme/useTheme";
+import {
+  detailFont as font,
+  useDetailTheme,
+  type DetailPalette,
+} from "@/features/vehicles/components/detail/detailTheme";
 import type { ContractContent } from "@/features/contracts/types";
 import { formatDate, formatDateTime, formatMoney } from "@/features/booking/utils/format";
 
@@ -10,8 +13,8 @@ const v = (x?: string | number | null) => (x === undefined || x === null || x ==
 const money = (x?: number | null) => `${new Intl.NumberFormat("vi-VN").format(x ?? 0)}đ`;
 
 function Article({ title, children }: { title: string; children: React.ReactNode }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { p } = useDetailTheme();
+  const styles = useMemo(() => createStyles(p), [p]);
   return (
     <View style={styles.article}>
       <AppText display style={styles.articleTitle}>{title}</AppText>
@@ -21,14 +24,14 @@ function Article({ title, children }: { title: string; children: React.ReactNode
 }
 
 function P({ children }: { children: React.ReactNode }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { p } = useDetailTheme();
+  const styles = useMemo(() => createStyles(p), [p]);
   return <AppText style={styles.p}>{children}</AppText>;
 }
 
 function Bullet({ children }: { children: React.ReactNode }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { p } = useDetailTheme();
+  const styles = useMemo(() => createStyles(p), [p]);
   return (
     <View style={styles.bulletRow}>
       <AppText style={styles.p}>• </AppText>
@@ -38,8 +41,8 @@ function Bullet({ children }: { children: React.ReactNode }) {
 }
 
 function KV({ n, children }: { n: string; children: React.ReactNode }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { p } = useDetailTheme();
+  const styles = useMemo(() => createStyles(p), [p]);
   return (
     <AppText style={styles.p}>
       <AppText style={styles.bold}>{n}: </AppText>
@@ -50,8 +53,8 @@ function KV({ n, children }: { n: string; children: React.ReactNode }) {
 
 /** Văn bản hợp đồng đầy đủ như bản web (tiêu ngữ, các bên, Điều 1–15, ký điện tử). */
 export default function ContractDocument({ content }: { content: ContractContent }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { p } = useDetailTheme();
+  const styles = useMemo(() => createStyles(p), [p]);
   const s = content.data;
   const a = s?.owner;
   const b = s?.customer;
@@ -65,20 +68,30 @@ export default function ContractDocument({ content }: { content: ContractContent
   return (
     <View style={styles.doc}>
       <View style={styles.header}>
+        <AppText style={styles.overline}>Hợp đồng điện tử</AppText>
         <AppText style={styles.motto}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</AppText>
         <AppText style={styles.motto}>Độc lập - Tự do - Hạnh phúc</AppText>
+        <View style={styles.divider} />
         <AppText display style={styles.docTitle}>HỢP ĐỒNG THUÊ XE</AppText>
         <AppText style={styles.muted}>MoveVN – Smart Car Rental Management System</AppText>
       </View>
 
-      <View style={styles.metaGrid}>
-        <View style={styles.metaCol}>
-          <AppText style={styles.muted}>Mã hợp đồng: <AppText style={styles.bold}>{content.contractNumber}</AppText></AppText>
-          <AppText style={styles.muted}>Phiên bản: {content.version}</AppText>
+      <View style={styles.metaTable}>
+        <View style={styles.metaRow}>
+          <AppText style={styles.metaKey}>Mã hợp đồng</AppText>
+          <AppText style={styles.metaVal}>{content.contractNumber}</AppText>
         </View>
-        <View style={styles.metaCol}>
-          <AppText style={styles.muted}>Mã booking: <AppText style={styles.bold}>{v(s?.bookingCode)}</AppText></AppText>
-          <AppText style={styles.muted}>Ngày tạo: {formatDate(content.createdAt)}</AppText>
+        <View style={styles.metaRow}>
+          <AppText style={styles.metaKey}>Phiên bản</AppText>
+          <AppText style={styles.metaVal}>v{content.version}</AppText>
+        </View>
+        <View style={styles.metaRow}>
+          <AppText style={styles.metaKey}>Mã booking</AppText>
+          <AppText style={styles.metaVal}>{v(s?.bookingCode)}</AppText>
+        </View>
+        <View style={styles.metaRow}>
+          <AppText style={styles.metaKey}>Ngày tạo</AppText>
+          <AppText style={styles.metaVal}>{formatDate(content.createdAt)}</AppText>
         </View>
       </View>
 
@@ -261,8 +274,8 @@ export default function ContractDocument({ content }: { content: ContractContent
 }
 
 function MoneyRow({ label, value, header }: { label: string; value: string; header: boolean }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { p } = useDetailTheme();
+  const styles = useMemo(() => createStyles(p), [p]);
   return (
     <View style={[styles.moneyRow, header && styles.moneyTotal]}>
       <AppText style={[styles.p, header && styles.bold]}>{label}</AppText>
@@ -271,46 +284,139 @@ function MoneyRow({ label, value, header }: { label: string; value: string; head
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (p: DetailPalette) =>
   StyleSheet.create({
-    doc: { gap: 6, paddingBottom: 8 },
-    header: { alignItems: "center", gap: 2, marginBottom: 8 },
-    motto: { color: theme.text, fontSize: 12, fontWeight: "700", textAlign: "center" },
-    docTitle: { color: theme.text, fontSize: 20, fontWeight: "800", marginTop: 8, textAlign: "center" },
-    muted: { color: theme.muted, fontSize: 12, textAlign: "center" },
-    metaGrid: { flexDirection: "row", gap: 12, marginVertical: 6 },
-    metaCol: { flex: 1, gap: 2 },
-    bold: { fontWeight: "700", color: theme.text },
-    p: { color: theme.text, fontSize: 13, lineHeight: 19, marginBottom: 5 },
+    doc: { gap: 8, paddingBottom: 4 },
+    header: { alignItems: "center", gap: 3 },
+    overline: {
+      color: p.brand,
+      fontFamily: font.bold,
+      fontSize: 9,
+      lineHeight: 12,
+      letterSpacing: 0.8,
+      textTransform: "uppercase",
+      marginBottom: 6,
+    },
+    motto: {
+      color: p.ink,
+      fontFamily: font.bold,
+      fontSize: 11,
+      lineHeight: 16,
+      textAlign: "center",
+    },
+    divider: { width: 56, height: 1, backgroundColor: p.line, marginVertical: 6 },
+    docTitle: {
+      color: p.ink,
+      fontFamily: font.display,
+      fontSize: 18,
+      lineHeight: 23,
+      letterSpacing: -0.3,
+      textAlign: "center",
+    },
+    muted: {
+      color: p.faint,
+      fontFamily: font.regular,
+      fontSize: 10.5,
+      lineHeight: 15,
+      textAlign: "center",
+    },
+    metaTable: {
+      borderTopWidth: 1,
+      borderTopColor: p.line,
+      marginVertical: 6,
+    },
+    metaRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "baseline",
+      gap: 12,
+      paddingVertical: 6,
+      borderBottomWidth: 1,
+      borderBottomColor: p.line,
+    },
+    metaKey: { color: p.faint, fontFamily: font.regular, fontSize: 11, lineHeight: 15 },
+    metaVal: {
+      color: p.ink,
+      fontFamily: font.semibold,
+      fontSize: 11.5,
+      lineHeight: 16,
+      textAlign: "right",
+      flexShrink: 1,
+    },
+    bold: { fontFamily: font.semibold, color: p.ink },
+    p: { color: p.ink, fontFamily: font.regular, fontSize: 11.5, lineHeight: 17, marginBottom: 4 },
     justify: { textAlign: "justify" },
-    article: { marginTop: 10 },
-    articleTitle: { color: theme.text, fontSize: 14, fontWeight: "800", marginBottom: 6 },
-    h3: { color: theme.text, fontSize: 13, fontWeight: "800", marginTop: 6, marginBottom: 3 },
+    article: { marginTop: 2 },
+    articleTitle: {
+      color: p.ink,
+      fontFamily: font.display,
+      fontSize: 13.5,
+      lineHeight: 18,
+      letterSpacing: -0.1,
+      marginBottom: 6,
+      paddingTop: 10,
+      borderTopWidth: 1,
+      borderTopColor: p.line,
+    },
+    h3: {
+      color: p.brand,
+      fontFamily: font.bold,
+      fontSize: 11,
+      lineHeight: 15,
+      letterSpacing: 0.2,
+      textTransform: "uppercase",
+      marginTop: 8,
+      marginBottom: 4,
+    },
     bulletRow: { flexDirection: "row", paddingRight: 4 },
     bulletText: { flex: 1 },
     moneyRow: {
       flexDirection: "row",
       justifyContent: "space-between",
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      borderRadius: 8,
-      paddingHorizontal: 10,
+      gap: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: p.line,
+      paddingHorizontal: 2,
       paddingVertical: 7,
-      marginBottom: 6,
     },
-    moneyTotal: { backgroundColor: theme.surfaceAlt },
+    moneyTotal: {
+      borderTopWidth: 1,
+      borderTopColor: p.line,
+      paddingHorizontal: 2,
+      paddingTop: 9,
+      marginTop: 2,
+    },
     termBox: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      borderRadius: 8,
-      padding: 10,
-      marginBottom: 6,
-      gap: 3,
+      borderLeftWidth: 2,
+      borderLeftColor: p.brandBorder,
+      paddingLeft: 10,
+      marginBottom: 8,
+      gap: 2,
     },
-    signBlock: { alignItems: "center", marginTop: 14, gap: 8 },
-    signTitle: { color: theme.text, fontSize: 14, fontWeight: "800" },
-    signGrid: { flexDirection: "row", gap: 12, width: "100%" },
-    signCol: { flex: 1, alignItems: "center", gap: 3 },
-    signed: { color: "#047857" },
-    verify: { color: theme.muted, fontSize: 12, marginTop: 4 },
+    signBlock: { alignItems: "center", marginTop: 10, gap: 8 },
+    signTitle: {
+      color: p.ink,
+      fontFamily: font.display,
+      fontSize: 13.5,
+      lineHeight: 18,
+      letterSpacing: -0.1,
+    },
+    signGrid: { flexDirection: "row", gap: 8, width: "100%" },
+    signCol: {
+      flex: 1,
+      alignItems: "center",
+      gap: 2,
+      paddingTop: 8,
+      borderTopWidth: 1,
+      borderTopColor: p.line,
+    },
+    signed: { color: p.mint },
+    verify: {
+      color: p.faint,
+      fontFamily: font.regular,
+      fontSize: 10,
+      lineHeight: 14,
+      marginTop: 2,
+      textAlign: "center",
+    },
   });

@@ -46,6 +46,6 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
     row: { flexDirection: "row", alignItems: "center", gap: 10 },
     medal: { width: 34, height: 34, borderRadius: 11, alignItems: "center", justifyContent: "center" },
     body: { flex: 1, minWidth: 0 },
-    title: { color: p.ink, fontFamily: checkoutFont.display, fontSize: 17, lineHeight: 22, letterSpacing: -0.2 },
+    title: { color: p.ink, fontFamily: checkoutFont.display, fontSize: 15.5, lineHeight: 20, letterSpacing: -0.2 },
     subtitle: { color: p.muted, fontFamily: checkoutFont.regular, fontSize: 10.5, lineHeight: 15, marginTop: 1 },
   });

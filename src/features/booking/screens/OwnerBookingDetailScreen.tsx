@@ -24,7 +24,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { CalendarDays, CircleCheck, ClipboardCheck, Clock3, KeyRound, MapPin, MessageSquare, PackageCheck, ReceiptText, RotateCcw, Star, TriangleAlert, Wallet, XCircle } from "lucide-react-native";
+import { CalendarDays, Camera, CircleCheck, ClipboardCheck, Clock3, KeyRound, MapPin, MessageSquare, PackageCheck, ReceiptText, RotateCcw, Star, TriangleAlert, Wallet, XCircle } from "lucide-react-native";
 import { detailFont as font, useDetailTheme } from "@/features/vehicles/components/detail/detailTheme";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -196,8 +196,8 @@ export default function OwnerBookingDetailScreen({
     return (
       <View style={styles.screen}>
         <DetailHeader
-          kicker="Đơn cho thuê"
-          title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Chi tiết đơn thuê"}
+          kicker={handover ? "Đơn cho thuê" : undefined}
+          title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Đơn cho thuê"}
           onBack={handleBack}
         />
         <View style={styles.center}>
@@ -249,8 +249,8 @@ export default function OwnerBookingDetailScreen({
   return (
     <View style={styles.screen}>
       <DetailHeader
-        kicker="Đơn cho thuê"
-        title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Chi tiết đơn thuê"}
+        kicker={handover ? "Đơn cho thuê" : undefined}
+        title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Đơn cho thuê"}
         onBack={handleBack}
         right={
           <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với khách thuê" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.headerChat}>
@@ -502,9 +502,9 @@ export default function OwnerBookingDetailScreen({
         <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage onChanged={() => load()} />
 
         <DetailCard>
-          <DetailSectionHeader icon={KeyRound} title="Bàn giao xe" subtitle="Biên bản nhận xe và trả xe" />
+          <DetailSectionHeader icon={Camera} title="Bàn giao xe" subtitle="Biên bản nhận xe và trả xe" />
           <InspectionSummaryLink booking={booking} type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckIn" })} />
-          <InspectionSummaryLink booking={booking} type="CheckOut" report={checkOutReport} onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckOut" })} />
+          <InspectionSummaryLink booking={booking} type="CheckOut" report={checkOutReport} divider onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckOut" })} />
         </DetailCard>
 
         {status === "Completed" && booking.escrowStatus === "Held" ? (
@@ -679,7 +679,7 @@ const createStyles = (theme: Theme) =>
     },
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
     scrollContent: { paddingBottom: 40 },
-    body: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 40, gap: 12 },
+    body: { paddingHorizontal: 8, paddingTop: 12, paddingBottom: 40, gap: 10 },
 
     // Toolbar
     toolbarRow: { flexDirection: "row", alignItems: "stretch", gap: 8 },
@@ -713,7 +713,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: "center",
       backgroundColor: theme.brandSoft,
     },
-    progressTitle: { color: theme.text, fontFamily: font.display, fontSize: 16, letterSpacing: -0.2, flexShrink: 1 },
+    progressTitle: { color: theme.text, fontFamily: font.display, fontSize: 14.5, lineHeight: 19, letterSpacing: -0.2, flexShrink: 1 },
     progressTrack: { height: 7, borderRadius: 999, backgroundColor: theme.surfaceAlt, overflow: "hidden" },
     progressFill: { height: "100%", borderRadius: 999, backgroundColor: theme.brand },
     progressFillOverdue: { backgroundColor: theme.danger },
@@ -729,7 +729,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: "center",
     },
     handoverBody: { flex: 1, minWidth: 0, gap: 2 },
-    handoverCode: { color: theme.text, fontFamily: font.display, fontSize: 15.5, letterSpacing: -0.2 },
+    handoverCode: { color: theme.text, fontFamily: font.display, fontSize: 14.5, lineHeight: 19, letterSpacing: -0.2 },
     handoverVehicle: { color: theme.muted, fontFamily: font.regular, fontSize: 10.5 },
 
     // Schedule
@@ -764,7 +764,7 @@ const createStyles = (theme: Theme) =>
     reviewAvatarFallback: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.brandSoft, alignItems: "center", justifyContent: "center" },
     reviewAvatarText: { color: theme.brand, fontFamily: font.bold, fontSize: 12 },
     reviewName: { color: theme.text, fontFamily: font.semibold, fontSize: 12.5 },
-    reviewStars: { color: theme.success, fontSize: 13 },
+    reviewStars: { color: theme.success, fontSize: 12 },
     reviewDate: { color: theme.faint, fontFamily: font.regular, fontSize: 10 },
     reviewComment: { color: theme.text, fontFamily: font.regular, fontSize: 11.5, lineHeight: 17, marginLeft: 42 },
     // Cost
@@ -784,8 +784,9 @@ const createStyles = (theme: Theme) =>
     totalValue: {
       color: theme.text,
       fontFamily: font.display,
-      fontSize: 20,
-      letterSpacing: -0.5,
+      fontSize: 18,
+      lineHeight: 22,
+      letterSpacing: -0.3,
       fontVariant: ["tabular-nums"],
     },
     scheduleBox: {
@@ -806,7 +807,7 @@ const createStyles = (theme: Theme) =>
     scheduleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
     scheduleLabel: { color: theme.muted, fontFamily: font.regular, fontSize: 11, flexShrink: 1 },
     scheduleValue: { color: theme.text, fontFamily: font.semibold, fontSize: 11.5, fontVariant: ["tabular-nums"] },
-    cardTitle: { color: theme.text, fontFamily: font.display, fontSize: 15.5, lineHeight: 20, letterSpacing: -0.2, marginBottom: 6 },
+    cardTitle: { color: theme.text, fontFamily: font.display, fontSize: 14.5, lineHeight: 19, letterSpacing: -0.2, marginBottom: 6 },
     muted: { color: theme.muted, fontFamily: font.regular, fontSize: 11.5, lineHeight: 17 },
     noteBox: {
       borderRadius: 16,

@@ -204,7 +204,7 @@ const createStyles = (theme: Theme) =>
       letterSpacing: 0.7,
       textTransform: "uppercase",
     },
-    heroTitle: { color: theme.text, fontFamily: font.display, fontSize: 17.5, lineHeight: 22, letterSpacing: -0.3 },
+    heroTitle: { color: theme.text, fontFamily: font.display, fontSize: 17, lineHeight: 22, letterSpacing: -0.3 },
     intro: { color: theme.muted, fontFamily: font.regular, fontSize: 10.5, lineHeight: 16 },
     timeButton: {
       minHeight: 42,
@@ -236,7 +236,7 @@ const createStyles = (theme: Theme) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    captureText: { color: theme.brand, fontFamily: font.bold, fontSize: 12.5 },
+    captureText: { color: theme.brand, fontFamily: font.bold, fontSize: 12 },
     submitButton: {
       minHeight: 48,
       borderRadius: 16,
