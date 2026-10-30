@@ -7,7 +7,7 @@ export type DeliveryConfig = { freeKm: number; perKm: number; maxKm: number };
 export type DeliveryPreview = { distanceKm: number; fee: number; overMax: boolean };
 
 const DISCOUNT_TIERS = [
-  { min: 3, max: 3, pct: 5 },
+  { min: 3, max: 4, pct: 5 },
   { min: 5, max: 6, pct: 10 },
   { min: 7, max: 29, pct: 15 },
   { min: 30, max: Number.POSITIVE_INFINITY, pct: 25 },
@@ -108,11 +108,14 @@ export function calcPricePreview(
   const discAmt = Math.round((base * discPct) / 100);
   const afterDisc = base - discAmt;
   const total = Math.max(afterDisc - promoDiscount, 0) + deliveryFee;
+  // Phí nền tảng tính trên giá thuê sau giảm giá dài hạn, TRƯỚC voucher và
+  // phí giao xe — khớp BookingService.CalculatePlatformFee + bản web.
+  const feeBase = afterDisc;
   const feeValue = vehicle.platformFeeValue ?? 10;
   const fee =
     vehicle.platformFeeType === "Fixed"
       ? Math.min(Math.max(feeValue, vehicle.platformFeeMinFee ?? 0), vehicle.platformFeeMaxFee ?? Number.POSITIVE_INFINITY)
-      : Math.round(Math.min(Math.max((total * feeValue) / 100, vehicle.platformFeeMinFee ?? 0), vehicle.platformFeeMaxFee ?? total));
+      : Math.round(Math.min(Math.max((feeBase * feeValue) / 100, vehicle.platformFeeMinFee ?? 0), vehicle.platformFeeMaxFee ?? feeBase));
   const depositPercent = Math.max(20, vehicle.depositPercent || 0);
   const deposit = Math.round((total * depositPercent) / 100);
   return { base, discPct, discAmt, promoAmt: promoDiscount, deliveryFee, total, fee, deposit, depositPercent, remaining: Math.max(total - deposit, 0) };
