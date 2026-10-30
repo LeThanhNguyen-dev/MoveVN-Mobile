@@ -28,7 +28,7 @@ export default function ReturnProgress({ booking, report, role }: {
       <View style={{ width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: theme.surface }}>
         <RotateCcw color={theme.info} size={15} strokeWidth={2.1} />
       </View>
-      <Text accessibilityRole="header" style={{ flex: 1, color: theme.text, fontFamily: font.display, fontSize: 14.5 }}>Tiến trình trả xe</Text>
+      <Text accessibilityRole="header" style={{ flex: 1, color: theme.text, fontFamily: font.display, fontSize: 14, lineHeight: 19 }}>Tiến trình trả xe</Text>
       <Text style={{ color: theme.info, fontFamily: font.bold, fontSize: 10 }}>{doneCount}/{steps.length} bước</Text>
     </View>
     <View style={{ gap: 9 }}>

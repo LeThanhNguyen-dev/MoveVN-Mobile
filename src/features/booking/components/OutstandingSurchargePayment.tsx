@@ -38,7 +38,7 @@ export default function OutstandingSurchargePayment({ booking, report, role, onU
 
     <View style={{ borderRadius: 16, borderWidth: 1, borderColor: theme.dangerBorder, backgroundColor: theme.dangerSoft, padding: 12, gap: 3 }}>
       <Text style={{ color: theme.muted, fontFamily: font.bold, fontSize: 8.5, letterSpacing: 0.6, textTransform: "uppercase" }}>Còn phụ phí chưa thanh toán</Text>
-      <Text style={{ color: theme.danger, fontFamily: font.display, fontSize: 24, letterSpacing: -0.5 }}>{formatMoney(amount)}</Text>
+      <Text style={{ color: theme.danger, fontFamily: font.display, fontSize: 20, lineHeight: 25, letterSpacing: -0.4 }}>{formatMoney(amount)}</Text>
       <Text style={{ color: theme.muted, fontFamily: font.regular, fontSize: 10, lineHeight: 15 }}>
         {external > 0 ? `Đã chọn trả trực tiếp: ${formatMoney(external)}, chờ chủ xe xác nhận đã nhận đủ tiền. Không trừ ví cho khoản này.` : "Khách chọn thanh toán qua ví MoveVN hoặc trả trực tiếp cho chủ xe."}
       </Text>

@@ -27,6 +27,7 @@ import {
 } from "react-native";
 import {
   Banknote,
+  Camera,
   CircleCheck,
   CircleDollarSign,
   Clock3,
@@ -408,8 +409,8 @@ export default function TripDetailScreen({
     return (
       <View style={styles.screen}>
         <DetailHeader
-          kicker={handover ? "Bàn giao xe" : "Chuyến đi của tôi"}
-          title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Chi tiết chuyến đi"}
+          kicker={handover ? "Bàn giao xe" : undefined}
+          title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Chuyến đi của tôi"}
           onBack={handleBack}
         />
         <View style={styles.center}>
@@ -587,8 +588,7 @@ export default function TripDetailScreen({
       ) : (
         <>
           <DetailHeader
-            kicker="Chuyến đi của tôi"
-            title="Chi tiết chuyến đi"
+            title="Chuyến đi của tôi"
             onBack={handleBack}
             right={
               <Pressable
@@ -826,9 +826,9 @@ export default function TripDetailScreen({
             <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage={false} onChanged={() => load()} />
 
             <DetailCard>
-              <DetailSectionHeader icon={KeyRound} title="Bàn giao xe" subtitle="Biên bản nhận xe và trả xe" />
+              <DetailSectionHeader icon={Camera} title="Bàn giao xe" subtitle="Biên bản nhận xe và trả xe" />
               <InspectionSummaryLink booking={booking} type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckIn" })} />
-              <InspectionSummaryLink booking={booking} type="CheckOut" report={checkOutReport} onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckOut" })} />
+              <InspectionSummaryLink booking={booking} type="CheckOut" report={checkOutReport} divider onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckOut" })} />
             </DetailCard>
 
             {(status === "Cancelled" || status === "Rejected") && booking.cancelReason ? (
@@ -1027,7 +1027,7 @@ const createStyles = (theme: Theme) =>
     screen: { flex: 1, backgroundColor: theme.background },
     center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
     scrollContent: { paddingBottom: 40 },
-    body: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 40, gap: 12 },
+    body: { paddingHorizontal: 8, paddingTop: 12, paddingBottom: 40, gap: 10 },
 
     pressed: { opacity: 0.72 },
     headerChat: {
@@ -1072,7 +1072,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: "center",
       backgroundColor: theme.brandSoft,
     },
-    progressTitle: { color: theme.text, fontFamily: font.display, fontSize: 16, letterSpacing: -0.2, flexShrink: 1 },
+    progressTitle: { color: theme.text, fontFamily: font.display, fontSize: 14.5, lineHeight: 19, letterSpacing: -0.2, flexShrink: 1 },
     progressTrack: { height: 7, borderRadius: 999, backgroundColor: theme.surfaceAlt, overflow: "hidden" },
     progressFill: { height: "100%", borderRadius: 999, backgroundColor: theme.brand },
     progressFillOverdue: { backgroundColor: theme.danger },
@@ -1122,13 +1122,14 @@ const createStyles = (theme: Theme) =>
       paddingTop: 12,
     },
     totalBody: { flex: 1, minWidth: 0 },
-    totalLabel: { color: theme.text, fontFamily: font.bold, fontSize: 13 },
+    totalLabel: { color: theme.text, fontFamily: font.bold, fontSize: 12.5 },
     totalHint: { color: theme.faint, fontFamily: font.regular, fontSize: 9.5, marginTop: 1 },
     totalValue: {
       color: theme.text,
       fontFamily: font.display,
-      fontSize: 20,
-      letterSpacing: -0.5,
+      fontSize: 18,
+      lineHeight: 22,
+      letterSpacing: -0.3,
       fontVariant: ["tabular-nums"],
     },
     scheduleBox: {
@@ -1180,7 +1181,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: "center",
     },
     handoverBody: { flex: 1, minWidth: 0, gap: 2 },
-    handoverCode: { color: theme.text, fontFamily: font.display, fontSize: 15.5, letterSpacing: -0.2 },
+    handoverCode: { color: theme.text, fontFamily: font.display, fontSize: 14.5, lineHeight: 19, letterSpacing: -0.2 },
     handoverVehicle: { color: theme.muted, fontFamily: font.regular, fontSize: 10.5 },
 
     // Reviews

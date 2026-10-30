@@ -246,8 +246,8 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
     name: {
       color: p.ink,
       fontFamily: checkoutFont.display,
-      fontSize: 18,
-      lineHeight: 22,
+      fontSize: 16.5,
+      lineHeight: 21,
       letterSpacing: -0.3,
     },
     areaRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
@@ -256,7 +256,8 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
     price: {
       color: p.ink,
       fontFamily: checkoutFont.display,
-      fontSize: 15,
+      fontSize: 14,
+      lineHeight: 18,
       letterSpacing: -0.3,
       fontVariant: ["tabular-nums"],
     },
@@ -299,12 +300,13 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
     periodDate: {
       color: p.ink,
       fontFamily: checkoutFont.bold,
-      fontSize: 16,
+      fontSize: 15,
+      lineHeight: 20,
       letterSpacing: -0.2,
       marginTop: 2,
       fontVariant: ["tabular-nums"],
     },
-    periodPlaceholder: { color: p.faint, fontFamily: checkoutFont.semibold, fontSize: 14 },
+    periodPlaceholder: { color: p.faint, fontFamily: checkoutFont.semibold, fontSize: 13, lineHeight: 18 },
     periodMeta: { color: p.muted, fontFamily: checkoutFont.regular, fontSize: 10, marginTop: 1 },
     periodArrow: { paddingTop: 16 },
     nextBox: {

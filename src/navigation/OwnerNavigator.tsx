@@ -142,7 +142,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
             setActiveTab(tab);
           }} /> : null}
           {/* ChatbotAI (không booking) cho chủ xe */}
-          {!(activeTab === "bookings" && bookingRoute === "OwnerBookingHandover") && <AssistantFab />}
+          {!(activeTab === "bookings" && (bookingRoute === "OwnerBookingHandover" || bookingRoute === "ContractDetail")) && <AssistantFab />}
         </>
       )}
     </SafeAreaView>

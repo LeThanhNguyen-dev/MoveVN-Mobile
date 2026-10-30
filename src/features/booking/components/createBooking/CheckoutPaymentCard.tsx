@@ -418,7 +418,7 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
     value: {
       color: p.ink,
       fontFamily: checkoutFont.semibold,
-      fontSize: 12,
+      fontSize: 11.5,
       fontVariant: ["tabular-nums"],
     },
     valueMuted: {
@@ -453,13 +453,14 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
       paddingTop: 12,
     },
     totalBody: { flex: 1, minWidth: 0 },
-    totalLabel: { color: p.ink, fontFamily: checkoutFont.bold, fontSize: 13 },
+    totalLabel: { color: p.ink, fontFamily: checkoutFont.bold, fontSize: 12.5 },
     totalHint: { color: p.faint, fontFamily: checkoutFont.regular, fontSize: 9.5, marginTop: 1 },
     totalValue: {
       color: p.ink,
       fontFamily: checkoutFont.display,
-      fontSize: 22,
-      letterSpacing: -0.5,
+      fontSize: 18,
+      lineHeight: 22,
+      letterSpacing: -0.3,
       fontVariant: ["tabular-nums"],
     },
     schedule: {
@@ -500,7 +501,7 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
     securityHint: { color: p.muted, fontFamily: checkoutFont.regular, fontSize: 9.5, lineHeight: 13, marginTop: 1 },
     securityValue: {
       fontFamily: checkoutFont.bold,
-      fontSize: 12.5,
+      fontSize: 12,
       maxWidth: 116,
       textAlign: "right",
       fontVariant: ["tabular-nums"],

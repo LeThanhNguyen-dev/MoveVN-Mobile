@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   back: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  title: { fontSize: 19, fontFamily: font.display, letterSpacing: -0.3, flex: 1 },
+  title: { fontSize: 17, lineHeight: 22, fontFamily: font.display, letterSpacing: -0.25, flex: 1 },
   pressed: { opacity: 0.72 },
   button: {
     minHeight: 46,
@@ -93,7 +93,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 11,
-    fontSize: 12.5,
+    fontSize: 12,
+    lineHeight: 16,
     fontFamily: font.regular,
   },
   multiline: { minHeight: 90, textAlignVertical: "top" },

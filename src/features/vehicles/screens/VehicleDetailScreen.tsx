@@ -452,7 +452,8 @@ const createStyles = (p: ReturnType<typeof useDetailTheme>["p"]) =>
     errorTitle: {
       color: p.ink,
       fontFamily: detailFont.display,
-      fontSize: 19,
+      fontSize: 17,
+      lineHeight: 22,
       textAlign: "center",
     },
     errorText: {

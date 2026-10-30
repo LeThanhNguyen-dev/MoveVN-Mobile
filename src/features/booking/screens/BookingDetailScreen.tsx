@@ -326,7 +326,7 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    content: { padding: 16, paddingBottom: 40, gap: 12 },
+    content: { paddingHorizontal: 8, paddingTop: 16, paddingBottom: 40, gap: 10 },
     center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
     sectionGroup: { gap: 12 },
     actionsRow: { flexDirection: "row", gap: 8 },
@@ -341,7 +341,7 @@ const createStyles = (theme: Theme) =>
       letterSpacing: 0.7,
       textTransform: "uppercase",
     },
-    heroTitle: { color: theme.text, fontFamily: font.display, fontSize: 18, lineHeight: 23, letterSpacing: -0.4 },
+    heroTitle: { color: theme.text, fontFamily: font.display, fontSize: 17, lineHeight: 22, letterSpacing: -0.3 },
     heroCode: { color: theme.muted, fontFamily: font.semibold, fontSize: 10.5, letterSpacing: 0.2 },
     stats: { flexDirection: "row", gap: 8 },
     hint: { color: theme.faint, fontFamily: font.regular, fontSize: 9.5, lineHeight: 14 },

@@ -80,7 +80,7 @@ const createStyles = (p: ReturnType<typeof useDetailTheme>["p"]) =>
     },
     avatarText: { color: "#FFFFFF", fontFamily: detailFont.display, fontSize: 15 },
     body: { flex: 1, minWidth: 0 },
-    name: { color: p.ink, fontFamily: detailFont.bold, fontSize: 13.5 },
+    name: { color: p.ink, fontFamily: detailFont.bold, fontSize: 13 },
     role: { color: p.muted, fontFamily: detailFont.regular, fontSize: 10.5, marginTop: 2 },
     pressed: { opacity: 0.65 },
   });

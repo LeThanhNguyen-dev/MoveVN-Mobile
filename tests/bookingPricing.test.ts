@@ -21,9 +21,12 @@ describe("bookingPricing", () => {
   });
   it("applies the same long-rental discount tiers as web", () => {
     expect(getDiscountPercent(1)).toBe(0);
+    expect(getDiscountPercent(2)).toBe(0);
     expect(getDiscountPercent(3)).toBe(5);
+    expect(getDiscountPercent(4)).toBe(5);
     expect(getDiscountPercent(5)).toBe(10);
     expect(getDiscountPercent(7)).toBe(15);
+    expect(getDiscountPercent(29)).toBe(15);
     expect(getDiscountPercent(30)).toBe(25);
   });
 
@@ -70,6 +73,8 @@ describe("bookingPricing", () => {
     expect(preview!.base).toBe(2500000);
     expect(preview!.discPct).toBe(10);
     expect(preview!.discAmt).toBe(250000);
+    // Phi nen tang = 10% x afterDisc (2.250.000), khong tinh voucher/delivery.
+    expect(preview!.fee).toBe(225000);
     expect(preview!.total).toBe(2220000);
     expect(preview!.depositPercent).toBe(30);
     expect(preview!.deposit).toBe(666000);

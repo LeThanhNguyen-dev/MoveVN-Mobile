@@ -26,7 +26,7 @@ export default function CheckoutConfirmation({ booking, report, busy, onClose, o
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={{ color: theme.brand, fontFamily: font.extraBold, fontSize: 9, letterSpacing: 0.9, textTransform: "uppercase" }}>Xác nhận trả xe</Text>
-            <Text style={{ color: theme.text, fontFamily: font.display, fontSize: 20, letterSpacing: -0.4 }}>
+            <Text style={{ color: theme.text, fontFamily: font.display, fontSize: 17, lineHeight: 22, letterSpacing: -0.25 }}>
               {returned ? "Bước 2 · Thanh toán phụ thu" : "Bước 1 · Xác nhận bàn giao xe"}
             </Text>
           </View>

@@ -103,7 +103,8 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
     total: {
       color: p.ink,
       fontFamily: checkoutFont.display,
-      fontSize: 21,
+      fontSize: 18,
+      lineHeight: 22,
       letterSpacing: -0.4,
       fontVariant: ["tabular-nums"],
     },
@@ -118,6 +119,6 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
       justifyContent: "center",
       gap: 7,
     },
-    ctaText: { color: p.onBrand, fontFamily: checkoutFont.bold, fontSize: 13.5, letterSpacing: 0.1 },
+    ctaText: { color: p.onBrand, fontFamily: checkoutFont.bold, fontSize: 13, letterSpacing: 0.1 },
     pressed: { opacity: 0.86 },
   });

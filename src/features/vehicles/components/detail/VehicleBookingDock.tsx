@@ -161,8 +161,9 @@ const createStyles = (p: ReturnType<typeof useDetailTheme>["p"]) =>
     headline: {
       color: p.ink,
       fontFamily: detailFont.display,
-      fontSize: 20,
-      letterSpacing: -0.4,
+      fontSize: 18,
+      lineHeight: 22,
+      letterSpacing: -0.3,
       fontVariant: ["tabular-nums"],
     },
     unit: { color: p.muted, fontFamily: detailFont.medium, fontSize: 11 },
@@ -178,6 +179,6 @@ const createStyles = (p: ReturnType<typeof useDetailTheme>["p"]) =>
       justifyContent: "center",
       gap: 5,
     },
-    ctaText: { color: p.onBrand, fontFamily: detailFont.bold, fontSize: 14, letterSpacing: -0.1 },
+    ctaText: { color: p.onBrand, fontFamily: detailFont.bold, fontSize: 13, letterSpacing: -0.1 },
     pressed: { opacity: 0.86 },
   });

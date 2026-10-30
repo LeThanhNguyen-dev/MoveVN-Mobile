@@ -42,8 +42,8 @@ const createStyles = (p: ReturnType<typeof useDetailTheme>["p"]) =>
     description: {
       color: p.ink,
       fontFamily: detailFont.regular,
-      fontSize: 13,
-      lineHeight: 21,
+      fontSize: 12.5,
+      lineHeight: 20,
       marginTop: 9,
     },
     more: { alignSelf: "flex-start", minHeight: 32, justifyContent: "center", marginTop: 2 },
