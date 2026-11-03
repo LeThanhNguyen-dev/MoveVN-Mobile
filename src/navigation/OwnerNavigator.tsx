@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePushNavigation } from "@/features/notifications/pushNavigation";
 import { CalendarCheck, CarFront, LayoutDashboard, MessageSquare, UserRound } from "lucide-react-native";
-import { StyleSheet, View } from "react-native";
+import { BackHandler, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
 import WalletScreen from "@/features/wallets/screens/WalletScreen";
 import OwnerOverviewScreen from "@/features/app/screens/OwnerOverviewScreen";
+import OwnerAnalyticsScreen from "@/features/ownerAnalytics/OwnerAnalyticsScreen";
 import OwnerVehiclesScreen, { type OwnerVehicleRoute } from "@/features/app/screens/OwnerVehiclesScreen";
 import AssistantFab from "@/features/assistant/components/AssistantFab";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
@@ -32,6 +33,12 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<OwnerTabKey>("overview");
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  useEffect(() => {
+    if (!showAnalytics) return;
+    const listener = BackHandler.addEventListener("hardwareBackPress", () => { setShowAnalytics(false); return true; });
+    return () => listener.remove();
+  }, [showAnalytics]);
   const [vehicleEntry, setVehicleEntry] = useState<{ key: number; route: OwnerVehicleRoute }>({ key: 0, route: { name: "list" } });
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const [chatRoute, setChatRoute] = useState("ChatList");
@@ -40,7 +47,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const pendingPush = usePushNavigation(state => state.pending);
   useEffect(() => {
     if (!pendingPush || pendingPush.userId !== user.userId || pendingPush.roleTarget !== "Owner") return;
-    setShowProfile(false); setShowWallet(false); setProfileUserId(null);
+    setShowProfile(false); setShowWallet(false); setShowAnalytics(false); setProfileUserId(null);
     setPushBooking(pendingPush);
     setActiveTab("bookings");
     usePushNavigation.getState().clear();
@@ -77,7 +84,9 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
-      {profileUserId != null ? (
+      {showAnalytics ? (
+        <OwnerAnalyticsScreen user={user} onBack={() => setShowAnalytics(false)} />
+      ) : profileUserId != null ? (
         <PublicUserProfileScreen
           userId={profileUserId}
           onBack={() => setProfileUserId(null)}
@@ -107,6 +116,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
                 user={user}
                 onAvatarPress={() => setShowProfile(true)}
                 onOpenWallet={() => setShowWallet(true)}
+                onOpenAnalytics={() => setShowAnalytics(true)}
                 onOpenBookings={() => { setPushBooking(null); setActiveTab("bookings"); }}
                 onOpenBooking={bookingId => { setPushBooking({ bookingId, requestId: `overview-${bookingId}-${Date.now()}` }); setActiveTab("bookings"); }}
                 onOpenVehicles={add => { setVehicleEntry(entry => ({ key: entry.key + 1, route: { name: add ? "add" : "list" } })); setActiveTab("vehicles"); }}
@@ -128,6 +138,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
               <AccountTabScreen
                 onProfilePress={() => setShowProfile(true)}
                 onWalletPress={() => setShowWallet(true)}
+                onAnalyticsPress={() => setShowAnalytics(true)}
                 user={user}
                 initialDisputes={pendingDispute}
                 onConsumedDisputes={consumeDisputes}

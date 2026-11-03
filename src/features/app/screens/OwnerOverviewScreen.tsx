@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, BackHandler, Pressable, RefreshControl, ScrollView, View } from "react-native";
+import { useMemo } from "react";
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { Image } from "expo-image";
 import { ArrowRight, BarChart3, CalendarCheck, CarFront, CheckCheck, ChevronRight, ClipboardList, Plus, RefreshCw, RotateCcw, Wallet } from "lucide-react-native";
 import AppText from "@/components/AppText";
 import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
 import type { AuthUser } from "@/features/auth/types";
 import { formatDateTime } from "@/features/booking/utils/format";
-import OwnerAnalyticsScreen from "@/features/ownerAnalytics/OwnerAnalyticsScreen";
 import { comparison, money, number, shortDate } from "@/features/ownerAnalytics/types";
 import { useOwnerDashboard } from "@/features/ownerDashboard/useOwnerDashboard";
 import { createDashboardStyles } from "@/features/ownerDashboard/styles";
@@ -22,27 +21,19 @@ type Props = {
   onOpenBookings: () => void;
   onOpenBooking: (bookingId: number) => void;
   onOpenWallet: () => void;
+  onOpenAnalytics: () => void;
 };
 
-export default function OwnerOverviewScreen({ user, onAvatarPress, onOpenVehicles, onOpenVehicle, onOpenBookings, onOpenBooking, onOpenWallet }: Props) {
+export default function OwnerOverviewScreen({ user, onAvatarPress, onOpenVehicles, onOpenVehicle, onOpenBookings, onOpenBooking, onOpenWallet, onOpenAnalytics }: Props) {
   const { theme } = useTheme();
   const styles = useMemo(() => createDashboardStyles(theme), [theme]);
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const { operations, business, operationsError, businessError, loading, refresh } = useOwnerDashboard(user.userId, !showAnalytics);
-
-  useEffect(() => {
-    if (!showAnalytics) return;
-    const listener = BackHandler.addEventListener("hardwareBackPress", () => { setShowAnalytics(false); return true; });
-    return () => listener.remove();
-  }, [showAnalytics]);
-
-  if (showAnalytics) return <OwnerAnalyticsScreen user={user} onBack={() => setShowAnalytics(false)} />;
+  const { operations, business, operationsError, businessError, loading, refresh } = useOwnerDashboard(user.userId, true);
 
   const shortcuts = [
     { label: "Thêm xe", icon: Plus, onPress: () => onOpenVehicles(true), color: theme.brand, background: theme.brandSoft },
     { label: "Đơn thuê", icon: CalendarCheck, onPress: onOpenBookings, color: theme.info, background: theme.infoSoft },
     { label: "Ví của tôi", icon: Wallet, onPress: onOpenWallet, color: theme.success, background: theme.successSoft },
-    { label: "Thống kê", icon: BarChart3, onPress: () => setShowAnalytics(true), color: theme.brand, background: theme.brandSoft },
+    { label: "Thống kê", icon: BarChart3, onPress: onOpenAnalytics, color: theme.brand, background: theme.brandSoft },
   ];
 
   return <View style={styles.root}>
@@ -99,7 +90,7 @@ export default function OwnerOverviewScreen({ user, onAvatarPress, onOpenVehicle
         </View> : <View style={styles.caughtUp}><View style={[styles.smallIcon, { backgroundColor: theme.successSoft }]}><CheckCheck size={22} color={theme.success} /></View><View style={styles.flex}><AppText style={styles.taskTitle}>Không có đơn chờ xử lý</AppText><AppText style={styles.caption}>Hiện không có đơn chờ duyệt hoặc chờ nhận lại.</AppText></View></View>)}
       </>}
 
-      <View style={styles.sectionHeading}><AppText display style={styles.sectionTitle}>Kinh doanh tháng này</AppText><Pressable accessibilityRole="button" onPress={() => setShowAnalytics(true)} style={styles.linkButton}><AppText style={styles.link}>Xem thống kê</AppText><ArrowRight size={14} color={theme.brand} /></Pressable></View>
+      <View style={styles.sectionHeading}><AppText display style={styles.sectionTitle}>Kinh doanh tháng này</AppText><Pressable accessibilityRole="button" onPress={onOpenAnalytics} style={styles.linkButton}><AppText style={styles.link}>Xem thống kê</AppText><ArrowRight size={14} color={theme.brand} /></Pressable></View>
       {businessError ? <View style={styles.panel}><AppText accessibilityRole="alert" style={styles.error}>{businessError}</AppText><Pressable accessibilityRole="button" onPress={refresh} style={styles.linkButton}><AppText style={styles.link}>Thử lại</AppText></Pressable></View> : <View style={styles.business}>
         <View style={styles.linkButton}><Wallet color={theme.brand} size={17} /><AppText style={styles.businessLabel}>Thu nhập ghi nhận qua ví</AppText></View>
         <AppText display style={styles.income}>{business ? money(business.summary.walletIncome) : "—"}</AppText>
