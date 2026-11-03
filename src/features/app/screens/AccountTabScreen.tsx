@@ -86,6 +86,7 @@ const verificationTotal = 4;
 export default function AccountTabScreen({
   onProfilePress,
   onWalletPress,
+  onAnalyticsPress,
   user,
   initialDisputes,
   onConsumedDisputes,
@@ -94,6 +95,7 @@ export default function AccountTabScreen({
 }: {
   onProfilePress: () => void;
   onWalletPress?: () => void;
+  onAnalyticsPress?: () => void;
   user: AuthUser;
   initialDisputes?: DisputeCreatePrefill | null;
   onConsumedDisputes?: () => void;
@@ -253,7 +255,7 @@ export default function AccountTabScreen({
         { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626", onPress: () => setShowDisputes(true) },
         { key: "violations", label: "Báo cáo vi phạm của tôi", icon: Flag, accent: "#EA580C", onPress: () => openViolations() },
         { key: "availability-alerts", label: "Thông báo xe trống", icon: Bell, accent: theme.brand, onPress: () => openAvailabilityAlerts() },
-        ...(canViewOwnerAnalytics ? [{ key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB", onPress: () => setShowAnalytics(true) }] : []),
+        ...(canViewOwnerAnalytics ? [{ key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB", onPress: () => onAnalyticsPress ? onAnalyticsPress() : setShowAnalytics(true) }] : []),
       ],
     },
     {
