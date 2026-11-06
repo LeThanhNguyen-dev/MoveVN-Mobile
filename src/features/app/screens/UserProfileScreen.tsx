@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -74,8 +75,8 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
   const [expandedKey, setExpandedKey] = useState<ExpandedKey>(null);
   const [driverLicense, setDriverLicense] = useState<DriverLicenseStatusResponse | null>(null);
   const [ownerApp, setOwnerApp] = useState<OwnerApplicationDto | null>(null);
-  const sheetScrollRef = useRef<ScrollView>(null);
-  const phoneInputRef = useRef<TextInput>(null);
+  const sheetScrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const phoneInputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 

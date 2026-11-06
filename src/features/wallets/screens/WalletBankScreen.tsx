@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Clipboard from "expo-clipboard";
 import {
@@ -41,9 +42,9 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
   const [bankListOpen, setBankListOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
-  const scrollRef = useRef<ScrollView | null>(null);
-  const accountRef = useRef<TextInput | null>(null);
-  const holderRef = useRef<TextInput | null>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView> | null>(null);
+  const accountRef = useRef<ComponentRef<typeof TextInput> | null>(null);
+  const holderRef = useRef<ComponentRef<typeof TextInput> | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {

@@ -642,7 +642,7 @@ export default function VehicleListScreen({
         ListFooterComponent={
           loadingMore ? (
             <ActivityIndicator color={theme.brand} style={styles.moreLoader} />
-          ) : null
+          ) : undefined
         }
       /> : (
         <View style={styles.mapScreen}>

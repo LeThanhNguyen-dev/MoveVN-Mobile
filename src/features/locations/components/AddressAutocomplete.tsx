@@ -45,6 +45,7 @@ export default function AddressAutocomplete({
   const [selecting, setSelecting] = useState(false);
   const [error, setError] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selectionSequence = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -53,6 +54,8 @@ export default function AddressAutocomplete({
   }, []);
 
   function handleChange(text: string) {
+    selectionSequence.current++;
+    setSelecting(false);
     onChange(text);
     onManualChange?.();
     setError("");
@@ -72,11 +75,14 @@ export default function AddressAutocomplete({
   }
 
   async function handleSelect(item: GoongPlacePrediction) {
+    const sequence = ++selectionSequence.current;
+    onManualChange?.();
     setPredictions([]);
     setSelecting(true);
     setError("");
     try {
       const detail = await getGoongPlaceDetail(item.placeId);
+      if (sequence !== selectionSequence.current) return;
       const address = detail?.formattedAddress || item.description;
       onChange(address);
       onSelect({
@@ -86,16 +92,19 @@ export default function AddressAutocomplete({
         placeId: detail?.placeId || item.placeId,
       });
     } catch {
+      if (sequence !== selectionSequence.current) return;
       // Không lấy được tọa độ thì vẫn giữ địa chỉ text đã chọn.
       onChange(item.description);
       onSelect({ address: item.description, latitude: null, longitude: null, placeId: item.placeId });
       setError("Không lấy được tọa độ địa chỉ.");
     } finally {
-      setSelecting(false);
+      if (sequence === selectionSequence.current) setSelecting(false);
     }
   }
 
   function handleClear() {
+    selectionSequence.current++;
+    setSelecting(false);
     onChange("");
     onManualChange?.();
     setPredictions([]);

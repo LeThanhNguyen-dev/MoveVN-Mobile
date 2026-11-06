@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { Plus, Trash2 } from "lucide-react-native";
 import { useMemo, useRef } from "react";
 import { Pressable, StyleSheet, Switch, TextInput, View } from "react-native"
@@ -9,8 +10,8 @@ import { useTheme } from "@/theme/useTheme";
 type Props = {
   value: VehicleSurchargePolicy[];
   onChange: (value: VehicleSurchargePolicy[]) => void;
-  onDescriptionFocus?: (input: TextInput) => void;
-  onDescriptionBlur?: (input: TextInput) => void;
+  onDescriptionFocus?: (input: ComponentRef<typeof TextInput>) => void;
+  onDescriptionBlur?: (input: ComponentRef<typeof TextInput>) => void;
 };
 
 const feeTypeOptions = [
@@ -98,7 +99,7 @@ function optionalNumber(text: string) {
 export default function SurchargePolicyEditor({ value, onChange, onDescriptionFocus, onDescriptionBlur }: Props) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const descriptionInputRefs = useRef<Record<number, TextInput | null>>({});
+  const descriptionInputRefs = useRef<Record<number, ComponentRef<typeof TextInput> | null>>({});
 
   function update(index: number, patch: Partial<VehicleSurchargePolicy>) {
     onChange(value.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)));

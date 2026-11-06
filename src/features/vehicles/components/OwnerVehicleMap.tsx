@@ -80,7 +80,7 @@ function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: 
       </AppText>
       {hasCoords ? (
         <View style={[styles.mapBox, { height }]}>
-          <WebView
+          <WebView<object>
             source={{ html }}
             style={styles.webview}
             scrollEnabled={false}
@@ -116,7 +116,7 @@ function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: 
             </Pressable>
           </View>
           {hasCoords ? (
-            <WebView
+            <WebView<object>
               source={{ html: htmlFull }}
               style={styles.fullMap}
               javaScriptEnabled

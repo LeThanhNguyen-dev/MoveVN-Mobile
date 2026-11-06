@@ -188,7 +188,7 @@ export default function NotificationCenter({ userId }: { userId: number }) {
               {state.page < state.totalPages || state.error ? <Pressable accessibilityRole="button" disabled={state.loadingMore || state.refreshing || state.loading} onPress={() => { void loadNotificationPage({ more: state.page < state.totalPages }); }} style={styles.retry}>
                 {state.loadingMore ? <ActivityIndicator color={theme.brand} /> : <AppText style={styles.retryText}>{state.error ? "Thử tải lại" : "Xem thêm thông báo"}</AppText>}
               </Pressable> : <AppText style={styles.footerText}>Bạn đã xem hết thông báo</AppText>}
-            </View> : null}
+            </View> : undefined}
           />
         </>}
       </SafeAreaView>

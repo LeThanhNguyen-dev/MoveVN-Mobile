@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { AlertCircle, Sparkles } from "lucide-react-native";
 import { useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native"
@@ -13,14 +14,14 @@ type Props = {
   value: string;
   onChange: (value: string) => void;
   request: VehicleDescriptionSuggestionRequest | null;
-  onFocus?: (input: TextInput) => void;
-  onBlur?: (input: TextInput) => void;
+  onFocus?: (input: ComponentRef<typeof TextInput>) => void;
+  onBlur?: (input: ComponentRef<typeof TextInput>) => void;
 };
 
 export default function VehicleDescriptionField({ value, onChange, request, onFocus, onBlur }: Props) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 

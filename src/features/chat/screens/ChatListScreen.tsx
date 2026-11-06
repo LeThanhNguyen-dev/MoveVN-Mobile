@@ -124,7 +124,7 @@ export default function ChatListScreen({
                 Mở chi tiết chuyến đi hoặc đơn thuê và chọn Nhắn tin để bắt đầu.
               </AppText>
             </View>
-          ) : null
+          ) : undefined
         }
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardDismissMode="on-drag"

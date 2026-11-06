@@ -171,7 +171,7 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
                   {loadingMore ? "Đang tải..." : `Xem thêm (${txTotal - searched.length})`}
                 </AppText>
               </Pressable>
-            ) : null
+            ) : undefined
           }
         />
       ) : (
@@ -195,7 +195,7 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
                   {loadingMoreWd ? "Đang tải..." : `Xem thêm (${wdTotal - withdrawals.length})`}
                 </AppText>
               </Pressable>
-            ) : null
+            ) : undefined
           }
         />
       )}

@@ -149,7 +149,7 @@ export default function FavoriteVehiclesScreen({
               <ActivityIndicator size="large" color={theme.brand} />
               <AppText style={styles.subtitle}>Đang tải xe yêu thích…</AppText>
             </View>
-          ) : state.listError ? null : (
+          ) : state.listError ? undefined : (
             <View style={styles.empty}>
               <View style={styles.emptyIcon}>
                 <Heart size={34} color={theme.brand} />
@@ -187,7 +187,7 @@ export default function FavoriteVehiclesScreen({
                 <AppText style={styles.link}>Xem thêm xe</AppText>
               )}
             </Pressable>
-          ) : null
+          ) : undefined
         }
       />
     </View>

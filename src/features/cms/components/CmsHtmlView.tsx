@@ -86,7 +86,7 @@ export default function CmsHtmlView({
   onImagePress?: (url: string) => void;
 }) {
   const { theme } = useTheme();
-  const webRef = useRef<WebView>(null);
+  const webRef = useRef<WebView<object>>(null);
   const [height, setHeight] = useState(48);
 
   const document = useMemo(
@@ -129,7 +129,7 @@ export default function CmsHtmlView({
 
   return (
     <View style={styles.container}>
-      <WebView
+      <WebView<object>
         ref={webRef}
         originWhitelist={["*"]}
         source={{ html: document }}

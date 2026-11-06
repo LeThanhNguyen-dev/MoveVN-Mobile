@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Clipboard from "expo-clipboard";
@@ -163,7 +164,7 @@ export default function VoucherHuntScreen() {
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selected, setSelected] = useState<PromotionDetailSlide | null>(null);
 
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const yMap = useRef(new Map<number, number>());
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
