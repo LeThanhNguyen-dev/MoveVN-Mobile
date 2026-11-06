@@ -177,7 +177,7 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
           )
         }
         ListFooterComponent={
-          loading || items.length === 0 ? null : loadingMore ? (
+          loading || items.length === 0 ? undefined : loadingMore ? (
             <ActivityIndicator color={theme.brand} style={styles.more} />
           ) : hasMore ? (
             <Pressable onPress={handleLoadMore} style={styles.moreButton}>

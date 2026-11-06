@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, AppState, Image, Linking, Modal, PixelRatio, Platform, Pressable, StyleSheet, Text, View } from "react-native";
@@ -16,7 +17,7 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
 }) {
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
-  const stampView = useRef<View>(null);
+  const stampView = useRef<ComponentRef<typeof View>>(null);
   const alive = useRef(true);
   const captureLock = useRef(false);
   const temporaryFiles = useRef(new Set<string>());

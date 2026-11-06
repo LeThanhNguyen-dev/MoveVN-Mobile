@@ -228,7 +228,7 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
           )
         }
         ListFooterComponent={
-          loadingMore ? <ActivityIndicator color={theme.brand} style={styles.more} /> : null
+          loadingMore ? <ActivityIndicator color={theme.brand} style={styles.more} /> : undefined
         }
       />
     </View>

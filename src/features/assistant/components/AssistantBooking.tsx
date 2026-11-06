@@ -5,6 +5,7 @@ import QRCode from "react-native-qrcode-svg";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
+import { actionIsExpired } from "@/features/assistant/assistantProtocol";
 import {
   confirmAction,
   getAssistantPaymentStatus,
@@ -13,6 +14,7 @@ import {
   prepareDraft,
   type AssistantQuote,
   type BookingDraft,
+  type DraftSlots,
   type CancellationProposal,
   type ConfirmResult,
   type PaymentLink,
@@ -33,7 +35,7 @@ function checkoutUrl(value?: string) {
   catch { return null; }
 }
 
-export function QuoteCard({ quote }: { quote: AssistantQuote }) {
+export function QuoteCard({ quote, slots }: { quote: AssistantQuote; slots?: DraftSlots }) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   return (
@@ -45,10 +47,12 @@ export function QuoteCard({ quote }: { quote: AssistantQuote }) {
       <Text style={styles.body}>Tiền thuê: {money(quote.rental)}</Text>
       {quote.rentalDiscount > 0 ? <Text style={styles.body}>Giảm theo thời gian thuê: −{money(quote.rentalDiscount)}</Text> : null}
       {quote.promotionDiscount > 0 ? <Text style={styles.body}>Khuyến mãi: −{money(quote.promotionDiscount)}</Text> : null}
+      {quote.deliveryDistanceKm != null || (quote.deliveryFee ?? 0) > 0 ? <Text style={styles.body}>Phí giao xe{quote.deliveryDistanceKm != null ? ` (${quote.deliveryDistanceKm} km)` : ""}: {(quote.deliveryFee ?? 0) > 0 ? money(quote.deliveryFee!) : "Miễn phí"}</Text> : null}
       <Text style={styles.total}>Tổng tiền thuê: {money(quote.total)}</Text>
       <Text style={styles.body}>Thanh toán trước: {money(quote.deposit)}</Text>
       <Text style={styles.body}>Tiền bảo đảm: {money(quote.securityDeposit)}</Text>
-      <Text style={styles.muted}>Nhận xe tại địa chỉ của chủ xe. Giá được kiểm tra lại khi xác nhận.</Text>
+      <Text style={styles.muted}>{slots?.pickupMode === "delivery" || quote.deliveryDistanceKm != null ? `Giao xe${slots?.pickupAddress ? `: ${slots.pickupAddress}` : " tới địa chỉ đã chọn"}.` : "Nhận xe tại địa chỉ của chủ xe."} Giá được kiểm tra lại khi xác nhận.</Text>
+      {slots?.returnAddress ? <Text style={styles.muted}>Trả xe: {slots.returnAddress}</Text> : null}
     </View>
   );
 }
@@ -142,12 +146,14 @@ export function ConfirmationCard({
   onChanged,
   onBooked,
   onViewBooking,
+  disabled = false,
 }: {
   conversationId: string;
   proposal: BookingDraft | CancellationProposal;
   onChanged?: () => void;
   onBooked?: (bookingId: number) => void;
   onViewBooking?: (bookingId: number) => void;
+  disabled?: boolean;
 }) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
@@ -156,7 +162,10 @@ export function ConfirmationCard({
   const [ack, setAck] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [, tick] = useState(0);
   const actionLock = useRef(false);
+
+  useEffect(() => { const delay = Date.parse(current.expiresAt) - Date.now(); if (!Number.isFinite(delay) || delay <= 0) return; const timer = setTimeout(() => tick(value => value + 1), Math.min(delay + 1, 2147483647)); return () => clearTimeout(timer); }, [current.expiresAt]);
 
   useEffect(() => {
     setCurrent(proposal);
@@ -169,7 +178,7 @@ export function ConfirmationCard({
   const rose = !!bookingDraft?.quote && bookingDraft.previousTotal != null && bookingDraft.quote.total > bookingDraft.previousTotal;
 
   async function confirm() {
-    if (!current.confirmToken || actionLock.current || Boolean(rose && !ack)) return;
+    if (disabled || actionIsExpired(current) || !current.confirmToken || actionLock.current || Boolean(rose && !ack)) return;
     actionLock.current = true;
     setBusy(true);
     setError("");
@@ -181,7 +190,11 @@ export function ConfirmationCard({
         setError(response.message ?? "Giá thay đổi, vui lòng xác nhận lại.");
       } else {
         setResult(response);
-        if (response.bookingId && response.status === "PaymentPending") onBooked?.(response.bookingId);
+        if (!cancel && response.status === "PaymentPending" && Number.isSafeInteger(response.bookingId) && response.bookingId! > 0) {
+          // A custom completion handler owns navigation; otherwise use the
+          // existing booking-detail route (which also closes the chat modal).
+          (onBooked ?? onViewBooking)?.(response.bookingId!);
+        }
       }
       onChanged?.();
     } catch (err) {
@@ -224,7 +237,7 @@ export function ConfirmationCard({
           </Text>
         </>
       ) : (
-        bookingDraft?.quote && <QuoteCard quote={bookingDraft.quote} />
+        bookingDraft?.quote && <QuoteCard quote={bookingDraft.quote} slots={bookingDraft.slots} />
       )}
       {rose && !result ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: ack }} disabled={busy} onPress={() => setAck(value => !value)}><Text style={styles.warn}>{ack ? "✓ " : "☐ "}Giá tăng so với báo giá trước. Tôi đồng ý giá mới.</Text></Pressable> : null}
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
@@ -241,7 +254,7 @@ export function ConfirmationCard({
       ) : (
         <>
           <Pressable
-            disabled={busy || !current.confirmToken || Boolean(rose && !ack)}
+            disabled={disabled || actionIsExpired(current) || busy || !current.confirmToken || Boolean(rose && !ack)}
             onPress={() => void confirm()}
             style={[styles.primaryButton, (busy || !current.confirmToken || Boolean(rose && !ack)) && styles.disabled]}
           >
@@ -268,12 +281,14 @@ export const AgentBlocks = memo(function AgentBlocks({
   onChanged,
   onBooked,
   onViewBooking,
+  disabled = false,
 }: {
   blocks: AssistantBlock[];
   conversationId: string;
   onChanged: () => void;
   onBooked?: (bookingId: number) => void;
   onViewBooking?: (bookingId: number) => void;
+  disabled?: boolean;
 }) {
   return (
     <>
@@ -287,6 +302,7 @@ export const AgentBlocks = memo(function AgentBlocks({
               onChanged={onChanged}
               onBooked={onBooked}
               onViewBooking={onViewBooking}
+              disabled={disabled}
             />
           );
         if (block.type === "quoteCard") return <QuoteCard key={index} quote={block.data as unknown as AssistantQuote} />;

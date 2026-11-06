@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -79,7 +80,7 @@ export default function ChatRoomScreen({
   const focused = useRef(false);
   const quoteRequest = useRef<AbortController | null>(null);
   const list = useRef<FlatList<ChatMessage>>(null);
-  const input = useRef<TextInput>(null);
+  const input = useRef<ComponentRef<typeof TextInput>>(null);
   const room = state.rooms.find((item) => item.id === roomId);
   const history = state.histories[roomId] ?? emptyHistory;
   const draft = state.drafts[roomId] ?? emptyDraft;

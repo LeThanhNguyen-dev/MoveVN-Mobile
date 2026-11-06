@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { Bot, CalendarCheck, Headphones, History, Plus, RotateCcw, Send, ThumbsDown, ThumbsUp, X } from "lucide-react-native";
 
-import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -26,6 +25,7 @@ import * as SecureStore from "expo-secure-store";
 import { AgentBlocks } from "@/features/assistant/components/AssistantBooking";
 import {
   assistantError,
+  assistantFailure,
   createConversation,
   getDraft,
   getHistory,
@@ -36,7 +36,8 @@ import {
   sendFeedback,
   sendQuestion,
 } from "@/features/assistant/assistantService";
-import type { AssistantAnswer, Conversation, DraftSlots, ResourceCard, TimelineItem } from "@/features/assistant/assistantService";
+import type { AssistantAnswer, Conversation, DraftSlots, MessageResult, ResourceCard, TimelineItem } from "@/features/assistant/assistantService";
+import { answerActionsAllowed, applyMessageResult, assistantSendCanRetry, isPendingMessage, pendingNotice } from "@/features/assistant/assistantProtocol";
 
 // Port từ FrontEnd AssistantWidget.tsx, gồm cả booking (đặt xe nhanh,
 // xác nhận trong chat, thanh toán) như bản web.
@@ -125,6 +126,13 @@ export default function AssistantScreen({
   const [staffNote, setStaffNote] = useState("");
   const [firstPage, setFirstPage] = useState(1);
   const [votes, setVotes] = useState<Record<string, boolean>>({});
+  const [uncertain, setUncertain] = useState<string | null>(null);
+  const retryAction = useRef<(() => void) | null>(null);
+  const pendingRequests = useRef(new Map<string, MessageResult>());
+  const receipts = useRef(new Map<string, MessageResult>());
+  const shownFailures = useRef(new Set<string>());
+  const attempts = useRef(new Map<string, { conversationId: string; content: string; clientId: string }>());
+  const serverOffset = useRef(0);
 
   const [funnelOpen, setFunnelOpen] = useState(false);
   const [policySlug, setPolicySlug] = useState<string | null>(null);
@@ -132,11 +140,14 @@ export default function AssistantScreen({
   const attempt = useRef<{ conversationId: string; content: string; clientId: string } | null>(null);
   const hydrated = useRef(false);
   const alive = useRef(true);
+  const conversationEpoch = useRef(0);
   const sendLock = useRef(false);
   const listRef = useRef<FlatList>(null);
   const refreshSequence = useRef(0);
   const earliestPage = useRef<number | null>(null);
   const storageKey = `movevn_assistant_${user?.userId}`;
+  const latestDraftVersion = Math.max(-1, ...items.map(item => item.draftVersion ?? -1));
+  const latestConfirmationId = [...items].reverse().find(item => item.answer?.blocks?.some(block => block.type === "confirmCard"))?.id;
 
   useEffect(() => {
     if (conversation && user) void SecureStore.setItemAsync(storageKey, conversation.id).catch(() => undefined);
@@ -149,13 +160,14 @@ export default function AssistantScreen({
     // Giống web: chỉ tải từ trang đã tải gần nhất tới trang mới nhất,
     // tránh fetch toàn bộ mỗi lần poll khi chat dài.
     const startPage = Math.min(earliestPage.current ?? lastPage, lastPage);
-    const rows: TimelineItem[] = [];
+    let rows: TimelineItem[] = [];
     for (let pageNumber = startPage; pageNumber <= lastPage; pageNumber++) {
       const page = pageNumber === 1 ? initial : await getHistory(selected.id, pageNumber, signal);
       rows.push(...page.items);
     }
     if (!alive.current || signal?.aborted || sequence !== refreshSequence.current) return;
     setRevision(value => value + 1);
+    for (const result of receipts.current.values()) rows = applyMessageResult(rows, result);
     earliestPage.current = startPage;
     setItems((previous) => {
       const byId = new Map(previous.map((item) => [item.id, item]));
@@ -165,21 +177,23 @@ export default function AssistantScreen({
       return next.length === previous.length && next.every((item, index) => item === previous[index]) ? previous : next;
     });
     setFirstPage(startPage);
-    const active = rows.find((item) => item.role === "user" && ["Queued", "Processing"].includes(item.status));
-    setPending(Boolean(active));
+    for (const item of rows.filter(row => row.role === "user" && row.requestId)) {
+      if (isPendingMessage(item) && !receipts.current.has(item.requestId!)) pendingRequests.current.set(item.requestId!, { ...pendingRequests.current.get(item.requestId!), ...item, id: item.requestId!, errorCode: null, deadlineAt: item.deadlineAt ?? pendingRequests.current.get(item.requestId!)?.deadlineAt ?? new Date(Date.now() + 90000).toISOString() });
+      else pendingRequests.current.delete(item.requestId!);
+    }
+    setPending(pendingRequests.current.size > 0);
     const failed = [...rows].reverse().find((item) => item.role === "user" && item.status === "Failed");
-    if (failed?.requestId && failed === rows[rows.length - 1]) {
+    if (failed?.requestId && failed === rows[rows.length - 1] && !shownFailures.current.has(failed.requestId)) {
+      shownFailures.current.add(failed.requestId);
       const result = await getMessage(selected.id, failed.requestId, signal);
-      if (alive.current && !signal?.aborted && sequence === refreshSequence.current) setError(assistantError(result.errorCode));
-    } else {
-      setError(null);
+      if (alive.current && !signal?.aborted && sequence === refreshSequence.current) { retryAction.current = result.diagnostics?.retryable === false ? null : () => void send(failed.content); setError(assistantError(result.errorCode)); }
     }
   }, []);
 
   useEffect(() => {
     alive.current = true;
     return () => {
-      alive.current = false;
+      alive.current = false; conversationEpoch.current++;
     };
   }, []);
 
@@ -200,7 +214,7 @@ export default function AssistantScreen({
         hydrated.current = true;
       })
       .catch((err) => {
-        if (!abort.signal.aborted) setError(getApiErrorMessage(err, "Chưa kết nối được với máy chủ. Bạn thử lại nhé."));
+        if (!abort.signal.aborted) { retryAction.current = () => void showHistory(); setError(assistantFailure(err, "Chưa kết nối được với máy chủ. Bạn thử lại nhé.")); }
       })
       .finally(() => {
         if (!abort.signal.aborted) setLoading(false);
@@ -247,12 +261,25 @@ export default function AssistantScreen({
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
       try {
-        await refresh(conversation, abort.signal);
-        const page = await listConversations(abort.signal);
-        const current = page.items.find(item => item.id === conversation.id);
-        if (current && !abort.signal.aborted) setConversation(previous => previous?.status === current.status ? previous : current);
-      } catch { /* Keep polling after a transient connection failure. */ }
-      if (!abort.signal.aborted) timer = setTimeout(poll, connected && conversation.status === "BotActive" ? 15000 : 3000);
+        let terminal = false;
+        for (const [id, previous] of pendingRequests.current) {
+          const result = await getMessage(conversation.id, id, abort.signal);
+          if (abort.signal.aborted) return;
+          if (result.serverNow && Number.isFinite(Date.parse(result.serverNow))) serverOffset.current = Date.parse(result.serverNow) - Date.now();
+          const current = { ...previous, ...result, deadlineAt: result.deadlineAt ?? previous.deadlineAt };
+          if (isPendingMessage(current)) pendingRequests.current.set(id, current);
+          else { pendingRequests.current.delete(id); receipts.current.set(id, current); setItems(items => applyMessageResult(items, current)); terminal = true; }
+        }
+        setUncertain([...pendingRequests.current.values()].map(message => pendingNotice(message, Date.now() + serverOffset.current)).find(Boolean) ?? null);
+        setPending(pendingRequests.current.size > 0);
+        if (terminal || conversation.ticketId) {
+          await refresh(conversation, abort.signal);
+          const page = await listConversations(abort.signal);
+          const current = page.items.find(item => item.id === conversation.id);
+          if (current && !abort.signal.aborted) setConversation(previous => previous?.status === current.status ? previous : current);
+        }
+      } catch { if (!abort.signal.aborted) setUncertain("Kết nối đang gián đoạn. Tin nhắn vẫn được giữ; MoveVN sẽ kiểm tra lại trạng thái."); }
+      if (!abort.signal.aborted) timer = setTimeout(poll, connected && conversation.status === "BotActive" ? 5000 : 3000);
     };
     timer = setTimeout(poll, 3000);
     return () => { abort.abort(); clearTimeout(timer); };
@@ -267,31 +294,46 @@ export default function AssistantScreen({
   }, [items.length, pending]);
 
   async function send(content = draft) {
-    if (!user || !content.trim() || content.trim().length > 2000 || sendLock.current || pending) return;
+    if (!user || !content.trim() || content.trim().length > 2000 || sendLock.current) return;
     sendLock.current = true;
     setBusy(true);
     setError(null);
+    const epoch = conversationEpoch.current;
+    let acceptedConversation: Conversation | null = null;
     try {
       const current = conversation ?? (await createConversation());
+      if (!alive.current || epoch !== conversationEpoch.current) return;
       setConversation(current);
       hydrated.current = true;
-      const request = attempt.current?.conversationId === current.id && attempt.current.content === content.trim()
-        ? attempt.current : { conversationId: current.id, content: content.trim(), clientId: newClientId() };
-      attempt.current = request;
+      const attemptKey = current.id + "\0" + content.trim();
+      const request = attempts.current.get(attemptKey) ?? { conversationId: current.id, content: content.trim(), clientId: newClientId() };
+      attempt.current = request; attempts.current.set(attemptKey, request);
       const result = await sendQuestion(current.id, request.content, request.clientId);
-      attempt.current = null;
-      setDraft("");
-      setPending(["Queued", "Processing"].includes(result.status));
+      if (!alive.current || epoch !== conversationEpoch.current) return;
+      acceptedConversation = current;
+      attempt.current = null; attempts.current.delete(attemptKey);
+      setDraft(value => value.trim() === request.content ? "" : value); retryAction.current = null;
+      if (isPendingMessage(result)) pendingRequests.current.set(result.id, { ...result, deadlineAt: result.deadlineAt ?? new Date(Date.now() + 90000).toISOString() });
+      else { receipts.current.set(result.id, result); setItems(items => applyMessageResult(items, result)); }
+      setPending(pendingRequests.current.size > 0);
       await refresh(current);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Chưa gửi được tin nhắn. Nhấn gửi lại để thử tiếp."));
+      if (!alive.current || epoch !== conversationEpoch.current) return;
+      if (acceptedConversation) { const accepted = acceptedConversation; retryAction.current = () => { void refresh(accepted).catch(() => undefined); }; setError("Tin nh\u1eafn \u0111\u00e3 \u0111\u01b0\u1ee3c nh\u1eadn. Ch\u01b0a t\u1ea3i \u0111\u01b0\u1ee3c k\u1ebft qu\u1ea3; h\u00e3y ki\u1ec3m tra l\u1ea1i tr\u1ea1ng th\u00e1i."); return; }
+      if (!draft.trim()) setDraft(content);
+      const retryable = assistantSendCanRetry(err);
+      if (!retryable && attempt.current) { attempts.current.delete(attempt.current.conversationId + "\0" + attempt.current.content); attempt.current = null; }
+      retryAction.current = retryable ? () => void send(content) : null;
+      setError(assistantFailure(err, "Chưa xác nhận tin nhắn đã được nhận. Thử gửi lại sẽ giữ nguyên mã tin nhắn."));
     } finally {
       sendLock.current = false;
-      setBusy(false);
+      if (alive.current && epoch === conversationEpoch.current) setBusy(false);
     }
   }
 
   function newConversation() {
+    conversationEpoch.current++;
+    pendingRequests.current.clear(); receipts.current.clear(); shownFailures.current.clear(); attempts.current.clear(); retryAction.current = null; setUncertain(null);
     void SecureStore.deleteItemAsync(storageKey).catch(() => undefined);
     refreshSequence.current++;
     attempt.current = null;
@@ -308,6 +350,8 @@ export default function AssistantScreen({
   }
 
   async function choose(current: Conversation) {
+    conversationEpoch.current++;
+    pendingRequests.current.clear(); receipts.current.clear(); shownFailures.current.clear(); attempts.current.clear(); retryAction.current = null; setUncertain(null);
     refreshSequence.current++;
     attempt.current = null;
     setItems([]);
@@ -321,7 +365,7 @@ export default function AssistantScreen({
     try {
       await refresh(current);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không tải được hội thoại."));
+      retryAction.current = () => void choose(current); setError(assistantFailure(err, "Không tải được hội thoại."));
     } finally {
       setLoading(false);
     }
@@ -340,7 +384,7 @@ export default function AssistantScreen({
       });
       setFirstPage(firstPage - 1);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Chưa tải được tin nhắn cũ."));
+      retryAction.current = () => void earlier(); setError(assistantFailure(err, "Chưa tải được tin nhắn cũ."));
     } finally {
       setLoading(false);
     }
@@ -352,7 +396,7 @@ export default function AssistantScreen({
     try {
       setConversations((await listConversations()).items);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không tải được lịch sử."));
+      retryAction.current = () => void showHistory(); setError(assistantFailure(err, "Không tải được lịch sử."));
     } finally {
       setLoading(false);
     }
@@ -372,7 +416,7 @@ export default function AssistantScreen({
       hydrated.current = true;
       await refresh(updated);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Chưa chuyển được yêu cầu. Bạn thử lại nhé."));
+      retryAction.current = () => void transfer(); setError(assistantFailure(err, "Chưa chuyển được yêu cầu. Bạn thử lại nhé."));
     } finally {
       sendLock.current = false;
       setBusy(false);
@@ -385,7 +429,7 @@ export default function AssistantScreen({
       await sendFeedback(conversation.id, messageId, helpful);
       setVotes((old) => ({ ...old, [messageId]: helpful }));
     } catch (err) {
-      setError(getApiErrorMessage(err, "Chưa gửi được đánh giá."));
+      retryAction.current = () => void vote(messageId, helpful); setError(assistantFailure(err, "Chưa gửi được đánh giá."));
     }
   }
 
@@ -404,7 +448,7 @@ export default function AssistantScreen({
       }
       setFunnelOpen(true);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Chưa mở được đặt xe nhanh. Bạn thử lại nhé."));
+      setError(assistantFailure(err, "Chưa mở được đặt xe nhanh. Bạn thử lại nhé."));
     } finally {
       sendLock.current = false;
       setBusy(false);
@@ -490,6 +534,7 @@ export default function AssistantScreen({
             <Text style={styles.link}>‹ Quay lại</Text>
           </Pressable>
           <Text style={styles.sectionTitle}>Lịch sử trò chuyện</Text>
+          {error && <View style={styles.errorBox}><Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>{retryAction.current && <Pressable disabled={loading} onPress={() => { setError(null); retryAction.current?.(); }}><Text style={styles.retryText}>Thử lại</Text></Pressable>}</View>}
           {loading ? (
             <ActivityIndicator color={theme.brand} />
           ) : (
@@ -521,7 +566,7 @@ export default function AssistantScreen({
                 <Pressable disabled={loading} onPress={() => void earlier()} style={styles.earlierButton}>
                   <Text style={styles.link}>Xem tin trước</Text>
                 </Pressable>
-              ) : null
+              ) : undefined
             }
             ListEmptyComponent={
               loading ? (
@@ -561,7 +606,8 @@ export default function AssistantScreen({
                       onUsePromo={isCustomer && onQuickBook ? applyPromoCode : undefined}
                       onDraftChanged={handleDraftChanged}
                       onBooked={onBookingConfirmed}
-                      disabled={busy || pending}
+                      disabled={!answerActionsAllowed(item, latestDraftVersion < 0 ? undefined : latestDraftVersion, pending)}
+                      actionsDisabled={item.id !== latestConfirmationId}
                     />
                   )}
                   {item.role === "assistant" && item.status === "Completed" && item.requestId && (
@@ -569,6 +615,7 @@ export default function AssistantScreen({
                       {[true, false].map((helpful) => (
                         <Pressable
                           key={String(helpful)}
+                          accessibilityLabel={helpful ? "Câu trả lời hữu ích" : "Câu trả lời chưa hữu ích"}
                           onPress={() => void vote(item.requestId!, helpful)}
                           style={[styles.voteButton, votes[item.requestId!] === helpful && styles.voteActive]}
                         >
@@ -585,9 +632,9 @@ export default function AssistantScreen({
               pending ? (
                 <View style={styles.pendingRow}>
                   <ActivityIndicator color={theme.brand} size="small" />
-                  <Text style={styles.muted}>{progress}</Text>
+                  <Text style={styles.muted}>{uncertain ?? progress}</Text>
                 </View>
-              ) : null
+              ) : undefined
             }
           />
 
@@ -602,16 +649,16 @@ export default function AssistantScreen({
           {error && (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{error}</Text>
-              <Pressable
-                disabled={busy || pending}
+              {retryAction.current && <Pressable
+                disabled={busy}
                 onPress={() => {
-                  if (draft.trim() || lastQuestion) void send(draft.trim() || lastQuestion!);
+                  setError(null); retryAction.current?.();
                 }}
                 style={styles.retryRow}
               >
                 <RotateCcw color={theme.danger} size={12} />
                 <Text style={styles.retryText}>Thử lại</Text>
-              </Pressable>
+              </Pressable>}
             </View>
           )}
 
@@ -654,9 +701,9 @@ export default function AssistantScreen({
                 />
                 <Pressable
                   accessibilityLabel="Gửi tin nhắn"
-                  disabled={busy || pending || !draft.trim()}
+                  disabled={busy || !draft.trim()}
                   onPress={() => void send()}
-                  style={[styles.sendButton, (!draft.trim() || busy || pending) && styles.sendDisabled]}
+                  style={[styles.sendButton, (!draft.trim() || busy) && styles.sendDisabled]}
                 >
                   {busy ? <ActivityIndicator color="#fff" size="small" /> : <Send color="#fff" size={18} />}
                 </Pressable>
@@ -712,6 +759,7 @@ function AnswerDetails({
   onDraftChanged,
   onBooked,
   disabled,
+  actionsDisabled,
 }: {
   answer: AssistantAnswer;
   conversationId?: string;
@@ -724,6 +772,7 @@ function AnswerDetails({
   onDraftChanged?: () => void;
   onBooked?: (bookingId: number) => void;
   disabled?: boolean;
+  actionsDisabled?: boolean;
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -736,11 +785,15 @@ function AnswerDetails({
           onChanged={() => onDraftChanged?.()}
           onBooked={onBooked}
           onViewBooking={onViewBooking}
+          disabled={disabled || actionsDisabled}
         />
       ) : null}
-      {answer.cards.map((group, index) => (
+      {answer.cards.map((group, index) => group.data.lookupStatus === "unavailable" ? (
         <View key={`${group.name}-${index}`} style={styles.cardGroup}>
-          {group.data.lookupStatus === "unavailable" && <Text style={styles.warn}>Tra cứu đang gián đoạn. Bạn thử lại nhé.</Text>}
+          <Text style={styles.warn}>Tra cứu đang gián đoạn. Bạn thử lại nhé.</Text>
+        </View>
+      ) : (
+        <View key={`${group.name}-${index}`} style={styles.cardGroup}>
           {group.name.startsWith("vehicles.") && group.data.availabilityChecked === false && (
             <Text style={styles.muted}>Giá cơ bản; cần ngày nhận và trả để kiểm tra lịch trống.</Text>
           )}

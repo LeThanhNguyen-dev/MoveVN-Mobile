@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { StyleSheet, TextInput, View } from "react-native"
 import AppText from "@/components/AppText";
@@ -35,7 +36,7 @@ const PinDigitInputs = forwardRef<PinDigitInputsHandle, PinDigitInputsProps>(fun
 ) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const inputRefs = useRef<Array<TextInput | null>>([]);
+  const inputRefs = useRef<Array<ComponentRef<typeof TextInput> | null>>([]);
 
   useEffect(() => {
     if (!autoFocus || disabled) return;

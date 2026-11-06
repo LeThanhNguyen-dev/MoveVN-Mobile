@@ -344,7 +344,7 @@ export default function DisputeListScreen({
                   <Text style={styles.pageText}>›</Text>
                 </Pressable>
               </View>
-            ) : null
+            ) : undefined
           }
         />
       )}

@@ -124,7 +124,7 @@ export default function ChatListScreen({
                 Mở chi tiết chuyến đi hoặc đơn thuê và chọn Nhắn tin để bắt đầu.
               </AppText>
             </View>
-          ) : null
+          ) : undefined
         }
         renderItem={({ item: room }) => {
           const person = chatCounterpart(room, userId);

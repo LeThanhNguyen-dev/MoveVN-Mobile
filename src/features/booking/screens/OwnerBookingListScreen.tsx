@@ -177,7 +177,7 @@ export default function OwnerBookingListScreen({ navigation, onOpenUserProfile }
           )
         }
         ListFooterComponent={
-          loading || items.length === 0 ? null : loadingMore ? (
+          loading || items.length === 0 ? undefined : loadingMore ? (
             <ActivityIndicator color={theme.brand} style={styles.more} />
           ) : hasMore ? (
             <Pressable onPress={handleLoadMore} style={styles.moreButton}>

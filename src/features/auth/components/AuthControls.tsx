@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type TextInputProps } from "react-native"
 import AppText from "@/components/AppText";
@@ -39,7 +40,7 @@ export function AuthField({ label, error, password, icon, ...props }: TextInputP
 export function OtpField({ value, error, disabled, onChange }: { value: string; error?: string; disabled?: boolean; onChange: (value: string) => void }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const input = useRef<TextInput>(null);
+  const input = useRef<ComponentRef<typeof TextInput>>(null);
   return <View style={styles.field}>
     <AppText style={styles.label}>Mã OTP</AppText>
     <Pressable accessibilityRole="button" accessibilityLabel="Nhập mã OTP" disabled={disabled} onPress={() => input.current?.focus()} style={styles.otpRow}>

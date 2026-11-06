@@ -38,7 +38,7 @@ export default function GpsTrackingScreen({
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId, vehicleName } = route.params;
-  const webRef = useRef<WebView>(null);
+  const webRef = useRef<WebView<object>>(null);
   const [mapReady, setMapReady] = useState(false);
   const [initial, setInitial] = useState<{ latitude: number; longitude: number } | null>(null);
   const [trackingActive, setTrackingActive] = useState(false);
@@ -150,7 +150,7 @@ export default function GpsTrackingScreen({
       </View>
 
       <View style={styles.mapWrap}>
-        <WebView
+        <WebView<object>
           ref={webRef}
           source={{ html: buildTrackingMapHtml(initial, theme.brand, theme.surfaceAlt) }}
           style={styles.map}

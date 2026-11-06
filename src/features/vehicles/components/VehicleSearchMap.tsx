@@ -105,7 +105,7 @@ export default function VehicleSearchMap({
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const webRef = useRef<WebView>(null);
+  const webRef = useRef<WebView<object>>(null);
   const cacheKey = useMemo(() => aiQuery
     ? JSON.stringify(["ai", aiQuery, aiFilters, params.sortBy ?? "", aiSearchVersion])
     : JSON.stringify(["filter", params]), [aiQuery, aiFilters, params, aiSearchVersion]);
@@ -211,7 +211,7 @@ export default function VehicleSearchMap({
 
   return (
     <View style={styles.container} onLayout={(event) => setMapHeight(event.nativeEvent.layout.height)}>
-      <WebView
+      <WebView<object>
         ref={webRef}
         source={webSource}
         style={styles.map}
@@ -288,7 +288,7 @@ export default function VehicleSearchMap({
                 </Pressable>
               </View>
             )}
-            ListEmptyComponent={!loading ? <AppText style={styles.emptyText}>Chưa có xe phù hợp có vị trí trên bản đồ.</AppText> : null}
+            ListEmptyComponent={!loading ? <AppText style={styles.emptyText}>Chưa có xe phù hợp có vị trí trên bản đồ.</AppText> : undefined}
           />
         ) : null}
       </View>

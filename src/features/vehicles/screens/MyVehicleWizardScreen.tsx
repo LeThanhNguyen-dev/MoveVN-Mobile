@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { ArrowLeft, Bike, Car, Check, ChevronLeft, ChevronRight, Plus, X } from "lucide-react-native";
@@ -69,9 +70,9 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const isEdit = mode === "edit";
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const scrollOffsetRef = useRef(0);
-  const activeDescriptionInputRef = useRef<TextInput | null>(null);
+  const activeDescriptionInputRef = useRef<ComponentRef<typeof TextInput> | null>(null);
   const keyboardTopRef = useRef<number | null>(null);
 
   const [step, setStep] = useState(isEdit ? 3 : 0);
@@ -82,7 +83,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
   const [submitError, setSubmitError] = useState("");
 
   function revealDescriptionInput(
-    input: TextInput | null,
+    input: ComponentRef<typeof TextInput> | null,
     keyboardTop = keyboardTopRef.current ?? Keyboard.metrics()?.screenY,
   ) {
     if (!input || keyboardTop == null) return;
@@ -98,7 +99,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     });
   }
 
-  function handleDescriptionFocus(input: TextInput) {
+  function handleDescriptionFocus(input: ComponentRef<typeof TextInput>) {
     activeDescriptionInputRef.current = input;
     setKeyboardVisible(true);
     requestAnimationFrame(() => revealDescriptionInput(input));
@@ -107,7 +108,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     }, 300);
   }
 
-  function handleDescriptionBlur(input: TextInput) {
+  function handleDescriptionBlur(input: ComponentRef<typeof TextInput>) {
     if (activeDescriptionInputRef.current === input) {
       activeDescriptionInputRef.current = null;
     }

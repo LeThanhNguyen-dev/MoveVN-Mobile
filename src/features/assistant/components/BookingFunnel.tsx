@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import RentalPeriodSheet from "@/features/vehicles/components/RentalPeriodSheet";
+import AddressAutocomplete from "@/features/locations/components/AddressAutocomplete";
 import { formatDateTime } from "@/features/booking/utils/format";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { getConversationState, getDraft, patchDraft, prepareDraft, type BookingDraft, type DraftSlots, type ResourceCard } from "../assistantService";
@@ -22,6 +23,7 @@ export default function BookingFunnel({ conversationId, vehicles, revision, onCl
   const [periodOpen, setPeriodOpen] = useState(false);
   const lock = useRef(false);
   const dirty = useRef(false);
+  const openBooking = onViewBooking ? (id: number) => { onClose(); onViewBooking(id); } : undefined;
   useEffect(() => {
     const abort = new AbortController();
     getDraft(conversationId, abort.signal).then(async current => {
@@ -40,9 +42,13 @@ export default function BookingFunnel({ conversationId, vehicles, revision, onCl
     if (step === 0 && (!Number.isFinite(start) || !Number.isFinite(end) || end <= start || start <= Date.now())) { setError("Chọn ngày nhận trong tương lai và ngày trả sau ngày nhận."); return; }
     if (step === 1 && !slots.vehicleId) { setError("Bạn chọn một xe để tiếp tục nhé."); return; }
     if (step === 3 && (!slots.pickupMode || (slots.pickupMode === "delivery" && !slots.pickupAddress?.trim()))) { setError("Chọn cách nhận xe và nhập địa chỉ nếu cần giao xe."); return; }
+    if (step === 3 && slots.pickupMode === "delivery" && (slots.pickupLatitude == null || slots.pickupLongitude == null)) { setError("Chọn địa chỉ giao từ danh sách gợi ý để tính phí theo khoảng cách."); return; }
+    if (step === 3 && slots.returnAddress?.trim() && (slots.returnLatitude == null || slots.returnLongitude == null)) { setError("Chọn địa chỉ trả từ danh sách gợi ý hoặc để trống để trả tại điểm nhận."); return; }
     lock.current = true; setBusy(true); setError("");
     try {
       const changed = Object.fromEntries(Object.entries(slots).filter(([key, value]) => value !== draft?.slots[key as keyof DraftSlots]));
+      for (const [address, latitude, longitude] of [["pickupAddress", "pickupLatitude", "pickupLongitude"], ["returnAddress", "returnLatitude", "returnLongitude"]] as const)
+        if ([address, latitude, longitude].some(key => key in changed)) { changed[latitude] = slots[latitude] ?? null; changed[longitude] = slots[longitude] ?? null; }
       let saved = Object.keys(changed).length || !draft ? await patchDraft(conversationId, draft?.version ?? 0, changed) : draft;
       if (step === 3) saved = await prepareDraft(conversationId, saved.version);
       setDraft(saved); setSlots(saved.slots); dirty.current = false; setStep(value => value + 1);
@@ -60,12 +66,22 @@ export default function BookingFunnel({ conversationId, vehicles, revision, onCl
     <View style={{ flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 16, gap: 8 }}>{steps.map((label, index) => <Text key={label} style={{ color: step === index ? theme.brand : theme.muted }}>{index + 1}. {label}</Text>)}</View>
     <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
       {!!error && <Text accessibilityRole="alert" style={{ color: theme.danger }}>{error}</Text>}
-      {!loaded ? <ActivityIndicator color={theme.brand} /> : draft?.bookingId ? <BookingPaymentCard conversationId={conversationId} bookingId={draft.bookingId} onViewBooking={onViewBooking} /> : <>
+      {!loaded ? <ActivityIndicator color={theme.brand} /> : draft?.bookingId ? <BookingPaymentCard conversationId={conversationId} bookingId={draft.bookingId} onViewBooking={openBooking} /> : <>
         {step === 0 && <><Text style={text}>Ngày nhận: {slots.startAt ? formatDateTime(slots.startAt) : "Chưa chọn"}</Text><Text style={text}>Ngày trả: {slots.endAt ? formatDateTime(slots.endAt) : "Chưa chọn"}</Text><Pressable style={button} onPress={() => setPeriodOpen(true)}><Text style={text}>Chọn ngày và giờ thuê</Text></Pressable></>}
         {step === 1 && <>{!vehicles.length && <Text style={text}>Nhờ trợ lý tìm xe trong chat; xe tìm được sẽ xuất hiện ở đây.</Text>}{vehicles.map(vehicle => <Pressable key={vehicle.id} onPress={() => edit({ vehicleId: vehicle.id })} accessibilityRole="radio" accessibilityState={{ checked: slots.vehicleId === vehicle.id }} style={[button, { borderWidth: 1, borderColor: slots.vehicleId === vehicle.id ? theme.brand : theme.border }]}><Text style={text}>{vehicle.brandName} {vehicle.modelName} · {vehicle.areaName}</Text></Pressable>)}{!!slots.vehicleId && !vehicles.some(v => v.id === slots.vehicleId) && <Text style={text}>Đã chọn xe #{slots.vehicleId}</Text>}</>}
         {step === 2 && <><Text style={text}>Mã khuyến mãi (nếu có)</Text><TextInput accessibilityLabel="Mã khuyến mãi" value={slots.promoCode ?? ""} onChangeText={value => edit({ promoCode: value.toUpperCase() || null })} maxLength={50} autoCapitalize="characters" style={input} /><Text style={{ color: theme.muted }}>Mã sẽ được kiểm tra khi báo giá.</Text></>}
-        {step === 3 && <><Text style={text}>Cách nhận xe</Text>{(["self_pickup", "delivery"] as const).map(mode => <Pressable key={mode} accessibilityRole="radio" accessibilityState={{ checked: slots.pickupMode === mode }} style={button} onPress={() => edit({ pickupMode: mode })}><Text style={text}>{slots.pickupMode === mode ? "✓ " : ""}{mode === "self_pickup" ? "Tự đến nhận tại chủ xe" : "Giao xe — cần nhân viên báo phí"}</Text></Pressable>)}{slots.pickupMode === "delivery" && <TextInput accessibilityLabel="Địa chỉ giao xe" placeholder="Địa chỉ giao xe" placeholderTextColor={theme.muted} value={slots.pickupAddress ?? ""} onChangeText={value => edit({ pickupAddress: value })} maxLength={500} style={input} />}<TextInput accessibilityLabel="Ghi chú" placeholder="Ghi chú" placeholderTextColor={theme.muted} value={slots.customerNote ?? ""} onChangeText={value => edit({ customerNote: value })} maxLength={500} style={input} /></>}
-        {step === 4 && draft && <ConfirmationCard conversationId={conversationId} proposal={draft} onViewBooking={onViewBooking} />}
+        {step === 3 && <><Text style={text}>Cách nhận xe</Text>{(["self_pickup", "delivery"] as const).map(mode => <Pressable key={mode} accessibilityRole="radio" accessibilityState={{ checked: slots.pickupMode === mode }} style={button} onPress={() => { if (slots.pickupMode !== mode) edit({ pickupMode: mode, pickupAddress: null, pickupLatitude: null, pickupLongitude: null }); }}><Text style={text}>{slots.pickupMode === mode ? "✓ " : ""}{mode === "self_pickup" ? "Tự đến nhận tại chủ xe" : "Giao xe tận nơi — tính phí theo khoảng cách"}</Text></Pressable>)}{slots.pickupMode === "delivery" && <>
+          <AddressAutocomplete label="Địa chỉ giao xe" value={slots.pickupAddress ?? ""}
+            onChange={value => edit({ pickupAddress: value.slice(0, 500), pickupLatitude: null, pickupLongitude: null })}
+            onManualChange={() => edit({ pickupLatitude: null, pickupLongitude: null })}
+            onSelect={selected => edit({ pickupAddress: selected.address.slice(0, 500), pickupLatitude: selected.latitude, pickupLongitude: selected.longitude })} />
+          <Text style={{ color: theme.muted }}>Phí giao được tính theo cấu hình booking và hiển thị trước khi xác nhận.</Text></>}
+          {(slots.pickupMode === "delivery" || slots.returnAddress) && <AddressAutocomplete label="Địa chỉ trả (nếu khác điểm nhận)" value={slots.returnAddress ?? ""}
+            onChange={value => edit({ returnAddress: value.slice(0, 500) || null, returnLatitude: null, returnLongitude: null })}
+            onManualChange={() => edit({ returnLatitude: null, returnLongitude: null })}
+            onSelect={selected => edit({ returnAddress: selected.address.slice(0, 500), returnLatitude: selected.latitude, returnLongitude: selected.longitude })} />}
+          <TextInput accessibilityLabel="Ghi chú" placeholder="Ghi chú" placeholderTextColor={theme.muted} value={slots.customerNote ?? ""} onChangeText={value => edit({ customerNote: value })} maxLength={500} style={input} /></>}
+        {step === 4 && draft && <ConfirmationCard conversationId={conversationId} proposal={draft} onViewBooking={openBooking} />}
       </>}
     </ScrollView>
     {loaded && !draft?.bookingId && <View style={{ flexDirection: "row", justifyContent: "space-between", padding: 16 }}><Pressable disabled={!step || busy} onPress={() => setStep(value => value - 1)}><Text style={{ color: !step || busy ? theme.muted : theme.brand }}>Quay lại</Text></Pressable>{step < 4 && <Pressable disabled={busy} onPress={() => void next()}><Text style={{ color: theme.brand }}>{busy ? "Đang lưu…" : "Tiếp tục"}</Text></Pressable>}</View>}

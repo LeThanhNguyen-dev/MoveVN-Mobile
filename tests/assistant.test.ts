@@ -31,7 +31,7 @@ const UUID = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
 
 describe("Assistant chat + booking contract", () => {
   it("calls conversation APIs", async () => {
-    mocks.post.mockResolvedValue({ data: { data: { id: UUID } } });
+    mocks.post.mockResolvedValue({ status: 202, data: { data: { id: UUID, status: "Queued", errorCode: null, answer: null } } });
     mocks.get.mockResolvedValue({ data: { data: { items: [] } } });
 
     await createConversation();
@@ -47,7 +47,7 @@ describe("Assistant chat + booking contract", () => {
 
   it("sends camelCase clientMessageId/content matching backend SendAssistantMessageRequest", async () => {
     mocks.post.mockClear();
-    mocks.post.mockResolvedValue({ data: { data: { id: UUID } } });
+    mocks.post.mockResolvedValue({ status: 202, data: { data: { id: UUID, status: "Queued", errorCode: null, answer: null } } });
     await sendQuestion(UUID, " hello ", UUID);
     expect(mocks.post).toHaveBeenCalledWith(expect.stringContaining(`/api/assistant/conversations/${UUID}/messages`), {
       content: " hello ",
@@ -57,7 +57,8 @@ describe("Assistant chat + booking contract", () => {
 
   it("maps backend error codes to Vietnamese messages", () => {
     expect(assistantError("AI_RATE_LIMITED")).toContain("nhiều yêu cầu");
-    expect(assistantError("AI_NO_EVIDENCE")).toContain("tìm xe");
+    expect(assistantError("AI_NO_EVIDENCE")).toContain("xác thực");
+    expect(assistantError("AI_MISSING_SOURCES")).not.toContain("ngoài");
     expect(assistantError("UNKNOWN_CODE")).toContain("thử lại");
   });
 
@@ -84,18 +85,42 @@ describe("Assistant chat + booking contract", () => {
     expect(mocks.patch).toHaveBeenCalledWith(
       expect.stringContaining(`/api/assistant/conversations/${UUID}/draft`),
       { version: 3, patch: { vehicleId: 7 } },
+      { headers: { "Idempotency-Key": expect.any(String) } },
     );
     expect(mocks.post).toHaveBeenCalledWith(
       expect.stringContaining(`/api/assistant/conversations/${UUID}/draft/prepare`),
       { version: 3 },
+      { headers: { "Idempotency-Key": expect.any(String) } },
     );
     // Token xác nhận phải được encode vì chứa ký tự đặc biệt.
     expect(mocks.post).toHaveBeenCalledWith(
       "/api/assistant/actions/tok%2Fen%2B1/confirm",
       { acceptPriceChange: true },
+      { headers: { "Idempotency-Key": expect.any(String) } },
     );
     expect(mocks.post).toHaveBeenCalledWith(
       expect.stringContaining(`/api/assistant/conversations/${UUID}/draft/payment-link`),
+      undefined,
+      { headers: { "Idempotency-Key": expect.any(String) } },
     );
+  });
+
+  it("keeps an idempotency header after transport uncertainty and changes it for a new draft version", async () => {
+    mocks.post.mockRejectedValueOnce(new Error("lost response")).mockResolvedValue({ data: { data: {} } });
+    await expect(prepareDraft(UUID, 10)).rejects.toThrow("lost response");
+    await prepareDraft(UUID, 10);
+    await prepareDraft(UUID, 11);
+    const calls = mocks.post.mock.calls;
+    expect(calls[1]![2].headers["Idempotency-Key"]).toBe(calls[0]![2].headers["Idempotency-Key"]);
+    expect(calls[2]![2].headers["Idempotency-Key"]).not.toBe(calls[0]![2].headers["Idempotency-Key"]);
+  });
+
+  it("uses a fresh operation key for a new confirmation token or price consent", async () => {
+    mocks.post.mockRejectedValueOnce(new Error("lost response")).mockResolvedValue({ data: { data: {} } });
+    await expect(confirmAction("first-token", false)).rejects.toThrow();
+    await confirmAction("first-token", true);
+    await confirmAction("new-token", true);
+    const keys = mocks.post.mock.calls.map(call => call[2].headers["Idempotency-Key"]);
+    expect(new Set(keys).size).toBe(3);
   });
 });

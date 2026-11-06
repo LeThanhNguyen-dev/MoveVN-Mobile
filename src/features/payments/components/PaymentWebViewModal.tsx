@@ -49,7 +49,7 @@ export default function PaymentWebViewModal({
           </Pressable>
         </View>
         {checkoutUrl ? (
-          <WebView
+          <WebView<object>
             source={{ uri: checkoutUrl }}
             startInLoadingState
             onLoadStart={() => {

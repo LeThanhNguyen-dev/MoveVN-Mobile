@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -92,7 +93,7 @@ export default function CreateBookingScreen({
   const [voucherModal, setVoucherModal] = useState(false);
   const [vouchers, setVouchers] = useState<VoucherClaimResponse[]>([]);
   const [vouchersLoading, setVouchersLoading] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const fieldY = useRef<Record<string, number>>({});
 
   function scrollToField(key: string) {

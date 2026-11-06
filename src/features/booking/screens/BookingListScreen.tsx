@@ -61,7 +61,7 @@ export default function BookingListScreen({ role, onOpen }: { role: BookingRole;
         <Text style={{ color: theme.muted, textAlign: "center" }}>{total} đơn · Trang {page}/{Math.max(1, Math.ceil(total / PAGE_SIZE))}</Text>
         <View style={styles.pages}><View style={{ flex: 1 }}><BookingButton secondary title="Trang trước" disabled={page <= 1} onPress={() => setPage(page - 1)} /></View>
           <View style={{ flex: 1 }}><BookingButton secondary title="Trang sau" disabled={page * PAGE_SIZE >= total} onPress={() => setPage(page + 1)} /></View></View>
-      </View> : null} />
+      </View> : undefined} />
   </View>;
 }
 
