@@ -62,3 +62,37 @@ export async function downloadContractPdf(contract: ContractSummary): Promise<vo
   const { downloadPdf } = await import("@/utils/pdfDownload");
   await downloadPdf(endpoints.contracts.pdfByGrant(contract.id), `hop-dong-${contract.id}-v${contract.version}.pdf`, "post");
 }
+
+export interface ExtensionRequestItem {
+  id: number;
+  bookingId: number;
+  contractId: number;
+  customerId: number;
+  additionalDays: number;
+  note?: string | null;
+  status: "Pending" | "Approved" | "Rejected";
+  rejectReason?: string | null;
+  createdAt: string;
+  respondedAt?: string | null;
+  newContractId?: number | null;
+}
+
+export async function createExtensionRequest(bookingId: number, additionalDays: number, note?: string): Promise<ExtensionRequestItem> {
+  const res = await apiClient.post<ApiResponse<ExtensionRequestItem>>(endpoints.extensionRequests.base, { bookingId, additionalDays, note });
+  return res.data.data!;
+}
+
+export async function getExtensionRequests(bookingId: number): Promise<ExtensionRequestItem[]> {
+  const res = await apiClient.get<ApiResponse<ExtensionRequestItem[]>>(endpoints.extensionRequests.byBooking(bookingId));
+  return res.data.data ?? [];
+}
+
+export async function approveExtensionRequest(id: number): Promise<ExtensionRequestItem> {
+  const res = await apiClient.post<ApiResponse<ExtensionRequestItem>>(endpoints.extensionRequests.approve(id));
+  return res.data.data!;
+}
+
+export async function rejectExtensionRequest(id: number, reason: string): Promise<ExtensionRequestItem> {
+  const res = await apiClient.post<ApiResponse<ExtensionRequestItem>>(endpoints.extensionRequests.reject(id), { reason });
+  return res.data.data!;
+}

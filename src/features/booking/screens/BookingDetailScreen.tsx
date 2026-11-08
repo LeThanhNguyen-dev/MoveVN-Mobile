@@ -12,6 +12,8 @@ import { BOOKING_STATUS_LABELS, isDepositExpired, formatMoney, formatVietnamDate
 import { BookingButton, BookingCard, BookingField, BookingHeader } from "../components/BookingControls";
 import InspectionReportCard from "../components/InspectionReportCard";
 import InspectionFormScreen from "./InspectionFormScreen";
+import LatePickupWaitCard from "../components/LatePickupWaitCard";
+import ExtensionRequestPanel from "@/features/contracts/components/ExtensionRequestPanel";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 
 export default function BookingDetailScreen({ bookingId, role, onBack }: { bookingId: number; role: BookingRole; onBack: () => void }) {
@@ -164,6 +166,9 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
             <Text style={{ color: theme.text }}>Nơi trả: {booking.returnAddress || booking.pickupAddress}</Text>
             {booking.customerNote ? <Text style={{ color: theme.muted }}>Ghi chú: {booking.customerNote}</Text> : null}
           </BookingCard>
+          {viewerRole === "Customer" ? (
+            <LatePickupWaitCard booking={booking} hasCheckIn={!!reports.find(r => r.type === "CheckIn")} onUpdated={setBooking} />
+          ) : null}
           <BookingCard>
             <Text style={{ color: theme.text, fontSize: 17, fontWeight: "700" }}>Chi phí đơn thuê</Text>
             <Text style={{ color: theme.text }}>Tổng tiền: {formatMoney(booking.totalAmount)}</Text>
@@ -171,6 +176,7 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
             {booking.securityDepositAmount > 0 ? <Text style={{ color: theme.text }}>Cọc đảm bảo: {formatMoney(booking.securityDepositAmount)}</Text> : null}
             {booking.paymentDueAt && booking.status === "Approved" ? <Text style={{ color: theme.muted }}>Hạn đặt cọc: {formatVietnamDateTime(booking.paymentDueAt)}</Text> : null}
           </BookingCard>
+          <ExtensionRequestPanel booking={booking} onBookingChanged={() => void load()} />
           {viewerRole === "Owner" && booking.status === "Pending" ? <BookingCard>
             <Text style={{ color: theme.text, fontWeight: "700" }}>Yêu cầu thuê đang chờ duyệt</Text>
             <BookingButton title="Duyệt đơn thuê" disabled={loading || !!error} busy={busy} onPress={() => void action(() => approveBooking(bookingId), "Đã duyệt đơn. Chờ khách đặt cọc.")} />

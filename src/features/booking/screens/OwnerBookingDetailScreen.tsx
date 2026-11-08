@@ -48,6 +48,7 @@ import { bookingStatusLabel, escrowHoldInfo, formatDateTime, formatMoney, rental
 import RiskScoreBadge from "@/features/booking/components/RiskScoreBadge";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
+import ExtensionRequestPanel from "@/features/contracts/components/ExtensionRequestPanel";
 import BookingTimeline from "@/features/booking/components/BookingTimeline";
 import BookingPricingDetails from "@/features/booking/components/BookingPricingDetails";
 import { createOwnerReview, getBookingReviews, hasReviewed, type ReviewResponse } from "@/features/review/reviewService";
@@ -430,6 +431,7 @@ export default function OwnerBookingDetailScreen({
 
         {pendingTopUp && pendingTopUp.amount > 0 ? <View style={styles.card}><Text style={styles.cardTitle}>Chờ cọc bổ sung để gia hạn</Text><Text style={styles.muted}>Khách cần thanh toán {formatMoney(pendingTopUp.amount)}{pendingTopUp.dueAt ? ` trước ${formatDateTime(pendingTopUp.dueAt)}` : ""}. Nếu quá hạn, yêu cầu gia hạn bị hủy và hợp đồng cũ tiếp tục hiệu lực.</Text></View> : null}
         <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage onChanged={() => load()} />
+        <ExtensionRequestPanel booking={booking} onBookingChanged={() => load()} />
 
         {(status === "Cancelled" || status === "Rejected") && booking.cancelReason ? (
           <View style={styles.card}>
