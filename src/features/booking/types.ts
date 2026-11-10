@@ -3,6 +3,10 @@ export type CheckoutPaymentMethod = "Wallet" | "External";
 export interface BookingResponse {
   externalPendingSurchargeAmount?: number;
   externalPaidSurchargeAmount?: number;
+  latePickupAcceptedAt?: string | null;
+  latePickupCompensatedAt?: string | null;
+  latePickupCompensationHours: number;
+  latePickupCompensationAmount: number;
   id: number;
   bookingCode: string;
   customerId: number;

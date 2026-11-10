@@ -15,6 +15,8 @@ import { BOOKING_STATUS_LABELS, isDepositExpired, formatMoney, formatVietnamDate
 import { BookingField } from "../components/BookingControls";
 import InspectionReportCard from "../components/InspectionReportCard";
 import InspectionFormScreen from "./InspectionFormScreen";
+import LatePickupWaitCard from "../components/LatePickupWaitCard";
+import ExtensionRequestPanel from "@/features/contracts/components/ExtensionRequestPanel";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import {
   DetailButton,
@@ -206,6 +208,10 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
             <Text style={styles.hint}>Thời gian hiển thị theo giờ Việt Nam (UTC+07:00).</Text>
           </DetailCard>
 
+          {viewerRole === "Customer" ? (
+            <LatePickupWaitCard booking={booking} hasCheckIn={!!reports.find(r => r.type === "CheckIn")} onUpdated={setBooking} />
+          ) : null}
+
           {viewerRole === "Owner" && booking.status === "Pending" ? <DetailCard>
             <DetailSectionHeader
               icon={ClipboardCheck}
@@ -245,6 +251,7 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
             {booking.paymentDueAt && booking.status === "Approved" ? <DetailRow label="Hạn đặt cọc" value={formatVietnamDateTime(booking.paymentDueAt)} tone="muted" /> : null}
           </DetailCard>
 
+          <ExtensionRequestPanel booking={booking} onBookingChanged={() => void load()} />
           <OutstandingSurcharge booking={booking} report={reports.find(r => r.type === "CheckOut")} role={role} onUpdated={load} />
 
           {(["CheckIn", "CheckOut"] as const).map((type) => {

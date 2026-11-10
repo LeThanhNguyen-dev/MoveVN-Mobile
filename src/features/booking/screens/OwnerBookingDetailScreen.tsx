@@ -47,6 +47,7 @@ import { escrowHoldInfo, formatDateTime, formatMoney, rentalProgress } from "@/f
 import RiskScoreBadge from "@/features/booking/components/RiskScoreBadge";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
+import ExtensionRequestPanel from "@/features/contracts/components/ExtensionRequestPanel";
 import BookingTimeline from "@/features/booking/components/BookingTimeline";
 import BookingPricingDetails from "@/features/booking/components/BookingPricingDetails";
 import { createOwnerReview, getBookingReviews, hasReviewed, type ReviewResponse } from "@/features/review/reviewService";
@@ -500,6 +501,7 @@ export default function OwnerBookingDetailScreen({
         )}
 
         <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage onChanged={() => load()} />
+        <ExtensionRequestPanel booking={booking} onBookingChanged={() => load()} />
 
         <DetailCard>
           <DetailSectionHeader icon={Camera} title="Bàn giao xe" subtitle="Biên bản nhận xe và trả xe" />
