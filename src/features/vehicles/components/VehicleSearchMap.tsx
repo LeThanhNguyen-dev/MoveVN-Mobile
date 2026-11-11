@@ -159,8 +159,17 @@ export default function VehicleSearchMap({
     totalPrice: vehicle.totalDynamicPrice,
     distanceKm: vehicle.distanceKm,
   })), [located]);
-  const html = useMemo(() => buildVehicleSearchMapHtml(points, mapCenter, safeRadius, theme.brand, theme.surfaceAlt),
-    [points, mapCenter?.latitude, mapCenter?.longitude, safeRadius, theme.brand, theme.surfaceAlt]);
+  const mapCopy = useMemo(() => ({
+    perDaySuffix: t("mobile:vehicleList.map.perDaySuffix"),
+    totalRentalPrefix: t("mobile:vehicleList.map.totalRentalPrefix"),
+    distancePrefix: t("mobile:vehicleList.map.distancePrefix"),
+    distanceSuffix: t("mobile:vehicleList.map.distanceSuffix"),
+    clusterSuffix: t("mobile:vehicleList.map.clusterSuffix"),
+    viewVehicle: t("mobile:vehicleList.map.viewVehicle"),
+    pickupPopup: t("mobile:vehicleList.map.pickupPopup"),
+  }), [t]);
+  const html = useMemo(() => buildVehicleSearchMapHtml(points, mapCenter, safeRadius, theme.brand, theme.surfaceAlt, mapCopy),
+    [points, mapCenter?.latitude, mapCenter?.longitude, safeRadius, theme.brand, theme.surfaceAlt, mapCopy]);
   const webSource = useMemo(() => ({ html }), [html]);
   const visibleVehicles = clusterIds
     ? located.filter((vehicle) => clusterIds.includes(vehicle.id)) : located;

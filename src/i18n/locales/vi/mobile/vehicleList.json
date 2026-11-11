@@ -56,7 +56,14 @@
       "expandAria": "Mở danh sách xe",
       "onMapCount": "{{total}} xe trên bản đồ",
       "sheetSubtitle": "{{total}} xe phù hợp · chỉ hiện xe có vị trí",
-      "distance": "Cách điểm nhận {{distance}} km"
+      "distance": "Cách điểm nhận {{distance}} km",
+      "perDaySuffix": "/ngày",
+      "totalRentalPrefix": "Tổng tiền thuê: ",
+      "distancePrefix": "Cách điểm nhận ",
+      "distanceSuffix": " km",
+      "clusterSuffix": " xe",
+      "viewVehicle": "Xem xe",
+      "pickupPopup": "Điểm nhận xe bạn chọn"
     },
     "address": {
       "placeholder": "Số nhà, đường...",

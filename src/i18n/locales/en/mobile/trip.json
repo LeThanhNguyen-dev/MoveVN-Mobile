@@ -103,6 +103,7 @@
       "reportReturned": "Report that the vehicle was returned",
       "reportReturnedSuccess": "Return reported. Waiting for the owner to create the record.",
       "checkoutConsentTitle": "Confirmation commitment",
+      "checkoutConsent": "Check the handover time, photos and surcharges. By confirming, you agree to be charged all displayed surcharges (late return, excess kilometres and selected additional charges) by the chosen method; any amount the owner has not confirmed or the wallet could not collect must still be paid. If something is wrong, open a dispute before confirming.",
       "disputeCheckout": "Disagree / Open a dispute",
       "reportStatusRevision": "Redo required",
       "reportStatusAwaiting": "Awaiting confirmation",

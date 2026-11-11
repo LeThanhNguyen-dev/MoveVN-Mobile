@@ -1,8 +1,6 @@
 import i18n from "@/i18n";
 import { parseServerDate } from "./bookingDisplay";
 
-export const CHECKOUT_CONSENT = "Kiểm tra giờ bàn giao, ảnh và phụ phí. Khi xác nhận, bạn đồng ý cho phép thu toàn bộ phụ phí đã hiển thị (trả trễ, vượt km và các khoản phát sinh được chọn) theo phương thức đã chọn; khoản chưa được chủ xe xác nhận hoặc ví chưa thu được vẫn phải thanh toán. Nếu có sai sót, hãy mở tranh chấp trước khi xác nhận.";
-
 export function vietnamInput(value = new Date().toISOString()): string {
   return new Date(parseServerDate(value).getTime() + 7 * 3600000).toISOString().slice(0, 16).replace("T", " ");
 }

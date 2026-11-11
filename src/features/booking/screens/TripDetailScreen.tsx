@@ -10,7 +10,6 @@ import InspectionReportCard from "../components/InspectionReportCard";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { OutstandingSurcharge } from "../components/CheckoutSummary";import CheckoutConfirmation from "../components/CheckoutConfirmation";
-import { CHECKOUT_CONSENT } from "../checkoutRules";
 import { isDepositExpired, parseServerDate } from "../bookingDisplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -497,7 +496,7 @@ export default function TripDetailScreen({
     {actions.confirmCheckOut && checkOutReport && (
       <>
         <DetailNotice icon={ShieldCheck} title={t("mobile:trip.detail.checkoutConsentTitle")} tone="brand">
-          {CHECKOUT_CONSENT}
+          {t("mobile:trip.detail.checkoutConsent")}
         </DetailNotice>
         <DetailButton
           label={t("booking:inspection.reviewAndConfirmReturn")}

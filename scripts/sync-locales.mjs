@@ -40,6 +40,7 @@ const ALLOWLIST = [
   "common/forms.json",
   "common/notifications.json",
   "common/reviewReply.json",
+  "admin/system.json",
   "common/surcharge.json",
   "common/vehicles.json",
   "vehicleDetail",

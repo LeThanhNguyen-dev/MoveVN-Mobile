@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from "react-native";
 import WebView from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
@@ -7,6 +8,7 @@ import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ArrowLeft, Crosshair, Navigation } from "lucide-react-native";
 import AppText from "@/components/AppText";
+import { translatedLabels } from "@/i18n/liveLabels";
 import { goBackOrFallback } from "@/navigation/goBackOrFallback";
 import type { OwnerBookingsStackParamList } from "@/navigation/OwnerBookingsNavigator";
 import type { Theme } from "@/theme/tokens";
@@ -21,12 +23,13 @@ import type { GpsLiveState, GpsRoutePointResponse } from "../types";
 type TrackingRoute = RouteProp<OwnerBookingsStackParamList, "OwnerTracking">;
 type TrackingNav = NativeStackNavigationProp<OwnerBookingsStackParamList>;
 
-const STATE_LABEL: Record<GpsLiveState, string> = {
-  live: "Đang cập nhật",
-  stale: "Mất tín hiệu",
-  ended: "Đã kết thúc",
-  none: "Chưa có dữ liệu",
-};
+// Nhãn trạng thái resolve mỗi lần đọc để đổi theo ngôn ngữ đang chọn.
+const STATE_LABEL: Record<GpsLiveState, string> = translatedLabels<GpsLiveState>("mobile:gps", {
+  live: "mobile:gps.tracking.status.live",
+  stale: "mobile:gps.tracking.status.stale",
+  ended: "mobile:gps.tracking.status.ended",
+  none: "mobile:gps.tracking.status.none",
+});
 
 export default function GpsTrackingScreen({
   route,
@@ -35,6 +38,7 @@ export default function GpsTrackingScreen({
   route: TrackingRoute;
   navigation: TrackingNav;
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId, vehicleName } = route.params;
@@ -76,11 +80,11 @@ export default function GpsTrackingScreen({
       }
       setRoutePoints(history.map((point) => [point.latitude, point.longitude] as [number, number]));
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được vị trí xe."));
+      Alert.alert(t("mobile:gps.errorTitle"), getApiErrorMessage(error, t("mobile:gps.tracking.loadError")));
     } finally {
       setLoading(false);
     }
-  }, [bookingId]);
+  }, [bookingId, t]);
 
   useFocusEffect(useCallback(() => { void loadInitial(); }, [loadInitial]));
 
@@ -132,21 +136,23 @@ export default function GpsTrackingScreen({
     setRequesting(true);
     try {
       await requestGpsEnable(bookingId);
-      Alert.alert("Đã gửi yêu cầu", "Khách thuê sẽ nhận thông báo yêu cầu bật GPS.");
+      Alert.alert(t("mobile:gps.tracking.requestSentTitle"), t("mobile:gps.tracking.requestSentBody"));
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không gửi được yêu cầu bật GPS."));
+      Alert.alert(t("mobile:gps.errorTitle"), getApiErrorMessage(error, t("mobile:gps.tracking.requestError")));
     } finally {
       setRequesting(false);
     }
-  }, [bookingId]);
+  }, [bookingId, t]);
 
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Pressable onPress={() => goBackOrFallback(navigation, () => navigation.goBack())} style={styles.backButton} accessibilityLabel="Quay lại">
+        <Pressable onPress={() => goBackOrFallback(navigation, () => navigation.goBack())} style={styles.backButton} accessibilityLabel={t("mobile:gps.backAria")}>
           <ArrowLeft color={theme.text} size={20} />
         </Pressable>
-        <AppText numberOfLines={1} style={styles.headerTitle}>Vị trí xe · {vehicleName || `Booking #${bookingId}`}</AppText>
+        <AppText numberOfLines={1} style={styles.headerTitle}>
+          {t("mobile:gps.tracking.title", { name: vehicleName || t("mobile:gps.bookingFallback", { id: bookingId }) })}
+        </AppText>
         <View style={styles.backButton} />
       </View>
 
@@ -174,12 +180,12 @@ export default function GpsTrackingScreen({
         {loading ? (
           <View style={styles.loadingBadge}>
             <ActivityIndicator size="small" color={theme.brand} />
-            <AppText style={styles.loadingText}>Đang tải vị trí xe...</AppText>
+            <AppText style={styles.loadingText}>{t("mobile:gps.tracking.loading")}</AppText>
           </View>
         ) : null}
         <Pressable
           style={styles.recenter}
-          accessibilityLabel="Về vị trí xe"
+          accessibilityLabel={t("mobile:gps.tracking.recenterAria")}
           onPress={() => {
             setFollowed(true);
             if (position && mapReady) {
@@ -195,25 +201,25 @@ export default function GpsTrackingScreen({
         <View style={styles.statusRow}>
           <View style={[styles.statusDot, { backgroundColor: stateColor }]} />
           <AppText style={[styles.statusText, { color: stateColor }]}>{STATE_LABEL[state]}</AppText>
-          {lastUpdated ? <AppText style={styles.lastUpdated}>· cập nhật {lastUpdated}</AppText> : null}
+          {lastUpdated ? <AppText style={styles.lastUpdated}>{t("mobile:gps.tracking.updatedAt", { time: lastUpdated })}</AppText> : null}
         </View>
         {position?.speedKmh != null ? (
-          <AppText style={styles.speedText}>Tốc độ: {Math.round(position.speedKmh)} km/h</AppText>
+          <AppText style={styles.speedText}>{t("mobile:gps.tracking.speed", { speed: Math.round(position.speedKmh) })}</AppText>
         ) : null}
         {state !== "none" && (address || (position?.latitude != null && position?.longitude != null)) ? (
           <AppText numberOfLines={2} style={styles.addressText}>
-            {address ?? `Tọa độ: ${position?.latitude.toFixed(5)}, ${position?.longitude.toFixed(5)}`}
+            {address ?? t("mobile:gps.tracking.coordinates", { lat: position?.latitude.toFixed(5), lng: position?.longitude.toFixed(5) })}
           </AppText>
         ) : null}
         {state === "stale" ? (
           <AppText style={styles.staleHint}>
-            Không nhận được vị trí mới trong một thời gian. Khách thuê có thể đã tắt GPS hoặc mất kết nối — vị trí hiển thị là điểm cuối cùng.
+            {t("mobile:gps.tracking.staleHint")}
           </AppText>
         ) : null}
         {state === "stale" && trackingActive ? (
-          <Pressable style={[styles.requestButton, requesting && styles.requestButtonDisabled]} onPress={() => void onRequestGps()} disabled={requesting} accessibilityLabel="Yêu cầu khách bật GPS">
+          <Pressable style={[styles.requestButton, requesting && styles.requestButtonDisabled]} onPress={() => void onRequestGps()} disabled={requesting} accessibilityLabel={t("mobile:gps.tracking.requestGps")}>
             <Navigation size={17} color={theme.onBrand} />
-            <AppText style={styles.requestButtonText}>{requesting ? "Đang gửi..." : "Yêu cầu khách bật GPS"}</AppText>
+            <AppText style={styles.requestButtonText}>{requesting ? t("mobile:gps.tracking.requesting") : t("mobile:gps.tracking.requestGps")}</AppText>
           </Pressable>
         ) : null}
       </View>

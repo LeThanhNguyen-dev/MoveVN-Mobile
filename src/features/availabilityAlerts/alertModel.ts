@@ -1,11 +1,22 @@
+import i18n from "@/i18n";
+import { translatedLabels } from "@/i18n/liveLabels";
+
 export type AvailabilityAlert = {
   id: number; vehicleId: number; vehicleName: string; licensePlate: string;
   startDate: string; endDate: string; status: "Active" | "Notified" | "Cancelled" | "Expired" | "Booked";
   createdAt: string; closedAt: string | null;
 };
-export const alertStatusLabels: Record<AvailabilityAlert["status"], string> = {
-  Active: "Đang theo dõi", Notified: "Đã thông báo", Cancelled: "Đã hủy", Expired: "Đã hết hạn", Booked: "Đã có đơn thuê",
-};
+// Nhãn resolve mỗi lần đọc để đổi theo ngôn ngữ đang chọn.
+export const alertStatusLabels: Record<AvailabilityAlert["status"], string> = translatedLabels<AvailabilityAlert["status"]>(
+  "mobile:availabilityAlerts",
+  {
+    Active: "mobile:availabilityAlerts.status.active",
+    Notified: "mobile:availabilityAlerts.status.notified",
+    Cancelled: "mobile:availabilityAlerts.status.cancelled",
+    Expired: "mobile:availabilityAlerts.status.expired",
+    Booked: "mobile:availabilityAlerts.status.booked",
+  },
+);
 export function alertTimestamp(value: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,7})?)?(Z|[+-]\d{2}:\d{2})?$/i.exec(value);
   if (!match) return NaN;
@@ -19,7 +30,7 @@ export function alertTimestamp(value: string) {
 export function alertPeriodError(start: string, end: string, now = Date.now()) {
   const from = alertTimestamp(start), until = alertTimestamp(end);
   return !Number.isFinite(from) || !Number.isFinite(until) || from <= now || until <= from
-    ? "Chọn ngày nhận ở tương lai và ngày trả sau ngày nhận." : "";
+    ? i18n.t("mobile:availabilityAlerts.errors.period") : "";
 }
 export function formatAlertDate(value: string) {
   return new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", dateStyle: "short", timeStyle: "short" }).format(new Date(alertTimestamp(value)));

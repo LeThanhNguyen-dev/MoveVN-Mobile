@@ -103,6 +103,7 @@
       "reportReturned": "Báo xe đã được bàn giao lại",
       "reportReturnedSuccess": "Đã báo trả xe. Chờ chủ xe lập biên bản.",
       "checkoutConsentTitle": "Cam kết khi xác nhận",
+      "checkoutConsent": "Kiểm tra giờ bàn giao, ảnh và phụ phí. Khi xác nhận, bạn đồng ý cho phép thu toàn bộ phụ phí đã hiển thị (trả trễ, vượt km và các khoản phát sinh được chọn) theo phương thức đã chọn; khoản chưa được chủ xe xác nhận hoặc ví chưa thu được vẫn phải thanh toán. Nếu có sai sót, hãy mở tranh chấp trước khi xác nhận.",
       "disputeCheckout": "Không đồng ý / Mở tranh chấp",
       "reportStatusRevision": "Cần lập lại",
       "reportStatusAwaiting": "Chờ xác nhận",

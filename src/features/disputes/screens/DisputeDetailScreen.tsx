@@ -31,7 +31,7 @@ import {
 } from "@/features/disputes/components/disputeLabels";
 import { getDisputeStatusStyle } from "@/features/disputes/components/disputeStatusStyles";
 import {
-  auditActionLabels,
+  formatAuditAction,
   formatAuditRole,
   parseAuditDetailEntries,
 } from "@/features/admin/auditLogLabels";
@@ -551,7 +551,7 @@ export default function DisputeDetailScreen({
                     {!isLast ? <View style={styles.timelineLine} /> : null}
                   </View>
                   <View style={styles.timelineContent}>
-                    <Text style={styles.value}>{auditActionLabels[log.action] ?? log.action}</Text>
+                    <Text style={styles.value}>{formatAuditAction(log.action)}</Text>
                     <Text style={styles.muted}>
                       {log.actorName} · {formatAuditRole(log.actorRole)} · {formatDisputeDateTime(log.createdAt)}
                     </Text>

@@ -56,7 +56,14 @@
       "expandAria": "Open vehicle list",
       "onMapCount": "{{total}} vehicles on the map",
       "sheetSubtitle": "{{total}} matching vehicles · showing only those with a location",
-      "distance": "{{distance}} km from the pick-up point"
+      "distance": "{{distance}} km from the pick-up point",
+      "perDaySuffix": "/day",
+      "totalRentalPrefix": "Total rental: ",
+      "distancePrefix": "Distance from pickup ",
+      "distanceSuffix": " km",
+      "clusterSuffix": " vehicles",
+      "viewVehicle": "View vehicle",
+      "pickupPopup": "Your selected pickup point"
     },
     "address": {
       "placeholder": "Street address, building number...",

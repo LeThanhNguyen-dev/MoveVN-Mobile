@@ -15,11 +15,11 @@ const VI =
 // - file locale
 const EXCLUSIONS = [
   "i18n/locales",
+  "features/admin",
   "features/assistant",
   "features/chat",
   "features/contracts/components/ContractDocument.tsx",
-  "features/owner/data/banks.ts",
-  "features/vehicles/components/vehicleSearchMapHtml.ts",
+  "features/wallets/data/banks.ts",
 ];
 
 function walk(dir, out = []) {

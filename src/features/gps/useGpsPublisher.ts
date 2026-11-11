@@ -4,6 +4,7 @@ import * as Location from "expo-location";
 import { postGpsPoints } from "./gpsService";
 import { useGpsStore } from "./gpsStore";
 import { getApiErrorMessage } from "@/services/apiClient";
+import i18n from "@/i18n";
 import type { GpsPointRequest } from "./types";
 
 /** Lấy điểm mới mỗi 8s — cân bằng giữa realtime và pin. */
@@ -55,7 +56,7 @@ export function useGpsPublisher() {
       }
       // Mất mạng: giữ lại tối đa OFFLINE_BUFFER_LIMIT điểm gần nhất để gửi lần sau.
       bufferRef.current = [...points.slice(-OFFLINE_BUFFER_LIMIT), ...bufferRef.current].slice(-OFFLINE_BUFFER_LIMIT);
-      useGpsStore.getState().setPublishError(getApiErrorMessage(error, "Không gửi được vị trí. Sẽ thử lại."));
+      useGpsStore.getState().setPublishError(getApiErrorMessage(error, i18n.t("mobile:gps.publisher.sendFailed")));
     } finally {
       inFlightRef.current = false;
     }
@@ -94,7 +95,7 @@ export function useGpsPublisher() {
       if (cancelled) return;
       useGpsStore.getState().setPermissionStatus(permission.granted ? "granted" : "denied");
       if (!permission.granted) {
-        useGpsStore.getState().setPublishError("Bạn chưa bật chia sẻ vị trí. Chủ xe không thể theo dõi chuyến đi.");
+        useGpsStore.getState().setPublishError(i18n.t("mobile:gps.publisher.permissionDenied"));
         return;
       }
 

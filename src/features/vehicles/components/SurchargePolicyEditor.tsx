@@ -1,8 +1,10 @@
 import type { ComponentRef } from "react";
 import { Plus, Trash2 } from "lucide-react-native";
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Switch, TextInput, View } from "react-native"
 import AppText from "@/components/AppText";
+import i18n from "@/i18n";
 import type { VehicleSurchargePolicy } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -14,31 +16,43 @@ type Props = {
   onDescriptionBlur?: (input: ComponentRef<typeof TextInput>) => void;
 };
 
-const feeTypeOptions = [
-  { value: "ExcessMileage", label: "Vượt km" },
-  { value: "LateReturn", label: "Quá giờ" },
-  { value: "Cleaning", label: "Vệ sinh" },
-  { value: "Deodorization", label: "Khử mùi" },
-  { value: "Custom", label: "Khác" },
-] as const;
+type PolicyPreset = Pick<VehicleSurchargePolicy, "name" | "calculationMethod" | "description">;
 
-const calculationOptions = [
-  { value: "PerKm", label: "Theo km" },
-  { value: "PerHour", label: "Theo giờ" },
-  { value: "PerDay", label: "Theo ngày" },
-  { value: "Fixed", label: "Cố định" },
-] as const;
-
-const defaultByType: Record<
-  VehicleSurchargePolicy["feeType"],
-  Pick<VehicleSurchargePolicy, "name" | "calculationMethod" | "description">
-> = {
-  ExcessMileage: { name: "Phí vượt giới hạn", calculationMethod: "PerKm", description: "Phụ phí phát sinh nếu di chuyển quá số km được bao gồm khi thuê xe." },
-  LateReturn: { name: "Phí quá giờ", calculationMethod: "PerHour", description: "Phụ phí phát sinh nếu hoàn trả xe trễ giờ." },
-  Cleaning: { name: "Phí vệ sinh", calculationMethod: "Fixed", description: "Áp dụng khi xe hoàn trả không đảm bảo vệ sinh." },
-  Deodorization: { name: "Phí khử mùi", calculationMethod: "Fixed", description: "Áp dụng khi xe có mùi thuốc lá hoặc thực phẩm nặng mùi." },
-  Custom: { name: "Phí khác", calculationMethod: "Fixed", description: "" },
-};
+/** Preset name/description dịch tại thời điểm gọi để theo ngôn ngữ đang chọn. */
+function policyPreset(type: VehicleSurchargePolicy["feeType"]): PolicyPreset {
+  switch (type) {
+    case "ExcessMileage":
+      return {
+        name: i18n.t("mobile:ownerVehicle.surcharge.preset.excessMileage"),
+        calculationMethod: "PerKm",
+        description: i18n.t("mobile:ownerVehicle.surcharge.presetDescription.excessMileage"),
+      };
+    case "LateReturn":
+      return {
+        name: i18n.t("mobile:ownerVehicle.surcharge.preset.lateReturn"),
+        calculationMethod: "PerHour",
+        description: i18n.t("mobile:ownerVehicle.surcharge.presetDescription.lateReturn"),
+      };
+    case "Cleaning":
+      return {
+        name: i18n.t("mobile:ownerVehicle.surcharge.preset.cleaning"),
+        calculationMethod: "Fixed",
+        description: i18n.t("mobile:ownerVehicle.surcharge.presetDescription.cleaning"),
+      };
+    case "Deodorization":
+      return {
+        name: i18n.t("mobile:ownerVehicle.surcharge.preset.deodorization"),
+        calculationMethod: "Fixed",
+        description: i18n.t("mobile:ownerVehicle.surcharge.presetDescription.deodorization"),
+      };
+    default:
+      return {
+        name: i18n.t("mobile:ownerVehicle.surcharge.preset.custom"),
+        calculationMethod: "Fixed",
+        description: "",
+      };
+  }
+}
 
 /** Ưu tiên giờ, fallback dữ liệu cũ (phút) quy đổi sang giờ. */
 function resolveHours(hours?: number | null, minutes?: number | null) {
@@ -97,16 +111,38 @@ function optionalNumber(text: string) {
 }
 
 export default function SurchargePolicyEditor({ value, onChange, onDescriptionFocus, onDescriptionBlur }: Props) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const descriptionInputRefs = useRef<Record<number, ComponentRef<typeof TextInput> | null>>({});
+
+  const feeTypeOptions = useMemo<{ value: VehicleSurchargePolicy["feeType"]; label: string }[]>(
+    () => [
+      { value: "ExcessMileage", label: t("mobile:ownerVehicle.surcharge.tag.excessMileage") },
+      { value: "LateReturn", label: t("mobile:ownerVehicle.surcharge.tag.lateReturn") },
+      { value: "Cleaning", label: t("mobile:ownerVehicle.surcharge.tag.cleaning") },
+      { value: "Deodorization", label: t("mobile:ownerVehicle.surcharge.tag.deodorization") },
+      { value: "Custom", label: t("mobile:ownerVehicle.surcharge.tag.custom") },
+    ],
+    [t],
+  );
+
+  const calculationOptions = useMemo<{ value: VehicleSurchargePolicy["calculationMethod"]; label: string }[]>(
+    () => [
+      { value: "PerKm", label: t("mobile:ownerVehicle.surcharge.calc.perKm") },
+      { value: "PerHour", label: t("mobile:ownerVehicle.surcharge.calc.perHour") },
+      { value: "PerDay", label: t("mobile:ownerVehicle.surcharge.calc.perDay") },
+      { value: "Fixed", label: t("mobile:ownerVehicle.surcharge.calc.fixed") },
+    ],
+    [t],
+  );
 
   function update(index: number, patch: Partial<VehicleSurchargePolicy>) {
     onChange(value.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)));
   }
 
   function addPolicy(type: VehicleSurchargePolicy["feeType"] = "ExcessMileage") {
-    const preset = defaultByType[type];
+    const preset = policyPreset(type);
     onChange([
       ...value,
       {
@@ -141,21 +177,21 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
     <View style={styles.box}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <AppText display style={styles.title}>Phụ phí có thể phát sinh</AppText>
-          <AppText style={styles.sub}>Chỉ cấu hình quy định cho xe, chưa tính vào booking ở bước này. Thời gian tính theo giờ.</AppText>
+          <AppText display style={styles.title}>{t("mobile:ownerVehicle.surcharge.title")}</AppText>
+          <AppText style={styles.sub}>{t("mobile:ownerVehicle.surcharge.editorSubtitle")}</AppText>
         </View>
         <Pressable onPress={() => addPolicy()} style={styles.addBtn}>
           <Plus color={theme.onBrand} size={14} />
-          <AppText style={styles.addText}>Thêm</AppText>
+          <AppText style={styles.addText}>{t("mobile:ownerVehicle.surcharge.add")}</AppText>
         </Pressable>
       </View>
 
-      {value.length === 0 ? <AppText style={styles.empty}>Chưa cấu hình phụ phí.</AppText> : null}
+      {value.length === 0 ? <AppText style={styles.empty}>{t("mobile:ownerVehicle.surcharge.empty")}</AppText> : null}
 
       {value.map((policy, index) => (
         <View key={`${policy.id ?? "new"}-${index}`} style={[styles.card, !policy.isActive && styles.cardInactive]}>
           <View style={styles.rowBetween}>
-            <AppText display style={styles.cardTitle}>{policy.name || "Phụ phí"}</AppText>
+            <AppText display style={styles.cardTitle}>{policy.name || t("mobile:ownerVehicle.surcharge.fallbackName")}</AppText>
             <View style={styles.actions}>
               <Switch value={policy.isActive} onValueChange={(checked) => update(index, { isActive: checked })} trackColor={{ false: theme.faint, true: theme.brand }} />
               <Pressable onPress={() => removePolicy(index)} style={styles.iconBtn}>
@@ -164,13 +200,13 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
             </View>
           </View>
 
-          <AppText style={styles.label}>Loại phí</AppText>
+          <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.feeTypeLabel")}</AppText>
           <View style={styles.chips}>
             {feeTypeOptions.map((option) => (
               <Pressable
                 key={option.value}
                 onPress={() => {
-                  const preset = defaultByType[option.value];
+                  const preset = policyPreset(option.value);
                   update(index, { feeType: option.value, name: preset.name, description: preset.description, calculationMethod: preset.calculationMethod });
                 }}
                 style={[styles.chip, policy.feeType === option.value && styles.chipActive]}
@@ -180,10 +216,10 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
             ))}
           </View>
 
-          <AppText style={styles.label}>Tên phí *</AppText>
+          <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.nameLabel")}</AppText>
           <TextInput value={policy.name} onChangeText={(text) => update(index, { name: text })} style={styles.input} placeholderTextColor={theme.placeholder} />
 
-          <AppText style={styles.label}>Cách tính *</AppText>
+          <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.calcLabel")}</AppText>
           <View style={styles.chips}>
             {calculationOptions.map((option) => (
               <Pressable key={option.value} onPress={() => update(index, { calculationMethod: option.value })} style={[styles.chip, policy.calculationMethod === option.value && styles.chipActive]}>
@@ -194,23 +230,23 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
 
           <View style={styles.twoCol}>
             <View style={styles.col}>
-              <AppText style={styles.label}>Đơn giá *</AppText>
+              <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.unitPriceLabel")}</AppText>
               <TextInput
                 value={numberText(policy.unitPrice)}
                 onChangeText={(text) => update(index, { unitPrice: optionalNumber(text) ?? 0 })}
                 keyboardType="numeric"
-                placeholder="VD: 5000"
+                placeholder={t("mobile:ownerVehicle.surcharge.unitPricePlaceholder")}
                 placeholderTextColor={theme.placeholder}
                 style={styles.input}
               />
             </View>
             <View style={styles.col}>
-              <AppText style={styles.label}>Tối đa</AppText>
+              <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.maxLabel")}</AppText>
               <TextInput
                 value={numberText(policy.maxAmount)}
                 onChangeText={(text) => update(index, { maxAmount: optionalNumber(text) })}
                 keyboardType="numeric"
-                placeholder="Không bắt buộc"
+                placeholder={t("mobile:ownerVehicle.surcharge.optionalPlaceholder")}
                 placeholderTextColor={theme.placeholder}
                 style={styles.input}
               />
@@ -220,22 +256,26 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
           {policy.feeType === "ExcessMileage" ? (
             <View style={styles.twoCol}>
               <View style={styles.col}>
-                <AppText style={styles.label}>Km bao gồm</AppText>
+                <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.includedKmLabel")}</AppText>
                 <TextInput
                   value={numberText(policy.includedKm)}
                   onChangeText={(text) => update(index, { includedKm: optionalNumber(text) })}
                   keyboardType="numeric"
-                  placeholder="VD: 300"
+                  placeholder={t("mobile:ownerVehicle.surcharge.includedKmPlaceholder")}
                   placeholderTextColor={theme.placeholder}
                   style={styles.input}
                 />
               </View>
               <View style={styles.col}>
-                <AppText style={styles.label}>Phạm vi</AppText>
+                <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.scopeLabel")}</AppText>
                 <View style={styles.scopeRow}>
                   {(["PerBooking", "PerDay"] as const).map((scope) => (
                     <Pressable key={scope} onPress={() => update(index, { allowanceScope: scope })} style={[styles.scopeBtn, (policy.allowanceScope ?? "PerBooking") === scope && styles.scopeBtnActive]}>
-                      <AppText style={[styles.scopeText, (policy.allowanceScope ?? "PerBooking") === scope && styles.scopeTextActive]}>{scope === "PerDay" ? "Ngày" : "Chuyến"}</AppText>
+                      <AppText style={[styles.scopeText, (policy.allowanceScope ?? "PerBooking") === scope && styles.scopeTextActive]}>
+                        {scope === "PerDay"
+                          ? t("mobile:ownerVehicle.surcharge.scope.day")
+                          : t("mobile:ownerVehicle.surcharge.scope.booking")}
+                      </AppText>
                     </Pressable>
                   ))}
                 </View>
@@ -247,7 +287,7 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
             <>
               <View style={styles.twoCol}>
                 <View style={styles.col}>
-                  <AppText style={styles.label}>Miễn trễ (giờ)</AppText>
+                  <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.graceHoursLabel")}</AppText>
                   <TextInput
                     value={hoursInputValue(resolveHours(policy.lateGraceHours, policy.lateGraceMinutes))}
                     onChangeText={(text) => {
@@ -255,13 +295,13 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
                       update(index, { lateGraceHours: hours, lateGraceMinutes: hours != null ? Math.round(hours * 60) : null });
                     }}
                     keyboardType="numeric"
-                    placeholder="VD: 1"
+                    placeholder={t("mobile:ownerVehicle.surcharge.graceHoursPlaceholder")}
                     placeholderTextColor={theme.placeholder}
                     style={styles.input}
                   />
                 </View>
                 <View style={styles.col}>
-                  <AppText style={styles.label}>Ngưỡng 1 ngày (giờ)</AppText>
+                  <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.dayThresholdLabel")}</AppText>
                   <TextInput
                     value={hoursInputValue(resolveHours(policy.lateDayThresholdHours, policy.lateDayThresholdMinutes))}
                     onChangeText={(text) => {
@@ -269,18 +309,18 @@ export default function SurchargePolicyEditor({ value, onChange, onDescriptionFo
                       update(index, { lateDayThresholdHours: hours, lateDayThresholdMinutes: hours != null ? Math.round(hours * 60) : null });
                     }}
                     keyboardType="numeric"
-                    placeholder="VD: 6"
+                    placeholder={t("mobile:ownerVehicle.surcharge.dayThresholdPlaceholder")}
                     placeholderTextColor={theme.placeholder}
                     style={styles.input}
                   />
                 </View>
               </View>
-              <AppText style={styles.label}>Giá/ngày trễ</AppText>
+              <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.lateDailyRateLabel")}</AppText>
               <TextInput value={numberText(policy.lateDailyRate)} onChangeText={(text) => update(index, { lateDailyRate: optionalNumber(text) })} keyboardType="numeric" style={styles.input} />
             </>
           ) : null}
 
-          <AppText style={styles.label}>Mô tả</AppText>
+          <AppText style={styles.label}>{t("mobile:ownerVehicle.surcharge.descriptionLabel")}</AppText>
           <TextInput
             ref={(input) => {
               descriptionInputRefs.current[index] = input;

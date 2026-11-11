@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { ArrowLeft, Bike, Car, Check, ChevronLeft, ChevronRight, Plus, X } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Keyboard,
@@ -63,12 +64,36 @@ type Props = {
   onDone: () => void;
 };
 
-const STEPS = ["Loại xe", "Hãng & dòng", "Thông tin", "Giá & địa chỉ", "Tính năng", "Hình ảnh", "Xác nhận"];
-
 export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone }: Props) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  // Nhãn các bước dựng trong component để đổi theo ngôn ngữ đang chọn.
+  const steps = useMemo(
+    () => [
+      t("mobile:ownerVehicle.wizard.steps.type"),
+      t("mobile:ownerVehicle.wizard.steps.brandModel"),
+      t("mobile:ownerVehicle.wizard.steps.info"),
+      t("mobile:ownerVehicle.wizard.steps.pricing"),
+      t("mobile:ownerVehicle.wizard.steps.features"),
+      t("mobile:ownerVehicle.wizard.steps.images"),
+      t("mobile:ownerVehicle.wizard.steps.confirm"),
+    ],
+    [t],
+  );
+  const typeOptions = useMemo(
+    () => [
+      { value: "Car" as const, label: t("common:car"), hint: "Sedan, SUV, hatchback...", Icon: Car },
+      {
+        value: "Motorbike" as const,
+        label: t("common:motorbike"),
+        hint: t("mobile:ownerVehicle.wizard.typeMotorbikeHint"),
+        Icon: Bike,
+      },
+    ],
+    [t],
+  );
   const isEdit = mode === "edit";
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const scrollOffsetRef = useRef(0);
@@ -203,10 +228,10 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     const remaining = Date.parse(verificationResult.expiresAt) - Date.now();
     const timer = setTimeout(() => {
       setVerificationResult(null);
-      setVerificationError("Phiên xác thực cà vẹt đã hết hạn. Vui lòng xác thực lại.");
+      setVerificationError(t("mobile:ownerVehicle.wizard.errExpired"));
     }, Math.max(0, remaining));
     return () => clearTimeout(timer);
-  }, [verificationResult]);
+  }, [verificationResult, t]);
 
   useEffect(() => {
     getCatalogAreas().then(setAreas).catch(() => undefined);
@@ -387,13 +412,13 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     if (!supported) {
       setDocUri(null);
       setVerificationResult(null);
-      setVerificationError("Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.");
+      setVerificationError(t("mobile:ownerVehicle.wizard.errFormat"));
       return;
     }
     if (asset.fileSize != null && asset.fileSize > 10 * 1024 * 1024) {
       setDocUri(null);
       setVerificationResult(null);
-      setVerificationError("Ảnh cà vẹt không được vượt quá 10 MB.");
+      setVerificationError(t("mobile:ownerVehicle.wizard.errTooLarge"));
       return;
     }
     setDocUri(asset.uri);
@@ -406,7 +431,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
 
   async function handleVerifyDocument() {
     if (!docUri || !vehicleType || brandId == null || modelId == null || !licensePlate.trim()) {
-      setVerificationError("Vui lòng chọn ảnh cà vẹt và nhập đủ thông tin xe trước khi xác thực.");
+      setVerificationError(t("mobile:ownerVehicle.wizard.errMissingInfo"));
       return;
     }
 
@@ -441,12 +466,12 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
       }
 
       setVerificationError(result?.flags && isVehicleOcrFailure(result.flags)
-        ? "Hệ thống xác thực cà vẹt đang gián đoạn. Vui lòng thử lại sau."
+        ? t("mobile:ownerVehicle.wizard.errOcrDown")
         : result?.recommendation === "NeedMoreInfo"
-          ? "Ảnh cà vẹt thiếu thông tin hoặc chưa đủ rõ. Vui lòng chụp lại và xác thực lại."
+          ? t("mobile:ownerVehicle.wizard.errNeedMoreInfo")
           : result?.recommendation === "Reject"
-            ? "Thông tin cà vẹt không khớp với xe. Vui lòng kiểm tra và chọn lại ảnh."
-            : result?.message || "Cà vẹt chưa đạt yêu cầu. Vui lòng kiểm tra và thử lại.");
+            ? t("mobile:ownerVehicle.wizard.errMismatch")
+            : result?.message || t("mobile:ownerVehicle.wizard.errRejected"));
     } catch (error) {
       setVerificationError(getVehicleErrorMessage(error));
     } finally {
@@ -510,9 +535,9 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     setSubmitting(true);
     setSubmitError("");
     try {
-      if (!isDeliveryValid()) { setSubmitError("Bán kính miễn phí 0–1000 km, phí/km 0–1.000.000đ, tối đa 1–10000 km và phải ≥ bán kính miễn phí."); return; }
+      if (!isDeliveryValid()) { setSubmitError(t("mobile:ownerVehicle.wizard.deliveryError")); return; }
       if (!isSurchargePoliciesValid(surchargePolicies)) {
-        setSubmitError("Vui lòng kiểm tra tên phí và đơn giá phụ phí.");
+        setSubmitError(t("mobile:ownerVehicle.wizard.surchargeSubmitError"));
         return;
       }
       const pricePerDay = pricingMode === "Fixed" ? Number(fixedPrice) : Number(autoMin);
@@ -550,7 +575,7 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         return;
       }
       if (!verifiedForCurrentInputs || !docUri || !verificationResult) {
-        setSubmitError("Vui lòng xác thực cà vẹt trước khi hoàn tất.");
+        setSubmitError(t("mobile:ownerVehicle.wizard.verifyRequired"));
         return;
       }
       const createRequest: CreateVehicleRequest = {
@@ -606,13 +631,19 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
     );
   }
 
+  const minPriceText = Number(autoMin).toLocaleString("vi-VN");
+  const maxPriceText = Number(autoMax).toLocaleString("vi-VN");
   const priceSummary =
     pricingMode === "Fixed"
       ? Number(fixedPrice) > 0
-        ? `từ ${Number(fixedPrice).toLocaleString("vi-VN")}đ/ngày`
+        ? t("mobile:ownerVehicle.price.fromPerDay", { price: `${Number(fixedPrice).toLocaleString("vi-VN")}đ` })
         : "-"
       : Number(autoMin) > 0 && Number(autoMax) > 0
-        ? `từ ${Number(autoMin).toLocaleString("vi-VN")}đ/ngày (khung ${Number(autoMin).toLocaleString("vi-VN")} - ${Number(autoMax).toLocaleString("vi-VN")}đ)`
+        ? t("mobile:ownerVehicle.wizard.priceSummaryRange", {
+            price: `${minPriceText}đ`,
+            min: minPriceText,
+            max: maxPriceText,
+          })
         : "-";
 
   return (
@@ -621,16 +652,18 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         <Pressable onPress={onBack} style={styles.iconBtn}>
           <ArrowLeft color={theme.text} size={20} />
         </Pressable>
-        <AppText display style={styles.topTitle}>{isEdit ? "Sửa xe" : "Thêm xe mới"}</AppText>
+        <AppText display style={styles.topTitle}>
+          {isEdit ? t("mobile:ownerVehicle.wizard.titleEdit") : t("mobile:ownerVehicle.wizard.titleAdd")}
+        </AppText>
         <AppText style={styles.stepCount}>
-          {step + 1}/{STEPS.length}
+          {step + 1}/{steps.length}
         </AppText>
       </View>
 
       <View style={styles.stepper}>
         <View style={styles.stepLine} />
         <View style={styles.stepDots}>
-          {STEPS.map((label, idx) => {
+          {steps.map((label, idx) => {
             const done = idx < step || idx < maxReached;
             const current = idx === step;
             const locked = isEdit && idx < 2;
@@ -684,25 +717,26 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
       >
         {step === 0 ? (
           <View>
-            <AppText display style={styles.groupTitle}>Chọn loại xe</AppText>
-            <AppText style={styles.groupSub}>Bạn muốn cho thuê loại xe nào?</AppText>
+            <AppText display style={styles.groupTitle}>
+              {t("mobile:ownerVehicle.wizard.sections.type")}
+            </AppText>
+            <AppText style={styles.groupSub}>{t("mobile:ownerVehicle.wizard.typeSubtitle")}</AppText>
             {isEdit ? (
               <View style={styles.lockedBox}>
                 <AppText style={styles.lockedText}>
-                  {vehicleType === "Car" ? "Ô tô" : "Xe máy"} (không thể đổi sau khi tạo)
+                  {t("mobile:ownerVehicle.wizard.typeLocked", {
+                    value: vehicleType === "Car" ? t("common:car") : t("common:motorbike"),
+                  })}
                 </AppText>
               </View>
             ) : (
               <View style={styles.typeRow}>
-                {[
-                  { value: "Car", label: "Ô tô", hint: "Sedan, SUV, hatchback...", Icon: Car },
-                  { value: "Motorbike", label: "Xe máy", hint: "Tay ga, xe số...", Icon: Bike },
-                ].map((t) => {
-                  const active = vehicleType === t.value;
+                {typeOptions.map((option) => {
+                  const active = vehicleType === option.value;
                   return (
                     <Pressable
-                      key={t.value}
-                      onPress={() => setVehicleType(t.value)}
+                      key={option.value}
+                      onPress={() => setVehicleType(option.value)}
                       style={[styles.typeCard, active && styles.typeCardActive]}
                     >
                       {active ? (
@@ -710,9 +744,9 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                           <Check color={theme.onBrand} size={12} />
                         </View>
                       ) : null}
-                      <t.Icon color={active ? theme.brand : theme.faint} size={40} />
-                      <AppText style={[styles.typeLabel, active && styles.typeLabelActive]}>{t.label}</AppText>
-                      <AppText style={styles.typeHint}>{t.hint}</AppText>
+                      <option.Icon color={active ? theme.brand : theme.faint} size={40} />
+                      <AppText style={[styles.typeLabel, active && styles.typeLabelActive]}>{option.label}</AppText>
+                      <AppText style={styles.typeHint}>{option.hint}</AppText>
                     </Pressable>
                   );
                 })}
@@ -723,20 +757,25 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
 
         {step === 1 ? (
           <View style={styles.fieldGroup}>
-            <AppText display style={styles.groupTitle}>Hãng & dòng xe</AppText>
-            <AppText style={styles.groupSub}>Chọn thông tin cơ bản của xe.</AppText>
+            <AppText display style={styles.groupTitle}>
+              {t("mobile:ownerVehicle.wizard.sections.brandModel")}
+            </AppText>
+            <AppText style={styles.groupSub}>{t("mobile:ownerVehicle.wizard.brandSubtitle")}</AppText>
             {isEdit ? (
               <View style={styles.lockedBox}>
                 <AppText style={styles.lockedText}>
-                  {lockedNames.brand} {lockedNames.model}
-                  {lockedNames.variant ? ` · ${lockedNames.variant}` : ""} (không thể đổi sau khi tạo)
+                  {t("mobile:ownerVehicle.wizard.typeLocked", {
+                    value: `${lockedNames.brand} ${lockedNames.model}${
+                      lockedNames.variant ? ` · ${lockedNames.variant}` : ""
+                    }`,
+                  })}
                 </AppText>
               </View>
             ) : (
               <>
                 <FormDropdownSheet
-                  label="Hãng xe"
-                  placeholder="Chọn hãng xe"
+                  label={t("mobile:ownerVehicle.wizard.fields.brand")}
+                  placeholder={t("mobile:ownerVehicle.wizard.fields.brandPlaceholder")}
                   value={brandId != null ? String(brandId) : ""}
                   options={brands.map((b) => ({ value: String(b.id), label: b.name }))}
                   onChange={(v) => {
@@ -747,8 +786,8 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                 />
                 {brandId ? (
                   <FormDropdownSheet
-                    label="Dòng xe"
-                    placeholder="Chọn dòng xe"
+                    label={t("mobile:ownerVehicle.wizard.fields.model")}
+                    placeholder={t("mobile:ownerVehicle.wizard.fields.modelPlaceholder")}
                     value={modelId != null ? String(modelId) : ""}
                     options={models.map((m) => ({ value: String(m.id), label: m.name }))}
                     onChange={(v) => {
@@ -759,13 +798,17 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                 ) : null}
                 {modelId && variants.length > 0 ? (
                   <FormDropdownSheet
-                    label="Phiên bản (không bắt buộc)"
-                    placeholder="Chọn phiên bản"
+                    label={t("mobile:ownerVehicle.wizard.fields.variant")}
+                    placeholder={t("mobile:ownerVehicle.wizard.fields.variantPlaceholder")}
                     value={variantId != null ? String(variantId) : ""}
                     options={variants.map((v) => ({
                       value: String(v.id),
                       label: v.name,
-                      hint: [v.seatCount ? `${v.seatCount} chỗ` : "", v.transmission ?? "", v.fuelType ?? ""]
+                      hint: [
+                        v.seatCount ? t("mobile:ownerVehicle.wizard.fields.seatCount", { count: v.seatCount }) : "",
+                        v.transmission ?? "",
+                        v.fuelType ?? "",
+                      ]
                         .filter(Boolean)
                         .join(" · "),
                     }))}
@@ -779,26 +822,28 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
 
         {step === 2 ? (
           <View style={styles.fieldGroup}>
-            <AppText display style={styles.groupTitle}>Thông tin xe</AppText>
-            <AppText style={styles.groupSub}>Nhập các thông số cơ bản của xe.</AppText>
-            <AppText style={styles.fieldLabel}>Biển số xe *</AppText>
+            <AppText display style={styles.groupTitle}>
+              {t("mobile:ownerVehicle.wizard.sections.info")}
+            </AppText>
+            <AppText style={styles.groupSub}>{t("mobile:ownerVehicle.wizard.infoSubtitle")}</AppText>
+            <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.wizard.licensePlateLabel")}</AppText>
             <TextInput
               value={licensePlate}
               onChangeText={setLicensePlate}
               editable={!isEdit}
               selectTextOnFocus={!isEdit}
-              placeholder="VD: 51A-12345"
+              placeholder={t("mobile:ownerVehicle.wizard.licensePlatePlaceholder")}
               placeholderTextColor={theme.placeholder}
               style={[styles.input, isEdit && styles.lockedInput]}
               autoCapitalize="characters"
             />
             <View style={styles.twoCol}>
               <View style={styles.col}>
-                <AppText style={styles.fieldLabel}>Năm sản xuất</AppText>
+                <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.detail.year")}</AppText>
                 <TextInput value={year} onChangeText={setYear} keyboardType="numeric" style={styles.input} />
               </View>
               <View style={styles.col}>
-                <AppText style={styles.fieldLabel}>Số km đã đi</AppText>
+                <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.detail.odometer")}</AppText>
                 <TextInput
                   value={odometerKm}
                   onChangeText={setOdometerKm}
@@ -814,11 +859,13 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
 
         {step === 3 ? (
           <View style={styles.fieldGroup}>
-            <AppText display style={styles.groupTitle}>Giá & địa chỉ</AppText>
-            <AppText style={styles.groupSub}>Thiết lập giá cho thuê và vị trí xe.</AppText>
+            <AppText display style={styles.groupTitle}>
+              {t("mobile:ownerVehicle.wizard.sections.pricing")}
+            </AppText>
+            <AppText style={styles.groupSub}>{t("mobile:ownerVehicle.wizard.pricingSubtitle")}</AppText>
             <FormDropdownSheet
-              label="Tỉnh/Thành phố"
-              placeholder="Chọn tỉnh/thành phố"
+              label={t("mobile:ownerVehicle.wizard.provinceLabel")}
+              placeholder={t("mobile:ownerVehicle.wizard.provincePlaceholder")}
               value={province}
               options={provinces.map((p) => ({ value: p, label: p }))}
               onChange={(v) => {
@@ -830,13 +877,17 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
               }}
             />
             <FormDropdownSheet
-              label="Phường/Xã"
-              placeholder={province ? "Chọn phường/xã" : "Chọn tỉnh trước"}
+              label={t("mobile:ownerVehicle.wizard.wardLabel")}
+              placeholder={
+                province
+                  ? t("mobile:ownerVehicle.wizard.wardPlaceholder")
+                  : t("mobile:ownerVehicle.wizard.wardPlaceholderFirst")
+              }
               value={areaId != null ? String(areaId) : ""}
               options={provinceAreas.map((a) => ({
                 value: String(a.id),
                 label: a.district,
-                hint: `Vùng giá ${a.pricingRegionCode}`,
+                hint: t("mobile:ownerVehicle.wizard.pricingRegion", { code: a.pricingRegionCode }),
               }))}
               onChange={(v) => {
                 setAreaId(Number(v));
@@ -857,30 +908,49 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                 setLatitude(null);
                 setLongitude(null);
               }}
-              label="Địa chỉ chi tiết *"
-              placeholder="Số nhà, đường... (gõ để xem gợi ý)"
+              label={t("mobile:ownerVehicle.wizard.addressLabel")}
+              placeholder={t("mobile:ownerVehicle.wizard.addressPlaceholder")}
             />
             {latitude != null && longitude != null ? (
-              <AppText style={styles.coordsHint}>Đã ghim tọa độ xe ({latitude.toFixed(5)}, {longitude.toFixed(5)}).</AppText>
+              <AppText style={styles.coordsHint}>
+                {t("mobile:ownerVehicle.wizard.coordsPinned", {
+                  lat: latitude.toFixed(5),
+                  lng: longitude.toFixed(5),
+                })}
+              </AppText>
             ) : null}
 
             {suggestion?.hasSuggestion ? (
               <View style={styles.suggestBox}>
-                <AppText display style={styles.suggestTitle}>Gợi ý giá động</AppText>
+                <AppText display style={styles.suggestTitle}>
+                  {t("mobile:ownerVehicle.wizard.suggestTitle")}
+                </AppText>
                 <AppText style={styles.suggestText}>
-                  Khung: {suggestion.suggestedMinPrice?.toLocaleString("vi-VN")}đ -{" "}
-                  {suggestion.suggestedMaxPrice?.toLocaleString("vi-VN")}đ/ngày (cơ sở:{" "}
-                  {suggestion.basePrice?.toLocaleString("vi-VN")}đ)
+                  {t("mobile:ownerVehicle.wizard.suggestRange", {
+                    min: suggestion.suggestedMinPrice?.toLocaleString("vi-VN") ?? "",
+                    max: suggestion.suggestedMaxPrice?.toLocaleString("vi-VN") ?? "",
+                    base: suggestion.basePrice?.toLocaleString("vi-VN") ?? "",
+                  })}
                 </AppText>
                 {suggestion.dynamicSuggestedPrice != null ? (
                   <AppText style={styles.suggestHot}>
-                    Đề xuất hôm nay: {suggestion.dynamicSuggestedPrice.toLocaleString("vi-VN")}đ
-                    {suggestion.dynamicPricingMultiplier != null ? ` (x${suggestion.dynamicPricingMultiplier})` : ""}
+                    {t("mobile:ownerVehicle.wizard.suggestToday", {
+                      price: suggestion.dynamicSuggestedPrice.toLocaleString("vi-VN"),
+                    })}
+                    {suggestion.dynamicPricingMultiplier != null
+                      ? t("mobile:ownerVehicle.wizard.suggestMultiplier", {
+                          value: suggestion.dynamicPricingMultiplier,
+                        })
+                      : ""}
                   </AppText>
                 ) : null}
                 {(suggestion.dynamicIsWeekend || suggestion.dynamicIsHoliday || suggestion.dynamicIsLowVacancy) ? (
                   <AppText style={styles.suggestFlags}>
-                    {[suggestion.dynamicIsWeekend ? "Cuối tuần" : "", suggestion.dynamicIsHoliday ? "Ngày lễ" : "", suggestion.dynamicIsLowVacancy ? "Ít xe trống" : ""]
+                    {[
+                      suggestion.dynamicIsWeekend ? t("mobile:ownerVehicle.wizard.flags.weekend") : "",
+                      suggestion.dynamicIsHoliday ? t("mobile:ownerVehicle.wizard.flags.holiday") : "",
+                      suggestion.dynamicIsLowVacancy ? t("mobile:ownerVehicle.wizard.flags.lowVacancy") : "",
+                    ]
                       .filter(Boolean)
                       .join(" · ")}
                   </AppText>
@@ -888,12 +958,14 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
               </View>
             ) : areaId ? (
               <View style={styles.suggestEmpty}>
-                <AppText style={styles.suggestEmptyText}>Chưa có khung giá gợi ý cho dòng xe và khu vực này.</AppText>
+                <AppText style={styles.suggestEmptyText}>{t("mobile:ownerVehicle.wizard.suggestEmpty")}</AppText>
               </View>
             ) : null}
 
             <View style={styles.fieldLabelRow}>
-              <AppText style={[styles.fieldLabel, styles.fieldLabelInline]}>Hình thức định giá</AppText>
+              <AppText style={[styles.fieldLabel, styles.fieldLabelInline]}>
+                {t("mobile:ownerVehicle.pricing.modeTitle")}
+              </AppText>
               <PricingModeHelp />
             </View>
             <View style={styles.modeRow}>
@@ -917,7 +989,9 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                       {active ? <Check color={theme.onBrand} size={12} /> : null}
                     </View>
                     <AppText style={[styles.modeText, active && styles.modeTextActive]}>
-                      {m === "Fixed" ? "Tự nhập giá" : "Giá tự động"}
+                      {m === "Fixed"
+                        ? t("mobile:ownerVehicle.pricing.fixed")
+                        : t("mobile:ownerVehicle.pricing.auto")}
                     </AppText>
                   </Pressable>
                 );
@@ -925,12 +999,12 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
             </View>
             {pricingMode === "Fixed" ? (
               <>
-                <AppText style={styles.fieldLabel}>Giá cho thuê (VNĐ/ngày) *</AppText>
+                <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.wizard.fixedPriceLabel")}</AppText>
                 <TextInput
                   value={fixedPrice}
                   onChangeText={setFixedPrice}
                   keyboardType="numeric"
-                  placeholder="VD: 500000"
+                  placeholder={t("mobile:ownerVehicle.wizard.fixedPricePlaceholder")}
                   placeholderTextColor={theme.placeholder}
                   style={styles.input}
                 />
@@ -938,47 +1012,49 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
             ) : (
               <View style={styles.twoCol}>
                 <View style={styles.col}>
-                  <AppText style={styles.fieldLabel}>Giá tối thiểu *</AppText>
+                  <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.wizard.autoMinLabel")}</AppText>
                   <TextInput value={autoMin} onChangeText={setAutoMin} keyboardType="numeric" style={styles.input} />
                 </View>
                 <View style={styles.col}>
-                  <AppText style={styles.fieldLabel}>Giá tối đa *</AppText>
+                  <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.wizard.autoMaxLabel")}</AppText>
                   <TextInput value={autoMax} onChangeText={setAutoMax} keyboardType="numeric" style={styles.input} />
                 </View>
               </View>
             )}
             {areaId && !isPricingValid() ? (
-              <AppText style={styles.errorText}>Giá phải hợp lệ và nằm trong khung gợi ý (nếu có).</AppText>
+              <AppText style={styles.errorText}>{t("mobile:ownerVehicle.wizard.invalidPrice")}</AppText>
             ) : null}
 
-            <AppText style={styles.fieldLabel}>Tiền cọc % (20-50)</AppText>
+            <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.wizard.depositPercentLabel")}</AppText>
             <TextInput value={depositPercent} onChangeText={setDepositPercent} keyboardType="numeric" style={styles.input} />
             <View style={styles.switchRow}>
-              <AppText style={styles.switchLabel}>Yêu cầu thế chấp</AppText>
+              <AppText style={styles.switchLabel}>{t("mobile:ownerVehicle.wizard.requiresCollateral")}</AppText>
               <Switch value={requiresDeposit} onValueChange={setRequiresDeposit} trackColor={{ false: theme.faint, true: theme.brand }} />
             </View>
             {requiresDeposit ? (
               <>
-                <AppText style={styles.fieldLabel}>Số tiền thế chấp (VNĐ)</AppText>
+                <AppText style={styles.fieldLabel}>
+                  {t("mobile:ownerVehicle.wizard.collateralAmountLabel")}
+                </AppText>
                 <TextInput
                   value={depositAmount}
                   onChangeText={setDepositAmount}
                   keyboardType="numeric"
-                  placeholder="VD: 2000000"
+                  placeholder={t("mobile:ownerVehicle.wizard.collateralAmountPlaceholder")}
                   placeholderTextColor={theme.placeholder}
                   style={styles.input}
                 />
               </>
             ) : null}
-            <AppText display style={styles.groupTitle}>Giao xe tận nơi</AppText>
-            <AppText style={styles.groupSub}>Tự đặt bán kính và phí giao xe cho xe này. Để trống một ô để dùng cấu hình chung của sàn.</AppText>
-            <AppText style={styles.fieldLabel}>Miễn phí trong (km)</AppText>
-            <TextInput value={deliveryFreeKm} onChangeText={setDeliveryFreeKm} keyboardType="decimal-pad" placeholder="VD: 5" placeholderTextColor={theme.placeholder} style={styles.input} />
-            <AppText style={styles.fieldLabel}>Phí mỗi km vượt (VNĐ)</AppText>
-            <TextInput value={deliveryFeePerKm} onChangeText={setDeliveryFeePerKm} keyboardType="decimal-pad" placeholder="VD: 10000" placeholderTextColor={theme.placeholder} style={styles.input} />
-            <AppText style={styles.fieldLabel}>Tối đa (km)</AppText>
-            <TextInput value={deliveryMaxKm} onChangeText={setDeliveryMaxKm} keyboardType="decimal-pad" placeholder="VD: 50" placeholderTextColor={theme.placeholder} style={styles.input} />
-            {!isDeliveryValid() ? <AppText style={styles.errorText}>Bán kính miễn phí 0–1000 km, phí/km 0–1.000.000đ, tối đa 1–10000 km và phải ≥ bán kính miễn phí.</AppText> : null}
+            <AppText display style={styles.groupTitle}>{t("mobile:ownerVehicle.wizard.deliveryTitle")}</AppText>
+            <AppText style={styles.groupSub}>{t("mobile:ownerVehicle.wizard.deliverySubtitle")}</AppText>
+            <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.wizard.deliveryFreeLabel")}</AppText>
+            <TextInput value={deliveryFreeKm} onChangeText={setDeliveryFreeKm} keyboardType="decimal-pad" placeholder={t("mobile:ownerVehicle.wizard.deliveryFreePlaceholder")} placeholderTextColor={theme.placeholder} style={styles.input} />
+            <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.wizard.deliveryFeeLabel")}</AppText>
+            <TextInput value={deliveryFeePerKm} onChangeText={setDeliveryFeePerKm} keyboardType="decimal-pad" placeholder={t("mobile:ownerVehicle.wizard.deliveryFeePlaceholder")} placeholderTextColor={theme.placeholder} style={styles.input} />
+            <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.wizard.deliveryMaxLabel")}</AppText>
+            <TextInput value={deliveryMaxKm} onChangeText={setDeliveryMaxKm} keyboardType="decimal-pad" placeholder={t("mobile:ownerVehicle.wizard.deliveryMaxPlaceholder")} placeholderTextColor={theme.placeholder} style={styles.input} />
+            {!isDeliveryValid() ? <AppText style={styles.errorText}>{t("mobile:ownerVehicle.wizard.deliveryError")}</AppText> : null}
             <SurchargePolicyEditor
               value={surchargePolicies}
               onChange={setSurchargePolicies}
@@ -986,15 +1062,17 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
               onDescriptionBlur={handleDescriptionBlur}
             />
             {!isSurchargePoliciesValid(surchargePolicies) ? (
-              <AppText style={styles.errorText}>Mỗi phụ phí cần có tên phí và đơn giá lớn hơn 0.</AppText>
+              <AppText style={styles.errorText}>{t("mobile:ownerVehicle.wizard.surchargeError")}</AppText>
             ) : null}
           </View>
         ) : null}
 
         {step === 4 ? (
           <View style={styles.fieldGroup}>
-            <AppText display style={styles.groupTitle}>Tính năng</AppText>
-            <AppText style={styles.groupSub}>Chọn các tính năng xe của bạn có.</AppText>
+            <AppText display style={styles.groupTitle}>
+              {t("mobile:ownerVehicle.wizard.sections.features")}
+            </AppText>
+            <AppText style={styles.groupSub}>{t("mobile:ownerVehicle.wizard.featuresSubtitle")}</AppText>
             <View style={styles.chips}>
               {features.map((f) => (
                 <Pressable key={f.id} onPress={() => toggleFeature(f.id)} style={[styles.chip, featureIds.includes(f.id) && styles.chipActive]}>
@@ -1002,7 +1080,9 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                   <AppText style={[styles.chipText, featureIds.includes(f.id) && styles.chipTextActive]}>{f.name}</AppText>
                 </Pressable>
               ))}
-              {features.length === 0 ? <AppText style={styles.muted}>Không có tính năng nào.</AppText> : null}
+              {features.length === 0 ? (
+                <AppText style={styles.muted}>{t("mobile:ownerVehicle.wizard.noFeatures")}</AppText>
+              ) : null}
             </View>
             <VehicleDescriptionField
               value={description}
@@ -1016,11 +1096,15 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
 
         {step === 5 ? (
           <View style={styles.fieldGroup}>
-            <AppText display style={styles.groupTitle}>Hình ảnh</AppText>
-            <AppText style={styles.groupSub}>Chạm vào ảnh để đặt làm ảnh chính.</AppText>
+            <AppText display style={styles.groupTitle}>
+              {t("mobile:ownerVehicle.wizard.sections.images")}
+            </AppText>
+            <AppText style={styles.groupSub}>{t("mobile:ownerVehicle.wizard.imagesSubtitle")}</AppText>
             <Pressable onPress={handlePickImages} disabled={uploadingImage} style={styles.pickBtn}>
               {uploadingImage ? <ActivityIndicator color={theme.brand} size="small" /> : <Plus color={theme.brand} size={16} />}
-              <AppText style={styles.pickText}>{uploadingImage ? "Đang tải..." : "Thêm hình ảnh"}</AppText>
+              <AppText style={styles.pickText}>
+                {uploadingImage ? t("common:loading") : t("mobile:ownerVehicle.wizard.addImages")}
+              </AppText>
             </Pressable>
             <View style={styles.imageGrid}>
               {imageUrls.map((url, idx) => (
@@ -1037,7 +1121,9 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                   >
                     <X color="#FFF" size={12} />
                   </Pressable>
-                  {idx === featuredIndex ? <AppText style={styles.avatarLabel}>Ảnh chính</AppText> : null}
+                  {idx === featuredIndex ? (
+                    <AppText style={styles.avatarLabel}>{t("mobile:ownerVehicle.detail.primaryImage")}</AppText>
+                  ) : null}
                 </View>
               ))}
             </View>
@@ -1046,23 +1132,47 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
 
         {step === 6 ? (
           <View style={styles.fieldGroup}>
-            <AppText display style={styles.groupTitle}>Xác nhận & cà vẹt</AppText>
-            <AppText style={styles.groupSub}>Kiểm tra lại thông tin và xác thực cà vẹt trước khi hoàn tất.</AppText>
+            <AppText display style={styles.groupTitle}>
+              {t("mobile:ownerVehicle.wizard.sections.confirm")}
+            </AppText>
+            <AppText style={styles.groupSub}>{t("mobile:ownerVehicle.wizard.confirmSubtitle")}</AppText>
             <View style={styles.summary}>
-              <AppText style={styles.summaryLine}>Biển số: {licensePlate || "-"}</AppText>
-              <AppText style={styles.summaryLine}>Giá: {priceSummary}</AppText>
               <AppText style={styles.summaryLine}>
-                {pricingMode === "Fixed" ? "Tự nhập giá" : "Giá tự động"} · Cọc {depositPercent}% · {imageUrls.length} ảnh · {featureIds.length} tiện ích
+                {t("mobile:ownerVehicle.wizard.summaryPlate", { value: licensePlate || "-" })}
               </AppText>
-              <AppText style={styles.summaryLine}>Phụ phí: {surchargePolicies.filter((policy) => policy.isActive).length} khoản</AppText>
-              <AppText style={styles.summaryLine}>Địa chỉ: {address || "-"}</AppText>
+              <AppText style={styles.summaryLine}>
+                {t("mobile:ownerVehicle.wizard.summaryPrice", { value: priceSummary })}
+              </AppText>
+              <AppText style={styles.summaryLine}>
+                {t("mobile:ownerVehicle.wizard.summaryMeta", {
+                  mode:
+                    pricingMode === "Fixed"
+                      ? t("mobile:ownerVehicle.pricing.fixed")
+                      : t("mobile:ownerVehicle.pricing.auto"),
+                  percent: depositPercent,
+                  images: imageUrls.length,
+                  features: featureIds.length,
+                })}
+              </AppText>
+              <AppText style={styles.summaryLine}>
+                {t("mobile:ownerVehicle.wizard.summarySurcharges", {
+                  count: surchargePolicies.filter((policy) => policy.isActive).length,
+                })}
+              </AppText>
+              <AppText style={styles.summaryLine}>
+                {t("mobile:ownerVehicle.wizard.summaryAddress", { value: address || "-" })}
+              </AppText>
             </View>
             {!isEdit ? (
               <>
-                <AppText style={styles.fieldLabel}>Ảnh cà vẹt *</AppText>
+                <AppText style={styles.fieldLabel}>{t("mobile:ownerVehicle.wizard.docLabel")}</AppText>
                 <Pressable onPress={handlePickDoc} disabled={verifyingDoc || submitting} style={[styles.pickBtn, (verifyingDoc || submitting) && styles.disabledBtn]}>
                   <Plus color={theme.brand} size={16} />
-                  <AppText style={styles.pickText}>{docUri ? "Đã chọn cà vẹt (chạm để đổi)" : "Chọn ảnh cà vẹt"}</AppText>
+                  <AppText style={styles.pickText}>
+                    {docUri
+                      ? t("mobile:ownerVehicle.wizard.docSelected")
+                      : t("mobile:ownerVehicle.wizard.docPick")}
+                  </AppText>
                 </Pressable>
                 {docUri ? <Image source={{ uri: docUri }} style={styles.docPreview} contentFit="contain" /> : null}
                 {docUri && !verifiedForCurrentInputs ? (
@@ -1072,7 +1182,11 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                     style={[styles.verifyBtn, (verifyingDoc || submitting) && styles.disabledBtn]}
                   >
                     {verifyingDoc ? <ActivityIndicator color={theme.onBrand} size="small" /> : <Check color={theme.onBrand} size={16} />}
-                    <AppText style={styles.verifyText}>{verifyingDoc ? "Đang xác thực..." : "Xác thực"}</AppText>
+                    <AppText style={styles.verifyText}>
+                      {verifyingDoc
+                        ? t("mobile:ownerVehicle.wizard.verifying")
+                        : t("mobile:ownerVehicle.wizard.verify")}
+                    </AppText>
                   </Pressable>
                 ) : null}
                 {verifiedForCurrentInputs && verificationResult ? (
@@ -1080,8 +1194,8 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                     <Check color={verificationResult.recommendation === "Pass" ? theme.success : theme.info} size={16} />
                     <AppText style={[styles.verificationText, { color: verificationResult.recommendation === "Pass" ? theme.success : theme.info }]}>
                       {verificationResult.recommendation === "Pass"
-                        ? "Cà vẹt hợp lệ"
-                        : "Cà vẹt đã được tiếp nhận và sẽ chờ nhân viên kiểm tra"}
+                        ? t("mobile:ownerVehicle.wizard.verifyPass")
+                        : t("mobile:ownerVehicle.wizard.verifyReview")}
                     </AppText>
                   </View>
                 ) : null}
@@ -1097,20 +1211,26 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
         {step > (isEdit ? 2 : 0) ? (
           <Pressable onPress={() => goStep(Math.max(isEdit ? 2 : 0, step - 1))} style={styles.backBtn}>
             <ChevronLeft color={theme.text} size={18} />
-            <AppText style={styles.backText}>Quay lại</AppText>
+            <AppText style={styles.backText}>{t("mobile:ownerVehicle.back")}</AppText>
           </Pressable>
         ) : (
           <View style={styles.flex} />
         )}
-        {step < STEPS.length - 1 ? (
+        {step < steps.length - 1 ? (
           <Pressable onPress={() => canProceed() && goStep(step + 1)} disabled={!canProceed()} style={[styles.nextBtn, !canProceed() && styles.disabledBtn]}>
-            <AppText style={styles.nextText}>Tiếp theo</AppText>
+            <AppText style={styles.nextText}>{t("mobile:ownerVehicle.wizard.next")}</AppText>
             <ChevronRight color={theme.onBrand} size={16} />
           </Pressable>
         ) : (
           <Pressable onPress={handleSubmit} disabled={submitting || verifyingDoc || !canProceed()} style={[styles.nextBtn, (!canProceed() || submitting || verifyingDoc) && styles.disabledBtn]}>
             {submitting ? <ActivityIndicator color={theme.onBrand} size="small" /> : <Check color={theme.onBrand} size={16} />}
-            <AppText style={styles.nextText}>{submitting ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Hoàn tất"}</AppText>
+            <AppText style={styles.nextText}>
+              {submitting
+                ? t("mobile:ownerVehicle.wizard.saving")
+                : isEdit
+                  ? t("mobile:ownerVehicle.wizard.save")
+                  : t("mobile:ownerVehicle.wizard.done")}
+            </AppText>
           </Pressable>
         )}
       </View> : null}

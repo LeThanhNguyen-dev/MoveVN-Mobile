@@ -21,6 +21,7 @@ import {
   XCircle,
 } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Dimensions,
@@ -51,6 +52,7 @@ import {
   vehicleTypeLabel,
 } from "@/features/vehicles/ownerDisplay";
 import { getVehicleErrorMessage } from "@/features/vehicles/vehicleDisplay";
+import { translatedLabels } from "@/i18n/liveLabels";
 import { getVehicleAvailability } from "@/features/vehicles/services/publicVehicleService";
 import { formatPeriodPart, MONTHS_VI } from "@/features/vehicles/utils/rentalPeriod";
 import {
@@ -71,14 +73,14 @@ type Props = {
   onDeleted: () => void;
 };
 
-const DOC_STATUS_LABEL: Record<string, string> = {
-  Pending: "Chờ xử lý",
-  Verified: "Đã xác thực",
-  NeedMoreInfo: "Cần bổ sung",
-  ManualReview: "Chờ nhân viên xem",
-  Rejected: "Từ chối",
-  Failed: "Lỗi xử lý",
-};
+const DOC_STATUS_LABEL: Record<string, string> = translatedLabels("mobile", {
+  Pending: "ownerVehicle.docStatus.pending",
+  Verified: "ownerVehicle.docStatus.verified",
+  NeedMoreInfo: "ownerVehicle.docStatus.needMoreInfo",
+  ManualReview: "ownerVehicle.docStatus.manualReview",
+  Rejected: "ownerVehicle.docStatus.rejected",
+  Failed: "ownerVehicle.docStatus.failed",
+});
 
 function toDateKey(value: string): string {
   return value.slice(0, 10);
@@ -104,6 +106,7 @@ function expandRange(from: string, to: string): string[] {
 }
 
 export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDeleted }: Props) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -141,11 +144,11 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
         .then((res) => setBusyPeriods(res?.busyPeriods ?? []))
         .catch(() => undefined);
     } catch {
-      setError("Không tải được thông tin xe.");
+      setError(t("mobile:ownerVehicle.detail.loadError"));
     } finally {
       setLoading(false);
     }
-  }, [vehicleId]);
+  }, [vehicleId, t]);
 
   useEffect(() => {
     void load();
@@ -165,19 +168,23 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
 
   function handleDelete() {
     if (!vehicle) return;
-    Alert.alert("Xóa xe", `Xóa ${vehicle.licensePlate}? Hành động này không thể hoàn tác.`, [
-      { text: "Hủy", style: "cancel" },
-      {
-        text: "Xóa",
-        style: "destructive",
-        onPress: () => {
-          setDeleting(true);
-          deleteVehicle(vehicle.id)
-            .then(() => onDeleted())
-            .catch(() => setDeleting(false));
+    Alert.alert(
+      t("mobile:ownerVehicle.detail.deleteTitle"),
+      t("mobile:ownerVehicle.detail.deleteMessage", { plate: vehicle.licensePlate }),
+      [
+        { text: t("common:cancel"), style: "cancel" },
+        {
+          text: t("mobile:ownerVehicle.detail.delete"),
+          style: "destructive",
+          onPress: () => {
+            setDeleting(true);
+            deleteVehicle(vehicle.id)
+              .then(() => onDeleted())
+              .catch(() => setDeleting(false));
+          },
         },
-      },
-    ]);
+      ],
+    );
   }
 
   async function handleAddBlocked(from: string, to: string, reason: string) {
@@ -254,9 +261,9 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
   if (error || !vehicle) {
     return (
       <View style={styles.center}>
-        <AppText style={styles.errorText}>{error || "Không tìm thấy xe."}</AppText>
+        <AppText style={styles.errorText}>{error || t("mobile:ownerVehicle.detail.notFound")}</AppText>
         <Pressable onPress={onBack} style={styles.primaryBtn}>
-          <AppText style={styles.primaryText}>Quay lại</AppText>
+          <AppText style={styles.primaryText}>{t("mobile:ownerVehicle.back")}</AppText>
         </Pressable>
       </View>
     );
@@ -326,7 +333,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
             />
             {images[galleryIndex]?.isPrimary ? (
               <View style={styles.primaryTag}>
-                <AppText style={styles.primaryTagText}>Ảnh chính</AppText>
+                <AppText style={styles.primaryTagText}>{t("mobile:ownerVehicle.detail.primaryImage")}</AppText>
               </View>
             ) : null}
             <View style={styles.counterBadge}>
@@ -345,7 +352,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
         ) : (
           <View style={styles.noImage}>
             <VehicleIcon color={theme.faint} size={40} />
-            <AppText style={styles.noImageText}>Chưa có hình ảnh xe</AppText>
+            <AppText style={styles.noImageText}>{t("mobile:ownerVehicle.detail.noImage")}</AppText>
           </View>
         )}
 
@@ -354,7 +361,9 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
             <View style={[styles.statusBadge, vehicle.status === "Approved" ? styles.statusOn : styles.statusOff]}>
               <View style={[styles.statusDot, vehicle.status === "Approved" ? styles.dotOn : styles.dotOff]} />
               <AppText style={[styles.statusText, vehicle.status === "Approved" ? styles.statusTextOn : styles.statusTextOff]}>
-                {vehicle.status === "Approved" ? "Đang cho thuê" : "Đang ẩn"}
+                {vehicle.status === "Approved"
+                  ? t("mobile:ownerVehicle.detail.statusRenting")
+                  : t("mobile:ownerVehicle.detail.statusHidden")}
               </AppText>
             </View>
             <Switch
@@ -371,35 +380,37 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
           <View style={styles.rejectBox}>
             <XCircle color={theme.danger} size={18} />
             <View style={styles.rejectTextWrap}>
-              <AppText display style={styles.rejectTitle}>Xe đã bị từ chối</AppText>
+              <AppText display style={styles.rejectTitle}>{t("mobile:ownerVehicle.detail.rejectedTitle")}</AppText>
               <AppText style={styles.rejectReason}>{vehicle.rejectionReason}</AppText>
             </View>
           </View>
         ) : null}
 
         <View style={styles.card}>
-          <AppText display style={styles.cardTitle}>Giá thuê</AppText>
+          <AppText display style={styles.cardTitle}>{t("mobile:ownerVehicle.detail.rentalPrice")}</AppText>
           <AppText style={styles.bigPrice}>
-            {rentalPrice == null ? "Liên hệ" : <>
-              {vehicle.pricingMode === "Auto" ? <AppText style={styles.priceUnit}>từ </AppText> : null}
+            {rentalPrice == null ? t("mobile:ownerVehicle.price.contact") : <>
+              {vehicle.pricingMode === "Auto" ? <AppText style={styles.priceUnit}>{t("mobile:ownerVehicle.price.fromPrefix")}</AppText> : null}
               {formatVnd(rentalPrice)}
-              <AppText style={styles.priceUnit}> /ngày</AppText>
+              <AppText style={styles.priceUnit}>{t("mobile:ownerVehicle.price.perDaySuffix")}</AppText>
             </>}
           </AppText>
           <View style={styles.kvRow}>
-            <AppText style={styles.kvKey}>Tiền cọc</AppText>
+            <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.detail.deposit")}</AppText>
             <AppText style={styles.kvVal}>
-              {vehicle.depositPercent > 0 ? `${vehicle.depositPercent}% tổng tiền thuê` : "Không yêu cầu"}
+              {vehicle.depositPercent > 0
+                ? t("mobile:ownerVehicle.detail.depositValue", { percent: vehicle.depositPercent })
+                : t("mobile:ownerVehicle.detail.depositNone")}
             </AppText>
           </View>
           {vehicle.securityRequiresDeposit ? (
             <View style={styles.kvRow}>
-              <AppText style={styles.kvKey}>Thế chấp</AppText>
+              <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.detail.collateral")}</AppText>
               <AppText style={styles.kvVal}>{formatVnd(vehicle.securityDepositAmount)}</AppText>
             </View>
           ) : null}
           <View style={styles.kvRow}>
-            <AppText style={styles.kvKey}>Loại xe</AppText>
+            <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.detail.vehicleType")}</AppText>
             <View style={styles.typePill}>
               <VehicleIcon color={theme.brand} size={13} />
               <AppText style={styles.typePillText}>{vehicleTypeLabel(vehicle.vehicleType)}</AppText>
@@ -407,9 +418,12 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
           </View>
           {vehicle.pricingMode === "Auto" ? (
             <View style={styles.autoBox}>
-              <AppText display style={styles.autoTitle}>Giá tự động</AppText>
+              <AppText display style={styles.autoTitle}>{t("mobile:ownerVehicle.pricing.auto")}</AppText>
               <AppText style={styles.autoText}>
-                Khung: {formatVnd(vehicle.autoMinPrice)} - {formatVnd(vehicle.autoMaxPrice)}/ngày
+                {t("mobile:ownerVehicle.detail.autoRange", {
+                  min: formatVnd(vehicle.autoMinPrice),
+                  max: formatVnd(vehicle.autoMaxPrice),
+                })}
               </AppText>
             </View>
           ) : null}
@@ -423,7 +437,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
               <View style={styles.infoIconTile}>
                 <VehicleIcon color={theme.brand} size={16} />
               </View>
-              <AppText display style={styles.cardTitle}>Thông tin xe</AppText>
+              <AppText display style={styles.cardTitle}>{t("mobile:ownerVehicle.detail.infoTitle")}</AppText>
             </View>
             <View style={styles.typePill}>
               <AppText style={styles.typePillText}>{vehicleTypeLabel(vehicle.vehicleType)}</AppText>
@@ -433,7 +447,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
           <View style={styles.specRow}>
             <View style={styles.specLeft}>
               <Hash color={theme.muted} size={15} />
-              <AppText style={styles.kvKey}>Biển số</AppText>
+              <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.detail.licensePlate")}</AppText>
             </View>
             <AppText style={styles.kvValStrong}>{vehicle.licensePlate}</AppText>
           </View>
@@ -441,7 +455,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
           <View style={styles.specRow}>
             <View style={styles.specLeft}>
               <Layers color={theme.muted} size={15} />
-              <AppText style={styles.kvKey}>Dòng xe</AppText>
+              <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.detail.model")}</AppText>
             </View>
             <View style={styles.specRight}>
               <AppText style={styles.kvVal}>
@@ -454,7 +468,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
           <View style={styles.specRow}>
             <View style={styles.specLeft}>
               <CalendarDays color={theme.muted} size={15} />
-              <AppText style={styles.kvKey}>Năm sản xuất</AppText>
+              <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.detail.year")}</AppText>
             </View>
             <AppText style={styles.kvVal}>{vehicle.year}</AppText>
           </View>
@@ -462,7 +476,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
           <View style={styles.specRow}>
             <View style={styles.specLeft}>
               <Gauge color={theme.muted} size={15} />
-              <AppText style={styles.kvKey}>Số km đã đi</AppText>
+              <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.detail.odometer")}</AppText>
             </View>
             <AppText style={styles.kvVal}>
               {vehicle.odometerKm != null ? `${vehicle.odometerKm.toLocaleString("vi-VN")} km` : "—"}
@@ -471,13 +485,13 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
 
           {vehicle.description ? (
             <View style={styles.descWrap}>
-              <AppText display style={styles.descTitle}>Mô tả xe</AppText>
+              <AppText display style={styles.descTitle}>{t("mobile:ownerVehicle.detail.descriptionTitle")}</AppText>
               <AppText style={styles.desc}>{vehicle.description}</AppText>
             </View>
           ) : null}
           {vehicle.features.length > 0 ? (
             <View style={styles.featureWrap}>
-              <AppText display style={styles.featureTitle}>Tính năng ({vehicle.features.length})</AppText>
+              <AppText display style={styles.featureTitle}>{t("mobile:ownerVehicle.features.count", { count: vehicle.features.length })}</AppText>
               <View style={styles.chips}>
                 {vehicle.features.map((f) => (
                   <View key={f.id} style={styles.chip}>
@@ -503,11 +517,11 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
           <View style={styles.rowBetween}>
             <View style={styles.rowLeft}>
               <CalendarOff color={theme.muted} size={15} />
-              <AppText display style={styles.cardTitle}>Lịch xe ({blockedDates.length} chặn)</AppText>
+              <AppText display style={styles.cardTitle}>{t("mobile:ownerVehicle.schedule.title", { count: blockedDates.length })}</AppText>
             </View>
             <Pressable onPress={() => setBlockedOpen(true)} style={styles.miniBtn}>
               <Plus color={theme.brand} size={14} />
-              <AppText style={styles.miniBtnText}>Chặn ngày</AppText>
+              <AppText style={styles.miniBtnText}>{t("mobile:ownerVehicle.blockedDate.title")}</AppText>
             </Pressable>
           </View>
 
@@ -587,15 +601,15 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
           <View style={styles.legend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, styles.legendBlocked]} />
-              <AppText style={styles.legendText}>Đã chặn ({blockedSet.size})</AppText>
+              <AppText style={styles.legendText}>{t("mobile:ownerVehicle.schedule.blockedLegend", { count: blockedSet.size })}</AppText>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, styles.legendBooked]} />
-              <AppText style={styles.legendText}>Đã đặt ({bookedSet.size})</AppText>
+              <AppText style={styles.legendText}>{t("mobile:ownerVehicle.schedule.bookedLegend", { count: bookedSet.size })}</AppText>
             </View>
           </View>
           {blockedDates.length === 0 ? (
-            <AppText style={styles.muted}>Chưa có ngày chặn nào.</AppText>
+            <AppText style={styles.muted}>{t("mobile:ownerVehicle.schedule.emptyBlocked")}</AppText>
           ) : (
             <View style={styles.blockedList}>
               {blockedDates.map((b) => (
@@ -616,7 +630,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
           )}
           {bookedPeriods.length > 0 ? (
             <View style={styles.bookedWrap}>
-              <AppText display style={styles.bookedTitle}>Ngày đã có người đặt ({bookedPeriods.length})</AppText>
+              <AppText display style={styles.bookedTitle}>{t("mobile:ownerVehicle.schedule.bookedTitle", { count: bookedPeriods.length })}</AppText>
               <View style={styles.blockedList}>
                 {bookedPeriods.map((b, idx) => (
                   <View key={`${b.startDate}-${b.endDate}-${idx}`} style={styles.bookedRow}>
@@ -635,7 +649,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
           <View style={styles.card}>
             <View style={styles.rowLeft}>
               <FileText color={theme.muted} size={15} />
-              <AppText display style={styles.cardTitle}>Giấy tờ xe</AppText>
+              <AppText display style={styles.cardTitle}>{t("mobile:ownerVehicle.documents.title")}</AppText>
             </View>
             <View style={styles.docTopRow}>
               <View style={styles.docBadge}>
@@ -655,29 +669,29 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
                 style={styles.viewCavetBtn}
               >
                 <Eye color={theme.brand} size={14} />
-                <AppText style={styles.viewCavetText}>Xem cavet</AppText>
+                <AppText style={styles.viewCavetText}>{t("mobile:ownerVehicle.documents.view")}</AppText>
               </Pressable>
             </View>
             <View style={styles.kvRow}>
-              <AppText style={styles.kvKey}>Biển số OCR</AppText>
+              <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.documents.ocrPlate")}</AppText>
               <AppText style={styles.kvVal}>{currentDoc.ocrLicensePlate ?? "-"}</AppText>
             </View>
             <View style={styles.kvRow}>
-              <AppText style={styles.kvKey}>Hãng / Dòng</AppText>
+              <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.documents.ocrBrandModel")}</AppText>
               <AppText style={styles.kvVal}>
                 {(currentDoc.ocrBrand ?? "-") + " / " + (currentDoc.ocrModel ?? "-")}
               </AppText>
             </View>
             <View style={styles.kvRow}>
-              <AppText style={styles.kvKey}>Số máy</AppText>
+              <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.documents.engineNumber")}</AppText>
               <AppText style={styles.kvVal}>{currentDoc.ocrEngineNumber ?? "-"}</AppText>
             </View>
             <View style={styles.kvRow}>
-              <AppText style={styles.kvKey}>Số khung</AppText>
+              <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.documents.chassisNumber")}</AppText>
               <AppText style={styles.kvVal}>{currentDoc.ocrChassisNumber ?? "-"}</AppText>
             </View>
             <View style={styles.kvRow}>
-              <AppText style={styles.kvKey}>Độ tin cậy</AppText>
+              <AppText style={styles.kvKey}>{t("mobile:ownerVehicle.documents.confidence")}</AppText>
               <AppText style={styles.kvVal}>
                 {currentDoc.ocrConfidence != null ? `${Math.round(currentDoc.ocrConfidence * 100)}%` : "-"}
               </AppText>
@@ -692,20 +706,20 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
                 style={[styles.primaryBtn, uploadingDoc && styles.disabledBtn]}
               >
                 <AppText style={styles.primaryText}>
-                  {uploadingDoc ? "Đang gửi..." : "Chọn ảnh cavet & gửi xác thực lại"}
+                  {uploadingDoc ? t("mobile:ownerVehicle.documents.uploading") : t("mobile:ownerVehicle.documents.reupload")}
                 </AppText>
               </Pressable>
             ) : null}
             {docError ? <AppText style={styles.errorText}>{docError}</AppText> : null}
             {vehicle.documents.length > 1 ? (
               <View style={styles.docHistory}>
-                <AppText display style={styles.docHistoryTitle}>Lịch sử giấy tờ ({vehicle.documents.length})</AppText>
+                <AppText display style={styles.docHistoryTitle}>{t("mobile:ownerVehicle.documents.historyTitle", { count: vehicle.documents.length })}</AppText>
                 {vehicle.documents
                   .filter((d) => d.id !== currentDoc.id)
                   .map((d, idx) => (
                     <View key={d.id} style={styles.docHistoryRow}>
                       <FileText color={theme.faint} size={14} />
-                      <AppText style={styles.docHistoryLabel}>Lần {idx + 2}</AppText>
+                      <AppText style={styles.docHistoryLabel}>{t("mobile:ownerVehicle.documents.attempt", { number: idx + 2 })}</AppText>
                       <View style={styles.docHistoryBadge}>
                         <AppText style={styles.docHistoryBadgeText}>
                           {DOC_STATUS_LABEL[d.verificationStatus] ?? d.verificationStatus}
@@ -740,7 +754,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
             style={[styles.dangerBtn, deleting && styles.disabledBtn]}
           >
             <Trash2 color={theme.danger} size={15} />
-            <AppText style={styles.dangerText}>{deleting ? "Đang xóa..." : "Xóa xe"}</AppText>
+            <AppText style={styles.dangerText}>{deleting ? t("mobile:ownerVehicle.detail.deleting") : t("mobile:ownerVehicle.detail.deleteTitle")}</AppText>
           </Pressable>
         </View>
       ) : null}
@@ -758,7 +772,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
         <View style={styles.viewerOverlay}>
           <View style={[styles.viewerHead, { paddingTop: Math.max(insets.top, 12) }]}>
             <AppText display style={styles.viewerTitle}>
-              Hình ảnh xe {galleryViewerIndex + 1}/{images.length}
+              {t("mobile:ownerVehicle.gallery.viewerTitle", { index: galleryViewerIndex + 1, total: images.length })}
             </AppText>
             <Pressable onPress={() => setGalleryViewer(false)} style={styles.viewerClose}>
               <X color="#FFF" size={20} />
@@ -824,7 +838,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
         <View style={styles.viewerOverlay}>
           <View style={[styles.viewerHead, { paddingTop: Math.max(insets.top, 12) }]}>
             <AppText display style={styles.viewerTitle}>
-              Cavet xe {docViewerIndex + 1}/{vehicle.documents.length}
+              {t("mobile:ownerVehicle.documents.viewerTitle", { index: docViewerIndex + 1, total: vehicle.documents.length })}
             </AppText>
             <Pressable onPress={() => setDocViewer(false)} style={styles.viewerClose}>
               <X color="#FFF" size={20} />
