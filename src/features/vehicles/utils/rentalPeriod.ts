@@ -1,3 +1,5 @@
+import i18n from "@/i18n";
+
 export const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** Availability is date-based on the public vehicle calendar, including both endpoints. */
@@ -86,7 +88,7 @@ export function formatPeriodPart(value: string): string {
 }
 
 export function formatPeriodSummary(startDate: string, endDate: string): string {
-  if (!startDate && !endDate) return "Chọn ngày và giờ thuê xe";
+  if (!startDate && !endDate) return i18n.t("common:rentalPicker.selectPrompt");
   return `${formatPeriodPart(startDate)} - ${formatPeriodPart(endDate)}`;
 }
 
@@ -113,7 +115,7 @@ export function getFirstAvailableHour(date: Date, preferredHour: string): string
 
 export function getRangeError(startDate: string, endDate: string): string {
   if (startDate && endDate && new Date(endDate) <= new Date(startDate)) {
-    return "Thời gian trả xe phải sau thời gian nhận xe.";
+    return i18n.t("common:rentalPicker.endBeforeStart");
   }
   return "";
 }

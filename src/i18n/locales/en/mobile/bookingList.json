@@ -1,0 +1,128 @@
+{
+  "bookingList": {
+    "titles": {
+      "customerTrips": "My trips",
+      "ownerBookings": "My booking requests",
+      "ownerTab": "Customer bookings"
+    },
+    "kickers": {
+      "owner": "Renting out",
+      "customer": "Trips"
+    },
+    "meta": {
+      "loading": "Loading...",
+      "totalOwner": "{{count}} bookings",
+      "totalCustomer": "{{count}} trips",
+      "pending": "{{count}} awaiting approval",
+      "ongoing": "{{count}} in progress"
+    },
+    "groups": {
+      "todo": "Needs action",
+      "ongoing": "In progress",
+      "upcoming": "Upcoming",
+      "finished": "Ended"
+    },
+    "primaryFilters": {
+      "depositPaid": "Deposit paid",
+      "inProgress": "Renting"
+    },
+    "a11y": {
+      "statusFilter": "Status filters",
+      "openStatusFilter": "Open status filters",
+      "clearSearch": "Clear search",
+      "closeFilter": "Close filters",
+      "closeSearch": "Close search"
+    },
+    "filterChip": "Filters",
+    "filterSheet": {
+      "titleOwner": "Booking filters",
+      "titleCustomer": "Trip filters",
+      "subtitle": "Pick one status · applies instantly",
+      "reset": "Clear filters"
+    },
+    "searchSheet": {
+      "titleOwner": "Search bookings",
+      "titleCustomer": "Search trips",
+      "subtitle": "Filter by booking code, vehicle name and date range."
+    },
+    "empty": {
+      "ownerTitle": "No booking requests yet",
+      "ownerDescription": "When a customer books your vehicle, the request will appear here.",
+      "customerTitle": "No trips yet",
+      "customerDescription": "Trips you book will appear here so you can follow them easily."
+    },
+    "footer": {
+      "loadMore": "Show more ({{count}})",
+      "shownOwner": "Showing {{shown}}/{{total}} bookings",
+      "shownCustomer": "Showing {{shown}}/{{total}} trips",
+      "allShown": "All shown"
+    },
+    "reminder": {
+      "fallbackCustomer": "Customer",
+      "fallbackVehicle": "Vehicle",
+      "fallbackVehicleLower": "vehicle",
+      "ownerPendingTitle": "{{code}} · awaiting your approval",
+      "ownerPendingDescription": "{{customer}} booked {{vehicle}} from {{time}}.",
+      "ownerHandoverTitle": "{{vehicle}} is due for handover",
+      "ownerHandoverDescription": "Customer picks up at {{time}}.",
+      "runningTitle": "{{vehicle}} is being rented",
+      "runningDescription": "Expected return {{time}}.",
+      "customerDepositTitle": "{{vehicle}} awaits deposit",
+      "depositDue": "Deposit due {{time}} · the booking is cancelled if overdue.",
+      "depositKeepTrip": "Complete the deposit to keep the trip.",
+      "readyTitle": "{{vehicle}} starts soon",
+      "readyDescription": "Pickup {{time}} · bring your ID and driver's license.",
+      "activeTitle": "{{vehicle}} in progress",
+      "ctaHandle": "Handle",
+      "ctaPay": "Pay",
+      "ctaView": "View"
+    },
+    "card": {
+      "actionReview": "Review",
+      "actionHandleOrder": "Handle request",
+      "actionTrack": "Track",
+      "actionReceiveVehicle": "Receive vehicle",
+      "actionViewReport": "View report",
+      "actionViewOrder": "View request",
+      "actionPayDeposit": "Pay deposit",
+      "actionReturnVehicle": "Return vehicle",
+      "actionHandoverReturn": "Hand over vehicle",
+      "priceFinished": "Ended",
+      "priceDepositExpected": "Expected deposit {{amount}}",
+      "priceDeposited": "Deposit paid {{amount}}",
+      "priceDeposit": "Deposit {{amount}}",
+      "customerFallback": "Customer #{{id}}",
+      "customerFallbackLower": "customer #{{id}}",
+      "profile": "Profile",
+      "pendingNote": "Awaiting your approval · respond early so the customer doesn't cancel.",
+      "depositDue": "Deposit due {{time}}",
+      "a11y": {
+        "openBooking": "{{vehicle}} · {{code}}",
+        "viewProfile": "View profile of {{name}}"
+      }
+    },
+    "search": {
+      "field": "Search bookings",
+      "keywordPlaceholder": "Booking code, vehicle name…",
+      "fromLabel": "From date (YYYY-MM-DD)",
+      "toLabel": "To date (YYYY-MM-DD)",
+      "apply": "Apply filters",
+      "validationDate": "Enter the date as YYYY-MM-DD.",
+      "validationRange": "Start date cannot be after end date."
+    },
+    "legacy": {
+      "errorLoad": "Could not load bookings.",
+      "emptyStatus": "No bookings with this status.",
+      "empty": "You have no bookings yet.",
+      "ownerHint": "Rental requests will appear here.",
+      "customerHint": "Pick a vehicle in Explore to create a rental request.",
+      "openBookingAria": "View booking {{code}}",
+      "pickupLine": "Pickup: {{time}}",
+      "returnLine": "Return: {{time}}",
+      "pageSummary": "{{total}} bookings · Page {{page}}/{{pages}}"
+    },
+    "assistance": {
+      "title": "Get help with this booking"
+    }
+  }
+}

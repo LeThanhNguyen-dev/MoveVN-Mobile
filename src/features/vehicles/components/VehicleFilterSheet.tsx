@@ -11,6 +11,8 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
+import { useTranslation } from "react-i18next";
+import { localizedOption } from "@/i18n/liveLabels";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -64,38 +66,38 @@ export const EMPTY_FILTERS: VehicleListFilters = {
 export const SEAT_OPTIONS = ["2", "4", "5", "7", "8", "9", "16", "29", "30"];
 
 export const FUEL_OPTIONS = [
-  { value: "Gasoline", label: "Xăng" },
-  { value: "Diesel", label: "Dầu" },
-  { value: "Electric", label: "Điện" },
-  { value: "Hybrid", label: "Hybrid" },
-  { value: "Plug-in Hybrid", label: "Plug-in Hybrid" },
+  localizedOption("Gasoline", "common", "fuel.Gasoline"),
+  localizedOption("Diesel", "common", "fuel.Diesel"),
+  localizedOption("Electric", "common", "fuel.Electric"),
+  localizedOption("Hybrid", "common", "fuel.Hybrid"),
+  localizedOption("Plug-in Hybrid", "common", "fuel.Plug-in Hybrid"),
 ];
 
 export const TRANSMISSION_OPTIONS = [
-  { value: "Automatic", label: "Số tự động" },
-  { value: "Manual", label: "Số sàn" },
-  { value: "CVT", label: "CVT" },
-  { value: "DCT", label: "DCT" },
+  localizedOption("Automatic", "vehicleList", "options.transmission.automatic"),
+  localizedOption("Manual", "vehicleList", "options.transmission.manual"),
+  localizedOption("CVT", "vehicleList", "options.transmission.cvt"),
+  localizedOption("DCT", "vehicleList", "options.transmission.dct"),
 ];
 
 export const CAR_BODY_TYPES = [
-  { value: "Sedan", label: "Sedan" },
-  { value: "SUV", label: "SUV" },
-  { value: "Hatchback", label: "Hatchback" },
-  { value: "Coupe", label: "Coupe" },
-  { value: "Convertible", label: "Mui trần" },
-  { value: "Pickup", label: "Bán tải" },
-  { value: "MPV/Minivan", label: "MPV / Minivan" },
-  { value: "Wagon", label: "Wagon" },
+  localizedOption("Sedan", "vehicleList", "options.bodyTypes.sedan"),
+  localizedOption("SUV", "vehicleList", "options.bodyTypes.suv"),
+  localizedOption("Hatchback", "vehicleList", "options.bodyTypes.hatchback"),
+  localizedOption("Coupe", "vehicleList", "options.bodyTypes.coupe"),
+  localizedOption("Convertible", "vehicleList", "options.bodyTypes.convertible"),
+  localizedOption("Pickup", "vehicleList", "options.bodyTypes.pickup"),
+  localizedOption("MPV/Minivan", "vehicleList", "options.bodyTypes.mpv"),
+  localizedOption("Wagon", "vehicleList", "options.bodyTypes.wagon"),
 ];
 
 export const BIKE_TYPE_OPTIONS = [
-  { value: "Scooter", label: "Xe tay ga" },
-  { value: "Manual", label: "Xe số" },
-  { value: "Clutch", label: "Xe côn tay" },
-  { value: "Sport", label: "Xe thể thao" },
-  { value: "Cruiser", label: "Cruiser" },
-  { value: "Adventure", label: "Adventure" },
+  localizedOption("Scooter", "common", "bikeType.Scooter"),
+  localizedOption("Manual", "common", "bikeType.Manual"),
+  localizedOption("Clutch", "common", "bikeType.Clutch"),
+  localizedOption("Sport", "common", "bikeType.Sport"),
+  localizedOption("Cruiser", "common", "bikeType.Cruiser"),
+  localizedOption("Adventure", "common", "bikeType.Adventure"),
 ];
 
 export const MIN_PRICE_LIMIT = 0;
@@ -131,6 +133,7 @@ export default function VehicleFilterSheet({
   onApply,
   onClose,
 }: VehicleFilterSheetProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -244,7 +247,9 @@ export default function VehicleFilterSheet({
           onPress={() => onPick("")}
           style={[styles.chip, !current && styles.chipActive]}
         >
-          <AppText style={[styles.chipText, !current && styles.chipTextActive]}>Tất cả</AppText>
+          <AppText style={[styles.chipText, !current && styles.chipTextActive]}>
+            {t("vehicleList:options.all")}
+          </AppText>
         </Pressable>
         {options.map((o) => {
           const active = current === o.value;
@@ -272,13 +277,13 @@ export default function VehicleFilterSheet({
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-      <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng bộ lọc" />
+      <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel={t("mobile:vehicleList.filters.closeAria")} />
       <Animated.View
         style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16), transform: [{ translateY }] }]}
       >
           <View style={styles.handle} />
           <View style={styles.header}>
-            <AppText display style={styles.headerTitle}>Bộ lọc</AppText>
+            <AppText display style={styles.headerTitle}>{t("vehicleList:filters.toggle")}</AppText>
             <Pressable onPress={handleClose} style={styles.closeButton}>
               <X color={theme.muted} size={18} />
             </Pressable>
@@ -290,18 +295,18 @@ export default function VehicleFilterSheet({
             keyboardShouldPersistTaps="handled"
             scrollEnabled={!sliding}
           >
-            <AppText style={styles.label}>Tìm kiếm thông minh</AppText>
+            <AppText style={styles.label}>{t("mobile:vehicleList.filters.smartSearch")}</AppText>
             <View style={styles.searchBox}>
               <Search color={theme.placeholder} size={15} />
               <TextInput
                 value={draftAiQuery}
                 onChangeText={setDraftAiQuery}
-                placeholder="Ví dụ: xe 7 chỗ dưới 1tr5, rộng rãi..."
+                placeholder={t("mobile:vehicleList.filters.smartSearchPlaceholder")}
                 placeholderTextColor={theme.placeholder}
                 style={styles.searchInput}
               />
               {draftAiQuery ? (
-                <Pressable onPress={() => setDraftAiQuery("")} accessibilityLabel="Xóa tìm kiếm thông minh">
+                <Pressable onPress={() => setDraftAiQuery("")} accessibilityLabel={t("mobile:vehicleList.filters.clearSmartSearchAria")}>
                   <X color={theme.muted} size={16} />
                 </Pressable>
               ) : null}
@@ -315,12 +320,12 @@ export default function VehicleFilterSheet({
                 set("customerLat", "");
                 set("customerLng", "");
               }}
-              label="Địa chỉ nhận xe"
-              placeholder="Nhập địa chỉ để lọc theo khoảng cách"
+              label={t("vehicleList:filters.pickupAddress")}
+              placeholder={t("mobile:vehicleList.filters.pickupPlaceholder")}
             />
 
             <View style={styles.sectionHead}>
-              <AppText style={styles.sectionLabel}>Bán kính tìm kiếm</AppText>
+              <AppText style={styles.sectionLabel}>{t("vehicleList:radius.label")}</AppText>
               <View style={styles.kmBox}>
                 <TextInput
                   value={draft.radiusKm}
@@ -342,15 +347,15 @@ export default function VehicleFilterSheet({
             />
             <SliderCaption left="1km" right="200km" />
             {!draft.customerLat || !draft.customerLng ? (
-              <AppText style={styles.hint}>Chọn địa chỉ nhận xe ở trên để áp dụng lọc khoảng cách.</AppText>
+              <AppText style={styles.hint}>{t("mobile:vehicleList.filters.radiusHint")}</AppText>
             ) : null}
 
-            <AppText style={styles.label}>Loại xe</AppText>
+            <AppText style={styles.label}>{t("vehicleList:filters.type")}</AppText>
             <View style={styles.chipRow}>
               {[
-                { value: "", label: "Tất cả" },
-                { value: "Car", label: "Ô tô" },
-                { value: "Motorbike", label: "Xe máy" },
+                { value: "", label: t("vehicleList:options.all") },
+                { value: "Car", label: t("common:car") },
+                { value: "Motorbike", label: t("common:motorbike") },
               ].map((o) => {
                 const active = draft.type === o.value;
                 return (
@@ -377,7 +382,7 @@ export default function VehicleFilterSheet({
               })}
             </View>
 
-            <AppText style={styles.label}>Hãng xe</AppText>
+            <AppText style={styles.label}>{t("vehicleList:filters.brand")}</AppText>
             {loadingBrands ? (
               <ActivityIndicator color={theme.brand} style={styles.loader} />
             ) : (
@@ -392,7 +397,7 @@ export default function VehicleFilterSheet({
                   style={[styles.chip, !draft.brandId && styles.chipActive]}
                 >
                   <AppText style={[styles.chipText, !draft.brandId && styles.chipTextActive]}>
-                    Tất cả
+                    {t("vehicleList:options.all")}
                   </AppText>
                 </Pressable>
                 {brands.map((b) => {
@@ -417,7 +422,7 @@ export default function VehicleFilterSheet({
 
             {draft.brandId ? (
               <>
-                <AppText style={styles.label}>Dòng xe</AppText>
+                <AppText style={styles.label}>{t("vehicleList:filters.model")}</AppText>
                 <View style={styles.chipWrap}>
                   <Pressable
                     onPress={() => {
@@ -427,7 +432,7 @@ export default function VehicleFilterSheet({
                     style={[styles.chip, !draft.modelId && styles.chipActive]}
                   >
                     <AppText style={[styles.chipText, !draft.modelId && styles.chipTextActive]}>
-                      Tất cả
+                      {t("vehicleList:options.all")}
                     </AppText>
                   </Pressable>
                   {models.map((m) => {
@@ -453,32 +458,32 @@ export default function VehicleFilterSheet({
 
             {showBodyType ? (
               <>
-                <AppText style={styles.label}>Kiểu thân xe</AppText>
+                <AppText style={styles.label}>{t("mobile:vehicleList.filters.bodyTypeLabel")}</AppText>
                 {renderChips(CAR_BODY_TYPES, draft.bodyType, (v) => set("bodyType", v))}
               </>
             ) : null}
 
             {showBikeType ? (
               <>
-                <AppText style={styles.label}>Loại xe máy</AppText>
+                <AppText style={styles.label}>{t("vehicleList:filters.bikeType")}</AppText>
                 {renderChips(BIKE_TYPE_OPTIONS, draft.bikeType, (v) => set("bikeType", v))}
               </>
             ) : null}
 
-            <AppText style={styles.label}>Nhiên liệu</AppText>
+            <AppText style={styles.label}>{t("vehicleList:filters.fuel")}</AppText>
             {renderChips(FUEL_OPTIONS, draft.fuelType, (v) => set("fuelType", v))}
 
-            <AppText style={styles.label}>Hộp số</AppText>
+            <AppText style={styles.label}>{t("vehicleList:filters.transmission")}</AppText>
             {renderChips(TRANSMISSION_OPTIONS, draft.transmission, (v) => set("transmission", v))}
 
-            <AppText style={styles.label}>Số chỗ</AppText>
+            <AppText style={styles.label}>{t("vehicleList:filters.seats")}</AppText>
             <View style={styles.chipWrap}>
               <Pressable
                 onPress={() => set("seatCount", "")}
                 style={[styles.chip, !draft.seatCount && styles.chipActive]}
               >
                 <AppText style={[styles.chipText, !draft.seatCount && styles.chipTextActive]}>
-                  Tất cả
+                  {t("vehicleList:options.all")}
                 </AppText>
               </Pressable>
               {SEAT_OPTIONS.map((s) => {
@@ -489,21 +494,23 @@ export default function VehicleFilterSheet({
                     onPress={() => set("seatCount", active ? "" : s)}
                     style={[styles.chip, active && styles.chipActive]}
                   >
-                    <AppText style={[styles.chipText, active && styles.chipTextActive]}>{s} chỗ</AppText>
+                    <AppText style={[styles.chipText, active && styles.chipTextActive]}>
+                      {t("vehicleList:options.seats", { seats: s })}
+                    </AppText>
                   </Pressable>
                 );
               })}
             </View>
 
             <View style={styles.sectionHead}>
-              <AppText style={styles.sectionLabel}>Khoảng giá</AppText>
+              <AppText style={styles.sectionLabel}>{t("vehicleList:price.rangeLabel")}</AppText>
               <AppText style={styles.sectionSummary}>
                 {formatCompact(priceLow)} – {formatCompact(priceHigh)}
               </AppText>
             </View>
             <View style={styles.priceInputs}>
               <View style={styles.priceField}>
-                <AppText style={styles.miniLabel}>Giá từ</AppText>
+                <AppText style={styles.miniLabel}>{t("vehicleList:price.from")}</AppText>
                 <TextInput
                   value={draft.minPrice}
                   onChangeText={(v) => set("minPrice", v.replace(/[^0-9]/g, ""))}
@@ -515,7 +522,7 @@ export default function VehicleFilterSheet({
                 />
               </View>
               <View style={styles.priceField}>
-                <AppText style={styles.miniLabel}>Giá đến</AppText>
+                <AppText style={styles.miniLabel}>{t("vehicleList:price.to")}</AppText>
                 <TextInput
                   value={draft.maxPrice}
                   onChangeText={(v) => set("maxPrice", v.replace(/[^0-9]/g, ""))}
@@ -543,7 +550,7 @@ export default function VehicleFilterSheet({
 
           <View style={styles.footer}>
             <Pressable onPress={handleClear}>
-              <AppText style={styles.clearText}>Reset</AppText>
+              <AppText style={styles.clearText}>{t("mobile:vehicleList.filters.reset")}</AppText>
             </Pressable>
             <Pressable
               disabled={searching}
@@ -555,7 +562,7 @@ export default function VehicleFilterSheet({
             >
               {searching ? <ActivityIndicator size="small" color={theme.onBrand} /> : (
                 <AppText style={styles.doneText}>
-                  Áp dụng{resultCount !== undefined ? ` (${resultCount})` : ""}
+                  {t("vehicleList:filters.apply")}{resultCount !== undefined ? ` (${resultCount})` : ""}
                 </AppText>
               )}
             </Pressable>

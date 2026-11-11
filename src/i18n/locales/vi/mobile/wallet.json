@@ -1,0 +1,158 @@
+{
+  "wallet": {
+    "a11y": {
+      "back": "Quay lại",
+      "unlockBalance": "Mở khóa số dư",
+      "showBalance": "Hiện số dư",
+      "hideBalance": "Ẩn số dư",
+      "withdrawalStatus": "Trạng thái: {{status}}",
+      "copyAccountNumber": "Sao chép số tài khoản",
+      "openBankList": "Mở danh sách ngân hàng",
+      "closeBankList": "Đóng danh sách ngân hàng",
+      "closePayment": "Đóng thanh toán"
+    },
+    "tabs": {
+      "overview": "Tổng quan",
+      "history": "Lịch sử",
+      "bank": "Ngân hàng"
+    },
+    "balance": {
+      "earned": "Tổng thu nhập",
+      "topUp": "Đã nạp",
+      "spent": "Đã chi",
+      "pendingTopUp": "Đang chờ nạp #{{code}}..."
+    },
+    "detail": {
+      "time": "Thời gian",
+      "balanceAfter": "Số dư sau GD",
+      "reference": "Mã tham chiếu",
+      "status": "Trạng thái",
+      "note": "Ghi chú"
+    },
+    "pin": {
+      "setupPurpose": "Thiết lập mã PIN 6 chữ số để bảo vệ số dư và rút tiền trong ví của bạn.",
+      "verifyBalance": "Nhập mã PIN của bạn để xem số dư ví.",
+      "verifyWithdraw": "Nhập mã PIN của bạn để xác nhận yêu cầu rút tiền này."
+    },
+    "errors": {
+      "loadWallet": "Không tải được ví.",
+      "loadHistory": "Không tải được lịch sử giao dịch."
+    },
+    "home": {
+      "bankMissingTitle": "Chưa liên kết ngân hàng",
+      "bankMissingSubtitle": "Thiết lập để rút tiền về tài khoản.",
+      "recentTitle": "Giao dịch gần đây",
+      "viewAll": "Xem tất cả",
+      "emptyRecent": "Chưa có giao dịch nào. Nạp tiền để bắt đầu."
+    },
+    "history": {
+      "txTab": "Giao dịch",
+      "chipAll": "Tất cả",
+      "chipDeposit": "Trả cọc",
+      "chipEarning": "Thu nhập",
+      "monthTitle": "Tháng {{month}}/{{year}}",
+      "unknownTime": "Không rõ thời gian",
+      "searchPlaceholder": "Tìm theo ghi chú trong kết quả đã tải...",
+      "noMatch": "Không tìm thấy giao dịch phù hợp.",
+      "loadMoreCount": "Xem thêm ({{count}})"
+    },
+    "cashflow": {
+      "topUpDesc": "Thanh toán qua PayOS, tiền vào ví sau khi xác nhận.",
+      "topUpPlaceholder": "Hoặc nhập số tiền (đồng)",
+      "topUpHint": "Tối thiểu {{min}} · tối đa {{max}} mỗi lần nạp.",
+      "payWithPayOS": "Thanh toán PayOS",
+      "withdrawTitle": "Rút tiền về ngân hàng",
+      "toBank": "Về: {{bank}} · {{account}}",
+      "notSet": "chưa thiết lập",
+      "setupBankLink": "Thiết lập ngân hàng ngay →",
+      "activeRequest": "Yêu cầu #{{id}} đang {{status}}",
+      "activeRequestHint": "Vui lòng chờ hoàn tất hoặc hủy yêu cầu này trước khi tạo yêu cầu mới.",
+      "withdrawPlaceholder": "Số tiền rút (đồng)",
+      "withdrawHint": "Tối thiểu {{min}} · tối đa {{max}}.",
+      "withdrawMax": "Rút tối đa",
+      "withdrawSubmit": "Tạo yêu cầu rút",
+      "pendingTitle": "Yêu cầu rút tiền"
+    },
+    "bank": {
+      "verified": "Đã xác thực",
+      "copied": "Đã sao chép số tài khoản.",
+      "changeAccount": "Đổi tài khoản khác",
+      "changeHint": "Đổi tài khoản cần xác thực lại OTP qua email để bảo vệ tiền rút của bạn.",
+      "selectBank": "Chọn ngân hàng nhận tiền",
+      "searchPlaceholder": "Tìm Vietcombank, BIDV, MB...",
+      "noBank": "Không tìm thấy ngân hàng phù hợp.",
+      "accountPlaceholder": "VD: 0123456789",
+      "accountHint": "Từ 6–19 chữ số, không dấu cách.",
+      "holderPlaceholder": "NGUYEN VAN A (viết hoa)",
+      "holderHint": "Nhập đúng tên in trên thẻ/tài khoản.",
+      "cancelChanges": "Hủy thay đổi",
+      "otpTitle": "Xác thực OTP",
+      "otpDescPrefix": "Mã gồm 6 chữ số đã gửi đến email của bạn cho tài khoản",
+      "otpDescSuffix": ".",
+      "editInfo": "Sửa lại thông tin",
+      "resendIn": "Gửi lại sau {{seconds}}s",
+      "resend": "Gửi lại mã"
+    },
+    "payment": {
+      "title": "Thanh toán PayOS",
+      "openFailed": "Không mở được link thanh toán.",
+      "loadFailed": "Không tải được trang thanh toán.",
+      "openInBrowser": "Mở bằng trình duyệt"
+    },
+    "alerts": {
+      "failedTitle": "Thất bại",
+      "noticeTitle": "Thông báo",
+      "invalidAmountTitle": "Số tiền chưa đúng",
+      "amountTooSmallTitle": "Số tiền quá nhỏ",
+      "amountTooLargeTitle": "Số tiền quá lớn",
+      "noPayoutAccountTitle": "Chưa có tài khoản nhận",
+      "insufficientTitle": "Số dư không đủ",
+      "pendingRequestTitle": "Đang có yêu cầu chờ xử lý",
+      "cancelRequestTitle": "Hủy yêu cầu",
+      "keep": "Giữ lại",
+      "confirmCancel": "Xác nhận hủy",
+      "otpSentTitle": "Đã gửi",
+      "missingOtpTitle": "Thiếu mã",
+      "timeoutTitle": "Hết thời gian chờ",
+      "topUpDone": "Đã nạp tiền vào ví.",
+      "paymentEnded": "Giao dịch đã kết thúc.",
+      "checkBalanceHint": "Mở lại màn ví để kiểm tra số dư.",
+      "topUpAmountRequired": "Vui lòng nhập số tiền nạp (đồng).",
+      "topUpMin": "Số tiền nạp tối thiểu là {{amount}}đ.",
+      "topUpMax": "Số tiền nạp tối đa là {{amount}}đ.",
+      "topUpCreateFailed": "Không tạo được link nạp tiền.",
+      "withdrawAmountRequired": "Vui lòng nhập số tiền rút (đồng).",
+      "withdrawMin": "Số tiền rút tối thiểu là {{amount}}đ.",
+      "withdrawMax": "Số tiền rút tối đa là {{amount}}đ.",
+      "noPayoutAccountMessage": "Hãy thiết lập tài khoản ngân hàng trước khi rút.",
+      "insufficientMessage": "Số dư khả dụng: {{balance}}đ.",
+      "pendingRequestMessage": "Yêu cầu #{{id}} đang ở trạng thái chờ. Vui lòng chờ hoàn tất hoặc hủy trước khi tạo yêu cầu mới.",
+      "withdrawCreated": "Đã tạo yêu cầu rút tiền. Nhân viên duyệt xong tiền sẽ về tài khoản.",
+      "withdrawCreateFailed": "Không tạo được yêu cầu rút tiền.",
+      "cancelRequestBody": "Tiền đang giữ sẽ hoàn lại ví ngay.",
+      "cancelRequestFailed": "Không hủy được yêu cầu.",
+      "bankMissingInfo": "Nhập đủ ngân hàng, số tài khoản và chủ tài khoản.",
+      "otpSentMessage": "Mã OTP đã gửi đến email của bạn.",
+      "otpSendFailed": "Không gửi được mã OTP.",
+      "otpRequired": "Vui lòng nhập đủ mã OTP.",
+      "bankSaved": "Đã lưu tài khoản ngân hàng.",
+      "bankSaveFailed": "Không lưu được tài khoản."
+    },
+    "txTypes": {
+      "bookingEarning": "Thu nhập booking",
+      "platformFeeRevenue": "Phí nền tảng",
+      "payoutReversal": "Hoàn tiền rút",
+      "adminAdjust": "Điều chỉnh",
+      "bookingPayment": "Trả cọc",
+      "penalty": "Phạt",
+      "bookingEarningReversal": "Thu hồi thu nhập",
+      "autoPayout": "Chuyển về ngân hàng"
+    },
+    "statuses": {
+      "pending": "Chờ duyệt",
+      "needsManualReview": "Chờ xử lý tay",
+      "completed": "Hoàn tất",
+      "rejected": "Từ chối"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "driverLicense": {
+    "cooldown": {
+      "days": "{{count}} ngày",
+      "hours": "{{count}} giờ",
+      "minutes": "{{count}} phút",
+      "shortly": "ít phút nữa",
+      "retryAfter": "Bạn có thể nộp lại sau {{duration}}.",
+      "retryAfterAt": "Bạn có thể nộp lại sau {{time}}."
+    },
+    "statusError": "Không tải được trạng thái GPLX.",
+    "cameraPermission": "Cần quyền camera để chụp ảnh GPLX.",
+    "libraryPermission": "Cần quyền truy cập thư viện ảnh để chọn ảnh GPLX.",
+    "invalidFileType": "Chỉ chấp nhận file JPG, PNG hoặc WebP.",
+    "processImageError": "Không xử lý được ảnh. Vui lòng thử ảnh khác.",
+    "photoRequired": "Vui lòng chọn ảnh GPLX trước khi gửi.",
+    "pendingReviewNotice": "Hồ sơ của bạn đang chờ nhân viên kiểm tra.",
+    "verifyFailed": "Xác thực GPLX chưa đạt. Vui lòng chụp lại ảnh rõ hơn.",
+    "submitError": "Gửi ảnh GPLX thất bại. Vui lòng thử lại.",
+    "reloadAria": "Tải lại trạng thái",
+    "statusTitle": "Trạng thái xác minh",
+    "loadingStatus": "Đang tải trạng thái...",
+    "licenseNumberWithType": "Số GPLX ({{type}})",
+    "revealDisabledHint": "Giấy tờ chưa được xác thực để hiển thị.",
+    "verifiedVehicleTypes": "Loại xe đã xác minh",
+    "pendingNotice": "Hồ sơ của bạn đang chờ nhân viên kiểm tra. Vui lòng quay lại sau.",
+    "uploadTitle": "Nộp ảnh GPLX mới",
+    "uploadHint": "Chụp mặt trước GPLX rõ nét, dung lượng tối đa 5MB (JPG/PNG/WebP).",
+    "noImageSelected": "Chưa có ảnh nào được chọn",
+    "processingImage": "Đang xử lý ảnh...",
+    "capture": "Chụp ảnh",
+    "library": "Thư viện",
+    "submitting": "Đang gửi..."
+  }
+}

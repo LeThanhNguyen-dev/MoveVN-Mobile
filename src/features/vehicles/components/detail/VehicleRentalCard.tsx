@@ -7,6 +7,7 @@ import {
 } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import type { PricingQuoteResponse } from "@/features/vehicles/types";
 import { formatVnd } from "@/features/vehicles/ownerDisplay";
@@ -39,6 +40,7 @@ export default function VehicleRentalCard({
   onOpenPeriod,
   onRetryQuote,
 }: Props) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(p), [p]);
   const [showDaily, setShowDaily] = useState(false);
@@ -53,22 +55,22 @@ export default function VehicleRentalCard({
   return (
     <View style={styles.card}>
       <DetailSectionHeader
-        actionLabel="Đổi ngày"
+        actionLabel={t("mobile:vehicleDetail.availability.changeDates")}
         icon={CalendarRange}
         onAction={onOpenPeriod}
-        title="Lịch & giá thuê"
+        title={t("mobile:vehicleDetail.rental.title")}
       />
 
       <View style={styles.dateGrid}>
         <Pressable
-          accessibilityLabel="Chọn ngày nhận xe"
+          accessibilityLabel={t("mobile:vehicleDetail.rental.pickupAria")}
           accessibilityRole="button"
           onPress={onOpenPeriod}
           style={({ pressed }) => [styles.dateBox, pressed && styles.pressed]}
         >
           <View style={styles.dateLabelRow}>
             <KeyRound color={p.faint} size={11} strokeWidth={2.1} />
-            <AppText style={styles.dateLabel}>Nhận xe</AppText>
+            <AppText style={styles.dateLabel}>{t("vehicleDetail:pricing.pickup")}</AppText>
           </View>
           <AppText style={styles.dateValue} numberOfLines={1}>
             {formatDateShort(startDate)}
@@ -79,14 +81,14 @@ export default function VehicleRentalCard({
         </Pressable>
 
         <Pressable
-          accessibilityLabel="Chọn ngày trả xe"
+          accessibilityLabel={t("mobile:vehicleDetail.rental.returnAria")}
           accessibilityRole="button"
           onPress={onOpenPeriod}
           style={({ pressed }) => [styles.dateBox, pressed && styles.pressed]}
         >
           <View style={styles.dateLabelRow}>
             <KeyRound color={p.faint} size={11} strokeWidth={2.1} />
-            <AppText style={styles.dateLabel}>Trả xe</AppText>
+            <AppText style={styles.dateLabel}>{t("vehicleDetail:pricing.return")}</AppText>
           </View>
           <AppText style={styles.dateValue} numberOfLines={1}>
             {formatDateShort(endDate)}
@@ -97,7 +99,7 @@ export default function VehicleRentalCard({
         </Pressable>
 
         <Pressable
-          accessibilityLabel="Đổi ngày nhận và trả xe"
+          accessibilityLabel={t("mobile:vehicleDetail.rental.swapAria")}
           accessibilityRole="button"
           hitSlop={6}
           onPress={onOpenPeriod}
@@ -110,36 +112,40 @@ export default function VehicleRentalCard({
       {!hasDates ? (
         <View style={styles.hintRow}>
           <Info color={p.faint} size={12} strokeWidth={2} />
-          <AppText style={styles.hint}>Chọn ngày nhận và trả xe để xem giá chính xác.</AppText>
+          <AppText style={styles.hint}>{t("mobile:vehicleDetail.rental.hint")}</AppText>
         </View>
       ) : quoteState === "loading" ? (
         <View style={styles.loadingRow}>
           <ActivityIndicator color={p.brand} size="small" />
-          <AppText style={styles.hint}>Đang tính giá theo từng ngày…</AppText>
+          <AppText style={styles.hint}>{t("mobile:vehicleDetail.rental.loading")}</AppText>
         </View>
       ) : quoteState === "error" ? (
         <View style={styles.errorRow}>
-          <AppText style={styles.hint}>Chưa lấy được báo giá cho khoảng ngày này.</AppText>
+          <AppText style={styles.hint}>{t("mobile:vehicleDetail.rental.error")}</AppText>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Thử lại báo giá"
+            accessibilityLabel={t("mobile:vehicleDetail.rental.retryQuoteAria")}
             hitSlop={8}
             onPress={onRetryQuote}
           >
-            <AppText style={styles.retry}>Thử lại</AppText>
+            <AppText style={styles.retry}>{t("common:retry")}</AppText>
           </Pressable>
         </View>
       ) : pricing && quote ? (
         <>
           <View style={styles.priceLines}>
             <View style={styles.line}>
-              <AppText style={styles.lineLabel}>Tiền thuê ({pricing.days} ngày)</AppText>
+              <AppText style={styles.lineLabel}>
+                {t("mobile:vehicleDetail.rental.rentalLine", { days: pricing.days })}
+              </AppText>
               <AppText style={styles.lineValue}>{formatVnd(pricing.base)}</AppText>
             </View>
             {hasDiscount ? (
               <View style={styles.line}>
                 <AppText style={styles.lineLabel}>
-                  Giảm thuê dài ngày ({pricing.discountPercent}%)
+                  {t("mobile:vehicleDetail.rental.discountLine", {
+                    percent: pricing.discountPercent,
+                  })}
                 </AppText>
                 <AppText style={[styles.lineValue, { color: p.mint }]}>
                   −{formatVnd(pricing.discountAmount)}
@@ -147,7 +153,7 @@ export default function VehicleRentalCard({
               </View>
             ) : null}
             <View style={[styles.line, styles.totalLine]}>
-              <AppText style={styles.totalLabel}>Tạm tính</AppText>
+              <AppText style={styles.totalLabel}>{t("mobile:vehicleDetail.rental.subtotal")}</AppText>
               <AppText style={styles.totalValue}>{formatVnd(pricing.payable)}</AppText>
             </View>
           </View>
@@ -161,7 +167,9 @@ export default function VehicleRentalCard({
                 style={({ pressed }) => [styles.detailLink, pressed && styles.pressed]}
               >
                 <AppText style={styles.detailLinkText}>
-                  {showDaily ? "Thu gọn chi tiết giá" : "Xem chi tiết giá theo ngày"}
+                  {showDaily
+                    ? t("mobile:vehicleDetail.rental.collapseDaily")
+                    : t("mobile:vehicleDetail.rental.expandDaily")}
                 </AppText>
                 <ChevronDown
                   color={p.brand}
@@ -188,7 +196,7 @@ export default function VehicleRentalCard({
       <View style={styles.footnote}>
         <Info color={p.faint} size={11} strokeWidth={2} />
         <AppText style={styles.footnoteText}>
-          Chưa gồm phí giao xe và phụ phí phát sinh
+          {t("mobile:vehicleDetail.rental.footnote")}
         </AppText>
       </View>
     </View>

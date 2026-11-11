@@ -1,0 +1,7 @@
+{
+  "logout": {
+    "successTitle": "Đã đăng xuất",
+    "successMessage": "Phiên đăng nhập của bạn đã kết thúc.",
+    "loader": "Đang đăng xuất..."
+  }
+}

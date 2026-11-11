@@ -1,0 +1,63 @@
+{
+  "cms": {
+    "a11y": {
+      "back": "Back"
+    },
+    "hero": {
+      "openHint": "Open the image in fullscreen",
+      "viewImageAria": "View image: {{title}}"
+    },
+    "viewer": {
+      "closeAria": "Close image viewer",
+      "loadError": "Unable to load the image."
+    },
+    "loadingContent": "Loading content...",
+    "resultCount": "{{count}} results",
+    "docCount": "{{count}} documents",
+    "searchClearAria": "Clear search",
+    "searchEmptyHint": "Try another keyword.",
+    "unsupportedType": "This content type cannot be displayed yet (type: {{type}}).",
+    "faq": {
+      "loadError": "Unable to load the content.",
+      "questionFallback": "Question {{index}}"
+    },
+    "policy": {
+      "title": "Terms & Policies",
+      "itemFallback": "Section {{index}}"
+    },
+    "list": {
+      "description": "MoveVN terms, policies and usage guides.",
+      "searchAria": "Search documents",
+      "searchPlaceholder": "Search documents",
+      "loading": "Loading documents...",
+      "loadError": "Unable to load the document list.",
+      "sectionTitle": "Document groups",
+      "groupCount": "{{count}} groups",
+      "emptySearchTitle": "No matching documents",
+      "emptyTitle": "No policy content yet"
+    },
+    "docs": {
+      "searchAria": "Search in {{title}}",
+      "searchPlaceholder": "Search documents",
+      "sectionTitle": "Documents",
+      "emptySearchTitle": "No matching documents",
+      "emptyTitle": "No documents yet",
+      "emptyDescription": "This document group is being updated. Please check back later."
+    },
+    "support": {
+      "heroTitle": "Hi, how can MoveVN help?",
+      "createRequest": "Send a request to our support team",
+      "viewRequests": "View my support requests",
+      "searchAria": "Search help topics",
+      "searchPlaceholder": "Search help topics",
+      "sectionTitle": "Help categories",
+      "topicCount": "{{count}} topics",
+      "loading": "Loading categories...",
+      "emptySearchTitle": "No matching topics",
+      "emptySearchHint": "Try another keyword or switch roles.",
+      "contact": "Contact our support team via hotline {{hotline}} or email {{email}}.",
+      "call": "Call {{hotline}}",
+      "email": "Send email"
+    }
+  }
+}

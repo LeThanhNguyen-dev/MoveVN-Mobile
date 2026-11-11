@@ -1,0 +1,29 @@
+{
+  "errors": {
+    "401": "Your session is invalid. Please sign in again.",
+    "403": "You do not have permission to perform this action.",
+    "404": "No matching data found.",
+    "422": "The information provided is invalid. Please check again.",
+    "429": "Too many requests. Please try again later.",
+    "500": "The system is busy. Please try again later.",
+    "AUTH_1001": "This email already exists.",
+    "AUTH_1002": "Incorrect email or password.",
+    "AUTH_1003": "Your email has not been verified. Please verify the OTP before signing in.",
+    "AUTH_1004": "No account found with this email.",
+    "AUTH_1005": "This account has been locked.",
+    "AUTH_1006": "Invalid role.",
+    "AUTH_1007": "This phone number already exists.",
+    "AUTH_1010": "You have requested OTP too many times. Please try again later.",
+    "AUTH_1011": "The OTP is incorrect or has expired.",
+    "AUTH_1012": "This OTP has already been used.",
+    "AUTH_1013": "Unable to send the OTP email. Please try again later.",
+    "AUTH_1014": "You entered the wrong OTP too many times. Please request a new code.",
+    "AUTH_1020": "Invalid refresh token. Please sign in again.",
+    "AUTH_1021": "Refresh token expired. Please sign in again.",
+    "AUTH_1030": "Passwords do not match.",
+    "AUTH_1031": "Current password is incorrect.",
+    "AUTH_1040": "Google sign-in failed. Please try again.",
+    "NETWORK": "Unable to connect to the server. Please check your connection.",
+    "UNKNOWN": "The request failed. Please try again."
+  }
+}

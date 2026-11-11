@@ -1,0 +1,57 @@
+{
+  "notification": {
+    "categories": {
+      "booking": "Chuyến đi",
+      "vehicle": "Phương tiện",
+      "message": "Tin nhắn"
+    },
+    "labels": {
+      "contract": "Hợp đồng",
+      "dispute": "Tranh chấp",
+      "violation": "Báo cáo vi phạm"
+    },
+    "reference": {
+      "bookingCode": "Mã đặt xe",
+      "bookingNumber": "Mã booking",
+      "ticketNumber": "Mã hỗ trợ",
+      "booking": "Booking",
+      "ticket": "Yêu cầu hỗ trợ"
+    },
+    "dayGroup": {
+      "today": "Hôm nay",
+      "yesterday": "Hôm qua",
+      "earlier": "Trước đó"
+    },
+    "bellAriaUnread": "Thông báo, {{total}} chưa đọc",
+    "refreshAria": "Làm mới thông báo",
+    "backToListAria": "Quay lại danh sách thông báo",
+    "detailTitle": "Chi tiết thông báo",
+    "subtitleSyncing": "Đang cập nhật thông báo…",
+    "subtitleCountError": "Chưa thể cập nhật số chưa đọc",
+    "read": "Đã đọc",
+    "unread": "Chưa đọc",
+    "markRead": "Đánh dấu đã đọc",
+    "markReadAria": "Đánh dấu thông báo đã đọc",
+    "markAllAria": "Đánh dấu tất cả thông báo đã đọc",
+    "viewVehicle": "Xem xe và lịch thuê",
+    "viewReport": "Xem kết quả báo cáo",
+    "viewTicket": "Xem yêu cầu hỗ trợ",
+    "connecting": "Đang kết nối cập nhật trực tiếp…",
+    "offline": "Cập nhật trực tiếp gián đoạn. Kéo xuống để làm mới.",
+    "loadFailedTitle": "Chưa tải được thông báo",
+    "retryLoad": "Thử tải lại",
+    "loadMore": "Xem thêm thông báo",
+    "footerEnd": "Bạn đã xem hết thông báo",
+    "emptyUnreadTitle": "Không có thông báo chưa đọc",
+    "emptyUnreadText": "Bạn đã xem hết các cập nhật.",
+    "emptyAllText": "Các cập nhật về chuyến đi, thanh toán và hỗ trợ sẽ xuất hiện tại đây.",
+    "loading": "Đang tải thông báo…",
+    "loadError": "Không thể tải thông báo. Vui lòng thử lại.",
+    "markReadError": "Chưa thể đánh dấu đã đọc. Bạn có thể thử lại.",
+    "markAllError": "Không thể đánh dấu tất cả đã đọc. Vui lòng thử lại.",
+    "rowAria": "{{status}}, {{category}}{{urgent}}: {{title}}",
+    "urgentSuffix": ", Cảnh báo quá hạn",
+    "channelBookingDemo": "Thông báo đơn thuê",
+    "channelBookings": "Đơn thuê và bàn giao xe"
+  }
+}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import type { ContractSummary } from "@/features/contracts/types";
 import { requestSignOtp, sendForSigning, verifySignOtp } from "@/features/contracts/contractService";
 import { clearSignOtp, hasUnexpiredSignOtp, rememberSignOtp } from "@/features/contracts/signOtp";
@@ -19,6 +20,7 @@ export default function ContractSignDialog({
   onSigned: (contract: ContractSummary) => void;
 }) {
   const { p } = useDetailTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(p), [p]);
   const [otp, setOtp] = useState("");
   const [preparing, setPreparing] = useState(false);
@@ -39,7 +41,7 @@ export default function ContractSignDialog({
           await rememberSignOtp(userId, contract.id);
         }
       } catch (err) {
-        Alert.alert("Thất bại", getApiErrorMessage(err, "Không thể gửi mã OTP lúc này."));
+        Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.signDialog.otpFailed")));
         if (active) closeRef.current();
       } finally {
         if (active) setPreparing(false);
@@ -53,17 +55,17 @@ export default function ContractSignDialog({
   async function confirm() {
     if (!contract) return;
     if (otp.trim().length < 6) {
-      Alert.alert("Thiếu mã", "Vui lòng nhập đủ 6 chữ số OTP.");
+      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("contract:otp.errorLength"));
       return;
     }
     setBusy(true);
     try {
       await verifySignOtp(contract.id, otp.trim());
       await clearSignOtp(userId, contract.id);
-      Alert.alert("Thành công", "Bạn đã ký hợp đồng.");
+      Alert.alert(t("contract:toast.successTitle"), t("mobile:contract.signDialog.signed"));
       onSigned(contract);
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Mã OTP không đúng hoặc đã hết hạn."));
+      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.signDialog.otpInvalid")));
     } finally {
       setBusy(false);
     }
@@ -73,15 +75,15 @@ export default function ContractSignDialog({
     <Modal visible={contract !== null} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.modal}>
-          <Text style={styles.title}>Ký hợp đồng</Text>
+          <Text style={styles.title}>{t("contract:section.sign")}</Text>
           <Text style={styles.muted}>
-            {preparing ? "Đang gửi mã OTP đến email của bạn…" : "Mã OTP ký đã gửi đến email của bạn, hiệu lực 10 phút."}
+            {preparing ? t("mobile:contract.signDialog.preparing") : t("mobile:contract.signDialog.sentHint")}
           </Text>
           {preparing ? (
             <>
               <ActivityIndicator color={p.brand} />
               <Pressable onPress={onClose} accessibilityRole="button" style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Đóng</Text>
+                <Text style={styles.ghostText}>{t("contract:drawer.close")}</Text>
               </Pressable>
             </>
           ) : (
@@ -89,7 +91,7 @@ export default function ContractSignDialog({
               <TextInput
                 value={otp}
                 onChangeText={setOtp}
-                placeholder="6 chữ số"
+                placeholder={t("mobile:contract.signDialog.otpPlaceholder")}
                 placeholderTextColor={p.faint}
                 keyboardType="number-pad"
                 maxLength={6}
@@ -98,7 +100,7 @@ export default function ContractSignDialog({
               />
               <View style={styles.actions}>
                 <Pressable onPress={onClose} accessibilityRole="button" style={styles.ghostButton}>
-                  <Text style={styles.ghostText}>Đóng</Text>
+                  <Text style={styles.ghostText}>{t("contract:drawer.close")}</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => void confirm()}
@@ -109,7 +111,7 @@ export default function ContractSignDialog({
                   {busy ? (
                     <ActivityIndicator size="small" color={p.onBrand} />
                   ) : (
-                    <Text style={styles.primaryText}>Xác nhận</Text>
+                    <Text style={styles.primaryText}>{t("mobile:contract.signDialog.confirm")}</Text>
                   )}
                 </Pressable>
               </View>

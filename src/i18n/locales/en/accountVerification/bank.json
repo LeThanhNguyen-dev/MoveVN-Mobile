@@ -1,0 +1,51 @@
+{
+  "bank": {
+    "back": "Back",
+    "eyebrow": "Payout account",
+    "title": "Bank information",
+    "description": "Update your payout account to receive payments, refunds or wallet reconciliation in the MoveVN system.",
+    "stepBankLabel": "Bank",
+    "stepBankDescription": "Choose your payout bank",
+    "stepAccountLabel": "Account number",
+    "stepAccountDescription": "Enter the correct account number",
+    "stepHolderLabel": "Account holder",
+    "stepHolderDescription": "Must match the account holder name",
+    "success": "Bank information updated successfully.",
+    "panelTitle": "Payout account",
+    "panelOwnerDescription": "Vehicle owners must verify with OTP before changing the payout account.",
+    "panelCustomerDescription": "This information is used in the vehicle owner registration process.",
+    "form": {
+      "title": "Bank information",
+      "description": "Enter your bank account details to receive payments.",
+      "bankLabel": "Payout bank",
+      "selectBank": "-- Select a bank --",
+      "accountNumber": "Account number",
+      "accountNumberPlaceholder": "Enter your bank account number",
+      "holder": "Account holder",
+      "holderPlaceholder": "Enter the account holder name",
+      "save": "Save information"
+    },
+    "otp": {
+      "title": "Verify changes with OTP",
+      "description": "An OTP will be sent to the email linked to your account to protect your payout account.",
+      "placeholder": "Enter the OTP from your email",
+      "resend": "Resend OTP",
+      "send": "Send OTP"
+    },
+    "submit": "Save bank information",
+    "toastMissingInfoTitle": "Missing information",
+    "toastMissingInfoMessage": "Please enter your full bank account details.",
+    "toastOtpSentTitle": "OTP sent",
+    "toastOtpSentMessage": "The OTP has been sent to your email.",
+    "toastOtpErrorTitle": "Failed to send OTP",
+    "toastOtpErrorFallback": "Unable to send OTP. Please try again.",
+    "toastOtpMissingTitle": "Missing OTP",
+    "toastOtpMissingMessage": "Please enter the OTP.",
+    "toastSavedTitle": "Bank saved",
+    "toastSavedOwnerMessage": "Your payout account has been updated.",
+    "toastSavedCustomerMessage": "Your bank information has been updated.",
+    "toastSaveErrorTitle": "Unable to save",
+    "otpVerifyFallback": "OTP verification failed.",
+    "customerSaveFallback": "Failed to update bank information."
+  }
+}

@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { apiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
 import type { ApiResponse } from "@/features/auth/types";
@@ -45,7 +46,9 @@ export async function createContract(bookingId: number): Promise<ContractSummary
 }
 
 export async function extendContract(contractId: number, additionalDays: number): Promise<ContractSummary> {
-  if (!Number.isInteger(additionalDays) || additionalDays < 1 || additionalDays > 90) throw new Error("Số ngày gia hạn phải từ 1 đến 90.");
+  if (!Number.isInteger(additionalDays) || additionalDays < 1 || additionalDays > 90) {
+    throw new Error(i18n.t("mobile:contract.errors.extendDays"));
+  }
   const res = await apiClient.post<ApiResponse<ContractSummary>>(endpoints.contracts.extend(contractId), { additionalDays });
   return res.data.data!;
 }

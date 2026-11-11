@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { toApiError } from "@/features/auth/services/authService";
 
 export function isVehicleOcrFailure(flags: string[]) {
@@ -8,7 +9,7 @@ export function getVehicleErrorMessage(error: unknown) {
   const apiError = toApiError(error);
 
   if (apiError.code === "VEHICLE_9008") {
-    return "Cà vẹt đang chờ nhân viên duyệt. Bạn chưa thể tải ảnh khác lên lúc này.";
+    return i18n.t("owner:vehicles.cavetErrors.pendingReview");
   }
 
   if (apiError.code === "VEHICLE_9009") {
@@ -16,20 +17,22 @@ export function getVehicleErrorMessage(error: unknown) {
     if (lockedUntil) {
       const date = new Date(lockedUntil);
       if (!Number.isNaN(date.getTime())) {
-        return `Bạn đã gửi ảnh không đạt quá nhiều lần. Vui lòng thử lại sau ${date.toLocaleString("vi-VN")}.`;
+        return i18n.t("owner:vehicles.cavetErrors.tooManyAttemptsDate", {
+          date: date.toLocaleString("vi-VN"),
+        });
       }
     }
 
-    return "Bạn đã gửi ảnh không đạt quá nhiều lần. Vui lòng thử lại sau.";
+    return i18n.t("owner:vehicles.cavetErrors.tooManyAttempts");
   }
 
   if (apiError.code === "VEHICLE_9015") {
-    return "Phiên xác thực cà vẹt đã hết hạn hoặc thông tin xe đã thay đổi. Vui lòng xác thực lại.";
+    return i18n.t("mobile:vehicleList.verify.sessionChanged");
   }
 
   if (apiError.code === "VEHICLE_9016") {
-    return "Không thể lưu phiên xác thực cà vẹt lúc này. Vui lòng thử lại.";
+    return i18n.t("mobile:vehicleList.verify.saveSessionError");
   }
 
-  return apiError.message || "Không thể xử lý cà vẹt xe. Vui lòng thử lại.";
+  return apiError.message || i18n.t("owner:vehicles.cavetErrors.generic");
 }

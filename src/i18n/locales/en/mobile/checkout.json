@@ -1,0 +1,149 @@
+{
+  "checkout": {
+    "create": {
+      "kicker": "Review",
+      "title": "Confirm booking",
+      "unpaid": "Not paid yet",
+      "preparing": "Preparing booking details…",
+      "vehicleLoadErrorTitle": "Could not load vehicle details",
+      "vehicleLoadErrorBody": "Please go back and try again.",
+      "invalidSchedule": "Choose a valid pickup and return date before submitting.",
+      "overlap": "This period overlaps the vehicle's busy schedule (60-minute cleaning buffer included). Please choose another date.",
+      "scheduleUnavailable": "No valid vehicle schedule yet. Please try again.",
+      "pickupSuggestion": "Choose the pickup address from the suggestions.",
+      "pickupUnpinned": "The pickup address has no coordinates yet. Choose it again from the suggestions.",
+      "deliveryTooFar": "The pickup point is beyond the delivery range ({{max}} km). Please choose a closer location.",
+      "returnSuggestion": "Choose the return address from the suggestions.",
+      "successMessage": "Booking code {{code}}. You will pay the deposit once the owner approves.",
+      "viewTrip": "View trip",
+      "busyNextAvailable": "The vehicle is busy for the selected period. It can be rented from {{date}}.",
+      "createError": "Could not create the booking. Please try again later."
+    },
+    "trip": {
+      "subtitleDays": "{{days}}-day rental",
+      "subtitleNoPeriod": "Choose pickup and return times",
+      "statusLoading": "Checking availability…",
+      "statusError": "Could not load the vehicle schedule",
+      "statusBusy": "Vehicle is busy in this period",
+      "statusNoPeriod": "Choose pickup & return dates",
+      "statusReady": "Vehicle is available",
+      "perDay": "/day",
+      "periodAriaHint": "Open the date and time picker for pickup and return",
+      "edit": "Change",
+      "datePlaceholder": "Choose date",
+      "timePlaceholder": "Choose time",
+      "nextAvailableTitle": "Vehicle free from another date",
+      "nextAvailableBody": "The vehicle can be rented from {{date}}. The current number of rental days stays the same.",
+      "nextAvailableApply": "Use this date"
+    },
+    "handover": {
+      "subtitle": "Vehicle handover locations",
+      "pickupPlaceholder": "Search pickup address",
+      "pickupHint": "Choose an address from the suggestions to calculate the delivery distance.",
+      "deliveryOverMax": "{{km}} km from the vehicle, beyond the {{max}} km delivery range.",
+      "deliveryFee": "{{km}} km from the vehicle · delivery fee {{fee}}",
+      "deliveryFree": "{{km}} km from the vehicle · free delivery within {{free}} km",
+      "radiusHint": "The owner only delivers within a {{max}} km radius.",
+      "sameReturn": "Return at pickup point",
+      "sameReturnOn": "You will return the vehicle where you picked it up.",
+      "sameReturnOff": "Choose a return address below.",
+      "returnPlaceLabel": "Return location",
+      "pickupEmpty": "No pickup point selected",
+      "returnPlaceholder": "Search return address",
+      "returnHint": "Choose the return address from the suggestions to confirm the location.",
+      "noteTitle": "Note for the owner",
+      "noteOptional": "Optional",
+      "notePlaceholder": "Example: I arrive 15 minutes early and need the vehicle delivered…",
+      "noticeTitle": "Pickup reminder",
+      "noticeBody": "Please bring your original ID card and driver's licence so the owner can verify them in person at pickup. Thank you!"
+    },
+    "payment": {
+      "subtitleDays": "{{days}} days · security deposit excluded",
+      "subtitleHint": "Choose the rental period to see pricing",
+      "promoDiscount": "{{amount}} off this booking",
+      "promoClearAria": "Remove discount code",
+      "promoPlaceholder": "Promo code",
+      "walletAria": "Open voucher wallet",
+      "walletShort": "Wallet",
+      "rentalFee": "Rental fee",
+      "longRentalDiscount": "Long-term rental discount ({{percent}}%)",
+      "deliveryFee": "Delivery fee",
+      "deliveryFeeKm": "Delivery fee ({{km}} km)",
+      "platformFee": "Platform fee (included)",
+      "payAfterApproval": "Pay after the owner approves",
+      "deposit": "Deposit ({{percent}}%)",
+      "remaining": "Remaining at pickup",
+      "missing": "Choose pickup and return dates to see the rental price, deposit and total.",
+      "securityByAgreement": "By agreement",
+      "securityNotRequired": "No security deposit needed",
+      "securityNoAsset": "The owner does not require an asset deposit",
+      "securityPending": "The owner will confirm the security amount before handover."
+    },
+    "submit": {
+      "hintEmpty": "Choose a valid rental period to see the total",
+      "hintDeposit": "Deposit {{amount}} · {{days}} days",
+      "aria": "Send rental request",
+      "cta": "Send request"
+    },
+    "voucher": {
+      "subtitle": "Choose a discount code for this booking",
+      "closeAria": "Close voucher wallet",
+      "loading": "Loading vouchers…",
+      "emptyTitle": "Your wallet is empty",
+      "emptyBody": "Find promo codes in the Offers tab, then come back here.",
+      "discount": "{{off}} off",
+      "minOrder": " · min order {{amount}}",
+      "blocked": "Not valid for this vehicle type",
+      "use": "Use"
+    },
+    "editor": {
+      "reasonRequired": "Enter an edit reason and describe any damage.",
+      "saveFallback": "Could not save changes. Reload to check the new version.",
+      "handoverTime": "Handover time (Vietnam, YYYY-MM-DD HH:mm)",
+      "damage": "Has damage",
+      "damageDescription": "Damage description",
+      "applyPolicyBody": "Proposes adding the vehicle's current late return policy. Stored hourly fee: {{fee}}đ. The customer must accept the revision before charging.",
+      "reloadVersion": "Reload the version to check"
+    },
+    "confirm": {
+      "consent": "Review the handover time, photos and surcharges. By confirming, you agree to pay all displayed surcharges (late return, excess mileage and selected additional fees) with the chosen method; amounts not yet confirmed by the owner or not collectable from your wallet remain payable. If anything is wrong, open a dispute before confirming.",
+      "paymentExternal": "Pay the owner directly",
+      "paymentHintNone": "Choose how to pay the surcharges before confirming. Nothing is charged until you choose.",
+      "paymentHintWallet": "Charged from your wallet after you agree; if the balance is short, top up and pay the rest.",
+      "paymentHintExternal": "No wallet deduction. The owner confirms once the full amount is received in cash or by separate transfer.",
+      "handoverBody": "Only continue after you have handed over the vehicle and checked the record. Nothing is charged at this step.",
+      "footer": "After you confirm, the owner confirms receipt of the vehicle to complete the trip. Confirming receipt of surcharges is a separate step."
+    },
+    "summary": {
+      "title": "Return reconciliation",
+      "handoverTime": "Handover time",
+      "lateFee": "Late return surcharge",
+      "excessFee": "Excess mileage surcharge",
+      "travelled": "Travelled {{km}} km · Allowance {{included}} km · Exceeded {{excess}} km",
+      "revisionLine": "{{time}} · Km: {{km}} · Late fee: {{lateFee}} · Excess mileage fee: {{excessFee}}"
+    },
+    "picker": {
+      "hint": "Choose the fees that actually applied under the agreed terms. Late return and excess mileage are calculated automatically; the customer agrees before charging.",
+      "quantity": "{{name}} quantity ({{unit}})",
+      "reason": "Reason for {{name}}",
+      "subtotal": "Subtotal: {{amount}}đ"
+    },
+    "mileage": {
+      "note": "The fee is recalculated on save and charged after the customer confirms."
+    },
+    "rules": {
+      "timeFormat": "Enter Vietnam time as YYYY-MM-DD HH:mm.",
+      "timeInvalid": "Invalid date and time."
+    },
+    "format": {
+      "datePlaceholder": "Not selected",
+      "timePlaceholder": "Time not selected"
+    },
+    "filters": {
+      "depositPaid": "Deposit paid",
+      "inProgress": "Renting",
+      "returning": "Returning",
+      "returned": "Returned, awaiting receipt"
+    }
+  }
+}

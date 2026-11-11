@@ -3,6 +3,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Clipboard from "expo-clipboard";
 import { Clock, Wallet } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,6 +11,7 @@ import {
   StyleSheet,
   View,
 } from "react-native"
+import i18n from "@/i18n";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -31,17 +33,10 @@ type DealsNav = NativeStackNavigationProp<DealsStackParamList>;
 type WalletFilter = "all" | "available" | "used" | "expiring";
 type WalletSort = "newest" | "ending" | "value";
 
-const WALLET_FILTERS: { value: WalletFilter; label: string }[] = [
-  { value: "all", label: "Tất cả" },
-  { value: "available", label: "Chưa dùng" },
-  { value: "used", label: "Đã dùng" },
-  { value: "expiring", label: "Sắp hết hạn" },
-];
-
-const SORT_OPTIONS = [
-  { value: "newest", label: "Mới nhận nhất" },
-  { value: "ending", label: "Hạn gần nhất" },
-  { value: "value", label: "Giảm nhiều nhất" },
+const SORT_OPTIONS: { value: WalletSort; labelKey: string }[] = [
+  { value: "newest", labelKey: "promo:wallet.sortNewest" },
+  { value: "ending", labelKey: "promo:wallet.sortEnding" },
+  { value: "value", labelKey: "promo:wallet.sortValue" },
 ];
 
 function isUsed(voucher: VoucherClaimResponse) {
@@ -82,7 +77,7 @@ function toDetailSlide(voucher: VoucherClaimResponse): PromotionDetailSlide {
     code: voucher.code,
     popupTitle: voucher.name,
     popupDescription: voucher.description ?? null,
-    popupCtaLabel: "Dùng ngay",
+    popupCtaLabel: i18n.t("promo:wallet.useNow"),
     promotionName: voucher.name,
     discountType: voucher.discountType,
     discountValue: voucher.discountValue,
@@ -105,6 +100,7 @@ type WalletCardProps = {
 
 function WalletCard({ voucher, copied, onCopy, onUseNow, onOpenDetail }: WalletCardProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const days = getDaysLeft(voucher.endAt);
   const usedVoucher = isUsed(voucher);
@@ -130,7 +126,7 @@ function WalletCard({ voucher, copied, onCopy, onUseNow, onOpenDetail }: WalletC
           >
             <Clock color={theme.mode === "dark" ? "#FBBF24" : "#B45309"} size={11} />
             <AppText style={[styles.daysBadgeText, { color: theme.mode === "dark" ? "#FBBF24" : "#B45309" }]}>
-              Còn {days} ngày
+              {t("promo:wallet.daysLeft", { days })}
             </AppText>
           </View>
         ) : null
@@ -139,7 +135,7 @@ function WalletCard({ voucher, copied, onCopy, onUseNow, onOpenDetail }: WalletC
         usedVoucher
           ? undefined
           : {
-              label: "Dùng ngay",
+              label: t("promo:wallet.useNow"),
               icon: <Wallet color="#FFFFFF" size={14} />,
               onClick: onUseNow,
             }
@@ -153,6 +149,7 @@ const MemoWalletCard = memo(WalletCard);
 export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => void }) {
   const navigation = useNavigation<DealsNav>();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [vouchers, setVouchers] = useState<VoucherClaimResponse[]>([]);
@@ -169,7 +166,11 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
       const data = await getVoucherWallet();
       setVouchers(Array.isArray(data) ? data : []);
     } catch {
-      showToast({ type: "error", title: "Lỗi", message: "Không thể tải ví voucher." });
+      showToast({
+        type: "error",
+        title: i18n.t("promo:errorTitle"),
+        message: i18n.t("promo:wallet.loadError"),
+      });
     } finally {
       setLoading(false);
     }
@@ -188,12 +189,22 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
 
   const filters = useMemo(
     () => [
-      { value: "all", label: "Tất cả", count: vouchers.length },
-      { value: "available", label: "Chưa dùng", count: available.length },
-      { value: "used", label: "Đã dùng", count: used.length },
-      { value: "expiring", label: "Sắp hết hạn", count: expiring.length, tone: "amber" as const },
+      { value: "all", label: t("promo:wallet.filterAll"), count: vouchers.length },
+      { value: "available", label: t("promo:wallet.filterAvailable"), count: available.length },
+      { value: "used", label: t("promo:wallet.filterUsed"), count: used.length },
+      {
+        value: "expiring",
+        label: t("promo:wallet.filterExpiring"),
+        count: expiring.length,
+        tone: "amber" as const,
+      },
     ],
-    [vouchers.length, available.length, used.length, expiring.length],
+    [vouchers.length, available.length, used.length, expiring.length, t],
+  );
+
+  const sortOptions = useMemo(
+    () => SORT_OPTIONS.map((option) => ({ value: option.value, label: t(option.labelKey) })),
+    [t],
   );
 
   const displayed = useMemo(() => {
@@ -222,20 +233,24 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
   }, [vouchers, filter, sort, search]);
 
   const filterDesc = useMemo(() => {
-    if (filter === "available") return "Các voucher bạn có thể dùng ngay.";
-    if (filter === "used") return "Lịch sử các voucher đã áp dụng.";
-    if (filter === "expiring") return "Những voucher sắp hết hạn, dùng sớm thôi!";
-    return "Chọn một voucher để sao chép mã hoặc dùng ngay.";
-  }, [filter]);
+    if (filter === "available") return t("promo:wallet.hintAvailable");
+    if (filter === "used") return t("promo:wallet.hintUsed");
+    if (filter === "expiring") return t("promo:wallet.hintExpiring");
+    return t("promo:wallet.hintAll");
+  }, [filter, t]);
 
   async function handleCopy(voucher: VoucherClaimResponse) {
     try {
       await Clipboard.setStringAsync(voucher.code);
       setCopiedId(voucher.id);
-      showToast({ type: "success", title: "Đã sao chép mã", message: voucher.code });
+      showToast({ type: "success", title: t("promo:wallet.copiedTitle"), message: voucher.code });
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      showToast({ type: "error", title: "Lỗi", message: "Không sao chép được mã voucher." });
+      showToast({
+        type: "error",
+        title: t("promo:errorTitle"),
+        message: t("promo:wallet.copyError"),
+      });
     }
   }
 
@@ -246,8 +261,8 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
     }
     showToast({
       type: "info",
-      title: "Đặt xe ngay",
-      message: "Mở tab Khám phá để chọn xe và dùng voucher khi đặt.",
+      title: t("mobile:voucher.wallet.bookNowTitle"),
+      message: t("mobile:voucher.wallet.bookNowMessage"),
     });
   }
 
@@ -264,7 +279,7 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
         showsVerticalScrollIndicator={false}
       >
         <AppText display style={styles.pageTitle}>
-          Ví voucher
+          {t("promo:wallet.pageTitle")}
         </AppText>
 
         <DealsSegmentedNav />
@@ -272,12 +287,12 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
         <DealsFilterBar
           search={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Tìm voucher, mã ưu đãi..."
+          searchPlaceholder={t("promo:wallet.searchPlaceholder")}
           filters={filters}
           activeFilter={filter}
           onFilterChange={(value) => setFilter(value as WalletFilter)}
           sortValue={sort}
-          sortOptions={SORT_OPTIONS}
+          sortOptions={sortOptions}
           onSortChange={(value) => setSort(value as WalletSort)}
         />
 
@@ -291,16 +306,18 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
               <Wallet color={theme.brand} size={26} />
             </View>
             <AppText display style={styles.emptyTitle}>
-              Ví voucher còn trống
+              {t("promo:wallet.emptyTitle")}
             </AppText>
             <AppText style={styles.emptyDesc}>
-              Hãy săn thêm voucher từ trung tâm ưu đãi, voucher đã nhận sẽ xuất hiện ở đây để dùng khi đặt xe.
+              {t("promo:wallet.emptyDescription")}
             </AppText>
             <Pressable
               onPress={() => navigation.navigate("VoucherHunt")}
               style={styles.emptyLinkTouch}
             >
-              <AppText style={styles.emptyLink}>Săn voucher ngay →</AppText>
+              <AppText style={styles.emptyLink}>
+                {t("promo:wallet.emptyCta")} →
+              </AppText>
             </Pressable>
           </View>
         ) : (
@@ -308,7 +325,7 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
             <View style={styles.sectionHead}>
               <View style={styles.sectionTitleRow}>
                 <AppText display style={styles.sectionTitle}>
-                  Voucher trong ví
+                  {t("promo:wallet.listTitle")}
                 </AppText>
                 <View style={styles.countBadge}>
                   <AppText style={styles.countBadgeText}>{displayed.length}</AppText>
@@ -320,10 +337,10 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
             {displayed.length === 0 ? (
               <View style={styles.emptyBox}>
                 <AppText display style={styles.emptyTitle}>
-                  Không có voucher phù hợp
+                  {t("promo:wallet.noMatch")}
                 </AppText>
                 <AppText style={styles.emptyDesc}>
-                  Thử đổi bộ lọc hoặc từ khoá tìm kiếm.
+                  {t("promo:wallet.noMatchHint")}
                 </AppText>
               </View>
             ) : (

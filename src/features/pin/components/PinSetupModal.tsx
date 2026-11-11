@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Modal, Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import PinDigitInputs from "@/features/pin/components/PinDigitInputs";
@@ -31,6 +32,7 @@ const RESEND_COUNTDOWN_SECONDS = 60;
  * cuối; sai thì tự quay về màn OTP.
  */
 export default function PinSetupModal({ documentType, visible, onClose, onSetupDone, purposeDescription }: PinSetupModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [step, setStep] = useState<SetupStep>("email");
@@ -46,7 +48,9 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   const email = getAuthUser()?.email ?? "";
-  const documentLabel = documentType === "CCCD" ? "Căn cước công dân" : "Giấy phép lái xe";
+  const documentLabel = t(
+    documentType === "CCCD" ? "accountSecurity:pin.documentCccd" : "accountSecurity:pin.documentGplx",
+  );
 
   useEffect(() => {
     if (!visible) return;
@@ -109,7 +113,7 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
     try {
       await requestSetupPinOtp();
       setResendSeconds(RESEND_COUNTDOWN_SECONDS);
-      setInfoMessage("Đã gửi lại mã OTP. Mã có hiệu lực trong 10 phút.");
+      setInfoMessage(t("accountSecurity:pin.setup.resendInfo"));
     } catch (error) {
       setErrorMessage(getFriendlyPinMessage(error));
     } finally {
@@ -119,7 +123,7 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
 
   function handleOtpContinue() {
     if (otp.length !== PIN_DIGIT_COUNT) {
-      setErrorMessage("Vui lòng nhập mã OTP 6 chữ số.");
+      setErrorMessage(t("accountSecurity:pin.setup.errorOtp"));
       return;
     }
     setErrorMessage(null);
@@ -129,12 +133,12 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
   async function handleConfirm() {
     if (!isPinFilled || isSubmitting) {
       if (!isPinFilled) {
-        setErrorMessage("Vui lòng nhập đủ mã PIN 6 chữ số ở cả hai ô.");
+        setErrorMessage(t("accountSecurity:pin.setup.errorFillBoth"));
       }
       return;
     }
     if (pinCode !== confirmPinCode) {
-      setErrorMessage("Mã PIN xác nhận không trùng khớp.");
+      setErrorMessage(t("accountSecurity:pin.setup.errorMismatch"));
       return;
     }
     setIsSubmitting(true);
@@ -164,10 +168,10 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
         <View style={styles.card}>
           <View style={styles.heading}>
             <ShieldCheck color={theme.brand} size={22} strokeWidth={2.3} />
-            <AppText display style={styles.title}>Thiết lập mã PIN</AppText>
+            <AppText display style={styles.title}>{t("accountSecurity:pin.setup.title")}</AppText>
             {step === "pin" ? (
               <Pressable
-                accessibilityLabel={showValue ? "Ẩn mã PIN" : "Hiển thị mã PIN"}
+                accessibilityLabel={showValue ? t("accountSecurity:pin.setup.hidePin") : t("accountSecurity:pin.setup.showPin")}
                 accessibilityRole="button"
                 onPress={() => setShowValue((prev) => !prev)}
                 style={styles.eyeButton}
@@ -182,7 +186,7 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
           {step === "email" ? (
             <View style={styles.stack}>
               <AppText style={styles.description}>
-                Để đảm bảo đúng chủ tài khoản, mã OTP xác thực sẽ được gửi đến email của bạn.
+                {t("mobile:pin.setup.emailIntro")}
               </AppText>
               <View style={styles.emailBox}>
                 <AppText style={styles.emailText}>{email}</AppText>
@@ -194,7 +198,7 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
               ) : null}
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <AppText style={styles.secondaryText}>Hủy</AppText>
+                  <AppText style={styles.secondaryText}>{t("accountSecurity:pin.cancel")}</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -202,7 +206,7 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
                   onPress={() => { void handleSendOtp(); }}
                   style={[styles.primaryButton, isSubmitting && styles.disabled]}
                 >
-                  <AppText style={styles.primaryText}>{isSubmitting ? "Đang gửi..." : "Gửi mã OTP"}</AppText>
+                  <AppText style={styles.primaryText}>{isSubmitting ? t("accountSecurity:pin.setup.resendSending") : t("accountSecurity:pin.forgot.sendOtp")}</AppText>
                 </Pressable>
               </View>
             </View>
@@ -211,23 +215,23 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
           {step === "otp" ? (
             <View style={styles.stack}>
               <AppText style={styles.description}>
-                Nhập mã OTP đã gửi về email của bạn để xác nhận chính chủ.
+                {t("mobile:pin.setup.otpIntro")}
               </AppText>
               <PinDigitInputs
                 autoFocus={visible}
                 disabled={isSubmitting}
                 hasError={otpHasError}
-                label="Mã OTP"
+                label={t("accountSecurity:pin.setup.otpLabel")}
                 onChange={handleOtpChange}
                 value={otp}
               />
               <AppText style={styles.muted}>
-                Mã OTP có hiệu lực trong 10 phút.{" "}
+                {t("accountSecurity:pin.setup.otpValidity")}{" "}
                 <AppText
                   onPress={() => { void handleResend(); }}
                   style={[styles.link, (isResending || isSubmitting || resendSeconds > 0) && styles.disabledText]}
                 >
-                  {isResending ? "Đang gửi..." : resendSeconds > 0 ? `Gửi lại mã (${resendSeconds}s)` : "Gửi lại mã"}
+                  {isResending ? t("accountSecurity:pin.setup.resendSending") : resendSeconds > 0 ? t("accountSecurity:pin.setup.resendCountdown", { seconds: resendSeconds }) : t("accountSecurity:pin.setup.resend")}
                 </AppText>
               </AppText>
               {infoMessage !== null ? <AppText style={styles.muted}>{infoMessage}</AppText> : null}
@@ -237,11 +241,11 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
                 </AppText>
               ) : null}
               <AppText style={styles.counter}>
-                {otp.length} / {PIN_DIGIT_COUNT}
+                {t("accountSecurity:pin.setup.otpCounter", { current: otp.length, total: PIN_DIGIT_COUNT })}
               </AppText>
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <AppText style={styles.secondaryText}>Hủy</AppText>
+                  <AppText style={styles.secondaryText}>{t("accountSecurity:pin.cancel")}</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -249,7 +253,7 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
                   onPress={handleOtpContinue}
                   style={[styles.primaryButton, (otp.length !== PIN_DIGIT_COUNT || isSubmitting) && styles.disabled]}
                 >
-                  <AppText style={styles.primaryText}>Tiếp tục</AppText>
+                  <AppText style={styles.primaryText}>{t("accountSecurity:pin.setup.continue")}</AppText>
                 </Pressable>
               </View>
             </View>
@@ -258,12 +262,12 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
           {step === "pin" ? (
             <View style={styles.stack}>
               <AppText style={styles.description}>
-                {purposeDescription ?? `Tạo mã PIN 6 chữ số để hiển thị chi tiết giấy tờ ${documentLabel}.`}
+                {purposeDescription ?? t("accountSecurity:pin.setup.intro", { document: documentLabel })}
               </AppText>
               <PinDigitInputs
                 autoFocus={visible}
                 disabled={isSubmitting}
-                label="Mã PIN mới"
+                label={t("accountSecurity:pin.setup.newPin")}
                 onChange={handlePinChange}
                 showValue={showValue}
                 value={pinCode}
@@ -271,14 +275,14 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
               <PinDigitInputs
                 disabled={isSubmitting}
                 hasError={hasMismatch}
-                label="Xác nhận mã PIN"
+                label={t("accountSecurity:pin.setup.confirmPin")}
                 onChange={setConfirmPinCode}
                 showValue={showValue}
                 value={confirmPinCode}
               />
               {hasMismatch ? (
                 <AppText accessibilityRole="alert" style={styles.error}>
-                  Mã PIN xác nhận không trùng khớp.
+                  {t("accountSecurity:pin.setup.errorMismatch")}
                 </AppText>
               ) : null}
               {errorMessage !== null ? (
@@ -288,7 +292,7 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
               ) : null}
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <AppText style={styles.secondaryText}>Hủy</AppText>
+                  <AppText style={styles.secondaryText}>{t("accountSecurity:pin.cancel")}</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -296,7 +300,7 @@ export default function PinSetupModal({ documentType, visible, onClose, onSetupD
                   onPress={() => { void handleConfirm(); }}
                   style={[styles.primaryButton, (!isPinFilled || isSubmitting) && styles.disabled]}
                 >
-                  <AppText style={styles.primaryText}>{isSubmitting ? "Đang tạo..." : "Xác nhận & Tạo PIN"}</AppText>
+                  <AppText style={styles.primaryText}>{isSubmitting ? t("mobile:pin.setup.submitting") : t("accountSecurity:pin.setup.confirmSubmit")}</AppText>
                 </Pressable>
               </View>
             </View>

@@ -1,0 +1,149 @@
+{
+  "checkout": {
+    "create": {
+      "kicker": "Kiểm tra lại",
+      "title": "Xác nhận đặt xe",
+      "unpaid": "Chưa thanh toán",
+      "preparing": "Đang chuẩn bị thông tin đặt xe…",
+      "vehicleLoadErrorTitle": "Không tải được thông tin xe",
+      "vehicleLoadErrorBody": "Vui lòng quay lại và thử lại.",
+      "invalidSchedule": "Vui lòng chọn ngày nhận và trả xe hợp lệ trước khi gửi.",
+      "overlap": "Khoảng thời gian này trùng lịch bận của xe (đã đệm 60 phút vệ sinh). Vui lòng chọn ngày khác.",
+      "scheduleUnavailable": "Chưa có lịch xe hợp lệ. Vui lòng thử lại.",
+      "pickupSuggestion": "Vui lòng chọn địa chỉ nhận xe từ danh sách gợi ý.",
+      "pickupUnpinned": "Địa chỉ nhận xe chưa ghim được tọa độ. Hãy chọn lại từ danh sách gợi ý.",
+      "deliveryTooFar": "Điểm nhận xe vượt quá phạm vi giao xe ({{max}} km). Vui lòng chọn địa điểm gần hơn.",
+      "returnSuggestion": "Vui lòng chọn địa chỉ trả xe từ danh sách gợi ý.",
+      "successMessage": "Mã đơn {{code}}. Chủ xe duyệt xong bạn sẽ thanh toán cọc.",
+      "viewTrip": "Xem chuyến đi",
+      "busyNextAvailable": "Xe bận trong thời gian đã chọn. Xe có thể thuê từ ngày {{date}}.",
+      "createError": "Không tạo được đơn. Vui lòng thử lại sau."
+    },
+    "trip": {
+      "subtitleDays": "{{days}} ngày thuê",
+      "subtitleNoPeriod": "Chọn thời gian nhận và trả xe",
+      "statusLoading": "Đang kiểm tra lịch trống…",
+      "statusError": "Chưa tải được lịch xe",
+      "statusBusy": "Xe đã bận trong khoảng này",
+      "statusNoPeriod": "Chọn ngày nhận & trả xe",
+      "statusReady": "Xe còn trống",
+      "perDay": "/ngày",
+      "periodAriaHint": "Mở lịch chọn ngày và giờ nhận trả xe",
+      "edit": "Đổi",
+      "datePlaceholder": "Chọn ngày",
+      "timePlaceholder": "Chọn giờ",
+      "nextAvailableTitle": "Xe trống từ ngày khác",
+      "nextAvailableBody": "Xe có thể thuê từ {{date}}. Giữ nguyên số ngày thuê hiện tại.",
+      "nextAvailableApply": "Dùng ngày này"
+    },
+    "handover": {
+      "subtitle": "Địa điểm bàn giao xe",
+      "pickupPlaceholder": "Tìm địa chỉ nhận xe",
+      "pickupHint": "Chọn địa chỉ từ danh sách gợi ý để xác định khoảng cách giao xe.",
+      "deliveryOverMax": "Cách xe {{km}} km, vượt quá phạm vi giao xe {{max}} km.",
+      "deliveryFee": "Cách xe {{km}} km · phí giao {{fee}}",
+      "deliveryFree": "Cách xe {{km}} km · miễn phí giao trong {{free}} km",
+      "radiusHint": "Chủ xe chỉ nhận giao trong bán kính {{max}} km.",
+      "sameReturn": "Trả xe tại điểm nhận",
+      "sameReturnOn": "Bạn sẽ trả xe đúng nơi đã nhận.",
+      "sameReturnOff": "Chọn địa chỉ trả xe bên dưới.",
+      "returnPlaceLabel": "Địa điểm trả",
+      "pickupEmpty": "Chưa chọn điểm nhận xe",
+      "returnPlaceholder": "Tìm địa chỉ trả xe",
+      "returnHint": "Chọn địa chỉ trả xe từ danh sách gợi ý để xác nhận vị trí.",
+      "noteTitle": "Ghi chú cho chủ xe",
+      "noteOptional": "Không bắt buộc",
+      "notePlaceholder": "Ví dụ: tôi đến sớm 15 phút, cần giao xe tận nơi…",
+      "noticeTitle": "Lưu ý khi nhận xe",
+      "noticeBody": "Quý khách vui lòng mang theo CCCD và GPLX bản gốc để Chủ xe đối chiếu trực tiếp khi nhận xe. Xin cảm ơn!"
+    },
+    "payment": {
+      "subtitleDays": "{{days}} ngày · chưa gồm thế chấp",
+      "subtitleHint": "Chọn thời gian thuê để xem giá",
+      "promoDiscount": "Giảm {{amount}} cho đơn này",
+      "promoClearAria": "Bỏ mã giảm giá",
+      "promoPlaceholder": "Mã ưu đãi",
+      "walletAria": "Mở ví voucher",
+      "walletShort": "Ví",
+      "rentalFee": "Tiền thuê xe",
+      "longRentalDiscount": "Giảm giá thuê dài ({{percent}}%)",
+      "deliveryFee": "Phí giao xe",
+      "deliveryFeeKm": "Phí giao xe ({{km}} km)",
+      "platformFee": "Phí nền tảng (đã bao gồm)",
+      "payAfterApproval": "Thanh toán sau khi chủ xe duyệt",
+      "deposit": "Tiền cọc ({{percent}}%)",
+      "remaining": "Còn lại khi nhận xe",
+      "missing": "Chọn ngày nhận và trả xe để xem giá thuê, tiền cọc và tổng thanh toán.",
+      "securityByAgreement": "Theo thoả thuận",
+      "securityNotRequired": "Không cần thế chấp",
+      "securityNoAsset": "Chủ xe không yêu cầu đặt cọc tài sản",
+      "securityPending": "Số tiền thế chấp sẽ được chủ xe xác nhận trước khi bàn giao."
+    },
+    "submit": {
+      "hintEmpty": "Chọn thời gian thuê hợp lệ để xem tổng tiền",
+      "hintDeposit": "Cọc {{amount}} · {{days}} ngày",
+      "aria": "Gửi yêu cầu thuê xe",
+      "cta": "Gửi yêu cầu"
+    },
+    "voucher": {
+      "subtitle": "Chọn mã giảm giá cho đơn này",
+      "closeAria": "Đóng ví voucher",
+      "loading": "Đang tải voucher…",
+      "emptyTitle": "Ví đang trống",
+      "emptyBody": "Săn mã ưu đãi ở tab Ưu đãi rồi quay lại đây.",
+      "discount": "Giảm {{off}}",
+      "minOrder": " · đơn từ {{amount}}",
+      "blocked": "Không áp dụng cho loại xe này",
+      "use": "Dùng"
+    },
+    "editor": {
+      "reasonRequired": "Nhập lý do sửa và mô tả hư hại nếu có.",
+      "saveFallback": "Không thể sửa. Hãy tải lại để kiểm tra phiên bản mới.",
+      "handoverTime": "Giờ bàn giao (Việt Nam, YYYY-MM-DD HH:mm)",
+      "damage": "Có hư hại",
+      "damageDescription": "Mô tả hư hại",
+      "applyPolicyBody": "Đề xuất bổ sung chính sách trả trễ hiện tại. Phí theo giờ đang lưu: {{fee}}đ. Khách cần đồng ý bản sửa trước khi thu.",
+      "reloadVersion": "Tải lại phiên bản để kiểm tra"
+    },
+    "confirm": {
+      "consent": "Kiểm tra giờ bàn giao, ảnh và phụ phí. Khi xác nhận, bạn đồng ý cho phép thu toàn bộ phụ phí đã hiển thị (trả trễ, vượt km và các khoản phát sinh được chọn) theo phương thức đã chọn; khoản chưa được chủ xe xác nhận hoặc ví chưa thu được vẫn phải thanh toán. Nếu có sai sót, hãy mở tranh chấp trước khi xác nhận.",
+      "paymentExternal": "Trả trực tiếp cho chủ xe",
+      "paymentHintNone": "Chọn cách thanh toán phụ thu trước khi xác nhận. Chưa chọn thì chưa thu tiền.",
+      "paymentHintWallet": "Thu từ ví sau khi đồng ý; thiếu tiền thì nạp thêm và thanh toán phần còn lại.",
+      "paymentHintExternal": "Không trừ ví. Chờ chủ xe xác nhận đã nhận đủ tiền mặt/chuyển khoản riêng.",
+      "handoverBody": "Chỉ tiếp tục sau khi bạn đã bàn giao xe và kiểm tra biên bản. Chưa thu tiền ở bước này.",
+      "footer": "Sau khi bạn xác nhận, chủ xe xác nhận nhận lại xe để hoàn tất chuyến. Xác nhận nhận tiền phụ thu là thao tác riêng."
+    },
+    "summary": {
+      "title": "Đối soát khi trả xe",
+      "handoverTime": "Giờ bàn giao",
+      "lateFee": "Phụ phí trả trễ",
+      "excessFee": "Phụ phí vượt km",
+      "travelled": "Đã đi {{km}} km · Hạn mức {{included}} km · Vượt {{excess}} km",
+      "revisionLine": "{{time}} · Km: {{km}} · Phí trả trễ: {{lateFee}} · Phí vượt km: {{excessFee}}"
+    },
+    "picker": {
+      "hint": "Chọn khoản thực tế phát sinh theo điều khoản đã chốt. Trả trễ và vượt km tính tự động; khách đồng ý trước khi thu.",
+      "quantity": "Số lượng {{name}} ({{unit}})",
+      "reason": "Lý do {{name}}",
+      "subtotal": "Tạm tính: {{amount}}đ"
+    },
+    "mileage": {
+      "note": "Phí được tính lại khi lưu, chờ khách xác nhận trước khi thu."
+    },
+    "rules": {
+      "timeFormat": "Nhập giờ Việt Nam theo dạng YYYY-MM-DD HH:mm.",
+      "timeInvalid": "Ngày giờ không hợp lệ."
+    },
+    "format": {
+      "datePlaceholder": "Chưa chọn",
+      "timePlaceholder": "Chưa chọn giờ"
+    },
+    "filters": {
+      "depositPaid": "Đã cọc",
+      "inProgress": "Đang thuê",
+      "returning": "Đang trả",
+      "returned": "Đã trả, chờ nhận"
+    }
+  }
+}

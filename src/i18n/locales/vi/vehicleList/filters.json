@@ -1,0 +1,44 @@
+{
+  "filters": {
+    "resetAria": "Đặt lại bộ lọc phụ",
+    "reset": "Đặt lại bộ lọc",
+    "type": "Loại xe",
+    "brand": "Hãng xe",
+    "fuel": "Nhiên liệu",
+    "bikeType": "Loại xe máy",
+    "bodyType": "Kiểu thân",
+    "transmission": "Hộp số",
+    "seats": "Số chỗ",
+    "toggle": "Bộ lọc",
+    "searchHeading": "Tìm xe",
+    "keyword": "Từ khóa",
+    "keywordPlaceholder": "Tìm theo tên xe, hãng xe...",
+    "typeHint": "Chọn ô tô hoặc xe máy để xem bộ lọc theo loại xe.",
+    "model": "Dòng xe",
+    "chooseBrandFirst": "Chọn hãng trước",
+    "allModels": "Tất cả dòng xe",
+    "engineCapacity": "Dung tích động cơ",
+    "engineCapacityPlaceholder": "VD: 125cc",
+    "budget": "Ngân sách",
+    "location": "Vị trí & khoảng cách",
+    "pickupAddress": "Địa chỉ nhận xe",
+    "pickupAddressPlaceholder": "Nhập địa chỉ để tìm xe gần bạn",
+    "apply": "Áp dụng",
+    "chipEngine": "Dung tích: {{value}}",
+    "chipPickupAddress": "Địa chỉ nhận xe"
+  },
+  "price": {
+    "rangeLabel": "Khoảng giá",
+    "from": "Giá từ",
+    "to": "Giá đến",
+    "minAria": "Giá thấp nhất",
+    "maxAria": "Giá cao nhất"
+  },
+  "radius": {
+    "label": "Bán kính tìm kiếm",
+    "aria": "Bán kính tìm kiếm"
+  },
+  "location": {
+    "coordinatesError": "Không lấy được tọa độ địa chỉ nhận xe."
+  }
+}

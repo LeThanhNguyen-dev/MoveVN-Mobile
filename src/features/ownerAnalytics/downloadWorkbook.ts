@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import i18n from "@/i18n";
 import { getOwnerWorkbook } from "./service";
 import type { AnalyticsFilters } from "./types";
 
@@ -13,10 +14,10 @@ export async function downloadOwnerWorkbook(filters: AnalyticsFilters) {
     setTimeout(() => URL.revokeObjectURL(url), 60000); return;
   }
   const [{ File, Paths }, sharing] = await Promise.all([import("expo-file-system"), import("expo-sharing")]);
-  if (!await sharing.isAvailableAsync()) throw new Error("Thiết bị chưa hỗ trợ chia sẻ file Excel.");
+  if (!await sharing.isAvailableAsync()) throw new Error(i18n.t("mobile:ownerAnalytics.errors.shareUnsupported"));
   const file = new File(Paths.cache, `${Date.now()}-${filename}`);
   try {
     file.write(new Uint8Array(bytes));
-    await sharing.shareAsync(file.uri, { mimeType, UTI: "org.openxmlformats.spreadsheetml.sheet", dialogTitle: "Lưu hoặc chia sẻ thống kê chủ xe" });
+    await sharing.shareAsync(file.uri, { mimeType, UTI: "org.openxmlformats.spreadsheetml.sheet", dialogTitle: i18n.t("mobile:ownerAnalytics.exportDialog.title") });
   } finally { if (file.exists) file.delete(); }
 }

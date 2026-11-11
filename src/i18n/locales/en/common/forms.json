@@ -1,0 +1,34 @@
+{
+  "validation": {
+    "fullNameRequired": "Please enter your full name.",
+    "fullNameTooLong": "Full name must not exceed 200 characters.",
+    "emailRequired": "Please enter your email.",
+    "emailTooLong": "Email must not exceed 256 characters.",
+    "emailInvalid": "Invalid email format.",
+    "passwordLabel": "Password",
+    "passwordRequired": "Please enter your {{label}}.",
+    "passwordMinLength": "{{label}} must be at least 8 characters.",
+    "confirmPasswordRequired": "Please re-enter your password.",
+    "confirmPasswordMismatch": "Passwords do not match.",
+    "otpRequired": "Please enter the OTP code.",
+    "otpLength": "OTP must be exactly 6 digits.",
+    "phoneRequired": "Please enter your phone number.",
+    "phoneInvalid": "Phone number must be exactly 10 digits and start with 0."
+  },
+  "otp": {
+    "label": "OTP code",
+    "digitAria": "OTP digit {{index}}"
+  },
+  "password": {
+    "show": "Show password",
+    "hide": "Hide password"
+  },
+  "imagePreview": {
+    "dialog": "View image",
+    "close": "Close image viewer",
+    "previous": "Previous image",
+    "next": "Next image",
+    "loadError": "Unable to load image",
+    "imageAlt": "Image {{index}}"
+  }
+}

@@ -9,7 +9,9 @@ import {
   ShieldCheck,
   Star,
 } from "lucide-react-native";
+import type { TFunction } from "i18next";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import AppText from "@/components/AppText";
 import ProfileAvatar from "@/features/users/components/ProfileAvatar";
@@ -56,21 +58,24 @@ const DOC_TONES: Record<
   },
 };
 
-function presenceText(profile: PublicUserProfile): string {
-  if (profile.isOnline) return "Đang hoạt động";
+function presenceText(profile: PublicUserProfile, t: TFunction): string {
+  if (profile.isOnline) return t("users:sidebar.online");
   const seen = relativeTime(profile.lastSeenAt);
-  return seen ? `Hoạt động ${seen}` : "Không hoạt động";
+  return seen ? t("users:sidebar.lastSeen", { time: seen }) : t("mobile:user.presence.offline");
 }
 
 /** Màn 2: chi tiết chủ xe — điểm đánh giá, số xe, thời gian tham gia, xác minh. */
 export default function OwnerProfileDetail({ profile, onOpenReviews, onOpenVehicles }: Props) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const rating = profile.ownerAverageRating;
   const reviewCount = profile.ownerReviewCount;
   const ratingText =
-    rating == null ? "Chưa có đánh giá" : `${rating.toFixed(1)}/5 (${reviewCount})`;
+    rating == null
+      ? t("common:noReviews")
+      : `${rating.toFixed(1)}/5 (${reviewCount})`;
 
   return (
     <ScrollView
@@ -85,16 +90,18 @@ export default function OwnerProfileDetail({ profile, onOpenReviews, onOpenVehic
         </AppText>
         <View style={styles.presenceRow}>
           {profile.isOnline ? <View style={styles.onlineDot} /> : null}
-          <AppText style={styles.presenceText}>{presenceText(profile)}</AppText>
+          <AppText style={styles.presenceText}>{presenceText(profile, t)}</AppText>
         </View>
         <View style={styles.badgeRow}>
           <View style={styles.roleBadge}>
-            <AppText style={styles.roleBadgeText}>Chủ xe</AppText>
+            <AppText style={styles.roleBadgeText}>{t("users:page.roleOwner")}</AppText>
           </View>
           {profile.isVerified ? (
             <View style={styles.verifiedBadge}>
               <ShieldCheck color={theme.mode === "dark" ? "#34D399" : "#059669"} size={10} />
-              <AppText style={styles.verifiedBadgeText}>Đã xác minh</AppText>
+              <AppText style={styles.verifiedBadgeText}>
+                {t("users:sidebar.verifiedBadge")}
+              </AppText>
             </View>
           ) : null}
         </View>
@@ -105,7 +112,7 @@ export default function OwnerProfileDetail({ profile, onOpenReviews, onOpenVehic
           style={({ pressed }) => [styles.infoRow, pressed && styles.rowPressed]}
           onPress={onOpenReviews}
           accessibilityRole="button"
-          accessibilityLabel={`Xem ${reviewCount} đánh giá của chủ xe`}
+          accessibilityLabel={t("mobile:user.detail.reviewsAria", { count: reviewCount })}
         >
           <View
             style={[
@@ -115,7 +122,7 @@ export default function OwnerProfileDetail({ profile, onOpenReviews, onOpenVehic
           >
             <Star color="#F59E0B" fill="#F59E0B" size={14} />
           </View>
-          <AppText style={styles.infoLabel}>Đánh giá</AppText>
+          <AppText style={styles.infoLabel}>{t("mobile:user.detail.reviewsLabel")}</AppText>
           <AppText style={styles.infoValue} numberOfLines={1}>
             {ratingText}
           </AppText>
@@ -128,8 +135,10 @@ export default function OwnerProfileDetail({ profile, onOpenReviews, onOpenVehic
           <View style={[styles.infoIcon, { backgroundColor: theme.brandSoft }]}>
             <Bike color={theme.brand} size={14} />
           </View>
-          <AppText style={styles.infoLabel}>Số sản phẩm (Xe)</AppText>
-          <AppText style={styles.infoValue}>{profile.totalVehicles} xe</AppText>
+          <AppText style={styles.infoLabel}>{t("mobile:user.detail.productsLabel")}</AppText>
+          <AppText style={styles.infoValue}>
+            {t("mobile:user.detail.vehiclesCount", { count: profile.totalVehicles })}
+          </AppText>
         </View>
 
         <View style={styles.divider} />
@@ -138,7 +147,7 @@ export default function OwnerProfileDetail({ profile, onOpenReviews, onOpenVehic
           <View style={[styles.infoIcon, { backgroundColor: theme.infoSoft }]}>
             <CalendarDays color={theme.info} size={14} />
           </View>
-          <AppText style={styles.infoLabel}>Đã tham gia</AppText>
+          <AppText style={styles.infoLabel}>{t("mobile:user.detail.joinedLabel")}</AppText>
           <AppText style={styles.infoValue}>{membershipLabel(profile.createdAt)}</AppText>
         </View>
       </View>
@@ -158,33 +167,35 @@ export default function OwnerProfileDetail({ profile, onOpenReviews, onOpenVehic
           </View>
           <View style={styles.verifyBody}>
             <AppText style={styles.verifyTitle}>
-              {profile.isVerified ? "Tài khoản đã được xác minh" : "Tài khoản chưa xác minh"}
+              {profile.isVerified
+                ? t("mobile:user.detail.verifiedTitle")
+                : t("mobile:user.detail.unverifiedTitle")}
             </AppText>
             <AppText style={styles.verifyDesc}>
               {profile.isVerified
-                ? "Hồ sơ chủ xe đã được MoveVN xác minh."
-                : "Chủ xe chưa hoàn tất xác minh hồ sơ."}
+                ? t("mobile:user.detail.verifiedDesc")
+                : t("mobile:user.detail.unverifiedDesc")}
             </AppText>
           </View>
         </View>
         <View style={styles.docRow}>
           <DocChip
             icon={IdCard}
-            label="CCCD"
+            label={t("account:items.cccd")}
             tone="emerald"
             active={profile.isVerified}
             styles={styles}
           />
           <DocChip
             icon={CreditCard}
-            label="GPLX"
+            label={t("account:items.license")}
             tone="blue"
             active={profile.isVerified}
             styles={styles}
           />
           <DocChip
             icon={Landmark}
-            label="Ngân hàng"
+            label={t("account:items.bank")}
             tone="purple"
             active={profile.isVerified}
             styles={styles}
@@ -196,11 +207,11 @@ export default function OwnerProfileDetail({ profile, onOpenReviews, onOpenVehic
         onPress={onOpenVehicles}
         style={({ pressed }) => [styles.vehiclesButton, pressed && styles.rowPressed]}
         accessibilityRole="button"
-        accessibilityLabel={`Xem tất cả ${profile.totalVehicles} xe`}
+        accessibilityLabel={t("mobile:user.detail.viewAllAria", { count: profile.totalVehicles })}
       >
         <CarFront color={theme.onBrand} size={15} />
         <AppText style={styles.vehiclesButtonText}>
-          Xem tất cả xe ({profile.totalVehicles})
+          {t("mobile:user.detail.viewAll", { count: profile.totalVehicles })}
         </AppText>
       </Pressable>
     </ScrollView>

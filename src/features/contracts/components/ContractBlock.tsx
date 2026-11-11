@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { FileText } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -54,6 +55,7 @@ export default function ContractBlock({
   onChanged?: () => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const cardStyles = useMemo(() => createCardStyles(p), [p]);
@@ -79,11 +81,11 @@ export default function ContractBlock({
     try {
       setContracts(await getContractsByBooking(bookingId)); setLoadError("");
     } catch (error) {
-      setLoadError(getApiErrorMessage(error, "Không tải được hợp đồng. Vui lòng thử lại."));
+      setLoadError(getApiErrorMessage(error, t("mobile:contract.block.loadFailed")));
     } finally {
       setLoading(false);
     }
-  }, [bookingId]);
+  }, [bookingId, t]);
 
   useEffect(() => {
     const timer = setInterval(() => { if (!actionLock.current) void load(); }, 30000);
@@ -102,11 +104,11 @@ export default function ContractBlock({
     setSendingId(contract.id);
     try {
       await sendForSigning(contract.id);
-      Alert.alert("Thành công", "Hợp đồng đã được gửi để hai bên ký.");
+      Alert.alert(t("contract:toast.successTitle"), t("contract:toast.sentForSigning"));
       await load();
       onChanged?.();
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không thể gửi hợp đồng."));
+      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("contract:toast.sendFailed")));
       await load();
     } finally {
       setSendingId(null);
@@ -123,19 +125,22 @@ export default function ContractBlock({
     if (actionLock.current) return;
     actionLock.current = true; setCreating(true); setActionError("");
     try { await createContract(bookingId); await load(); onChanged?.(); }
-    catch (e) { setActionError(getApiErrorMessage(e, "Không tạo được hợp đồng.")); }
+    catch (e) { setActionError(getApiErrorMessage(e, t("mobile:contract.block.createFailed"))); }
     finally { actionLock.current = false; setCreating(false); }
   }
   async function handleExtend() {
     if (!extendTarget || actionLock.current) return;
     const count = Number(days);
-    if (!/^\d+$/.test(days.trim()) || !Number.isInteger(count) || count < 1 || count > 90) { setActionError("Số ngày gia hạn phải từ 1 đến 90."); return; }
+    if (!/^\d+$/.test(days.trim()) || !Number.isInteger(count) || count < 1 || count > 90) { setActionError(t("mobile:contract.errors.extendDays")); return; }
     actionLock.current = true; setExtending(true); setActionError("");
     try {
       const updated = await extendContract(extendTarget.id, count);
       setExtendTarget(null); await load(); onChanged?.();
-      Alert.alert("Đã gia hạn", `Đã tạo hợp đồng v${updated.version}. Hai bên cần ký lại bằng OTP và thanh toán cọc bổ sung nếu có.`);
-    } catch (e) { setActionError(getApiErrorMessage(e, "Không thể gia hạn. Vui lòng kiểm tra lịch xe và trạng thái hợp đồng.")); }
+      Alert.alert(
+        t("mobile:contract.alerts.extendedTitle"),
+        t("mobile:contract.block.extendedMessage", { version: updated.version }),
+      );
+    } catch (e) { setActionError(getApiErrorMessage(e, t("mobile:contract.block.extendFailed"))); }
     finally { actionLock.current = false; setExtending(false); }
   }
   async function handleDownload(contract: ContractSummary, verified = false) {
@@ -144,7 +149,7 @@ export default function ContractBlock({
     try { await downloadContractPdf(contract); }
     catch (e) {
       if (!verified) setPinContract(contract);
-      else setActionError(getApiErrorMessage(e, "Không tải được PDF. Vui lòng thử lại."));
+      else setActionError(getApiErrorMessage(e, t("mobile:contract.block.downloadFailed")));
     } finally { actionLock.current = false; setFileBusy(false); }
   }
   const hasLive = contracts.some(c => ["Draft", "PendingSigning", "Overdue", "Active"].includes(c.status));
@@ -153,27 +158,27 @@ export default function ContractBlock({
   const latest = contracts.length > 0 ? contracts[contracts.length - 1] : null;
   const latestStatusLabel = latest ? CONTRACT_STATUS_LABELS[latest.status] ?? latest.status : "";
   const cardSubtitle = loading
-    ? "Đang tải hợp đồng"
+    ? t("mobile:contract.block.subtitleLoading")
     : !latest
-      ? "Chưa có hợp đồng cho đơn thuê này"
-      : `${contracts.length} phiên bản · ${latestStatusLabel}`;
+      ? t("mobile:contract.block.subtitleEmpty")
+      : t("mobile:contract.block.subtitleVersions", { total: contracts.length, status: latestStatusLabel });
 
   return (
     <DetailCard>
       <DetailSectionHeader
         icon={FileText}
-        title="Hợp đồng thuê xe"
+        title={t("contract:section.title")}
         subtitle={cardSubtitle}
         tone={latest?.status === "Active" ? "mint" : "brand"}
         right={latest ? <DetailPill label={`v${latest.version}`} tone={contractTone(latest.status)} /> : undefined}
       />
       {loadError ? <Text accessibilityRole="alert" style={{ color: p.danger }}>{loadError}</Text> : null}
       {actionError && !extendTarget ? <Text accessibilityRole="alert" style={{ color: p.danger }}>{actionError}</Text> : null}
-      {canCreate ? <DetailButton label="Tạo hợp đồng" busy={creating} onPress={() => void handleCreate()} /> : null}
+      {canCreate ? <DetailButton label={t("contract:section.create")} busy={creating} onPress={() => void handleCreate()} /> : null}
       {loading ? (
         <ActivityIndicator color={p.brand} />
       ) : contracts.length === 0 ? (
-        <Text style={cardStyles.muted}>Chưa có hợp đồng. Hệ thống thường tự tạo lúc duyệt booking.</Text>
+        <Text style={cardStyles.muted}>{t("mobile:contract.block.empty")}</Text>
       ) : (
         contracts.map((c, index) => {
           const signable = canSignContract(c, userId);
@@ -188,13 +193,19 @@ export default function ContractBlock({
                 <DetailPill label={CONTRACT_STATUS_LABELS[c.status] ?? c.status} tone={contractTone(c.status)} />
               </View>
               <View style={cardStyles.partyRow}>
-                <Text style={cardStyles.partyLabel}>Khách thuê{userId === c.customerId ? " (bạn)" : ""}</Text>
+                <Text style={cardStyles.partyLabel}>
+                  {t("mobile:contract.block.customerParty")}
+                  {userId === c.customerId ? t("mobile:contract.block.youSuffix") : ""}
+                </Text>
                 <Text style={[cardStyles.partyValue, { color: customerSigned ? p.mint : p.faint }]}>
                   {signLabel(customerSigned, c.customerSignedAt)}
                 </Text>
               </View>
               <View style={cardStyles.partyRow}>
-                <Text style={cardStyles.partyLabel}>Chủ xe{userId === c.ownerId ? " (bạn)" : ""}</Text>
+                <Text style={cardStyles.partyLabel}>
+                  {t("mobile:contract.block.ownerParty")}
+                  {userId === c.ownerId ? t("mobile:contract.block.youSuffix") : ""}
+                </Text>
                 <Text style={[cardStyles.partyValue, { color: ownerSigned ? p.mint : p.faint }]}>
                   {signLabel(ownerSigned, c.ownerSignedAt)}
                 </Text>
@@ -202,18 +213,18 @@ export default function ContractBlock({
               <View style={cardStyles.actions}>
                 {(isParty(c, userId) || canManage) && (
                   <Pressable onPress={() => handleView(c)} style={cardStyles.button}>
-                    <Text style={cardStyles.buttonText}>Xem</Text>
+                    <Text style={cardStyles.buttonText}>{t("mobile:contract.block.view")}</Text>
                   </Pressable>
                 )}
-                <Pressable accessibilityRole="button" accessibilityLabel={`Tải PDF hợp đồng v${c.version}`} onPress={() => void handleDownload(c)} disabled={fileBusy} style={cardStyles.button}><Text style={cardStyles.buttonText}>Tải PDF</Text></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:contract.block.downloadA11y", { version: c.version })} onPress={() => void handleDownload(c)} disabled={fileBusy} style={cardStyles.button}><Text style={cardStyles.buttonText}>{t("contract:drawer.downloadPdf")}</Text></Pressable>
                 {canManage && c.id === contracts[contracts.length - 1]?.id && ["Active", "Overdue"].includes(c.status) ?
-                  <Pressable accessibilityRole="button" accessibilityLabel="Gia hạn hợp đồng" onPress={() => { setActionError(""); setDays("1"); setExtendTarget(c); }} style={cardStyles.button}><Text style={cardStyles.buttonText}>Gia hạn</Text></Pressable> : null}
+                  <Pressable accessibilityRole="button" accessibilityLabel={t("contract:extend.title")} onPress={() => { setActionError(""); setDays("1"); setExtendTarget(c); }} style={cardStyles.button}><Text style={cardStyles.buttonText}>{t("contract:section.extend")}</Text></Pressable> : null}
                 {signable && (
                   <Pressable
                     onPress={() => setSignTarget(c)}
                     style={[cardStyles.button, cardStyles.primaryButton]}
                   >
-                    <Text style={[cardStyles.buttonText, cardStyles.primaryButtonText]}>Ký</Text>
+                    <Text style={[cardStyles.buttonText, cardStyles.primaryButtonText]}>{t("mobile:contract.block.sign")}</Text>
                   </Pressable>
                 )}
                 {canManage && c.status === "Draft" && !signable && (
@@ -225,7 +236,7 @@ export default function ContractBlock({
                     {sendingId === c.id ? (
                       <ActivityIndicator size="small" color={p.onBrand} />
                     ) : (
-                      <Text style={[cardStyles.buttonText, cardStyles.primaryButtonText]}>Gửi ký</Text>
+                      <Text style={[cardStyles.buttonText, cardStyles.primaryButtonText]}>{t("mobile:contract.block.send")}</Text>
                     )}
                   </Pressable>
                 )}
@@ -237,12 +248,12 @@ export default function ContractBlock({
 
       <Modal visible={extendTarget !== null} transparent animationType="fade" onRequestClose={() => { if (!extending) setExtendTarget(null); }}>
         <View style={styles.backdrop}><View style={styles.modal}>
-          <Text style={styles.cardTitle}>Gia hạn hợp đồng</Text>
-          <Text style={styles.muted}>Tạo phiên bản mới với ngày trả xe được kéo dài. Hai bên phải ký lại bằng OTP; cọc bổ sung được tính theo hợp đồng mới. Hợp đồng cũ tiếp tục hiệu lực nếu yêu cầu hết hạn.</Text>
-          <BookingField label="Số ngày gia hạn" numeric value={days} onChangeText={setDays} editable={!extending} />
+          <Text style={styles.cardTitle}>{t("contract:extend.title")}</Text>
+          <Text style={styles.muted}>{t("mobile:contract.block.extendDescription")}</Text>
+          <BookingField label={t("contract:extend.daysLabel")} numeric value={days} onChangeText={setDays} editable={!extending} />
           {actionError ? <Text accessibilityRole="alert" style={{ color: theme.danger }}>{actionError}</Text> : null}
-          <BookingButton title="Xác nhận gia hạn" busy={extending} onPress={() => void handleExtend()} />
-          <BookingButton secondary title="Đóng gia hạn" disabled={extending} onPress={() => setExtendTarget(null)} />
+          <BookingButton title={t("contract:extend.submit")} busy={extending} onPress={() => void handleExtend()} />
+          <BookingButton secondary title={t("mobile:contract.block.extendClose")} disabled={extending} onPress={() => setExtendTarget(null)} />
         </View></View>
       </Modal>
       <ContractSignDialog

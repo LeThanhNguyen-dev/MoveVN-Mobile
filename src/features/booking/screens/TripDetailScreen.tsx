@@ -8,6 +8,7 @@ import BookingAssistance from "../components/BookingAssistance";
 import ReturnProgress from "../components/ReturnProgress";
 import InspectionReportCard from "../components/InspectionReportCard";
 import { useFocusEffect } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import { OutstandingSurcharge } from "../components/CheckoutSummary";import CheckoutConfirmation from "../components/CheckoutConfirmation";
 import { CHECKOUT_CONSENT } from "../checkoutRules";
 import { isDepositExpired, parseServerDate } from "../bookingDisplay";
@@ -116,6 +117,7 @@ export default function TripDetailScreen({
 }) {
   const { theme } = useTheme();
   const { p } = useDetailTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId } = route.params;
   const handover = "inspectionType" in route.params ? route.params.inspectionType : null;
@@ -193,11 +195,11 @@ export default function TripDetailScreen({
     } catch (err) {
       if (request !== loadId.current) return;
       setDataReady(false);
-      Alert.alert("Lỗi", getApiErrorMessage(err, "Không tải được chi tiết chuyến đi."));
+      Alert.alert(t("booking:detail.toast.errorTitle"), getApiErrorMessage(err, t("mobile:trip.detail.loadError")));
     } finally {
       if (request === loadId.current) setLoading(false);
     }
-  }, [bookingId]);
+  }, [bookingId, t]);
 
   useBookingNotificationRefresh(bookingId, useCallback(() => { if (!actionLock.current) void load(); }, [load]));
   useFocusEffect(useCallback(() => { void load(); return () => { loadId.current++; }; }, [load]));
@@ -241,13 +243,13 @@ export default function TripDetailScreen({
         const res = await checkPaymentStatus(orderCode);
         if (res.isConfirmed) {
           setPendingOrderCode(null);
-          Alert.alert("Thành công", res.message || "Đã xác nhận đặt cọc.");
+          Alert.alert(t("booking:detail.toast.successTitle"), res.message || t("mobile:trip.dialogs.depositConfirmed"));
           await load();
           return;
         }
         if (res.status === "Cancelled" || res.status === "Expired" || res.status === "Failed") {
           setPendingOrderCode(null);
-          Alert.alert("Thông báo", res.message || "Giao dịch đã kết thúc.");
+          Alert.alert(t("payments:toast.noticeTitle"), res.message || t("mobile:trip.dialogs.transactionEnded"));
           await load();
           return;
         }
@@ -258,7 +260,7 @@ export default function TripDetailScreen({
         pollPayment(orderCode, attempt + 1);
       } else {
         setPendingOrderCode(null);
-        Alert.alert("Hết thời gian chờ", "Chưa nhận được xác nhận. Mở lại màn này để kiểm tra sau.");
+        Alert.alert(t("mobile:trip.dialogs.pollTimeoutTitle"), t("mobile:trip.dialogs.pollTimeoutBody"));
         await load();
       }
     }, POLL_MS);
@@ -282,12 +284,12 @@ export default function TripDetailScreen({
     try {
       await fn();
       await load();
-      if (successMessage) Alert.alert("Thành công", successMessage);
+      if (successMessage) Alert.alert(t("booking:detail.toast.successTitle"), successMessage);
       return true;
     } catch (err) {
-      const message = getApiErrorMessage(err, "Vui lòng thử lại sau.");
-      setActionError(key === "checkout" ? `${message} Hãy kiểm tra lại biên bản và phụ phí trước khi xác nhận.` : message);
-      Alert.alert("Thất bại", message);
+      const message = getApiErrorMessage(err, t("mobile:trip.dialogs.tryAgain"));
+      setActionError(key === "checkout" ? t("mobile:trip.dialogs.checkoutErrorSuffix", { message }) : message);
+      Alert.alert(t("mobile:trip.dialogs.failedTitle"), message);
       if (key === "checkout") { setCheckoutToConfirm(null); await load(); }
       return false;
     } finally {
@@ -299,7 +301,7 @@ export default function TripDetailScreen({
   async function handlePayWithWallet() {
     await runAction("wallet", async () => {
       await payDepositWithWallet(bookingId);
-    }, "Đã đặt cọc bằng ví thành công.");
+    }, t("mobile:trip.dialogs.walletDepositSuccess"));
   }
 
   async function openPayOsCheckout(
@@ -317,7 +319,7 @@ export default function TripDetailScreen({
       setPendingOrderCode(link.orderCode);
       pollPayment(link.orderCode);
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không tạo được link thanh toán."));
+      Alert.alert(t("mobile:trip.dialogs.failedTitle"), getApiErrorMessage(err, t("mobile:trip.dialogs.paymentLinkError")));
     } finally {
       actionLock.current = false;
       setActionBusy(null);
@@ -336,46 +338,46 @@ export default function TripDetailScreen({
     try {
       const quote = await getBookingCancellationQuote(bookingId);
       if (!quote.canCancel) {
-        Alert.alert("Không thể hủy", quote.policyMessage);
+        Alert.alert(t("booking:cancel.loadPolicyErrorTitle"), quote.policyMessage);
         return;
       }
       setCancelQuote(quote);
       setCancelReason("");
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không lấy được chính sách hủy."));
+      Alert.alert(t("mobile:trip.dialogs.failedTitle"), getApiErrorMessage(err, t("mobile:trip.dialogs.cancelPolicyError")));
     }
   }
 
   async function submitCancel() {
     if (!cancelQuote) return;
     if (!cancelReason.trim()) {
-      Alert.alert("Thiếu lý do", "Vui lòng nhập lý do hủy.");
+      Alert.alert(t("mobile:trip.dialogs.cancelReasonRequiredTitle"), t("mobile:trip.dialogs.cancelReasonRequiredBody"));
       return;
     }
     const ok = await runAction("cancel", () => cancelBooking(bookingId, cancelReason.trim()).then(() => undefined));
     if (ok) {
       setCancelQuote(null);
       setCancelReason("");
-      Alert.alert("Thành công", "Đã hủy chuyến đi.", [
-        { text: "Về danh sách", onPress: handleBack },
+      Alert.alert(t("booking:detail.toast.successTitle"), t("mobile:trip.dialogs.cancelledMessage"), [
+        { text: t("mobile:trip.dialogs.backToList"), onPress: handleBack },
       ]);
     }
   }
 
   async function handleNoShow() {
     Alert.alert(
-      "Tố chủ xe không giao xe",
-      "Chỉ dùng khi đã quá giờ nhận xe mà chưa có biên bản bàn giao. Tiền cọc sẽ được hoàn 100% vào ví.",
+      t("mobile:trip.dialogs.noShowTitle"),
+      t("mobile:trip.dialogs.noShowBody"),
       [
-        { text: "Hủy bỏ", style: "cancel" },
+        { text: t("mobile:trip.dialogs.dismiss"), style: "cancel" },
         {
-          text: "Xác nhận",
+          text: t("common:confirm"),
           style: "destructive",
           onPress: () => {
             void runAction("noshow", () => reportNoShow(bookingId).then(() => undefined)).then((ok) => {
               if (ok) {
-                Alert.alert("Thành công", "Đã ghi nhận. Tiền cọc hoàn vào ví.", [
-                  { text: "Về danh sách", onPress: handleBack },
+                Alert.alert(t("booking:detail.toast.successTitle"), t("mobile:trip.dialogs.noShowRecorded"), [
+                  { text: t("mobile:trip.dialogs.backToList"), onPress: handleBack },
                 ]);
               }
             });
@@ -387,7 +389,7 @@ export default function TripDetailScreen({
 
   async function handleReview() {
     if (rating < 1 || rating > 5) {
-      Alert.alert("Thiếu đánh giá", "Vui lòng chọn số sao đánh giá tổng quan.");
+      Alert.alert(t("mobile:trip.dialogs.ratingMissingTitle"), t("mobile:trip.dialogs.ratingMissingBody"));
       return;
     }
     const ok = await runAction(
@@ -400,7 +402,7 @@ export default function TripDetailScreen({
         supportScore: support || undefined,
         comment: comment.trim() || undefined,
       }).then(() => undefined),
-      "Cảm ơn đánh giá của bạn.",
+      t("mobile:trip.dialogs.reviewThanks"),
     );
     if (ok) setReviewOpen(false);
   }
@@ -409,12 +411,12 @@ export default function TripDetailScreen({
     return (
       <View style={styles.screen}>
         <DetailHeader
-          kicker={handover ? "Bàn giao xe" : undefined}
-          title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Chuyến đi của tôi"}
+          kicker={handover ? t("mobile:trip.detail.handoverKicker") : undefined}
+          title={handover ? (handover === "CheckIn" ? t("booking:detail.handoverCheckIn") : t("booking:detail.handoverCheckOut")) : t("mobile:trip.detail.title")}
           onBack={handleBack}
         />
         <View style={styles.center}>
-          {loading ? <ActivityIndicator color={theme.brand} /> : <Text style={styles.muted}>Không tải được.</Text>}
+          {loading ? <ActivityIndicator color={theme.brand} /> : <Text style={styles.muted}>{t("mobile:trip.detail.loadFailed")}</Text>}
         </View>
       </View>
     );
@@ -423,7 +425,7 @@ export default function TripDetailScreen({
 
   if (disputeOpen) return createdDisputeId
     ? <DisputeDetailScreen disputeId={createdDisputeId} onBack={() => { setDisputeOpen(false); setCreatedDisputeId(null); void load(); }} />
-    : <CreateDisputeScreen role="Customer" initial={{ bookingId, reportType: "Other", description: "Tôi không đồng ý với biên bản trả xe: " }} onBack={() => setDisputeOpen(false)} onCreated={id => { setCreatedDisputeId(id); void load(); }} />;
+    : <CreateDisputeScreen role="Customer" initial={{ bookingId, reportType: "Other", description: t("mobile:trip.detail.disputePrefill") }} onBack={() => setDisputeOpen(false)} onCreated={id => { setCreatedDisputeId(id); void load(); }} />;
 
   const status = booking.status;
   const actions = bookingActions(booking, reports, "Customer", now);
@@ -443,29 +445,29 @@ export default function TripDetailScreen({
     {(status === "DepositPaid" || status === "Confirmed") && (
       <>
         {status === "DepositPaid" && booking.canCheckInNow === true && !pickupReached ? (
-          <DetailNotice icon={Clock3} title="Có thể nhận xe sớm" tone="brand">
-            Xe trống: có thể nhận sớm tối đa 2 tiếng. Chủ xe lập biên bản, khách kiểm tra rồi xác nhận nhận xe. Giờ trả và giá thuê giữ theo booking.
+          <DetailNotice icon={Clock3} title={t("mobile:trip.detail.earlyPickupTitle")} tone="brand">
+            {t("mobile:trip.detail.earlyPickupBody")}
           </DetailNotice>
         ) : null}
         {actions.confirmCheckIn && checkInReport ? (
           <DetailButton
             icon={KeyRound}
-            label="Đồng ý biên bản và nhận xe"
-            onPress={() => runAction("checkin", () => confirmCheckIn(bookingId, checkInReport.version ?? 1).then(() => undefined), "Đã xác nhận nhận xe. Chúc bạn đi tốt!")}
+            label={t("booking:inspection.agreeAndPickup")}
+            onPress={() => runAction("checkin", () => confirmCheckIn(bookingId, checkInReport.version ?? 1).then(() => undefined), t("mobile:trip.detail.confirmPickupSuccess"))}
             disabled={!dataReady || actionBusy !== null}
           />
         ) : (
-          <Text style={styles.hint}>{booking.checkInUnavailableReason || "Chờ biên bản nhận xe và kiểm tra khả năng check-in."}</Text>
+          <Text style={styles.hint}>{booking.checkInUnavailableReason || t("mobile:trip.detail.waitingPickupReport")}</Text>
         )}
         {checkInReport && !checkInReport.isCustomerConfirmed ? checkInReport.requiresRevision ? (
-          <DetailNotice icon={TriangleAlert} title="Đã yêu cầu lập lại" tone="warn">
-            {checkInReport.revisionReason}. Chờ chủ xe gửi biên bản mới rồi kiểm tra lại.
+          <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.revisionRequestedTitle")} tone="warn">
+            {t("mobile:trip.detail.revisionRequestedBody", { reason: checkInReport.revisionReason })}
           </DetailNotice>
         ) : (
           <DetailButton
             variant="secondary"
             icon={TriangleAlert}
-            label="Không đồng ý / Yêu cầu lập lại"
+            label={t("mobile:trip.detail.disagreeRequestRevision")}
             disabled={!dataReady || actionBusy !== null}
             onPress={() => { setRevisionReason(""); setRevisionOpen(true); }}
           />
@@ -474,7 +476,7 @@ export default function TripDetailScreen({
           <DetailButton
             variant="ghost"
             icon={TriangleAlert}
-            label="Chủ xe không giao xe"
+            label={t("mobile:trip.detail.ownerNoShow")}
             onPress={handleNoShow}
             disabled={!dataReady || actionBusy !== null}
           />
@@ -486,19 +488,19 @@ export default function TripDetailScreen({
     {actions.reportReturn && (
       <DetailButton
         icon={PackageCheck}
-        label="Báo xe đã được bàn giao lại"
-        onPress={() => runAction("report", () => reportReturn(bookingId).then(() => undefined), "Đã báo trả xe. Chờ chủ xe lập biên bản.")}
+        label={t("mobile:trip.detail.reportReturned")}
+        onPress={() => runAction("report", () => reportReturn(bookingId).then(() => undefined), t("mobile:trip.detail.reportReturnedSuccess"))}
         disabled={!dataReady || actionBusy !== null}
       />
     )}
 
     {actions.confirmCheckOut && checkOutReport && (
       <>
-        <DetailNotice icon={ShieldCheck} title="Cam kết khi xác nhận" tone="brand">
+        <DetailNotice icon={ShieldCheck} title={t("mobile:trip.detail.checkoutConsentTitle")} tone="brand">
           {CHECKOUT_CONSENT}
         </DetailNotice>
         <DetailButton
-          label="Kiểm tra biên bản và xác nhận trả xe"
+          label={t("booking:inspection.reviewAndConfirmReturn")}
           onPress={() => setCheckoutToConfirm(checkOutReport)}
           disabled={!dataReady || actionBusy !== null}
         />
@@ -508,7 +510,7 @@ export default function TripDetailScreen({
       <DetailButton
         variant="ghost"
         icon={TriangleAlert}
-        label="Không đồng ý / Mở tranh chấp"
+        label={t("mobile:trip.detail.disputeCheckout")}
         onPress={() => {
           setCreatedDisputeId(null);
           setDisputeOpen(true);
@@ -526,13 +528,13 @@ export default function TripDetailScreen({
       {handover ? (
         <>
           <DetailHeader
-            kicker="Bàn giao xe"
-            title={handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out"}
+            kicker={t("mobile:trip.detail.handoverKicker")}
+            title={handover === "CheckIn" ? t("booking:detail.handoverCheckIn") : t("booking:detail.handoverCheckOut")}
             onBack={handleBack}
             right={
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Nhắn tin với chủ xe"
+                accessibilityLabel={t("mobile:trip.detail.chatWithOwner")}
                 onPress={() => navigation.navigate("BookingChat", { bookingId })}
                 style={styles.headerChat}
               >
@@ -550,27 +552,27 @@ export default function TripDetailScreen({
                 </View>
                 <View style={styles.handoverBody}>
                   <Text style={styles.handoverCode}>{booking.bookingCode}</Text>
-                  <Text style={styles.handoverVehicle} numberOfLines={1}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text>
+                  <Text style={styles.handoverVehicle} numberOfLines={1}>{booking.vehicleName || t("booking:list.vehicleFallback", { id: booking.vehicleId })}</Text>
                 </View>
                 <DetailPill
-                  label={activeHandoverReport ? (activeHandoverReport.isCustomerConfirmed ? "Đã xác nhận" : activeHandoverReport.requiresRevision ? "Cần lập lại" : "Chờ xác nhận") : "Chưa có biên bản"}
+                  label={activeHandoverReport ? (activeHandoverReport.isCustomerConfirmed ? t("booking:status.confirmed") : activeHandoverReport.requiresRevision ? t("mobile:trip.detail.reportStatusRevision") : t("mobile:trip.detail.reportStatusAwaiting")) : t("booking:detail.noReport")}
                   tone={activeHandoverReport ? (activeHandoverReport.isCustomerConfirmed ? "mint" : activeHandoverReport.requiresRevision ? "danger" : "warn") : "neutral"}
                 />
               </View>
-              <DetailButton variant="ghost" icon={RotateCcw} label="Tải lại biên bản" disabled={actionBusy !== null} onPress={() => void load()} />
+              <DetailButton variant="ghost" icon={RotateCcw} label={t("mobile:trip.detail.reloadReport")} disabled={actionBusy !== null} onPress={() => void load()} />
             </DetailCard>
 
-            {!!actionError && <DetailNotice icon={TriangleAlert} title="Không thực hiện được" tone="danger">{actionError}</DetailNotice>}
-            {!dataReady && <DetailNotice icon={TriangleAlert} title="Chưa tải được dữ liệu mới" tone="warn">Tải lại trước khi thao tác.</DetailNotice>}
+            {!!actionError && <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.actionErrorTitle")} tone="danger">{actionError}</DetailNotice>}
+            {!dataReady && <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.staleTitle")} tone="warn">{t("mobile:trip.detail.staleBodyHandover")}</DetailNotice>}
 
             {activeHandoverReport ? <InspectionReportCard booking={booking} report={activeHandoverReport} /> : (
               <DetailCard>
                 <DetailSectionHeader
                   icon={handover === "CheckIn" ? KeyRound : PackageCheck}
-                  title="Chưa có biên bản"
-                  subtitle="Biên bản sẽ xuất hiện khi chủ xe gửi"
+                  title={t("booking:detail.noReport")}
+                  subtitle={t("mobile:trip.detail.reportPlaceholderSubtitle")}
                 />
-                <Text style={styles.hint}>Thao tác khả dụng sẽ xuất hiện theo trạng thái chuyến đi.</Text>
+                <Text style={styles.hint}>{t("mobile:trip.detail.reportPlaceholderHint")}</Text>
               </DetailCard>
             )}
 
@@ -578,8 +580,8 @@ export default function TripDetailScreen({
               <DetailSectionHeader
                 icon={handover === "CheckIn" ? KeyRound : PackageCheck}
                 tone={handover === "CheckIn" ? "brand" : "mint"}
-                title={handover === "CheckIn" ? "Xác nhận nhận xe" : "Xác nhận trả xe"}
-                subtitle="Kiểm tra biên bản, ảnh xe và các khoản thanh toán trước khi xác nhận"
+                title={handover === "CheckIn" ? t("mobile:trip.detail.confirmPickupTitle") : t("mobile:trip.detail.confirmReturnTitle")}
+                subtitle={t("mobile:trip.detail.confirmHandoverSubtitle")}
               />
               {handover === "CheckIn" ? checkInActions : checkOutActions}
             </DetailCard>
@@ -588,12 +590,12 @@ export default function TripDetailScreen({
       ) : (
         <>
           <DetailHeader
-            title="Chuyến đi của tôi"
+            title={t("mobile:trip.detail.title")}
             onBack={handleBack}
             right={
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Nhắn tin với chủ xe"
+                accessibilityLabel={t("mobile:trip.detail.chatWithOwner")}
                 onPress={() => navigation.navigate("BookingChat", { bookingId })}
                 style={styles.headerChat}
               >
@@ -610,11 +612,11 @@ export default function TripDetailScreen({
           />
 
           <View style={styles.body}>
-            {actionError ? <DetailNotice icon={TriangleAlert} title="Không thực hiện được" tone="danger">{actionError}</DetailNotice> : null}
-            {!dataReady ? <DetailNotice icon={TriangleAlert} title="Chưa tải được dữ liệu mới" tone="warn">Quay lại màn hoặc tải lại trước khi thao tác.</DetailNotice> : null}
+            {actionError ? <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.actionErrorTitle")} tone="danger">{actionError}</DetailNotice> : null}
+            {!dataReady ? <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.staleTitle")} tone="warn">{t("mobile:trip.detail.staleBody")}</DetailNotice> : null}
 
             <View style={styles.toolbarRow}>
-              <DetailButton variant="ghost" icon={RotateCcw} label="Tải lại" disabled={actionBusy !== null} onPress={() => void load()} style={styles.toolbarButton} />
+              <DetailButton variant="ghost" icon={RotateCcw} label={t("mobile:trip.detail.reload")} disabled={actionBusy !== null} onPress={() => void load()} style={styles.toolbarButton} />
               {onOpenDisputes ? (
                 <Pressable
                   accessibilityRole="button"
@@ -622,13 +624,13 @@ export default function TripDetailScreen({
                   style={({ pressed }) => [styles.disputeButton, pressed && styles.pressed]}
                 >
                   <TriangleAlert color={p.danger} size={15} strokeWidth={2.1} />
-                  <Text style={styles.disputeLink}>Tranh chấp</Text>
+                  <Text style={styles.disputeLink}>{t("mobile:trip.detail.dispute")}</Text>
                 </Pressable>
               ) : null}
             </View>
 
             <View style={styles.statusChips}>
-              {booking.escrowStatus === "Held" ? <DetailPill label={`Giữ cọc ${formatMoney(booking.escrowAmount)}`} tone="mint" /> : null}
+              {booking.escrowStatus === "Held" ? <DetailPill label={t("mobile:trip.detail.escrowHold", { amount: formatMoney(booking.escrowAmount) })} tone="mint" /> : null}
               <RiskScoreBadge score={booking.riskScore} />
             </View>
 
@@ -639,9 +641,9 @@ export default function TripDetailScreen({
                     <View style={styles.progressIcon}>
                       <Clock3 color={p.brand} size={15} strokeWidth={2.1} />
                     </View>
-                    <Text style={styles.progressTitle}>{progress.overdue ? "Đã quá hạn trả xe" : "Đang trong chuyến"}</Text>
+                    <Text style={styles.progressTitle}>{progress.overdue ? t("mobile:trip.progress.titleOverdue") : t("mobile:trip.progress.titleActive")}</Text>
                   </View>
-                  <DetailPill label={progress.overdue ? "Quá hạn" : `Ngày ${progress.currentDay}/${progress.totalDays}`} tone={progress.overdue ? "danger" : "brand"} />
+                  <DetailPill label={progress.overdue ? t("mobile:trip.progress.overduePill") : t("mobile:trip.progress.dayPill", { day: progress.currentDay, total: progress.totalDays })} tone={progress.overdue ? "danger" : "brand"} />
                 </View>
                 <View style={styles.progressTrack}>
                   <View style={[styles.progressFill, { width: `${progressPercent}%` }, progress.overdue && styles.progressFillOverdue]} />
@@ -651,33 +653,40 @@ export default function TripDetailScreen({
             ) : null}
 
             {(status === "InProgress" || status === "Returning") && gpsSharingHere && gpsPermissionStatus === "granted" && !gpsPublishError ? (
-              <DetailNotice icon={CircleCheck} title="Đang chia sẻ vị trí" tone="mint">
-                Chủ xe theo dõi được chuyến đi{gpsLastPublishedAt ? ` · cập nhật ${new Date(gpsLastPublishedAt).toLocaleTimeString("vi-VN")}` : ""}.
+              <DetailNotice icon={CircleCheck} title={t("mobile:trip.detail.gpsSharingTitle")} tone="mint">
+                {t("mobile:trip.detail.gpsSharingBody")}
+                {gpsLastPublishedAt ? t("mobile:trip.detail.gpsUpdatedAt", { time: new Date(gpsLastPublishedAt).toLocaleTimeString("vi-VN") }) : ""}.
               </DetailNotice>
             ) : null}
             {(status === "InProgress" || status === "Returning") && (gpsPermissionStatus === "denied" || gpsPublishError) ? (
-              <DetailNotice icon={TriangleAlert} title="Chưa chia sẻ vị trí" tone="warn">
-                {gpsPublishError || "Bạn chưa cấp quyền vị trí cho MoveVN. Bật GPS để chủ xe theo dõi chuyến đi."}
+              <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.gpsOffTitle")} tone="warn">
+                {gpsPublishError || t("mobile:trip.detail.gpsOffBody")}
               </DetailNotice>
             ) : null}
 
             {status === "Pending" && autoCancelHours != null && booking.createdAt ? (
-              <DetailNotice icon={Clock3} title="Chờ chủ xe duyệt" tone="warn">
-                Chủ xe có {autoCancelHours} giờ để duyệt. Nếu không phản hồi trước {formatDateTime(new Date(new Date(booking.createdAt).getTime() + autoCancelHours * 3600000).toISOString())}, hệ thống sẽ tự động từ chối booking.
+              <DetailNotice icon={Clock3} title={t("mobile:trip.detail.pendingTitle")} tone="warn">
+                {t("mobile:trip.detail.pendingBody", {
+                  hours: autoCancelHours,
+                  time: formatDateTime(new Date(new Date(booking.createdAt).getTime() + autoCancelHours * 3600000).toISOString()),
+                })}
               </DetailNotice>
             ) : null}
 
             <DetailCard>
-              <DetailSectionHeader icon={MapPin} title="Nhận & trả xe" subtitle="Địa điểm bàn giao" />
+              <DetailSectionHeader icon={MapPin} title={t("mobile:trip.detail.placesTitle")} subtitle={t("mobile:trip.detail.placesSubtitle")} />
               <View style={styles.placeBlock}>
                 <View style={styles.placeRail}><View style={styles.placeDotBrand} /><View style={styles.placeLine} /></View>
                 <View style={styles.placeBody}>
-                  <Text style={styles.placeLabel}>Điểm nhận xe</Text>
+                  <Text style={styles.placeLabel}>{t("mobile:trip.detail.pickupPoint")}</Text>
                   <Text style={styles.placeAddress}>{booking.pickupAddress}</Text>
-                  <Text style={styles.hint}>Dự kiến {formatDateTime(booking.startDate)}</Text>
+                  <Text style={styles.hint}>{t("mobile:trip.detail.expectedAt", { time: formatDateTime(booking.startDate) })}</Text>
                   {booking.deliveryDistanceKm != null ? (
                     <Text style={styles.hint}>
-                      Cách vị trí xe {booking.deliveryDistanceKm} km{booking.deliveryFee > 0 ? ` · Phí giao xe ${formatMoney(booking.deliveryFee)}` : " · Miễn phí giao xe"}
+                      {t("mobile:trip.detail.vehicleDistance", { km: booking.deliveryDistanceKm })}
+                      {booking.deliveryFee > 0
+                        ? t("mobile:trip.detail.deliveryFeeSuffix", { amount: formatMoney(booking.deliveryFee) })
+                        : t("mobile:trip.detail.deliveryFreeSuffix")}
                     </Text>
                   ) : null}
                 </View>
@@ -685,44 +694,44 @@ export default function TripDetailScreen({
               <View style={styles.placeBlock}>
                 <View style={styles.placeRail}><View style={styles.placeDotInk} /></View>
                 <View style={styles.placeBody}>
-                  <Text style={styles.placeLabel}>Điểm trả xe</Text>
+                  <Text style={styles.placeLabel}>{t("mobile:trip.detail.returnPoint")}</Text>
                   <Text style={styles.placeAddress}>{booking.returnAddress || booking.pickupAddress}</Text>
-                  <Text style={styles.hint}>Dự kiến {formatDateTime(booking.endDate)}</Text>
+                  <Text style={styles.hint}>{t("mobile:trip.detail.expectedAt", { time: formatDateTime(booking.endDate) })}</Text>
                 </View>
               </View>
               {booking.customerNote ? (
                 <View style={styles.noteBox}>
-                  <Text style={styles.noteLabel}>Ghi chú của bạn</Text>
+                  <Text style={styles.noteLabel}>{t("mobile:trip.detail.yourNote")}</Text>
                   <Text style={styles.noteText}>{booking.customerNote}</Text>
                 </View>
               ) : null}
             </DetailCard>
 
             <DetailCard>
-              <DetailSectionHeader icon={ReceiptText} title="Chi phí" subtitle="Đã gồm phí nền tảng" />
+              <DetailSectionHeader icon={ReceiptText} title={t("mobile:trip.detail.costTitle")} subtitle={t("mobile:trip.detail.costSubtitle")} />
               <View style={styles.rows}>
-                <DetailRow label={`Giá thuê (${booking.totalDays} ngày)`} value={formatMoney(booking.basePrice)} />
-                {booking.discountPercent > 0 ? <DetailRow label={`Giảm giá (${booking.discountPercent}%)`} value={`-${formatMoney(booking.discountAmount)}`} tone="success" /> : null}
-                {booking.promotionDiscount > 0 ? <DetailRow label={`Mã ${booking.promotionCode ?? ""}`} value={`-${formatMoney(booking.promotionDiscount)}`} tone="success" /> : null}
-                {booking.deliveryFee > 0 ? <DetailRow label={`Phí giao xe tận nơi${booking.deliveryDistanceKm != null ? ` (${booking.deliveryDistanceKm} km)` : ""}`} value={`+${formatMoney(booking.deliveryFee)}`} /> : null}
-                <DetailRow label="Phí nền tảng (đã gồm trong tổng)" value={formatMoney(booking.platformFee)} tone="muted" />
+                <DetailRow label={t("mobile:trip.detail.rentalPriceDays", { days: booking.totalDays })} value={formatMoney(booking.basePrice)} />
+                {booking.discountPercent > 0 ? <DetailRow label={t("booking:detail.discount", { percent: booking.discountPercent })} value={`-${formatMoney(booking.discountAmount)}`} tone="success" /> : null}
+                {booking.promotionDiscount > 0 ? <DetailRow label={t("booking:detail.promoCode", { code: booking.promotionCode ?? "" })} value={`-${formatMoney(booking.promotionDiscount)}`} tone="success" /> : null}
+                {booking.deliveryFee > 0 ? <DetailRow label={booking.deliveryDistanceKm != null ? t("booking:detail.deliveryFeeWithKm", { km: booking.deliveryDistanceKm }) : t("booking:detail.deliveryFee")} value={`+${formatMoney(booking.deliveryFee)}`} /> : null}
+                <DetailRow label={t("mobile:trip.detail.platformFeeIncluded")} value={formatMoney(booking.platformFee)} tone="muted" />
               </View>
               <View style={styles.totalRow}>
                 <View style={styles.totalBody}>
-                  <Text style={styles.totalLabel}>Tổng cộng</Text>
-                  <Text style={styles.totalHint}>Đã trừ ưu đãi, chưa gồm thế chấp</Text>
+                  <Text style={styles.totalLabel}>{t("booking:create.total")}</Text>
+                  <Text style={styles.totalHint}>{t("mobile:trip.detail.totalHint")}</Text>
                 </View>
                 <Text style={styles.totalValue}>{formatMoney(booking.totalAmount)}</Text>
               </View>
               <View style={styles.scheduleBox}>
-                <Text style={styles.scheduleTitle}>Thanh toán dự kiến</Text>
+                <Text style={styles.scheduleTitle}>{t("mobile:trip.detail.paymentScheduleTitle")}</Text>
                 <View style={styles.scheduleRow}>
-                  <Text style={styles.scheduleLabel}>Đặt cọc ngay</Text>
+                  <Text style={styles.scheduleLabel}>{t("mobile:trip.detail.depositNow")}</Text>
                   <Text style={styles.scheduleValue}>{formatMoney(booking.depositAmount)}</Text>
                 </View>
                 {remainingAmount > 0 ? (
                   <View style={styles.scheduleRow}>
-                    <Text style={styles.scheduleLabel}>Trả khi nhận xe</Text>
+                    <Text style={styles.scheduleLabel}>{t("booking:create.payOnPickup")}</Text>
                     <Text style={styles.scheduleValue}>{formatMoney(remainingAmount)}</Text>
                   </View>
                 ) : null}
@@ -731,8 +740,8 @@ export default function TripDetailScreen({
                 <View style={[styles.securityBox, { borderColor: p.warningBorder, backgroundColor: p.warningSoft }]}>
                   <ShieldCheck color={p.warning} size={16} strokeWidth={2.1} />
                   <View style={styles.securityBody}>
-                    <Text style={styles.securityLabel}>Tiền thế chấp</Text>
-                    <Text style={styles.securityHint}>Hoàn lại khi trả xe đúng hiện trạng</Text>
+                    <Text style={styles.securityLabel}>{t("mobile:trip.detail.securityLabel")}</Text>
+                    <Text style={styles.securityHint}>{t("mobile:trip.detail.securityHint")}</Text>
                   </View>
                   <Text style={[styles.securityValue, { color: p.warning }]}>{formatMoney(booking.securityDepositAmount)}</Text>
                 </View>
@@ -744,12 +753,12 @@ export default function TripDetailScreen({
               <DetailCard>
                 <DetailSectionHeader
                   icon={CircleDollarSign}
-                  title="Phụ phí còn nợ"
-                  subtitle="Khoản phát sinh khi trả xe"
+                  title={t("mobile:trip.detail.outstandingTitle")}
+                  subtitle={t("mobile:trip.detail.outstandingSubtitle")}
                   right={<DetailPill label={formatMoney(booking.outstandingSurchargeAmount ?? 0)} tone="danger" />}
                 />
-                <DetailNotice icon={TriangleAlert} title="Cần thanh toán để hoàn tất" tone="danger">
-                  Còn nợ {formatMoney(booking.outstandingSurchargeAmount)} phụ phí. Vui lòng thanh toán để hoàn tất chuyến đi.
+                <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.outstandingNoticeTitle")} tone="danger">
+                  {t("mobile:trip.detail.outstandingNoticeBody", { amount: formatMoney(booking.outstandingSurchargeAmount) })}
                 </DetailNotice>
               </DetailCard>
             ) : null}
@@ -758,17 +767,19 @@ export default function TripDetailScreen({
               <DetailCard>
                 <DetailSectionHeader
                   icon={Wallet}
-                  title="Cọc bổ sung (gia hạn)"
-                  subtitle={pendingTopUp.dueAt ? `Hạn thanh toán ${formatDateTime(pendingTopUp.dueAt)}` : "Thanh toán để giữ lịch gia hạn"}
+                  title={t("mobile:trip.detail.topUpTitle")}
+                  subtitle={pendingTopUp.dueAt ? t("mobile:trip.detail.topUpDue", { time: formatDateTime(pendingTopUp.dueAt) }) : t("mobile:trip.detail.topUpKeepSchedule")}
                   right={<DetailPill label={formatMoney(pendingTopUp.amount)} tone="warn" />}
                 />
                 <Text style={styles.muted}>
-                  Cần thêm {formatMoney(pendingTopUp.amount)}
-                  {pendingTopUp.dueAt ? ` trước ${formatDateTime(pendingTopUp.dueAt)}` : ""} để giữ lịch gia hạn.
+                  {t("mobile:trip.detail.topUpBody", {
+                    amount: formatMoney(pendingTopUp.amount),
+                    due: pendingTopUp.dueAt ? t("mobile:trip.detail.topUpBeforeDue", { time: formatDateTime(pendingTopUp.dueAt) }) : "",
+                  })}
                 </Text>
                 <DetailButton
                   icon={Wallet}
-                  label={actionBusy === "topup" ? "Đang tạo link..." : "Trả cọc bổ sung qua PayOS"}
+                  label={actionBusy === "topup" ? t("mobile:trip.detail.creatingLink") : t("mobile:trip.detail.topUpPay")}
                   onPress={handlePayTopUp}
                   disabled={!dataReady || actionBusy !== null}
                 />
@@ -779,32 +790,36 @@ export default function TripDetailScreen({
               <DetailCard>
                 <DetailSectionHeader
                   icon={Banknote}
-                  title="Đặt cọc giữ xe"
-                  subtitle={booking.paymentDueAt ? `Hạn cọc ${formatDateTime(booking.paymentDueAt)}` : "Hoàn tất cọc để giữ chuyến"}
+                  title={t("mobile:trip.detail.depositTitle")}
+                  subtitle={booking.paymentDueAt ? t("mobile:trip.detail.depositDueSubtitle", { time: formatDateTime(booking.paymentDueAt) }) : t("mobile:trip.detail.depositKeepTrip")}
                   right={<DetailPill label={formatMoney(booking.depositAmount)} tone="brand" />}
                 />
-                {booking.paymentDueAt ? <Text style={styles.muted}>Hạn cọc: {formatDateTime(booking.paymentDueAt)}. Quá hạn booking sẽ tự hủy.</Text> : null}
+                {booking.paymentDueAt ? <Text style={styles.muted}>{t("mobile:trip.detail.depositDueLine", { time: formatDateTime(booking.paymentDueAt) })}</Text> : null}
                 {depositExpired ? (
-                  <DetailNotice icon={TriangleAlert} title="Đã hết hạn thanh toán" tone="danger">
-                    Booking không còn hiệu lực nhận cọc vì đã hết hạn thanh toán. Hệ thống sẽ tự hủy booking này.
+                  <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.depositExpiredTitle")} tone="danger">
+                    {t("mobile:trip.detail.depositExpiredBody")}
                   </DetailNotice>
                 ) : (
                   <>
                     <DetailButton
                       icon={Wallet}
-                      label={actionBusy === "wallet" ? "Đang trừ ví..." : `Trả bằng ví${walletBalance != null ? ` (${formatMoney(walletBalance)})` : ""}`}
+                      label={actionBusy === "wallet"
+                        ? t("mobile:trip.detail.payingWallet")
+                        : walletBalance != null
+                          ? t("mobile:trip.detail.payWithWalletAmount", { amount: formatMoney(walletBalance) })
+                          : t("booking:detail.payRemainingWallet")}
                       onPress={handlePayWithWallet}
                       disabled={!dataReady || actionBusy !== null}
                     />
                     <DetailButton
                       variant="secondary"
                       icon={CreditCard}
-                      label={actionBusy === "payos" ? "Đang tạo link..." : "Trả qua PayOS"}
+                      label={actionBusy === "payos" ? t("mobile:trip.detail.creatingLink") : t("mobile:trip.detail.payWithPayOS")}
                       onPress={handlePayWithPayOs}
                       disabled={!dataReady || actionBusy !== null}
                     />
                     {pendingOrderCode != null ? (
-                      <Text style={styles.muted}>Đang chờ xác nhận giao dịch #{pendingOrderCode}...</Text>
+                      <Text style={styles.muted}>{t("mobile:trip.detail.awaitingTransfer", { code: pendingOrderCode })}</Text>
                     ) : null}
                   </>
                 )}
@@ -815,7 +830,7 @@ export default function TripDetailScreen({
               <DetailButton
                 variant="danger"
                 icon={TriangleAlert}
-                label="Hủy chuyến đi"
+                label={t("mobile:trip.detail.cancelTrip")}
                 onPress={handleCancel}
                 disabled={!dataReady || actionBusy !== null}
               />
@@ -826,7 +841,7 @@ export default function TripDetailScreen({
             <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage={false} onChanged={() => load()} />
 
             <DetailCard>
-              <DetailSectionHeader icon={Camera} title="Bàn giao xe" subtitle="Biên bản nhận xe và trả xe" />
+              <DetailSectionHeader icon={Camera} title={t("mobile:trip.detail.handoverKicker")} subtitle={t("mobile:trip.detail.handoverSectionSubtitle")} />
               <InspectionSummaryLink booking={booking} type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckIn" })} />
               <InspectionSummaryLink booking={booking} type="CheckOut" report={checkOutReport} divider onPress={() => navigation.navigate("TripHandover", { bookingId, inspectionType: "CheckOut" })} />
             </DetailCard>
@@ -835,8 +850,8 @@ export default function TripDetailScreen({
               <DetailCard>
                 <DetailSectionHeader
                   icon={TriangleAlert}
-                  title={`Lý do ${status === "Rejected" ? "từ chối" : "hủy"}`}
-                  subtitle="Ghi nhận từ hệ thống"
+                  title={status === "Rejected" ? t("mobile:trip.detail.cancelReasonRejected") : t("booking:cancel.reasonLabel")}
+                  subtitle={t("mobile:trip.detail.cancelReasonSubtitle")}
                 />
                 <Text style={styles.muted}>{booking.cancelReason}</Text>
               </DetailCard>
@@ -846,16 +861,16 @@ export default function TripDetailScreen({
               <DetailCard>
                 <DetailSectionHeader
                   icon={Star}
-                  title="Đánh giá chuyến đi"
-                  subtitle={alreadyReviewed ? "Cảm ơn bạn đã chia sẻ trải nghiệm" : "Chia sẻ trải nghiệm của bạn"}
+                  title={t("booking:detail.reviewTripTitle")}
+                  subtitle={alreadyReviewed ? t("mobile:trip.detail.reviewThanksSubtitle") : t("mobile:trip.detail.reviewShareSubtitle")}
                 />
                 {!alreadyReviewed ? (
                   <View style={styles.reviewPrompt}>
                     <Text style={[styles.reviewPromptStars, { color: p.rating }]}>★★★★★</Text>
-                    <Text style={styles.muted}>Bạn chưa đánh giá chuyến đi này.</Text>
+                    <Text style={styles.muted}>{t("mobile:trip.detail.notReviewed")}</Text>
                     <DetailButton
                       icon={Star}
-                      label="Viết đánh giá"
+                      label={t("booking:detail.writeReview")}
                       onPress={() => setReviewOpen(true)}
                       disabled={!dataReady || actionBusy !== null}
                     />
@@ -864,19 +879,19 @@ export default function TripDetailScreen({
                 {bookingReviews.filter((review) => review.reviewType === "Customer").map((review) => (
                   <View key={review.id} style={styles.reviewItem}>
                     <View style={styles.reviewHeader}>
-                      {review.reviewerAvatar ? <Image source={{ uri: review.reviewerAvatar }} style={styles.reviewAvatar} /> : <View style={styles.reviewAvatarFallback}><Text style={styles.reviewAvatarText}>{(review.reviewerName || "K").slice(0, 1).toUpperCase()}</Text></View>}
-                      <View style={{ flex: 1 }}><Text style={styles.reviewName}>{review.reviewerName || "Khách thuê"}</Text><Text style={styles.reviewStars}>{"★".repeat(review.rating)}{"☆".repeat(Math.max(0, 5 - review.rating))}</Text></View>
+                      {review.reviewerAvatar ? <Image source={{ uri: review.reviewerAvatar }} style={styles.reviewAvatar} /> : <View style={styles.reviewAvatarFallback}><Text style={styles.reviewAvatarText}>{(review.reviewerName || t("booking:detail.roleCustomer")).slice(0, 1).toUpperCase()}</Text></View>}
+                      <View style={{ flex: 1 }}><Text style={styles.reviewName}>{review.reviewerName || t("booking:detail.roleCustomer")}</Text><Text style={styles.reviewStars}>{"★".repeat(review.rating)}{"☆".repeat(Math.max(0, 5 - review.rating))}</Text></View>
                       <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString("vi-VN")}</Text>
                     </View>
                     {review.comment ? <Text style={styles.reviewComment}>{review.comment}</Text> : null}
                   </View>
                 ))}
-                {alreadyReviewed && bookingReviews.filter((review) => review.reviewType === "Customer").length === 0 ? <Text style={styles.muted}>Bạn đã gửi đánh giá cho chuyến đi này.</Text> : null}
+                {alreadyReviewed && bookingReviews.filter((review) => review.reviewType === "Customer").length === 0 ? <Text style={styles.muted}>{t("booking:detail.reviewSubmitted")}</Text> : null}
               </DetailCard>
             ) : null}
 
             <DetailCard>
-              <DetailSectionHeader icon={Headphones} title="Hỗ trợ & báo cáo" subtitle="Liên hệ MoveVN khi cần giúp đỡ" />
+              <DetailSectionHeader icon={Headphones} title={t("mobile:trip.detail.supportTitle")} subtitle={t("mobile:trip.detail.supportSubtitle")} />
               <BookingAssistance key={booking.id} bookingId={booking.id} bookingCode={booking.bookingCode} />
               <ReportBookingViolation key={`violation-${booking.id}`} bookingId={booking.id} bookingCode={booking.bookingCode} />
             </DetailCard>
@@ -889,7 +904,7 @@ export default function TripDetailScreen({
       )}
 
       <CheckoutConfirmation booking={booking} report={checkoutToConfirm} busy={actionBusy !== null} onClose={() => setCheckoutToConfirm(null)} onConfirm={(report, paymentMethod) => {
-        void runAction("checkout", () => confirmCheckOut(bookingId, report.version ?? 1, paymentMethod).then(() => undefined), "Đã xác nhận trả xe và ghi nhận phương thức thanh toán. Chủ xe cần xác nhận nhận lại xe để hoàn tất chuyến.").then(ok => { if (ok) setCheckoutToConfirm(null); });
+        void runAction("checkout", () => confirmCheckOut(bookingId, report.version ?? 1, paymentMethod).then(() => undefined), t("mobile:trip.dialogs.checkoutConfirmed")).then(ok => { if (ok) setCheckoutToConfirm(null); });
       }} />
 
       <Modal visible={reviewOpen} transparent animationType="fade" onRequestClose={() => { if (actionBusy === null) setReviewOpen(false); }}>
@@ -898,25 +913,25 @@ export default function TripDetailScreen({
             <View style={styles.modalHead}>
               <View style={styles.modalIcon}><Star color={p.brand} size={18} strokeWidth={2.1} /></View>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.modalTitle}>Đánh giá chuyến đi</Text>
-                <Text style={styles.modalHint}>Chia sẻ trải nghiệm của bạn</Text>
+                <Text style={styles.modalTitle}>{t("booking:detail.reviewTripTitle")}</Text>
+                <Text style={styles.modalHint}>{t("mobile:trip.detail.reviewShareSubtitle")}</Text>
               </View>
             </View>
-            <RatingInput label="Đánh giá tổng quan (bắt buộc)" value={rating} onChange={setRating} styles={styles} />
-            <RatingInput label="Vệ sinh (không bắt buộc)" value={cleanliness} onChange={setCleanliness} styles={styles} />
-            <RatingInput label="Chính xác mô tả (không bắt buộc)" value={accuracy} onChange={setAccuracy} styles={styles} />
-            <RatingInput label="Hỗ trợ (không bắt buộc)" value={support} onChange={setSupport} styles={styles} />
+            <RatingInput label={t("mobile:trip.review.overallRequired")} value={rating} onChange={setRating} styles={styles} />
+            <RatingInput label={t("mobile:trip.review.cleanlinessOptional")} value={cleanliness} onChange={setCleanliness} styles={styles} />
+            <RatingInput label={t("mobile:trip.review.accuracyOptional")} value={accuracy} onChange={setAccuracy} styles={styles} />
+            <RatingInput label={t("mobile:trip.review.supportOptional")} value={support} onChange={setSupport} styles={styles} />
             <TextInput
               value={comment}
               onChangeText={setComment}
-              placeholder="Chia sẻ trải nghiệm của bạn..."
+              placeholder={t("booking:detail.reviewCommentPlaceholderCustomer")}
               placeholderTextColor={theme.placeholder}
               multiline
               style={styles.commentInput}
             />
             <View style={styles.modalActions}>
-              <DetailButton variant="ghost" label="Đóng" disabled={actionBusy !== null} onPress={() => setReviewOpen(false)} style={styles.modalButton} />
-              <DetailButton icon={Star} label={actionBusy === "review" ? "Đang gửi..." : "Gửi đánh giá"} onPress={handleReview} disabled={!dataReady || actionBusy !== null || rating === 0} style={styles.modalButton} />
+              <DetailButton variant="ghost" label={t("common:closeAction")} disabled={actionBusy !== null} onPress={() => setReviewOpen(false)} style={styles.modalButton} />
+              <DetailButton icon={Star} label={actionBusy === "review" ? t("mobile:trip.review.submitting") : t("booking:detail.submitReview")} onPress={handleReview} disabled={!dataReady || actionBusy !== null || rating === 0} style={styles.modalButton} />
             </View>
           </View>
         </View>
@@ -927,7 +942,7 @@ export default function TripDetailScreen({
           {viewingImage ? (
             <Image source={{ uri: viewingImage }} style={styles.fullImage} resizeMode="contain" />
           ) : null}
-          <Text style={styles.fullHint}>Chạm để đóng</Text>
+          <Text style={styles.fullHint}>{t("mobile:trip.dialogs.tapToClose")}</Text>
         </Pressable>
       </Modal>
 
@@ -937,8 +952,8 @@ export default function TripDetailScreen({
             <View style={styles.modalHead}>
               <View style={[styles.modalIcon, { backgroundColor: p.dangerSoft }]}><TriangleAlert color={p.danger} size={18} strokeWidth={2.1} /></View>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.modalTitle}>Hủy chuyến đi</Text>
-                <Text style={styles.modalHint}>Xem chính sách hoàn cọc trước khi hủy</Text>
+                <Text style={styles.modalTitle}>{t("mobile:trip.detail.cancelTrip")}</Text>
+                <Text style={styles.modalHint}>{t("mobile:trip.dialogs.cancelModalHint")}</Text>
               </View>
             </View>
             {cancelQuote ? (
@@ -946,22 +961,26 @@ export default function TripDetailScreen({
                 <Text style={styles.muted}>{cancelQuote.policyMessage}</Text>
                 <Text style={styles.muted}>
                   {cancelQuote.hasPaidDeposit
-                    ? `Hoàn ${formatMoney(cancelQuote.refundAmount)} (${cancelQuote.refundPercent}%), mất ${formatMoney(cancelQuote.forfeitedAmount)}.`
-                    : "Chưa đặt cọc nên hủy miễn phí."}
+                    ? t("mobile:trip.dialogs.cancelRefundLine", {
+                      refund: formatMoney(cancelQuote.refundAmount),
+                      percent: cancelQuote.refundPercent,
+                      forfeited: formatMoney(cancelQuote.forfeitedAmount),
+                    })
+                    : t("mobile:trip.dialogs.cancelFree")}
                 </Text>
               </>
             ) : null}
             <TextInput
               value={cancelReason}
               onChangeText={setCancelReason}
-              placeholder="Lý do hủy..."
+              placeholder={t("mobile:trip.dialogs.cancelReasonPlaceholder")}
               placeholderTextColor={theme.placeholder}
               multiline
               style={[styles.input, styles.multiline]}
             />
             <View style={styles.modalActions}>
-              <DetailButton variant="ghost" label="Đóng" onPress={() => setCancelQuote(null)} style={styles.modalButton} />
-              <DetailButton variant="danger" label="Xác nhận hủy" busy={actionBusy === "cancel"} disabled={actionBusy !== null} onPress={submitCancel} style={styles.modalButton} />
+              <DetailButton variant="ghost" label={t("common:closeAction")} onPress={() => setCancelQuote(null)} style={styles.modalButton} />
+              <DetailButton variant="danger" label={t("booking:cancel.confirm")} busy={actionBusy === "cancel"} disabled={actionBusy !== null} onPress={submitCancel} style={styles.modalButton} />
             </View>
           </View>
         </View>
@@ -972,17 +991,17 @@ export default function TripDetailScreen({
           <View style={styles.modalHead}>
             <View style={styles.modalIcon}><RotateCcw color={p.brand} size={18} strokeWidth={2.1} /></View>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={styles.modalTitle}>Yêu cầu lập lại biên bản</Text>
-              <Text style={styles.modalHint}>Biên bản nhận xe</Text>
+              <Text style={styles.modalTitle}>{t("mobile:trip.dialogs.revisionTitle")}</Text>
+              <Text style={styles.modalHint}>{t("mobile:trip.dialogs.revisionSubtitle")}</Text>
             </View>
           </View>
-          <Text style={styles.muted}>Ghi rõ số km, nhiên liệu, ảnh hoặc tình trạng xe cần sửa. Chuyến chưa bắt đầu cho đến khi bạn đồng ý biên bản mới.</Text>
-          <TextInput accessibilityLabel="Lý do yêu cầu lập lại" value={revisionReason} onChangeText={setRevisionReason} maxLength={1000} editable={!actionBusy} placeholder="Nội dung cần điều chỉnh..." placeholderTextColor={theme.placeholder} multiline style={[styles.input, styles.multiline]} />
-          <DetailButton label="Gửi yêu cầu lập lại" disabled={!revisionReason.trim() || !dataReady || actionBusy !== null} onPress={() => {
+          <Text style={styles.muted}>{t("mobile:trip.dialogs.revisionBody")}</Text>
+          <TextInput accessibilityLabel={t("mobile:trip.dialogs.revisionReasonAria")} value={revisionReason} onChangeText={setRevisionReason} maxLength={1000} editable={!actionBusy} placeholder={t("booking:inspection.revisionReasonPlaceholder")} placeholderTextColor={theme.placeholder} multiline style={[styles.input, styles.multiline]} />
+          <DetailButton label={t("booking:inspection.revisionSubmit")} disabled={!revisionReason.trim() || !dataReady || actionBusy !== null} onPress={() => {
             if (!checkInReport) return;
-            void runAction("revision", () => requestCheckInRevision(bookingId, checkInReport.version ?? 1, revisionReason.trim()).then(() => undefined), "Đã gửi yêu cầu cho chủ xe.").then(ok => { if (ok) setRevisionOpen(false); });
+            void runAction("revision", () => requestCheckInRevision(bookingId, checkInReport.version ?? 1, revisionReason.trim()).then(() => undefined), t("mobile:trip.dialogs.revisionSent")).then(ok => { if (ok) setRevisionOpen(false); });
           }} />
-          <DetailButton variant="secondary" label="Đóng" disabled={actionBusy !== null} onPress={() => setRevisionOpen(false)} />
+          <DetailButton variant="secondary" label={t("common:closeAction")} disabled={actionBusy !== null} onPress={() => setRevisionOpen(false)} />
         </View></View>
       </Modal>
       <PaymentWebViewModal

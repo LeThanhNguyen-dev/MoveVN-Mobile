@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DarkTheme, DefaultTheme, NavigationContainer, type Theme as NavTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import AppText from "@/components/AppText";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,6 +24,7 @@ import AvailabilityAlertCenter from "@/features/availabilityAlerts/AvailabilityA
 import ViolationCenter from "@/features/violations/ViolationCenter";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
+import { initializeLanguage, useLanguageStore } from "@/theme/useLanguageStore";
 import { initializeTheme } from "@/theme/useThemeStore";
 import { useTheme } from "@/theme/useTheme";
 
@@ -50,7 +52,9 @@ export default function RootNavigator() {
       void useAuthStore.getState().setActiveRole(pendingPush.roleTarget);
     }
   }, [pendingPush, user, activeRole]);
-  const [startupError, setStartupError] = useState("");
+  const [startupFailed, setStartupFailed] = useState(false);
+  const { t } = useTranslation("app");
+  const languageHydrated = useLanguageStore((state) => state.isHydrated);
   const { mode, theme } = useTheme();
 
   const navTheme: NavTheme = useMemo(() => {
@@ -69,17 +73,18 @@ export default function RootNavigator() {
   }, [mode, theme]);
 
   const retryStartup = useCallback(() => {
-    setStartupError("");
-    void restoreSession().catch(() => setStartupError("Chưa thể kiểm tra phiên đăng nhập. Hãy kiểm tra kết nối và thử lại."));
+    setStartupFailed(false);
+    void restoreSession().catch(() => setStartupFailed(true));
   }, []);
 
   useEffect(() => {
     void initializeTheme();
+    void initializeLanguage();
     retryStartup();
   }, [retryStartup]);
 
-  if (startupError) return <Startup label={startupError} onRetry={retryStartup} />;
-  if (!hydrated) return <Startup label="Đang mở MoveVN..." />;
+  if (startupFailed) return <Startup label={t("startup.sessionError")} onRetry={retryStartup} />;
+  if (!hydrated || !languageHydrated) return <Startup label={t("startup.opening")} />;
 
   const role = user ? getActiveLandingRole(user.roles, activeRole) : null;
   return <NavigationContainer theme={navTheme}>
@@ -98,11 +103,12 @@ export default function RootNavigator() {
 
 function Startup({ label, onRetry }: { label: string; onRetry?: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation("app");
   const styles = createStyles(theme);
   return <SafeAreaView style={styles.safe}><View style={styles.content}>
     {!onRetry && <ActivityIndicator color={theme.brand} size="large" />}
     <AppText accessibilityRole={onRetry ? "alert" : undefined} style={styles.label}>{label}</AppText>
-    {onRetry && <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><AppText style={styles.retryLabel}>Thử lại</AppText></Pressable>}
+    {onRetry && <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><AppText style={styles.retryLabel}>{t("startup.retry")}</AppText></Pressable>}
   </View></SafeAreaView>;
 }
 

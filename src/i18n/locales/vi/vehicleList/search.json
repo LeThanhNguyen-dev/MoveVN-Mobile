@@ -1,0 +1,44 @@
+{
+  "searchBar": {
+    "locationLabel": "Địa điểm thuê xe",
+    "searchAria": "Tìm xe"
+  },
+  "dropdown": {
+    "fallback": "Đà Nẵng",
+    "searchPlaceholder": "Tìm tỉnh, quận hoặc phường...",
+    "searchHint": "Có thể tìm không dấu, ví dụ “Da Nang”.",
+    "empty": "Không tìm thấy khu vực phù hợp."
+  },
+  "options": {
+    "all": "Tất cả",
+    "allWards": "Tất cả phường/xã",
+    "car": "Ô tô",
+    "motorbike": "Xe máy",
+    "seats": "{{seats}} chỗ",
+    "bodyTypes": {
+      "sedan": "Sedan",
+      "suv": "SUV",
+      "hatchback": "Hatchback",
+      "coupe": "Coupe",
+      "convertible": "Mui trần",
+      "pickup": "Bán tải",
+      "mpv": "MPV / Minivan",
+      "wagon": "Wagon"
+    },
+    "transmission": {
+      "automatic": "Số tự động",
+      "manual": "Số sàn",
+      "cvt": "CVT",
+      "dct": "DCT"
+    },
+    "sort": {
+      "priceAsc": "Giá thấp đến cao",
+      "priceDesc": "Giá cao đến thấp",
+      "ratingDesc": "Đánh giá tốt nhất",
+      "distanceAsc": "Gần bạn nhất"
+    }
+  },
+  "rentalPeriod": {
+    "days": "{{days}} ngày"
+  }
+}

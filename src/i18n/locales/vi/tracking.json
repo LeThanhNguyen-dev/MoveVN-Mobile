@@ -1,0 +1,69 @@
+{
+  "badge": {
+    "live": "Đang cập nhật",
+    "stale": "Mất tín hiệu",
+    "ended": "Đã kết thúc",
+    "none": "Chưa có dữ liệu"
+  },
+  "live": {
+    "title": "Vị trí xe · {{name}}",
+    "backTitle": "Về chi tiết đơn thuê",
+    "connectionLabel": "Kết nối realtime: {{status}}",
+    "connection": {
+      "connected": "đã kết nối",
+      "connecting": "đang kết nối...",
+      "disconnected": "mất kết nối — đang hiển thị dữ liệu mới nhất"
+    },
+    "loading": "Đang tải vị trí xe...",
+    "updatedAt": "Cập nhật lúc {{time}}",
+    "speed": "Tốc độ: {{speed}} km/h",
+    "coordinates": "Tọa độ: {{lat}}, {{lng}}",
+    "staleMessage": "Không nhận được vị trí mới trong một thời gian. Khách thuê có thể đã tắt GPS hoặc mất kết nối — bản đồ đang hiển thị điểm cuối cùng.",
+    "noData": "Chưa nhận được điểm vị trí nào từ khách thuê trong chuyến này.",
+    "requestGps": "Yêu cầu khách bật GPS",
+    "invalidBooking": "Booking không hợp lệ.",
+    "vehicleFallback": "Xe #{{id}}",
+    "toastRequestedTitle": "Đã gửi yêu cầu",
+    "toastRequestedMessage": "Khách thuê sẽ nhận thông báo yêu cầu bật GPS.",
+    "toastRequestErrorTitle": "Không gửi được yêu cầu",
+    "toastRequestErrorMessage": "Vui lòng thử lại sau."
+  },
+  "playback": {
+    "title": "Hành trình chuyến đi · {{name}}",
+    "backTitle": "Về chi tiết đơn thuê",
+    "loading": "Đang tải hành trình...",
+    "routeMatched": "Lộ trình đã khớp theo đường phố thật (map matching)",
+    "routeUnmatched": "Lộ trình nối giữa các điểm GPS (chưa khớp được đường phố)",
+    "play": "Phát",
+    "pause": "Tạm dừng",
+    "replay": "Phát lại",
+    "sliderLabel": "Vị trí phát lại trong hành trình",
+    "point": "Điểm {{current}}/{{total}}",
+    "startedAt": "Bắt đầu {{time}}",
+    "summaryTitle": "Tổng hợp chuyến đi",
+    "distance": "Quãng đường",
+    "maxSpeed": "Tốc độ tối đa",
+    "avgSpeed": "Tốc độ trung bình",
+    "pointCount": "Số điểm ghi nhận",
+    "signalLost": "Số lần mất tín hiệu",
+    "notFinal": "Chuyến chưa kết thúc — số liệu đang tính tạm từ log hiện có.",
+    "noSummary": "Chưa có dữ liệu tổng hợp cho chuyến này.",
+    "invalidBooking": "Booking không hợp lệ.",
+    "vehicleFallback": "Xe #{{id}}",
+    "toastEmptyTitle": "Chưa có hành trình",
+    "toastEmptyMessage": "Chuyến này chưa có đủ điểm GPS để phát lại.",
+    "toastErrorTitle": "Lỗi",
+    "toastErrorMessage": "Không tải được hành trình chuyến đi."
+  },
+  "banner": {
+    "permissionDenied": "Bạn chưa bật chia sẻ vị trí cho trình duyệt. Chủ xe không thể theo dõi chuyến đi.",
+    "ownerFollowing": "Chủ xe theo dõi được chuyến đi",
+    "updated": "cập nhật {{time}}"
+  },
+  "publisher": {
+    "sendFailed": "Không gửi được vị trí. Sẽ thử lại.",
+    "geolocationUnsupported": "Trình duyệt của bạn không hỗ trợ định vị GPS.",
+    "permissionDenied": "Bạn chưa cấp quyền vị trí cho trình duyệt. Chủ xe không thể theo dõi chuyến đi.",
+    "positionFailed": "Không lấy được vị trí hiện tại. Sẽ thử lại."
+  }
+}

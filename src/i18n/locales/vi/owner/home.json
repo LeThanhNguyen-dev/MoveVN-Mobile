@@ -1,0 +1,80 @@
+{
+  "home": {
+    "header": {
+      "eyebrow": "Không gian chủ xe",
+      "title": "Tổng quan chủ xe",
+      "description": "Theo dõi việc cần xử lý, chuẩn bị giao nhận xe và mở nhanh các công cụ quản lý cho thuê."
+    },
+    "actions": {
+      "refresh": "Làm mới",
+      "addVehicle": "Thêm xe",
+      "retry": "Thử lại"
+    },
+    "metrics": {
+      "pending": {
+        "label": "Yêu cầu chờ duyệt",
+        "description": "Mở danh sách để xem và phản hồi yêu cầu"
+      },
+      "returns": {
+        "label": "Chờ xác nhận nhận lại xe",
+        "description": "Khách đã báo trả, cần chủ xe kiểm tra"
+      },
+      "pickups": {
+        "label": "Giao xe trong 24 giờ tới",
+        "description": "Các chuyến đã xác nhận, sắp đến giờ giao"
+      },
+      "dueReturns": {
+        "label": "Nhận lại trong 24 giờ tới",
+        "description": "Xe đã bàn giao, sắp đến giờ trả dự kiến"
+      }
+    },
+    "fleet": {
+      "title": "Hiện trạng đội xe",
+      "description": "Số liệu vận hành hiện tại trên toàn bộ xe của bạn.",
+      "openCalendar": "Mở lịch đội xe",
+      "loading": "Đang tải hiện trạng đội xe",
+      "summary": {
+        "available": "Xe đang trống",
+        "rented": "Đang thuê đúng giờ",
+        "overdue": "Quá giờ trả",
+        "blocked": "Đang chặn lịch"
+      },
+      "overdueAlert": "Có {{count}} xe quá giờ trả cần kiểm tra.",
+      "checkCalendar": "Kiểm tra trên lịch",
+      "footer": "{{count}} xe trong đội · Cập nhật {{updatedAt}} · Giờ Việt Nam UTC+7"
+    },
+    "errors": {
+      "fleet": "Không thể tải hiện trạng đội xe. Vui lòng thử lại.",
+      "pending": "Không thể tải các yêu cầu chờ duyệt.",
+      "returned": "Không thể tải các chuyến chờ nhận lại xe."
+    },
+    "worklists": {
+      "pending": {
+        "title": "Yêu cầu cần duyệt",
+        "description": "Mở từng yêu cầu để kiểm tra khách hàng, lịch thuê và phản hồi."
+      },
+      "returned": {
+        "title": "Chờ xác nhận nhận lại xe",
+        "description": "Kiểm tra xe và hồ sơ trả xe trước khi hoàn tất chuyến thuê."
+      },
+      "viewAll": "Xem tất cả",
+      "loading": "Đang tải {{name}}",
+      "emptyPending": "Không có yêu cầu chờ duyệt",
+      "emptyReturned": "Không có chuyến chờ xác nhận nhận lại xe",
+      "emptyHint": "Các yêu cầu mới sẽ được hiển thị tại đây.",
+      "vehicleFallback": "Xe #{{id}}",
+      "customerFallback": "Khách hàng #{{id}}",
+      "pickupLabel": "Nhận xe:",
+      "returnLabel": "Giờ trả dự kiến:",
+      "footer": "Hiển thị {{shown}} / {{total}} yêu cầu · Mở danh sách để xem thêm."
+    },
+    "shortcuts": {
+      "title": "Truy cập nhanh",
+      "description": "Chọn công việc bạn muốn thực hiện.",
+      "vehicles": "Quản lý xe",
+      "calendar": "Lịch giao và nhận xe",
+      "bookings": "Tất cả yêu cầu thuê",
+      "statistics": "Thống kê đội xe"
+    }
+  }
+}

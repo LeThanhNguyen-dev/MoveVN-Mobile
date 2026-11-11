@@ -1,15 +1,17 @@
 import { useMemo } from "react";
 import { ArrowLeft } from "lucide-react-native";
 import { Pressable, StyleSheet, View } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { useTheme } from "@/theme/useTheme";
 import type { Theme } from "@/theme/tokens";
 
 export function AuthScreenHeader({ title, description, onBack }: { title: string; description: string; onBack?: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return <>
-    {onBack ? <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.back}><ArrowLeft color={theme.brand} size={21} /></Pressable> : null}
+    {onBack ? <Pressable accessibilityLabel={t("mobile:auth.back")} accessibilityRole="button" onPress={onBack} style={styles.back}><ArrowLeft color={theme.brand} size={21} /></Pressable> : null}
     <View style={styles.heading}><AppText display style={styles.title}>{title}</AppText><AppText style={styles.description}>{description}</AppText></View>
   </>;
 }

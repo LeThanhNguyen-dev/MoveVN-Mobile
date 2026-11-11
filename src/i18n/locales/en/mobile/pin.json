@@ -1,0 +1,34 @@
+{
+  "pin": {
+    "masked": {
+      "copyAria": "Copy document number",
+      "revealAria": "Reveal document number",
+      "notVerified": "This document has not been verified for display.",
+      "setupNoticeTitle": "PIN setup required",
+      "setupNoticeBody": "You need to set up a PIN to view this document's details.",
+      "later": "Later",
+      "setupNow": "Set up now"
+    },
+    "change": {
+      "otpIntro": "A verification OTP will be sent to your email.",
+      "otpEnterIntro": "Enter the OTP sent to your email.",
+      "newPinIntro": "Enter your new 6-digit PIN.",
+      "confirmIntro": "Re-enter your new PIN to confirm.",
+      "errorFillNewPin": "Please enter all 6 digits of the new PIN.",
+      "submitting": "Changing...",
+      "submit": "Confirm PIN change"
+    },
+    "setup": {
+      "emailIntro": "To confirm you own this account, a verification OTP will be sent to your email.",
+      "otpIntro": "Enter the OTP sent to your email to confirm you are the account owner.",
+      "submitting": "Creating..."
+    },
+    "verify": {
+      "lockedDetail": "The PIN is temporarily locked after too many incorrect attempts.",
+      "submitting": "Checking..."
+    },
+    "forgot": {
+      "submitting": "Resetting..."
+    }
+  }
+}

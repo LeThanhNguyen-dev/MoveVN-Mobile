@@ -1,0 +1,39 @@
+{
+  "login": {
+    "title": "Đăng nhập",
+    "description": "Chào mừng bạn quay lại MoveVN!",
+    "passwordRequired": "Vui lòng nhập mật khẩu.",
+    "expiredSession": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+    "rememberMe": "Ghi nhớ đăng nhập",
+    "forgotPassword": "Quên mật khẩu?",
+    "submit": "Đăng nhập",
+    "orContinueWith": "Hoặc tiếp tục với",
+    "googleFailed": "Đăng nhập Google thất bại. Vui lòng thử lại.",
+    "googleNotConfigured": "Google (chưa cấu hình)",
+    "googleDisabledTitle": "Thiếu VITE_GOOGLE_CLIENT_ID nên đăng nhập Google bị tắt",
+    "noAccount": "Chưa có tài khoản?",
+    "registerNow": "Đăng ký ngay",
+    "successTitle": "Đăng nhập thành công",
+    "successMessage": "Chào mừng {{name}}."
+  },
+  "register": {
+    "title": "Đăng ký",
+    "description": "Chào mừng bạn đến với MoveVN!",
+    "passwordHelper": "Tối thiểu 8 ký tự.",
+    "roleInvalid": "Chỉ được đăng ký vai trò Customer hoặc Owner.",
+    "termsRequiredTitle": "Chưa đồng ý điều khoản",
+    "termsRequiredMessage": "Vui lòng đọc và đồng ý với chính sách và điều khoản sử dụng.",
+    "terms": "Tôi đã đọc và đồng ý với <privacy>Chính sách bảo mật</privacy> và <terms>Điều khoản sử dụng</terms> của MoveVN.",
+    "privacyPolicy": "Chính sách bảo mật",
+    "termsOfService": "Điều khoản sử dụng",
+    "submit": "Đăng ký",
+    "hasAccount": "Đã có tài khoản?",
+    "loginNow": "Đăng nhập ngay",
+    "successTitle": "Đăng ký thành công",
+    "successMessage": "MoveVN đã gửi OTP tới email của bạn."
+  },
+  "ownerRegister": {
+    "title": "Đăng ký chủ xe",
+    "description": "Tạo tài khoản và đăng ký làm chủ xe trên MoveVN!"
+  }
+}

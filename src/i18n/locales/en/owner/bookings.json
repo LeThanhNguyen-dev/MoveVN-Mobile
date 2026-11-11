@@ -1,0 +1,28 @@
+{
+  "bookings": {
+    "status": {
+      "all": "All"
+    },
+    "list": {
+      "eyebrow": "Owner bookings",
+      "title": "Booking requests",
+      "description": "Manage booking requests from customers, review risk and open details to reply to a booking.",
+      "count": "{{count}} requests",
+      "searchPlaceholder": "Booking code, customer, address...",
+      "sectionTitle": "Request list",
+      "sectionDescription": "Prioritise requests that are already deposited or carry high risk.",
+      "emptyTitle": "No requests yet",
+      "emptyDescription": "Bookings from customers will appear here.",
+      "colBookingCode": "Booking code",
+      "colCustomer": "Customer",
+      "colStartDate": "Pick-up date",
+      "colEndDate": "Return date",
+      "colTotal": "Total",
+      "colRisk": "Risk",
+      "colStatus": "Status",
+      "colActions": "Actions",
+      "customerFallback": "Customer #{{id}}",
+      "viewDetail": "Details"
+    }
+  }
+}

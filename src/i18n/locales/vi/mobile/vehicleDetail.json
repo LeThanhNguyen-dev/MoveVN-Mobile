@@ -1,0 +1,136 @@
+{
+  "vehicleDetail": {
+    "screen": {
+      "titleFallback": "Chi tiết xe",
+      "loadErrorTitle": "Không tải được thông tin xe",
+      "loadErrorBody": "Vui lòng kiểm tra kết nối và thử lại.",
+      "shareMessage": "{{title}} trên MoveVN",
+      "addressFallback": "Chưa cập nhật địa chỉ",
+      "pageNote": "Thông tin do chủ xe cung cấp. Giá và phụ phí có thể thay đổi theo thời gian thuê."
+    },
+    "hero": {
+      "viewPhotoAria": "Xem ảnh {{index}} trên {{total}} của xe",
+      "noPhotos": "Xe chưa có ảnh",
+      "shareAria": "Chia sẻ xe",
+      "viewAllAria": "Xem toàn bộ {{total}} ảnh",
+      "viewAll": "Xem {{total}} ảnh"
+    },
+    "about": {
+      "title": "Về chiếc xe",
+      "empty": "Chủ xe chưa bổ sung mô tả cho xe này.",
+      "showMore": "Xem thêm"
+    },
+    "features": {
+      "title": "Tiện ích",
+      "empty": "Chưa cập nhật tiện ích."
+    },
+    "availability": {
+      "idleTitle": "Chọn ngày để kiểm tra lịch",
+      "loadingTitle": "Đang kiểm tra lịch xe…",
+      "busyTitle": "Xe đã bận trong khoảng này",
+      "errorTitle": "Chưa kiểm tra được lịch",
+      "readyTitle": "Còn trống · {{range}}",
+      "idleSubtitle": "Xe có thể còn trống cho khoảng ngày của bạn",
+      "loadingSubtitle": "Vui lòng chờ trong giây lát",
+      "busySubtitle": "Chọn khoảng ngày khác để tiếp tục",
+      "errorSubtitle": "Thử lại để xem xe có trống không",
+      "readySubtitle": "Không trùng lịch bận hiện tại của xe",
+      "choose": "Chọn",
+      "change": "Đổi",
+      "changeDates": "Đổi ngày"
+    },
+    "dock": {
+      "selectDates": "Chọn ngày thuê",
+      "checking": "Đang kiểm tra…",
+      "recheckCalendar": "Kiểm tra lại lịch",
+      "changeDates": "Đổi ngày thuê",
+      "bookNow": "Đặt xe ngay",
+      "calculating": "Đang tính giá…",
+      "totalDays": "tổng {{days}} ngày",
+      "savings": "Tiết kiệm {{amount}}đ (−{{percent}}%)",
+      "busyHint": "Xe đã bận trong khoảng ngày này",
+      "availabilityErrorHint": "Chưa kiểm tra được lịch xe",
+      "totalHint": "Chưa gồm phí giao xe & phụ phí",
+      "selectDatesHint": "Chọn ngày để xem tổng tiền",
+      "pickDatesHint": "Chọn ngày nhận và trả xe"
+    },
+    "unit": {
+      "perDay": "/ngày"
+    },
+    "rental": {
+      "title": "Lịch & giá thuê",
+      "pickupAria": "Chọn ngày nhận xe",
+      "returnAria": "Chọn ngày trả xe",
+      "swapAria": "Đổi ngày nhận và trả xe",
+      "hint": "Chọn ngày nhận và trả xe để xem giá chính xác.",
+      "loading": "Đang tính giá theo từng ngày…",
+      "error": "Chưa lấy được báo giá cho khoảng ngày này.",
+      "retryQuoteAria": "Thử lại báo giá",
+      "rentalLine": "Tiền thuê ({{days}} ngày)",
+      "discountLine": "Giảm thuê dài ngày ({{percent}}%)",
+      "subtotal": "Tạm tính",
+      "collapseDaily": "Thu gọn chi tiết giá",
+      "expandDaily": "Xem chi tiết giá theo ngày",
+      "footnote": "Chưa gồm phí giao xe và phụ phí phát sinh"
+    },
+    "policies": {
+      "title": "Chính sách & phí",
+      "deliveryTitle": "Giao xe tận nơi",
+      "deliveryFree": "Miễn phí {{km}} km đầu",
+      "deliveryByDistance": "Theo khoảng cách",
+      "deliveryPerKm": "{{price}}/km vượt · tối đa {{max}} km",
+      "deliveryWithin": "Áp dụng trong phạm vi {{max}} km",
+      "depositTitle": "Đặt cọc",
+      "depositPercent": "{{percent}}% tiền thuê",
+      "depositSub": "Theo giá trị đơn thuê",
+      "depositNoPrepay": "Không cần đặt cọc trước",
+      "collateralTitle": "Tiền thế chấp",
+      "collateralAgreed": "Theo thoả thuận",
+      "collateralSub": "Khoản thế chấp khi nhận xe",
+      "collateralNone": "Không cần thế chấp tài sản",
+      "surchargeTitle": "Phụ phí",
+      "surchargeCount": "{{count}} khoản",
+      "surchargeNone": "Không có",
+      "surchargeSub": "Chạm để xem chi tiết từng khoản",
+      "surchargeNoExtra": "Không phát sinh phụ phí",
+      "surchargeAria": "Xem chi tiết phụ phí",
+      "closeSurchargeAria": "Đóng chi tiết phụ phí",
+      "sheetTitle": "Phụ phí & chính sách",
+      "sheetSubtitle": "Các khoản có thể phát sinh khi thuê xe"
+    },
+    "reviews": {
+      "all": "Xem tất cả",
+      "allAria": "Xem tất cả {{count}} đánh giá",
+      "title": "Đánh giá từ khách thuê",
+      "count": "{{count}} lượt đánh giá",
+      "hint": "Chia sẻ từ người thuê trước",
+      "loading": "Đang tải đánh giá…",
+      "error": "Không tải được đánh giá.",
+      "retryAria": "Thử lại đánh giá",
+      "emptyText": "Xe chưa có đánh giá từ khách thuê.",
+      "closeAria": "Đóng đánh giá",
+      "anonymous": "Khách thuê",
+      "profileAria": "Xem hồ sơ {{name}}",
+      "noComment": "Khách thuê không để lại nhận xét.",
+      "ratingError": "Chưa tải được đánh giá"
+    },
+    "summary": {
+      "year": "Năm SX",
+      "odometer": "Đã đi",
+      "type": "Loại xe",
+      "collateral": "Thế chấp",
+      "free": "Miễn",
+      "priceNote": "Chưa gồm phí"
+    },
+    "owner": {
+      "fallback": "Chưa cập nhật",
+      "role": "Chủ xe",
+      "profileSuffix": " · Xem hồ sơ",
+      "profileAria": "Xem hồ sơ chủ xe {{name}}"
+    },
+    "pricing": {
+      "selectDate": "Chọn ngày",
+      "tapToSelect": "Chạm để chọn"
+    }
+  }
+}

@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -21,30 +22,35 @@ import type { WalletState } from "@/features/wallets/hooks/useWallet";
 type HistorySubTab = "tx" | "withdraw";
 
 // Lọc server-side qua ?type= (exact-match với WalletTransactionType của BE).
-const TYPE_CHIPS: { key: string | null; label: string }[] = [
-  { key: null, label: "Tất cả" },
-  { key: "TopUp", label: "Nạp tiền" },
-  { key: "BookingPayment", label: "Trả cọc" },
-  { key: "Refund", label: "Hoàn tiền" },
-  { key: "Withdrawal", label: "Rút tiền" },
-  { key: "BookingEarning", label: "Thu nhập" },
+const TYPE_CHIPS: { key: string | null; labelKey: string }[] = [
+  { key: null, labelKey: "mobile:wallet.history.chipAll" },
+  { key: "TopUp", labelKey: "accountWallet:types.TopUp" },
+  { key: "BookingPayment", labelKey: "mobile:wallet.history.chipDeposit" },
+  { key: "Refund", labelKey: "accountWallet:types.Refund" },
+  { key: "Withdrawal", labelKey: "accountWallet:types.Withdrawal" },
+  { key: "BookingEarning", labelKey: "mobile:wallet.history.chipEarning" },
 ];
+
+// Khoá nhóm tháng không phụ thuộc ngôn ngữ: "YYYY-M" (hoặc "unknown"),
+// phần hiển thị dịch ra ở component để sort vẫn đúng khi đổi ngôn ngữ.
+const UNKNOWN_MONTH_KEY = "unknown";
 
 function monthKey(dateStr: string) {
   const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "Không rõ thời gian";
-  return `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`;
+  if (Number.isNaN(d.getTime())) return UNKNOWN_MONTH_KEY;
+  return `${d.getFullYear()}-${d.getMonth() + 1}`;
 }
 
-function monthSortValue(title: string) {
-  const m = title.match(/Tháng (\d+)\/(\d+)/);
+function monthSortValue(key: string) {
+  const m = key.match(/^(\d+)-(\d+)$/);
   if (!m) return 0;
-  return Number(m[2]) * 12 + Number(m[1]);
+  return Number(m[1]) * 12 + Number(m[2]);
 }
 
 export default function WalletHistoryScreen({ state }: { state: WalletState }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
   const [sub, setSub] = useState<HistorySubTab>("tx");
   const [keyword, setKeyword] = useState("");
   const [selectedTx, setSelectedTx] = useState<WalletTransactionDto | null>(null);
@@ -73,16 +79,22 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
 
   const sections = useMemo(() => {
     const groups = new Map<string, WalletTransactionDto[]>();
-    for (const t of searched) {
-      const k = monthKey(t.createdAt);
+    for (const item of searched) {
+      const k = monthKey(item.createdAt);
       const arr = groups.get(k);
-      if (arr) arr.push(t);
-      else groups.set(k, [t]);
+      if (arr) arr.push(item);
+      else groups.set(k, [item]);
     }
     return [...groups.entries()]
-      .map(([title, data]) => ({ title, data }))
-      .sort((a, b) => monthSortValue(b.title) - monthSortValue(a.title));
+      .map(([key, data]) => ({ key, data }))
+      .sort((a, b) => monthSortValue(b.key) - monthSortValue(a.key));
   }, [searched]);
+
+  function monthLabel(key: string) {
+    if (key === UNKNOWN_MONTH_KEY) return t("mobile:wallet.history.unknownTime");
+    const [year, month] = key.split("-");
+    return t("mobile:wallet.history.monthTitle", { month, year });
+  }
 
   if (loading) {
     return (
@@ -103,7 +115,8 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
           style={[styles.subButton, sub === "tx" && styles.subActive]}
         >
           <AppText style={[styles.subText, sub === "tx" && styles.subTextActive]}>
-            Giao dịch{transactions.length > 0 ? ` (${txTotal})` : ""}
+            {t("mobile:wallet.history.txTab")}
+            {transactions.length > 0 ? ` (${txTotal})` : ""}
           </AppText>
         </Pressable>
         <Pressable
@@ -113,7 +126,8 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
           style={[styles.subButton, sub === "withdraw" && styles.subActive]}
         >
           <AppText style={[styles.subText, sub === "withdraw" && styles.subTextActive]}>
-            Rút tiền{withdrawals.length > 0 ? ` (${wdTotal})` : ""}
+            {t("accountWallet:withdraw")}
+            {withdrawals.length > 0 ? ` (${wdTotal})` : ""}
           </AppText>
         </Pressable>
       </View>
@@ -121,7 +135,7 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
       {sub === "tx" ? (
         <SectionList
           sections={sections}
-          keyExtractor={(t) => String(t.id)}
+          keyExtractor={(tx) => String(tx.id)}
           contentContainerStyle={styles.body}
           showsVerticalScrollIndicator={false}
           onRefresh={reload}
@@ -132,12 +146,12 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
                 {TYPE_CHIPS.map((c) => (
                   <Pressable
-                    key={c.label}
+                    key={c.labelKey}
                     onPress={() => void setTxTypeFilter(c.key)}
                     style={[styles.chip, txType === c.key && styles.chipActive]}
                   >
                     <AppText style={[styles.chipText, txType === c.key && styles.chipTextActive]}>
-                      {c.label}
+                      {t(c.labelKey)}
                     </AppText>
                   </Pressable>
                 ))}
@@ -145,14 +159,14 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
               <TextInput
                 value={keyword}
                 onChangeText={setKeyword}
-                placeholder="Tìm theo ghi chú trong kết quả đã tải..."
+                placeholder={t("mobile:wallet.history.searchPlaceholder")}
                 placeholderTextColor={theme.placeholder}
                 style={styles.search}
               />
             </View>
           }
           renderSectionHeader={({ section }) => (
-            <AppText display style={styles.monthTitle}>{section.title}</AppText>
+            <AppText display style={styles.monthTitle}>{monthLabel(section.key)}</AppText>
           )}
           renderItem={({ item }) => (
             <Pressable onPress={() => setSelectedTx(item)} style={styles.card}>
@@ -161,14 +175,18 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
           )}
           ListEmptyComponent={
             <AppText style={styles.muted}>
-              {keyword.trim() ? "Không tìm thấy giao dịch phù hợp." : "Chưa có giao dịch nào."}
+              {keyword.trim()
+                ? t("mobile:wallet.history.noMatch")
+                : t("accountWallet:tx.empty")}
             </AppText>
           }
           ListFooterComponent={
             !keyword.trim() && searched.length < txTotal ? (
               <Pressable onPress={loadMoreTx} disabled={loadingMore} style={styles.moreButton}>
                 <AppText style={styles.moreText}>
-                  {loadingMore ? "Đang tải..." : `Xem thêm (${txTotal - searched.length})`}
+                  {loadingMore
+                    ? t("common:loading")
+                    : t("mobile:wallet.history.loadMoreCount", { count: txTotal - searched.length })}
                 </AppText>
               </Pressable>
             ) : undefined
@@ -187,12 +205,18 @@ export default function WalletHistoryScreen({ state }: { state: WalletState }) {
               <WithdrawalRow w={item} onCancel={handleCancelWithdrawal} />
             </View>
           )}
-          ListEmptyComponent={<AppText style={styles.muted}>Chưa có yêu cầu rút tiền nào.</AppText>}
+          ListEmptyComponent={
+            <AppText style={styles.muted}>
+              {t("accountWallet:withdrawals.empty")}
+            </AppText>
+          }
           ListFooterComponent={
             withdrawals.length < wdTotal ? (
               <Pressable onPress={loadMoreWd} disabled={loadingMoreWd} style={styles.moreButton}>
                 <AppText style={styles.moreText}>
-                  {loadingMoreWd ? "Đang tải..." : `Xem thêm (${wdTotal - withdrawals.length})`}
+                  {loadingMoreWd
+                    ? t("common:loading")
+                    : t("mobile:wallet.history.loadMoreCount", { count: wdTotal - withdrawals.length })}
                 </AppText>
               </Pressable>
             ) : undefined

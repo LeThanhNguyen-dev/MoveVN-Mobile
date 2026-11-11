@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import i18n from "@/i18n";
 import { getMyApplication, createApplication, uploadNationalId, updateBankInfo, submitApplication } from "@/features/owner/services/ownerService";
 import { refreshAuthSession } from "@/services/apiClient";
 import { appendUploadFile, type UploadFileInput } from "@/types/upload";
@@ -100,7 +101,7 @@ export function useOwnerApplication(stepParam?: string | null) {
         }
         return result;
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Tải ảnh thất bại. Vui lòng thử lại.";
+        const msg = err instanceof Error ? err.message : i18n.t("mobile:ownerHome.errors.uploadFailed");
         setError(msg);
         throw err;
       } finally {
@@ -119,7 +120,7 @@ export function useOwnerApplication(stepParam?: string | null) {
         setApplication(result);
         setWizardStep(nextStepToWizardStep(result.nextStep));
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Cập nhật thông tin ngân hàng thất bại.";
+        const msg = err instanceof Error ? err.message : i18n.t("accountVerification:bank.customerSaveFallback");
         setError(msg);
         throw err;
       } finally {
@@ -143,7 +144,7 @@ export function useOwnerApplication(stepParam?: string | null) {
       }
       setWizardStep("owner-success");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gửi hồ sơ thất bại.";
+      const msg = err instanceof Error ? err.message : i18n.t("mobile:ownerHome.errors.submitApplication");
       setError(msg);
       throw err;
     } finally {

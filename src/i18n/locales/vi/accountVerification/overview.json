@@ -1,0 +1,26 @@
+{
+  "overview": {
+    "loader": "Đang tải...",
+    "eyebrow": "Trung tâm danh tính",
+    "title": "Xác minh danh tính",
+    "description": "Theo dõi các bước xác minh cần thiết để thuê xe, đăng ký làm chủ xe và nhận thanh toán an toàn trên MoveVN.",
+    "statusBadge": "{{verified}}/{{total}} đã xác minh",
+    "checklistTitle": "Checklist xác minh",
+    "checklistDescription": "Hoàn tất các mục còn thiếu để tài khoản có đủ điều kiện sử dụng đầy đủ tính năng.",
+    "items": {
+      "email": "Email",
+      "cccd": "CCCD / CMND",
+      "cccdDescription": "Căn cước công dân",
+      "license": "Giấy phép lái xe",
+      "licenseClass": "Hạng {{class}}",
+      "licenseAll": "Bằng lái xe các hạng",
+      "bank": "Ngân hàng",
+      "bankDescription": "Tài khoản thụ hưởng"
+    },
+    "verified": "Đã xác minh",
+    "unverified": "Chưa xác minh",
+    "readyTitle": "Tài khoản đã sẵn sàng",
+    "pendingTitle": "Còn bước xác minh cần hoàn tất",
+    "footerDescription": "Các bước xác minh giúp giảm rủi ro khi đặt xe, hỗ trợ duyệt hồ sơ nhanh hơn và bảo vệ giao dịch giữa khách hàng với chủ xe."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "polling": {
+    "checking": "Checking the payment result from PayOS...",
+    "cancelled": "The payment transaction has been cancelled.",
+    "expired": "The transaction has expired or failed.",
+    "noConfirmation": "No confirmation received. Please check again later.",
+    "checkFailed": "Unable to check the payment status."
+  },
+  "toast": {
+    "successTitle": "Success",
+    "noticeTitle": "Notice",
+    "timeoutTitle": "Timed out",
+    "errorTitle": "Error",
+    "confirmTitle": "Confirm"
+  }
+}

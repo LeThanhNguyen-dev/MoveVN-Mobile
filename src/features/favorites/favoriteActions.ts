@@ -4,6 +4,7 @@ import {
   getToken,
   useAuthStore,
 } from "@/features/auth/hooks/useAuth";
+import i18n from "@/i18n";
 import { getApiErrorMessage } from "@/services/apiClient";
 import {
   addFavoriteVehicle,
@@ -62,7 +63,7 @@ export function refreshFavoriteIds(): Promise<void> {
         store.setState({
           idsError: getApiErrorMessage(
             error,
-            "Chưa tải được trạng thái yêu thích. Nhấn để thử lại.",
+            i18n.t("mobile:favorites.idsLoadError"),
           ),
         });
     } finally {
@@ -120,7 +121,7 @@ export async function loadFavoriteVehicles(more = false) {
       store.setState({
         listError: getApiErrorMessage(
           error,
-          "Không tải được xe yêu thích. Vui lòng thử lại.",
+          i18n.t("users:favorites.loadError"),
         ),
         listDirty: state.listDirty || store.getState().revision !== revision,
       });
@@ -151,7 +152,7 @@ export async function toggleFavoriteVehicle(
         ? {
             error:
               store.getState().idsError ??
-              "Chưa tải được trạng thái yêu thích.",
+              i18n.t("mobile:favorites.idsNotReady"),
           }
         : {}),
     };
@@ -190,8 +191,8 @@ export async function toggleFavoriteVehicle(
       error: getApiErrorMessage(
         error,
         saved
-          ? "Chưa bỏ được xe khỏi yêu thích. Vui lòng thử lại."
-          : "Chưa lưu được xe. Kiểm tra kết nối và tình trạng xe rồi thử lại.",
+          ? i18n.t("mobile:favorites.removeError")
+          : i18n.t("mobile:favorites.saveError"),
       ),
     };
   } finally {

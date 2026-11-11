@@ -1,0 +1,73 @@
+{
+  "account": {
+    "roles": {
+      "renter": "Renter"
+    },
+    "sections": {
+      "manage": "Management",
+      "security": "Security",
+      "appearance": "Appearance"
+    },
+    "status": {
+      "unreadCount": "{{total}} unread"
+    },
+    "profile": {
+      "title": "Account information",
+      "openA11y": "View account information",
+      "fallbackName": "MoveVN account",
+      "edit": "Edit information",
+      "closeSheet": "Close editing",
+      "changeAvatar": "Change profile photo",
+      "phoneEmpty": "Not added",
+      "cccdName": "Name on ID card",
+      "cccdNotVerified": "You haven't verified your ID card yet.",
+      "documentLocked": "This document isn't verified for display.",
+      "licenseEmpty": "No driver's license information yet.",
+      "bankEmpty": "No bank information yet.",
+      "avatarPermission": "Photo library access is required to change your profile photo.",
+      "nameRequired": "Please enter your full name."
+    },
+    "menu": {
+      "favorites": "Favorites",
+      "deals": "Deals",
+      "disputes": "Disputes",
+      "stats": "Statistics",
+      "availabilityAlerts": "Availability alerts",
+      "supportTickets": "My support requests",
+      "chatbot": "MoveVN Chatbot",
+      "chatbotReopen": "Reopen",
+      "policy": "Terms & policies"
+    },
+    "theme": {
+      "title": "Dark mode",
+      "activeDark": "Using dark theme",
+      "activeLight": "Using light theme",
+      "toggleA11y": "Toggle light and dark mode"
+    },
+    "roleAction": {
+      "switchToCustomer": "Switch to renter",
+      "switchToCustomerDescription": "Rent vehicles and manage your travel needs",
+      "switchToOwner": "Switch to vehicle owner",
+      "switchToOwnerDescription": "Manage vehicles, bookings and earnings",
+      "becomeOwnerDescription": "Create your rental profile on MoveVN"
+    },
+    "verification": {
+      "title": "Verification",
+      "overview": "Verification overview"
+    },
+    "verificationHub": {
+      "title": "Account verification",
+      "subtitle": "Check the verification status of your documents"
+    },
+    "verify": {
+      "cccd": "Verify ID card",
+      "gplx": "Verify driver's license"
+    },
+    "cccdInfo": {
+      "title": "ID card information",
+      "verifiedDescription": "Your identity information is verified",
+      "storedNote": "Your information is stored securely.",
+      "unverifiedDescription": "You haven't verified your ID card yet. Verify now to unlock all MoveVN features."
+    }
+  }
+}

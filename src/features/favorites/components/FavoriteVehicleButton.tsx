@@ -8,6 +8,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { Heart, RefreshCw } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { useTheme } from "@/theme/useTheme";
 import {
@@ -44,6 +45,7 @@ export default function FavoriteVehicleButton({
   const pending = useFavoriteStore((state) =>
     state.pendingIds.includes(vehicleId),
   );
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const mounted = useRef(true);
   useEffect(() => {
@@ -54,8 +56,10 @@ export default function FavoriteVehicleButton({
   }, []);
   if (!supported) return null;
   const label = !loaded
-    ? `Tải trạng thái yêu thích xe ${vehicleId}`
-    : `${saved ? "Bỏ yêu thích" : "Lưu xe yêu thích"} ${vehicleId}`;
+    ? t("mobile:favorites.loadStateAria", { id: vehicleId })
+    : saved
+      ? t("common:unfavoriteVehicle", { title: vehicleId })
+      : t("mobile:favorites.saveAria", { id: vehicleId });
   const busy = pending || (!loaded && loading);
   return (
     <Pressable
@@ -76,14 +80,14 @@ export default function FavoriteVehicleButton({
             !useFavoriteStore.getState().idsLoaded
           )
             Alert.alert(
-              "Chưa tải được yêu thích",
-              useFavoriteStore.getState().idsError ?? "Vui lòng thử lại.",
+              t("mobile:favorites.alertTitle"),
+              useFavoriteStore.getState().idsError ?? t("mobile:favorites.alertMessage"),
             );
           return;
         }
         const result = await toggleFavoriteVehicle(vehicleId);
         if (result.error && current() && mounted.current)
-          Alert.alert("Yêu thích", result.error);
+          Alert.alert(t("mobile:favorites.errorTitle"), result.error);
       }}
     >
       {busy ? (

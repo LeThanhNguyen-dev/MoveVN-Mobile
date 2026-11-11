@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import PinForgotModal from "@/features/pin/components/PinForgotModal";
 import PinSetupModal from "@/features/pin/components/PinSetupModal";
 import PinVerifyModal from "@/features/pin/components/PinVerifyModal";
@@ -23,6 +24,7 @@ export default function WalletPinUnlockModal({
   verifyDescription?: string;
 }) {
   const [forgotVisible, setForgotVisible] = useState(false);
+  const { t } = useTranslation();
   const isPinSet = gate.pinStatus?.isPinSet ?? true;
 
   async function handleVerified(pinCode: string) {
@@ -55,7 +57,7 @@ export default function WalletPinUnlockModal({
         visible={visible}
         onClose={onClose}
         onSetupDone={handleSetupDone}
-        purposeDescription="Thiết lập mã PIN 6 chữ số để bảo vệ số dư và rút tiền trong ví của bạn."
+        purposeDescription={t("mobile:wallet.pin.setupPurpose")}
       />
     );
   }
@@ -70,7 +72,7 @@ export default function WalletPinUnlockModal({
         onForgotPin={() => setForgotVisible(true)}
         lockoutSeconds={gate.lockoutSeconds}
         remainingAttempts={gate.remainingAttempts}
-        purposeDescription={verifyDescription ?? "Nhập mã PIN của bạn để xem số dư ví."}
+        purposeDescription={verifyDescription ?? t("mobile:wallet.pin.verifyBalance")}
       />
       <PinForgotModal
         visible={forgotVisible}

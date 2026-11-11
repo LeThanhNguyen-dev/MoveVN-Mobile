@@ -2,6 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { memo, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
@@ -9,10 +10,10 @@ import { useTheme } from "@/theme/useTheme";
 import type { DealsStackParamList } from "@/navigation/types";
 import { CTA_GRADIENT } from "@/features/vouchers/voucherFormat";
 
-const SEGMENTS: { route: keyof DealsStackParamList; emoji: string; label: string }[] = [
-  { route: "Promotions", emoji: "🔥", label: "Khuyến mãi" },
-  { route: "VoucherHunt", emoji: "✨", label: "Săn mã" },
-  { route: "VoucherWallet", emoji: "🧳", label: "Ví voucher" },
+const SEGMENTS: { route: keyof DealsStackParamList; emoji: string; labelKey: string }[] = [
+  { route: "Promotions", emoji: "🔥", labelKey: "mobile:voucher.nav.promotions" },
+  { route: "VoucherHunt", emoji: "✨", labelKey: "mobile:voucher.nav.hunt" },
+  { route: "VoucherWallet", emoji: "🧳", labelKey: "promo:wallet.pageTitle" },
 ];
 
 type DealsNav = NativeStackNavigationProp<DealsStackParamList>;
@@ -22,18 +23,20 @@ function DealsSegmentedNav() {
   const route = useRoute();
   const navigation = useNavigation<DealsNav>();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View style={styles.bar}>
       {SEGMENTS.map((seg) => {
         const active = route.name === seg.route;
+        const label = t(seg.labelKey);
         return (
           <Pressable
             key={seg.route}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={seg.label}
+            accessibilityLabel={label}
             onPress={() => {
               if (active) return;
               if (seg.route === "Promotions") navigation.navigate("Promotions");
@@ -50,13 +53,13 @@ function DealsSegmentedNav() {
                 style={styles.segActive}
               >
                 <AppText style={styles.segActiveText}>
-                  {seg.emoji} {seg.label}
+                  {seg.emoji} {label}
                 </AppText>
               </LinearGradient>
             ) : (
               <View style={styles.segIdle}>
                 <AppText style={styles.segIdleText}>
-                  {seg.emoji} {seg.label}
+                  {seg.emoji} {label}
                 </AppText>
               </View>
             )}

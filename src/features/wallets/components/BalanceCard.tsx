@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { Eye, EyeOff, LoaderCircle } from "lucide-react-native";
 import type { Theme } from "@/theme/tokens";
@@ -30,6 +31,7 @@ export default function BalanceCard({
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
   const masked = locked === true || hidden;
 
   return (
@@ -39,10 +41,14 @@ export default function BalanceCard({
       <View pointerEvents="none" style={styles.decorB} />
 
       <View style={styles.topRow}>
-        <AppText style={styles.label}>Số dư khả dụng</AppText>
+        <AppText style={styles.label}>{t("accountWallet:availableBalance")}</AppText>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={locked === true ? "Mở khóa số dư" : hidden ? "Hiện số dư" : "Ẩn số dư"}
+          accessibilityLabel={locked === true
+            ? t("mobile:wallet.a11y.unlockBalance")
+            : hidden
+              ? t("mobile:wallet.a11y.showBalance")
+              : t("mobile:wallet.a11y.hideBalance")}
           onPress={locked === true ? onUnlockPress : onToggleHidden}
           style={styles.eyeButton}
           hitSlop={10}
@@ -59,14 +65,16 @@ export default function BalanceCard({
 
       <View style={styles.statsRow}>
         <View style={styles.stat}>
-          <AppText style={styles.statLabel}>{isOwner ? "Tổng thu nhập" : "Đã nạp"}</AppText>
+          <AppText style={styles.statLabel}>
+            {isOwner ? t("mobile:wallet.balance.earned") : t("mobile:wallet.balance.topUp")}
+          </AppText>
           <AppText style={styles.statValue}>
             {masked ? "***" : formatMoney(totalEarned)}
           </AppText>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>
-          <AppText style={styles.statLabel}>Đã chi</AppText>
+          <AppText style={styles.statLabel}>{t("mobile:wallet.balance.spent")}</AppText>
           <AppText style={styles.statValue}>
             {masked ? "***" : formatMoney(totalSpent)}
           </AppText>
@@ -76,7 +84,9 @@ export default function BalanceCard({
       {pendingOrderCode != null && (
         <View style={styles.pendingChip}>
           <LoaderCircle color={theme.onBrand} size={14} />
-          <AppText style={styles.pendingText}>Đang chờ nạp #{pendingOrderCode}...</AppText>
+          <AppText style={styles.pendingText}>
+            {t("mobile:wallet.balance.pendingTopUp", { code: pendingOrderCode })}
+          </AppText>
         </View>
       )}
     </View>

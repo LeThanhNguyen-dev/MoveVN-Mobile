@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, CheckCircle2, CircleAlert, IdCard } from "lucide-react-native";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
@@ -22,13 +23,14 @@ function formatDate(value?: string | null) {
 
 export default function CccdInfoScreen({ onBack, onVerify, application }: CccdInfoScreenProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const verified = application?.nationalIdVerified ?? false;
 
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("accountVerification:bank.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
         <View style={styles.topBarSpacer} />
@@ -38,32 +40,32 @@ export default function CccdInfoScreen({ onBack, onVerify, application }: CccdIn
         {verified && application ? (
           <>
             <View style={styles.header}>
-              <AppText display style={styles.headerTitle}>Thông tin CCCD</AppText>
-              <AppText display style={styles.headerDescription}>Thông tin định danh đã được xác minh</AppText>
+              <AppText display style={styles.headerTitle}>{t("mobile:account.cccdInfo.title")}</AppText>
+              <AppText display style={styles.headerDescription}>{t("mobile:account.cccdInfo.verifiedDescription")}</AppText>
             </View>
 
             <View style={styles.card}>
               <View style={styles.statusBox}>
                 <StatusBadge />
-                <DetailLine label="Họ và tên" value={application.fullName || "-"} />
+                <DetailLine label={t("accountProfile:fullName.label")} value={application.fullName || "-"} />
                 <View style={styles.detailLine}>
-                  <AppText style={styles.detailLabel}>Số CCCD</AppText>
+                  <AppText style={styles.detailLabel}>{t("accountVerification:cccd.idNumber")}</AppText>
                   <MaskedDocumentValue
                     canReveal
                     documentType="CCCD"
                     maskedValue={application.nationalIdNumber ?? null}
-                    revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                    revealDisabledHint={t("mobile:account.profile.documentLocked")}
                   />
                 </View>
-                <DetailLine label="Ngày xác thực" value={formatDate(application.createdAt)} />
+                <DetailLine label={t("accountVerification:cccd.verifiedAt")} value={formatDate(application.createdAt)} />
               </View>
             </View>
 
             <View style={styles.successBox}>
               <CheckCircle2 color={theme.success} size={20} strokeWidth={2.3} />
               <View style={styles.successBody}>
-                <AppText display style={styles.successTitle}>CCCD đã được xác thực</AppText>
-                <AppText style={styles.successText}>Thông tin được lưu trữ an toàn.</AppText>
+                <AppText display style={styles.successTitle}>{t("accountVerification:cccd.verifiedTitle")}</AppText>
+                <AppText style={styles.successText}>{t("mobile:account.cccdInfo.storedNote")}</AppText>
               </View>
             </View>
           </>
@@ -74,19 +76,19 @@ export default function CccdInfoScreen({ onBack, onVerify, application }: CccdIn
                 <IdCard color={theme.brand} size={24} strokeWidth={2.3} />
               </View>
               <View style={styles.cardTitleWrap}>
-                <AppText display style={styles.cardTitle}>Căn cước công dân</AppText>
+                <AppText display style={styles.cardTitle}>{t("accountVerification:overview.items.cccdDescription")}</AppText>
                 <View style={styles.statusRow}>
                   <CircleAlert color={theme.danger} size={15} strokeWidth={2.5} />
-                  <AppText style={[styles.statusText, styles.statusUnverified]}>Chưa xác minh</AppText>
+                  <AppText style={[styles.statusText, styles.statusUnverified]}>{t("account:unverified")}</AppText>
                 </View>
               </View>
             </View>
             <View style={styles.stack}>
               <AppText style={styles.description}>
-                Bạn chưa xác minh CCCD. Xác minh ngay để mở khóa đầy đủ tính năng của MoveVN.
+                {t("mobile:account.cccdInfo.unverifiedDescription")}
               </AppText>
               <Pressable accessibilityRole="button" onPress={onVerify} style={styles.verifyButton}>
-                <AppText style={styles.verifyText}>Xác minh CCCD</AppText>
+                <AppText style={styles.verifyText}>{t("mobile:account.verify.cccd")}</AppText>
               </Pressable>
             </View>
           </View>
@@ -98,11 +100,12 @@ export default function CccdInfoScreen({ onBack, onVerify, application }: CccdIn
 
 function StatusBadge() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={[styles.badge, styles.badgeVerified]}>
       <CheckCircle2 color={theme.success} size={14} strokeWidth={2.5} />
-      <AppText style={[styles.badgeText, styles.badgeTextVerified]}>Đã xác minh</AppText>
+      <AppText style={[styles.badgeText, styles.badgeTextVerified]}>{t("account:verified")}</AppText>
     </View>
   );
 }

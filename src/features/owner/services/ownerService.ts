@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { apiClient, bareApiClient } from "@/services/apiClient";
 import type { ApiResponse } from "@/features/auth/types";
 import type { OwnerApplicationDto, NationalIdOcrResult, BankInfoRequest, CreateOwnerResponse, SubmitOwnerApplicationResponse, OwnerOnboardingRegisterRequest, OwnerOnboardingRegisterResponse } from "@/features/owner/types";
@@ -25,7 +26,7 @@ export async function uploadNationalId(formData: FormData): Promise<NationalIdOc
   });
   const result = unwrap(data);
   if (!result.status) {
-    throw new Error("Xác thực CCCD thất bại. Vui lòng thử lại.");
+    throw new Error(i18n.t("accountVerification:cccd.verifyFailedMessage"));
   }
   return result;
 }

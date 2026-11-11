@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { ChevronLeft, ShieldCheck } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import type { ScrollViewInstance } from "react-native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -64,6 +65,7 @@ export default function CreateBookingScreen({
   onCreated?: (bookingId: number) => void;
 }) {
   const { p } = useCheckoutTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(p), [p]);
   const { vehicleId, startDate: initialStart, endDate: initialEnd } = route.params;
@@ -263,10 +265,10 @@ export default function CreateBookingScreen({
       if (result?.success) {
         setPromoResult({ discountAmount: result.discountAmount, code: result.code });
       } else {
-        setPromoError(result?.message || "Mã không hợp lệ.");
+        setPromoError(result?.message || t("booking:create.invalidCode"));
       }
     } catch (err) {
-      setPromoError(getApiErrorMessage(err, "Không thể kiểm tra mã."));
+      setPromoError(getApiErrorMessage(err, t("booking:create.checkCodeError")));
     } finally {
       setPromoLoading(false);
     }
@@ -296,32 +298,32 @@ export default function CreateBookingScreen({
 
   async function handleSubmit() {
     if (days <= 0) {
-      setSubmitError("Vui lòng chọn ngày nhận và trả xe hợp lệ trước khi gửi.");
+      setSubmitError(t("mobile:checkout.create.invalidSchedule"));
       return;
     }
     if (availabilityLoading || availabilityError || overlapped) {
       setSubmitError(
         overlapped
-          ? "Khoảng thời gian này trùng lịch bận của xe (đã đệm 60 phút vệ sinh). Vui lòng chọn ngày khác."
-          : "Chưa có lịch xe hợp lệ. Vui lòng thử lại.",
+          ? t("mobile:checkout.create.overlap")
+          : t("mobile:checkout.create.scheduleUnavailable"),
       );
       return;
     }
     if (!pickupAddress.trim()) {
-      setSubmitError("Vui lòng chọn địa chỉ nhận xe từ danh sách gợi ý.");
+      setSubmitError(t("mobile:checkout.create.pickupSuggestion"));
       return;
     }
     if (pickupLat == null || pickupLng == null) {
-      setSubmitError("Địa chỉ nhận xe chưa ghim được tọa độ. Hãy chọn lại từ danh sách gợi ý.");
+      setSubmitError(t("mobile:checkout.create.pickupUnpinned"));
       return;
     }
     if (deliveryPreview?.overMax) {
-      setSubmitError(`Điểm nhận xe vượt quá phạm vi giao xe (${effectiveConfig.maxKm} km). Vui lòng chọn địa điểm gần hơn.`);
+      setSubmitError(t("mobile:checkout.create.deliveryTooFar", { max: effectiveConfig.maxKm }));
       return;
     }
     if (!sameReturn) {
       if (!returnAddress.trim() || returnLat == null || returnLng == null) {
-        setSubmitError("Vui lòng chọn địa chỉ trả xe từ danh sách gợi ý.");
+        setSubmitError(t("mobile:checkout.create.returnSuggestion"));
         return;
       }
     }
@@ -342,16 +344,16 @@ export default function CreateBookingScreen({
         customerNote: note.trim() || undefined,
         promotionCode: promoResult ? promoCode.trim().toUpperCase() : undefined,
       });
-      Alert.alert("Đặt xe thành công", `Mã đơn ${created.bookingCode}. Chủ xe duyệt xong bạn sẽ thanh toán cọc.`, [
-        { text: "Xem chuyến đi", onPress: () => onCreated?.(created.id) },
+      Alert.alert(t("booking:create.submitSuccessTitle"), t("mobile:checkout.create.successMessage", { code: created.bookingCode }), [
+        { text: t("mobile:checkout.create.viewTrip"), onPress: () => onCreated?.(created.id) },
       ]);
     } catch (err) {
       const nextAvailable = getNextAvailableFromError(err);
       if (nextAvailable) {
         setNextAvailableDate(nextAvailable);
-        setSubmitError(`Xe bận trong thời gian đã chọn. Xe có thể thuê từ ngày ${new Date(nextAvailable).toLocaleDateString("vi-VN")}.`);
+        setSubmitError(t("mobile:checkout.create.busyNextAvailable", { date: new Date(nextAvailable).toLocaleDateString("vi-VN") }));
       } else {
-        setSubmitError(getApiErrorMessage(err, "Không tạo được đơn. Vui lòng thử lại sau."));
+        setSubmitError(getApiErrorMessage(err, t("mobile:checkout.create.createError")));
       }
     } finally {
       setSubmitting(false);
@@ -362,7 +364,7 @@ export default function CreateBookingScreen({
     <View style={styles.screen}>
       <View style={styles.header}>
         <Pressable
-          accessibilityLabel="Quay lại"
+          accessibilityLabel={t("booking:create.back")}
           hitSlop={6}
           onPress={() => navigation.goBack()}
           style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
@@ -370,14 +372,14 @@ export default function CreateBookingScreen({
           <ChevronLeft color={p.ink} size={21} strokeWidth={2.2} />
         </Pressable>
         <View style={styles.headerBody}>
-          <AppText style={styles.headerKicker}>Kiểm tra lại</AppText>
+          <AppText style={styles.headerKicker}>{t("mobile:checkout.create.kicker")}</AppText>
           <AppText numberOfLines={1} style={styles.headerTitle}>
-            Xác nhận đặt xe
+            {t("mobile:checkout.create.title")}
           </AppText>
         </View>
         <View style={styles.payPill}>
           <ShieldCheck color={p.mint} size={12} strokeWidth={2.2} />
-          <AppText style={styles.payPillText}>Chưa thanh toán</AppText>
+          <AppText style={styles.payPillText}>{t("mobile:checkout.create.unpaid")}</AppText>
         </View>
       </View>
 
@@ -396,12 +398,12 @@ export default function CreateBookingScreen({
           {vehicle === undefined ? (
             <View style={styles.state}>
               <ActivityIndicator color={p.brand} />
-              <AppText style={styles.stateText}>Đang chuẩn bị thông tin đặt xe…</AppText>
+              <AppText style={styles.stateText}>{t("mobile:checkout.create.preparing")}</AppText>
             </View>
           ) : vehicle === null ? (
             <View style={styles.state}>
-              <AppText style={styles.stateTitle}>Không tải được thông tin xe</AppText>
-              <AppText style={styles.stateText}>Vui lòng quay lại và thử lại.</AppText>
+              <AppText style={styles.stateTitle}>{t("mobile:checkout.create.vehicleLoadErrorTitle")}</AppText>
+              <AppText style={styles.stateText}>{t("mobile:checkout.create.vehicleLoadErrorBody")}</AppText>
             </View>
           ) : (
             <>

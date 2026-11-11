@@ -8,6 +8,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppText from "@/components/AppText";
@@ -61,14 +62,15 @@ function ReviewCard({
   full?: boolean;
   onOpenUserProfile?: (userId: number) => void;
 }) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(p), [p]);
-  const name = review.reviewerName || "Khách thuê";
+  const name = review.reviewerName || t("mobile:vehicleDetail.reviews.anonymous");
   const canOpen = Boolean(onOpenUserProfile && review.reviewerId);
   const nameNode = canOpen ? (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`Xem hồ sơ ${name}`}
+      accessibilityLabel={t("mobile:vehicleDetail.reviews.profileAria", { name })}
       onPress={() => onOpenUserProfile?.(review.reviewerId)}
     >
       <AppText style={styles.reviewName} numberOfLines={1}>
@@ -94,7 +96,7 @@ function ReviewCard({
         <Stars value={review.rating} />
       </View>
       <AppText style={styles.reviewComment} numberOfLines={full ? undefined : 4}>
-        {review.comment?.trim() || "Khách thuê không để lại nhận xét."}
+        {review.comment?.trim() || t("mobile:vehicleDetail.reviews.noComment")}
       </AppText>
     </View>
   );
@@ -107,6 +109,7 @@ export default function VehicleReviewsSection({
   onRetry,
   onOpenUserProfile,
 }: Props) {
+  const { t } = useTranslation();
   const { p, mode } = useDetailTheme();
   const styles = useMemo(() => createStyles(p), [p]);
   const insets = useSafeAreaInsets();
@@ -122,28 +125,34 @@ export default function VehicleReviewsSection({
     <View style={styles.section}>
       <View style={styles.headWrap}>
         <DetailSectionHeader
-          actionLabel={count > 0 ? "Xem tất cả" : undefined}
-          actionAccessibilityLabel={`Xem tất cả ${count} đánh giá`}
+          actionLabel={count > 0 ? t("mobile:vehicleDetail.reviews.all") : undefined}
+          actionAccessibilityLabel={t("mobile:vehicleDetail.reviews.allAria", { count })}
           icon={Star}
           onAction={count > 0 ? () => setAllOpen(true) : undefined}
-          title="Đánh giá từ khách thuê"
+          title={t("mobile:vehicleDetail.reviews.title")}
           tone="amber"
         />
         <AppText style={styles.headSub}>
-          {state === "ready" && count > 0 ? `${count} lượt đánh giá` : "Chia sẻ từ người thuê trước"}
+          {state === "ready" && count > 0
+            ? t("mobile:vehicleDetail.reviews.count", { count })
+            : t("mobile:vehicleDetail.reviews.hint")}
         </AppText>
       </View>
 
       {state === "loading" ? (
         <View style={styles.stateCard}>
           <ActivityIndicator color={p.brand} size="small" />
-          <AppText style={styles.stateText}>Đang tải đánh giá…</AppText>
+          <AppText style={styles.stateText}>{t("mobile:vehicleDetail.reviews.loading")}</AppText>
         </View>
       ) : state === "error" ? (
         <View style={styles.stateCard}>
-          <AppText style={styles.stateText}>Không tải được đánh giá.</AppText>
-          <Pressable accessibilityRole="button" accessibilityLabel="Thử lại đánh giá" onPress={onRetry}>
-            <AppText style={styles.retry}>Thử lại</AppText>
+          <AppText style={styles.stateText}>{t("mobile:vehicleDetail.reviews.error")}</AppText>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("mobile:vehicleDetail.reviews.retryAria")}
+            onPress={onRetry}
+          >
+            <AppText style={styles.retry}>{t("common:retry")}</AppText>
           </Pressable>
         </View>
       ) : count === 0 ? (
@@ -151,8 +160,8 @@ export default function VehicleReviewsSection({
           <View style={styles.emptyIcon}>
             <Star color={p.rating} size={20} strokeWidth={2} />
           </View>
-          <AppText style={styles.emptyTitle}>Chưa có đánh giá</AppText>
-          <AppText style={styles.emptyText}>Xe chưa có đánh giá từ khách thuê.</AppText>
+          <AppText style={styles.emptyTitle}>{t("common:noReviews")}</AppText>
+          <AppText style={styles.emptyText}>{t("mobile:vehicleDetail.reviews.emptyText")}</AppText>
         </View>
       ) : (
         <>
@@ -160,7 +169,9 @@ export default function VehicleReviewsSection({
             <View style={styles.scoreBlock}>
               <AppText style={styles.score}>{average != null ? average.toFixed(1) : "—"}</AppText>
               <Stars value={average ?? 0} size={12} />
-              <AppText style={styles.scoreCount}>{count} đánh giá</AppText>
+              <AppText style={styles.scoreCount}>
+                {t("common:reviewsCount", { count })}
+              </AppText>
             </View>
             <View style={styles.bars}>
               {distribution.map((item) => (
@@ -202,11 +213,13 @@ export default function VehicleReviewsSection({
         <View style={styles.modal}>
           <View style={[styles.modalHead, { paddingTop: Math.max(insets.top, 12) }]}>
             <View style={styles.modalTitleWrap}>
-              <AppText style={styles.modalTitle}>Đánh giá từ khách thuê</AppText>
-              <AppText style={styles.modalSub}>{count} lượt đánh giá</AppText>
+              <AppText style={styles.modalTitle}>{t("mobile:vehicleDetail.reviews.title")}</AppText>
+              <AppText style={styles.modalSub}>
+                {t("mobile:vehicleDetail.reviews.count", { count })}
+              </AppText>
             </View>
             <Pressable
-              accessibilityLabel="Đóng đánh giá"
+              accessibilityLabel={t("mobile:vehicleDetail.reviews.closeAria")}
               accessibilityRole="button"
               hitSlop={8}
               onPress={() => setAllOpen(false)}

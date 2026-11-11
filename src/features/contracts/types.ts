@@ -1,3 +1,5 @@
+import { translatedLabels } from "@/i18n/liveLabels";
+
 export interface ContractSummary {
   id: number;
   bookingId: number;
@@ -89,15 +91,16 @@ export interface ContractContent {
   } | null;
 }
 
-export const CONTRACT_STATUS_LABELS: Record<string, string> = {
-  Draft: "Soạn thảo",
-  PendingSigning: "Chờ ký",
-  Overdue: "Quá hạn",
-  Active: "Đang hiệu lực",
-  Completed: "Hoàn thành",
-  Cancelled: "Đã hủy",
-  Terminated: "Chấm dứt",
-  Superseded: "Đã thay thế",
-};
+// Lazy getters: nhãn trạng thái đổi theo ngôn ngữ đang chọn, không đóng băng lúc import.
+export const CONTRACT_STATUS_LABELS: Record<string, string> = translatedLabels("contract", {
+  Draft: "status.Draft",
+  PendingSigning: "status.PendingSigning",
+  Overdue: "status.Overdue",
+  Active: "status.Active",
+  Completed: "status.Completed",
+  Cancelled: "status.Cancelled",
+  Terminated: "status.Terminated",
+  Superseded: "status.Superseded",
+});
 
 export const CONTRACT_LIVE_STATUSES = ["Draft", "PendingSigning", "Overdue", "Active"];

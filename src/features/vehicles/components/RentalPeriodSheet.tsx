@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -121,6 +122,7 @@ export default function RentalPeriodSheet({
   availabilityError = false,
   onRetryAvailability,
 }: RentalPeriodSheetProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -198,7 +200,8 @@ export default function RentalPeriodSheet({
 
     const busyDate = firstBusyDateInRange(startValue, selectedValue, busyDates);
     if (busyDate) {
-      setSelectionError(`Ngày ${busyDate.slice(8, 10)}/${busyDate.slice(5, 7)} đã có người đặt hoặc bị khóa.`);
+      const dayLabel = `${busyDate.slice(8, 10)}/${busyDate.slice(5, 7)}`;
+      setSelectionError(t("mobile:vehicleList.rentalPeriod.dayBusy", { date: dayLabel }));
       return;
     }
     onEndDateChange(withDateAndHour(date, getHour(endDate) || DEFAULT_HOUR));
@@ -233,17 +236,17 @@ export default function RentalPeriodSheet({
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng lịch" />
+        <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel={t("common:rentalPicker.closeAria")} />
         <Animated.View
           style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16), transform: [{ translateY }] }]}
         >
           <View style={styles.handle} />
           <View style={styles.header}>
             <View>
-              <AppText display style={styles.headerTitle}>Chọn thời gian thuê</AppText>
-              <AppText display style={styles.headerSub}>Chọn ngày nhận trước, sau đó chọn ngày trả.</AppText>
+              <AppText display style={styles.headerTitle}>{t("common:rentalPicker.dialogTitle")}</AppText>
+              <AppText display style={styles.headerSub}>{t("common:rentalPicker.dialogDescription")}</AppText>
             </View>
-            <Pressable onPress={handleClose} style={styles.closeButton} accessibilityLabel="Đóng lịch">
+            <Pressable onPress={handleClose} style={styles.closeButton} accessibilityLabel={t("common:rentalPicker.closeAria")}>
               <X color={theme.muted} size={18} />
             </Pressable>
           </View>
@@ -272,8 +275,8 @@ export default function RentalPeriodSheet({
                   </AppText>
                 ))}
               </View>
-              {availabilityLoading && <AppText style={styles.availabilityInfo}>Đang tải lịch trống của xe…</AppText>}
-              {availabilityError && <View style={styles.availabilityRow}><AppText style={styles.error}>Không tải được lịch trống của xe.</AppText><Pressable onPress={onRetryAvailability}><AppText style={styles.retryText}>Thử lại</AppText></Pressable></View>}
+              {availabilityLoading && <AppText style={styles.availabilityInfo}>{t("mobile:vehicleList.rentalPeriod.availabilityLoading")}</AppText>}
+              {availabilityError && <View style={styles.availabilityRow}><AppText style={styles.error}>{t("mobile:vehicleList.rentalPeriod.availabilityError")}</AppText><Pressable onPress={onRetryAvailability}><AppText style={styles.retryText}>{t("common:retry")}</AppText></Pressable></View>}
               <View style={styles.daysGrid}>
                 {cells.map((cell) => {
                   if (!cell || cell.empty || !cell.date) return <View key={cell?.key} style={styles.dayCell} />;
@@ -317,13 +320,13 @@ export default function RentalPeriodSheet({
                 })}
               </View>
               <View style={styles.legendRow}>
-                <AppText style={styles.legend}>● Ngày đã chọn  ░ Trong khoảng  × Đã đặt / khóa</AppText>
+                <AppText style={styles.legend}>{t("mobile:vehicleList.rentalPeriod.legend")}</AppText>
               </View>
             </View>
 
             <View style={styles.hoursRow}>
               <HourPicker
-                label="Giờ nhận xe"
+                label={t("common:rentalPicker.pickupHour")}
                 dateValue={startDate}
                 value={getHour(startDate)}
                 disabled={!startDate}
@@ -332,7 +335,7 @@ export default function RentalPeriodSheet({
                 }}
               />
               <HourPicker
-                label="Giờ trả xe"
+                label={t("common:rentalPicker.returnHour")}
                 dateValue={endDate}
                 value={getHour(endDate)}
                 disabled={!endDate}
@@ -343,24 +346,26 @@ export default function RentalPeriodSheet({
             </View>
             {rangeError ? <AppText style={styles.error}>{rangeError}</AppText> : null}
             {selectionError ? <AppText style={styles.error}>{selectionError}</AppText> : null}
-            {busyDateInSelection ? <AppText style={styles.error}>Khoảng thuê có ngày đã đặt hoặc bị khóa.</AppText> : null}
+            {busyDateInSelection ? <AppText style={styles.error}>{t("mobile:vehicleList.rentalPeriod.rangeBusy")}</AppText> : null}
 
             <View style={styles.summaryCard}>
-              <AppText display style={styles.summaryTitle}>Thời gian đã chọn</AppText>
+              <AppText display style={styles.summaryTitle}>{t("common:rentalPicker.selectedPeriod")}</AppText>
               <View style={styles.summaryRow}>
                 <View style={styles.summaryCol}>
-                  <AppText style={styles.summaryLabel}>Nhận xe</AppText>
+                  <AppText style={styles.summaryLabel}>{t("common:rentalPicker.pickup")}</AppText>
                   <AppText style={styles.summaryValue}>{formatPeriodPart(startDate)}</AppText>
                 </View>
                 <AppText style={styles.summaryArrow}>→</AppText>
                 <View style={[styles.summaryCol, styles.summaryColRight]}>
-                  <AppText style={styles.summaryLabel}>Trả xe</AppText>
+                  <AppText style={styles.summaryLabel}>{t("common:rentalPicker.return")}</AppText>
                   <AppText style={styles.summaryValue}>{formatPeriodPart(endDate)}</AppText>
                 </View>
               </View>
               <View style={styles.summaryDaysRow}>
-                <AppText style={styles.summaryLabel}>Số ngày</AppText>
-                <AppText style={styles.summaryDays}>{rentalDays > 0 ? `${rentalDays} ngày` : "-"}</AppText>
+                <AppText style={styles.summaryLabel}>{t("common:rentalPicker.days")}</AppText>
+                <AppText style={styles.summaryDays}>
+                  {rentalDays > 0 ? t("common:rentalPicker.dayCount", { days: rentalDays }) : "-"}
+                </AppText>
               </View>
             </View>
           </ScrollView>
@@ -373,7 +378,7 @@ export default function RentalPeriodSheet({
                 onEndDateChange("");
               }}
             >
-              <AppText style={styles.clearText}>Xóa thời gian</AppText>
+              <AppText style={styles.clearText}>{t("common:rentalPicker.clear")}</AppText>
             </Pressable>
             <Pressable
               disabled={!startDate || !endDate || Boolean(rangeError) || Boolean(busyDateInSelection) || availabilityLoading || availabilityError}
@@ -383,7 +388,7 @@ export default function RentalPeriodSheet({
                 (!startDate || !endDate || Boolean(rangeError) || Boolean(busyDateInSelection) || availabilityLoading || availabilityError) && styles.doneDisabled,
               ]}
             >
-              <AppText style={styles.doneText}>Hoàn tất</AppText>
+              <AppText style={styles.doneText}>{t("common:rentalPicker.done")}</AppText>
             </Pressable>
           </View>
         </Animated.View>

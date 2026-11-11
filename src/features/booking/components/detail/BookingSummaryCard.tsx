@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Car, Clock3, KeyRound, PackageCheck, UserRound, Wallet } from "lucide-react-native";
 import {
@@ -32,8 +33,9 @@ export default function BookingSummaryCard({
   onOpenUserProfile?: (userId: number) => void;
 }) {
   const { p } = useDetailTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(p), [p]);
-  const vehicleName = booking.vehicleName || `Xe #${booking.vehicleId}`;
+  const vehicleName = booking.vehicleName || t("booking:list.vehicleFallback", { id: booking.vehicleId });
   const ownerName = booking.ownerName || `#${booking.ownerId}`;
   const customerName = booking.customerName || `#${booking.customerId}`;
 
@@ -42,7 +44,7 @@ export default function BookingSummaryCard({
       <View style={styles.top}>
         <Pressable
           accessibilityRole={onOpenVehicle ? "link" : undefined}
-          accessibilityLabel={`Xem xe ${vehicleName}`}
+          accessibilityLabel={t("mobile:trip.summary.viewVehicle", { name: vehicleName })}
           onPress={onOpenVehicle}
           style={styles.photoWrap}
         >
@@ -74,7 +76,7 @@ export default function BookingSummaryCard({
             >
               <UserRound color={p.muted} size={12} strokeWidth={2.1} />
               <Text style={styles.metaText} numberOfLines={1}>
-                Chủ xe · {ownerName}
+                {t("mobile:trip.summary.ownerLine", { name: ownerName })}
               </Text>
             </Pressable>
             <Pressable
@@ -85,7 +87,7 @@ export default function BookingSummaryCard({
             >
               <UserRound color={p.muted} size={12} strokeWidth={2.1} />
               <Text style={styles.metaText} numberOfLines={1}>
-                Khách · {customerName}
+                {t("mobile:trip.summary.customerLine", { name: customerName })}
               </Text>
             </Pressable>
           </View>
@@ -93,21 +95,21 @@ export default function BookingSummaryCard({
       </View>
 
       <View style={styles.facts}>
-        <DetailStat icon={KeyRound} label="Nhận xe" value={formatDate(booking.startDate)} />
-        <DetailStat icon={PackageCheck} label="Trả xe" value={formatDate(booking.endDate)} />
-        <DetailStat icon={Clock3} label="Thời lượng" value={`${booking.totalDays} ngày`} tone="brand" />
-        <DetailStat icon={Wallet} label="Đặt cọc" value={formatMoney(booking.depositAmount)} />
+        <DetailStat icon={KeyRound} label={t("booking:detail.pickup")} value={formatDate(booking.startDate)} />
+        <DetailStat icon={PackageCheck} label={t("booking:detail.return")} value={formatDate(booking.endDate)} />
+        <DetailStat icon={Clock3} label={t("mobile:trip.summary.durationLabel")} value={t("mobile:trip.summary.durationValue", { days: booking.totalDays })} tone="brand" />
+        <DetailStat icon={Wallet} label={t("mobile:trip.summary.depositLabel")} value={formatMoney(booking.depositAmount)} />
       </View>
 
       <View style={styles.priceRow}>
         <View style={styles.priceMeta}>
           <DetailPill label={bookingStatusLabel(booking.status)} tone={statusTone(booking.status)} />
           <Text style={styles.created} numberOfLines={1}>
-            Đặt {formatDate(booking.createdAt)}
+            {t("mobile:trip.summary.createdAt", { date: formatDate(booking.createdAt) })}
           </Text>
         </View>
         <View style={styles.priceBlock}>
-          <Text style={styles.priceLabel}>Tổng cộng</Text>
+          <Text style={styles.priceLabel}>{t("booking:create.total")}</Text>
           <Text style={styles.price} numberOfLines={1}>
             {formatMoney(booking.totalAmount)}
           </Text>

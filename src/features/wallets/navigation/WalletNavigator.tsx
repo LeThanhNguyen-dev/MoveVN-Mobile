@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import {
   Banknote,
@@ -24,6 +25,7 @@ export type WalletTabKey = "home" | "history" | "cashflow" | "bank";
 export default function WalletNavigator({ onBack }: { onBack: () => void }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
   const state = useWallet();
   // Mở khóa PIN chỉ giữ trong RAM của Navigator: thoát ví là khóa lại.
   const pinGate = useWalletPinGate();
@@ -35,10 +37,14 @@ export default function WalletNavigator({ onBack }: { onBack: () => void }) {
   const [balanceHidden, setBalanceHidden] = useState(false);
 
   const tabs: MobileTabItem<WalletTabKey>[] = [
-    { key: "home", label: "Tổng quan", icon: LayoutDashboard },
-    { key: "history", label: "Lịch sử", icon: Clock3 },
-    { key: "cashflow", label: isOwner ? "Rút tiền" : "Nạp tiền", icon: Banknote },
-    { key: "bank", label: "Ngân hàng", icon: Landmark },
+    { key: "home", label: t("mobile:wallet.tabs.overview"), icon: LayoutDashboard },
+    { key: "history", label: t("mobile:wallet.tabs.history"), icon: Clock3 },
+    {
+      key: "cashflow",
+      label: isOwner ? t("accountWallet:withdraw") : t("accountWallet:topUp"),
+      icon: Banknote,
+    },
+    { key: "bank", label: t("mobile:wallet.tabs.bank"), icon: Landmark },
   ];
 
   function goCashflow(pane: CashflowPane) {
@@ -51,13 +57,13 @@ export default function WalletNavigator({ onBack }: { onBack: () => void }) {
       <View style={styles.header}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Quay lại"
+          accessibilityLabel={t("mobile:wallet.a11y.back")}
           onPress={onBack}
           style={styles.backButton}
         >
           <AppText style={styles.backText}>‹</AppText>
         </Pressable>
-        <AppText display style={styles.headerTitle}>Ví của tôi</AppText>
+        <AppText display style={styles.headerTitle}>{t("accountWallet:title")}</AppText>
         <View style={styles.backButtonPlaceholder} />
       </View>
 

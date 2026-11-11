@@ -1,3 +1,5 @@
+import i18n from "@/i18n";
+
 /** Gradient chữ ký MoveVN dùng cho CTA / cuống vé (sáng + tối đều dùng). */
 export const CTA_GRADIENT: readonly [string, string, string] = ["#6B19FF", "#7C3AED", "#D946EF"];
 
@@ -8,8 +10,9 @@ export function formatVnd(value: number): string {
 /** Dòng giảm đầy đủ: "Giảm 50.000đ" / "Giảm 20%". */
 export function formatDiscountLong(discountType: string | null | undefined, discountValue: number | null | undefined): string | null {
   if (discountValue == null) return null;
-  if (discountType === "Fixed") return `Giảm ${formatVnd(Number(discountValue))}`;
-  return `Giảm ${discountValue}%`;
+  const prefix = i18n.t("promo:voucherCard.discountLabel");
+  if (discountType === "Fixed") return `${prefix} ${formatVnd(Number(discountValue))}`;
+  return `${prefix} ${discountValue}%`;
 }
 
 /** Rút gọn mức giảm cho cuống vé (mirror web formatVoucherStub): 50000 -> 50k, 500 -> 500đ. */
@@ -26,16 +29,16 @@ export function formatVoucherStub(discountType?: string | null, discountValue?: 
 
 /** Nhãn phương tiện dùng trên thẻ vé (mirror web formatVoucherVehicle). */
 export function formatVehicleLabel(vehicleType?: string | null): string {
-  if (vehicleType === "Motorbike") return "Xe máy";
-  if (vehicleType === "Car") return "Ô tô";
-  return "Tất cả phương tiện";
+  if (vehicleType === "Motorbike") return i18n.t("common:motorbike");
+  if (vehicleType === "Car") return i18n.t("common:car");
+  return i18n.t("promo:voucherCard.vehicleAll");
 }
 
 /** Nhãn phương tiện rút gọn cho chip/sheet (mirror web PromotionDetailModal formatVehicleType). */
 export function formatVehicleLabelShort(vehicleType?: string | null): string {
-  if (vehicleType === "Motorbike") return "Xe máy";
-  if (vehicleType === "Car") return "Ô tô";
-  return "Tất cả xe";
+  if (vehicleType === "Motorbike") return i18n.t("common:motorbike");
+  if (vehicleType === "Car") return i18n.t("common:car");
+  return i18n.t("mobile:explore.banner.vehicleAll");
 }
 
 export function formatEndDate(endAt?: string | null): string | null {

@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { CircleAlert, Send } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import AppText from "@/components/AppText";
 import { formatMoney } from "@/features/booking/utils/format";
@@ -26,12 +27,13 @@ export default function CheckoutSubmitDock({
   onSubmit,
 }: Props) {
   const { p } = useCheckoutTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(p), [p]);
 
   const hint =
     total == null
-      ? "Chọn thời gian thuê hợp lệ để xem tổng tiền"
-      : `Cọc ${formatMoney(deposit ?? 0)} · ${days} ngày`;
+      ? t("mobile:checkout.submit.hintEmpty")
+      : t("mobile:checkout.submit.hintDeposit", { amount: formatMoney(deposit ?? 0), days });
 
   return (
     <View style={[styles.dock, { paddingBottom: Math.max(bottomInset, 10) }]}>
@@ -54,7 +56,7 @@ export default function CheckoutSubmitDock({
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Gửi yêu cầu thuê xe"
+          accessibilityLabel={t("mobile:checkout.submit.aria")}
           accessibilityState={{ busy: submitting, disabled: submitting }}
           disabled={submitting}
           onPress={onSubmit}
@@ -70,7 +72,7 @@ export default function CheckoutSubmitDock({
               <ActivityIndicator color={p.muted} size="small" />
             ) : (
               <>
-                <AppText style={styles.ctaText}>Gửi yêu cầu</AppText>
+                <AppText style={styles.ctaText}>{t("mobile:checkout.submit.cta")}</AppText>
                 <Send color={p.onBrand} size={15} strokeWidth={2.2} />
               </>
             )}

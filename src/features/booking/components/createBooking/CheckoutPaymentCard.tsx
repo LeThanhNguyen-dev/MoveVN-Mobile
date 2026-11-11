@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react-native";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 import AppText from "@/components/AppText";
 import { formatMoney } from "@/features/booking/utils/format";
@@ -57,6 +58,7 @@ export default function CheckoutPaymentCard({
   onFocusPromo,
 }: Props) {
   const { p } = useCheckoutTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(p), [p]);
   const [expanded, setExpanded] = useState(false);
 
@@ -64,15 +66,15 @@ export default function CheckoutPaymentCard({
   const securityValue = security.required
     ? security.amount > 0
       ? formatMoney(security.amount)
-      : "Theo thoả thuận"
-    : "Miễn thế chấp";
+      : t("mobile:checkout.payment.securityByAgreement")
+    : t("common:noDeposit");
 
   return (
     <View style={styles.card}>
       <CheckoutSectionHeader
         icon={ReceiptText}
-        subtitle={days > 0 ? `${days} ngày · chưa gồm thế chấp` : "Chọn thời gian thuê để xem giá"}
-        title="Thanh toán"
+        subtitle={days > 0 ? t("mobile:checkout.payment.subtitleDays", { days }) : t("mobile:checkout.payment.subtitleHint")}
+        title={t("booking:funnel.payment")}
       />
 
       <View style={styles.promoBlock}>
@@ -86,11 +88,11 @@ export default function CheckoutPaymentCard({
                 {appliedPromo.code}
               </AppText>
               <AppText style={styles.appliedText}>
-                Giảm {formatMoney(appliedPromo.discountAmount)} cho đơn này
+                {t("mobile:checkout.payment.promoDiscount", { amount: formatMoney(appliedPromo.discountAmount) })}
               </AppText>
             </View>
             <Pressable
-              accessibilityLabel="Bỏ mã giảm giá"
+              accessibilityLabel={t("mobile:checkout.payment.promoClearAria")}
               hitSlop={8}
               onPress={onClearPromo}
               style={({ pressed }) => [styles.clear, pressed && styles.pressed]}
@@ -103,12 +105,12 @@ export default function CheckoutPaymentCard({
             <View style={styles.promoInputWrap}>
               <TicketPercent color={p.faint} size={15} strokeWidth={2.1} />
               <TextInput
-                accessibilityLabel="Mã khuyến mãi"
+                accessibilityLabel={t("booking:create.promoTitle")}
                 autoCapitalize="characters"
                 autoCorrect={false}
                 onChangeText={onChangeCode}
                 onFocus={onFocusPromo}
-                placeholder="Mã ưu đãi"
+                placeholder={t("mobile:checkout.payment.promoPlaceholder")}
                 placeholderTextColor={p.faint}
                 selectionColor={p.brand}
                 style={styles.promoInput}
@@ -116,12 +118,12 @@ export default function CheckoutPaymentCard({
               />
             </View>
             <Pressable
-              accessibilityLabel="Mở ví voucher"
+              accessibilityLabel={t("mobile:checkout.payment.walletAria")}
               onPress={onOpenWallet}
               style={({ pressed }) => [styles.wallet, pressed && styles.pressed]}
             >
               <Wallet color={p.brand} size={14} strokeWidth={2.1} />
-              <AppText style={styles.walletText}>Ví</AppText>
+              <AppText style={styles.walletText}>{t("mobile:checkout.payment.walletShort")}</AppText>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -138,7 +140,7 @@ export default function CheckoutPaymentCard({
                 <ActivityIndicator color={p.onBrand} size="small" />
               ) : (
                 <AppText style={[styles.applyText, applyDisabled && { color: p.faint }]}>
-                  Áp dụng
+                  {t("booking:create.apply")}
                 </AppText>
               )}
             </Pressable>
@@ -169,7 +171,7 @@ export default function CheckoutPaymentCard({
               ]}
             >
               <View style={styles.rowLabel}>
-                <AppText style={styles.label}>Tiền thuê xe</AppText>
+                <AppText style={styles.label}>{t("mobile:checkout.payment.rentalFee")}</AppText>
                 {dailyPrices.length > 0 ? (
                   <ChevronDown
                     color={p.faint}
@@ -193,7 +195,7 @@ export default function CheckoutPaymentCard({
 
             {preview.discPct > 0 ? (
               <View style={styles.row}>
-                <AppText style={styles.discountLabel}>Giảm giá thuê dài ({preview.discPct}%)</AppText>
+                <AppText style={styles.discountLabel}>{t("mobile:checkout.payment.longRentalDiscount", { percent: preview.discPct })}</AppText>
                 <AppText style={styles.discountValue}>-{formatMoney(preview.discAmt)}</AppText>
               </View>
             ) : null}
@@ -201,7 +203,7 @@ export default function CheckoutPaymentCard({
             {appliedPromo ? (
               <View style={styles.row}>
                 <AppText style={styles.discountLabel} numberOfLines={1}>
-                  Mã {appliedPromo.code}
+                  {t("booking:create.promoApplied", { code: appliedPromo.code })}
                 </AppText>
                 <AppText style={styles.discountValue}>-{formatMoney(appliedPromo.discountAmount)}</AppText>
               </View>
@@ -210,7 +212,9 @@ export default function CheckoutPaymentCard({
             {preview.deliveryFee > 0 ? (
               <View style={styles.row}>
                 <AppText style={styles.label} numberOfLines={1}>
-                  Phí giao xe{deliveryDistanceKm != null ? ` (${deliveryDistanceKm} km)` : ""}
+                  {deliveryDistanceKm != null
+                    ? t("mobile:checkout.payment.deliveryFeeKm", { km: deliveryDistanceKm })
+                    : t("mobile:checkout.payment.deliveryFee")}
                 </AppText>
                 <AppText style={styles.value}>+{formatMoney(preview.deliveryFee)}</AppText>
               </View>
@@ -218,7 +222,7 @@ export default function CheckoutPaymentCard({
 
             <View style={styles.row}>
               <AppText style={styles.label} numberOfLines={1}>
-                Phí nền tảng (đã bao gồm)
+                {t("mobile:checkout.payment.platformFee")}
               </AppText>
               <AppText style={styles.valueMuted}>{formatMoney(preview.fee)}</AppText>
             </View>
@@ -226,20 +230,20 @@ export default function CheckoutPaymentCard({
 
           <View style={styles.totalRow}>
             <View style={styles.totalBody}>
-              <AppText style={styles.totalLabel}>Tổng cộng</AppText>
-              <AppText style={styles.totalHint}>Đã trừ ưu đãi, chưa gồm thế chấp</AppText>
+              <AppText style={styles.totalLabel}>{t("booking:create.total")}</AppText>
+              <AppText style={styles.totalHint}>{t("mobile:trip.detail.totalHint")}</AppText>
             </View>
             <AppText style={styles.totalValue}>{formatMoney(preview.total)}</AppText>
           </View>
 
           <View style={styles.schedule}>
-            <AppText style={styles.scheduleTitle}>Thanh toán sau khi chủ xe duyệt</AppText>
+            <AppText style={styles.scheduleTitle}>{t("mobile:checkout.payment.payAfterApproval")}</AppText>
             <View style={styles.scheduleRow}>
-              <AppText style={styles.scheduleLabel}>Tiền cọc ({preview.depositPercent}%)</AppText>
+              <AppText style={styles.scheduleLabel}>{t("mobile:checkout.payment.deposit", { percent: preview.depositPercent })}</AppText>
               <AppText style={styles.scheduleValue}>{formatMoney(preview.deposit)}</AppText>
             </View>
             <View style={styles.scheduleRow}>
-              <AppText style={styles.scheduleLabel}>Còn lại khi nhận xe</AppText>
+              <AppText style={styles.scheduleLabel}>{t("mobile:checkout.payment.remaining")}</AppText>
               <AppText style={styles.scheduleValue}>{formatMoney(preview.remaining)}</AppText>
             </View>
           </View>
@@ -248,7 +252,7 @@ export default function CheckoutPaymentCard({
         <View style={styles.missing}>
           <Clock3 color={p.faint} size={16} strokeWidth={2.1} />
           <AppText style={styles.missingText}>
-            Chọn ngày nhận và trả xe để xem giá thuê, tiền cọc và tổng thanh toán.
+            {t("mobile:checkout.payment.missing")}
           </AppText>
         </View>
       )}
@@ -261,10 +265,10 @@ export default function CheckoutPaymentCard({
         )}
         <View style={styles.securityBody}>
           <AppText style={styles.securityLabel}>
-            {security.required ? "Thế chấp khi nhận xe" : "Không cần thế chấp"}
+            {security.required ? t("booking:create.securityAtPickup") : t("mobile:checkout.payment.securityNotRequired")}
           </AppText>
           <AppText style={styles.securityHint}>
-            {security.required ? "Hoàn lại khi trả xe đúng hiện trạng" : "Chủ xe không yêu cầu đặt cọc tài sản"}
+            {security.required ? t("mobile:trip.detail.securityHint") : t("mobile:checkout.payment.securityNoAsset")}
           </AppText>
         </View>
         <AppText
@@ -279,7 +283,7 @@ export default function CheckoutPaymentCard({
         <View style={styles.noteRow}>
           <TriangleAlert color={p.warning} size={13} strokeWidth={2.1} />
           <AppText style={styles.noteText}>
-            Số tiền thế chấp sẽ được chủ xe xác nhận trước khi bàn giao.
+            {t("mobile:checkout.payment.securityPending")}
           </AppText>
         </View>
       ) : null}

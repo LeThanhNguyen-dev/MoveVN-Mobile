@@ -1,0 +1,75 @@
+{
+  "skipToContent": "Skip to main content",
+  "loading": "Loading...",
+  "retry": "Retry",
+  "list": "Contents",
+  "tableOfContents": "Table of contents",
+  "contentLoadError": "Unable to load content. Please try again.",
+  "contentNotFound": "Content not found.",
+  "contentUpdating": "Content is being updated.",
+  "contact": "Contact us",
+  "noImage": "No image available",
+  "areaUpdating": "Area not updated yet",
+  "new": "New",
+  "currencySymbol": "đ",
+  "dialogClose": "Close dialog",
+  "originalInVietnamese": "Original content is in Vietnamese",
+  "checkingSession": "Checking your session...",
+  "opening": "Opening...",
+  "noTime": "No time yet",
+  "closeNotification": "Close notification",
+  "promotionImageAlt": "View promotion image",
+  "closeAction": "Close",
+  "underDevelopmentTitle": "Under development",
+  "underDevelopmentDescription": "This feature is currently under construction and will be available soon.",
+  "pagination": "Pagination",
+  "showingPage": "Showing page {{page}}/{{totalPages}}",
+  "previousPage": "Previous",
+  "nextPage": "Next",
+  "tableToggleHint": "Click to expand or collapse details",
+  "tableExpandAll": "Show all",
+  "tableCollapse": "Collapse",
+  "vietnameseTime": "Vietnam time",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "genericError": "Something went wrong.",
+  "mapCenterVehicle": "Center on vehicle",
+  "mapFullscreen": "Fullscreen",
+  "selectPlaceholder": "Select",
+  "selectListAriaLabel": "Options",
+  "pages": {
+    "notFound": {
+      "title": "Page not found",
+      "description": "The page you are trying to open does not exist or has been moved.",
+      "backHome": "Back to home"
+    },
+    "forbidden": {
+      "title": "Access denied",
+      "description": "Your current account does not have a role that allows access to this area.",
+      "backToMyArea": "Back to my area"
+    }
+  },
+  "activeToggle": {
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "activateAction": "activate",
+    "deactivateAction": "deactivate",
+    "confirmQuestion": "Are you sure you want to {{action}}",
+    "cascadePrefix": "Deactivating",
+    "cascadeSuffix": "will also deactivate",
+    "cascadeSeparator": " and ",
+    "modelsCount": "{{count}} models",
+    "variantsCount": "{{count}} variants",
+    "errors": {
+      "brandDisabled": "Cannot activate because the brand is currently disabled.",
+      "modelDisabled": "Cannot activate because the model is currently disabled."
+    }
+  },
+  "userStatusToggle": {
+    "activate": "Activate",
+    "deactivate": "Suspend",
+    "activateAction": "activate",
+    "deactivateAction": "suspend",
+    "confirmQuestion": "Are you sure you want to {{action}}"
+  }
+}

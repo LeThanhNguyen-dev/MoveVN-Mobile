@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
+import { useTranslation } from "react-i18next";
 import { TriangleAlert } from "lucide-react-native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -40,6 +41,7 @@ export default function WalletCashflowScreen({
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
   const [pane, setPane] = useState<CashflowPane>(initialPane);
   // Popup PIN xác nhận mỗi lần rút (kể cả vừa mở khóa xem số dư).
   const [confirmVisible, setConfirmVisible] = useState(false);
@@ -84,7 +86,9 @@ export default function WalletCashflowScreen({
           onPress={() => setPane("topup")}
           style={[styles.segButton, pane === "topup" && styles.segActive]}
         >
-          <AppText style={[styles.segText, pane === "topup" && styles.segTextActive]}>Nạp tiền</AppText>
+          <AppText style={[styles.segText, pane === "topup" && styles.segTextActive]}>
+            {t("accountWallet:topUp")}
+          </AppText>
         </Pressable>
         <Pressable
           accessibilityRole="tab"
@@ -92,14 +96,16 @@ export default function WalletCashflowScreen({
           onPress={() => setPane("withdraw")}
           style={[styles.segButton, pane === "withdraw" && styles.segActive]}
         >
-          <AppText style={[styles.segText, pane === "withdraw" && styles.segTextActive]}>Rút tiền</AppText>
+          <AppText style={[styles.segText, pane === "withdraw" && styles.segTextActive]}>
+            {t("accountWallet:withdraw")}
+          </AppText>
         </Pressable>
       </View>
 
       {pane === "topup" ? (
         <View style={styles.card}>
-          <AppText display style={styles.cardTitle}>Nạp tiền vào ví</AppText>
-          <AppText style={styles.muted}>Thanh toán qua PayOS, tiền vào ví sau khi xác nhận.</AppText>
+          <AppText display style={styles.cardTitle}>{t("accountWallet:topUpModal.title")}</AppText>
+          <AppText style={styles.muted}>{t("mobile:wallet.cashflow.topUpDesc")}</AppText>
           <View style={styles.presets}>
             {TOPUP_PRESETS.map((amt) => (
               <Pressable
@@ -116,13 +122,16 @@ export default function WalletCashflowScreen({
           <TextInput
             value={topUpAmount}
             onChangeText={(v) => setTopUpAmount(v.replace(/[^0-9]/g, ""))}
-            placeholder="Hoặc nhập số tiền (đồng)"
+            placeholder={t("mobile:wallet.cashflow.topUpPlaceholder")}
             placeholderTextColor={theme.placeholder}
             keyboardType="number-pad"
             style={styles.input}
           />
           <AppText style={styles.hint}>
-            Tối thiểu {formatMoney(TOPUP_MIN_AMOUNT)} · tối đa {formatMoney(TOPUP_MAX_AMOUNT)} mỗi lần nạp.
+            {t("mobile:wallet.cashflow.topUpHint", {
+              min: formatMoney(TOPUP_MIN_AMOUNT),
+              max: formatMoney(TOPUP_MAX_AMOUNT),
+            })}
           </AppText>
           <Pressable
             onPress={() => void handleTopUp()}
@@ -132,22 +141,26 @@ export default function WalletCashflowScreen({
             {busy === "topup" ? (
               <ActivityIndicator color={theme.onBrand} />
             ) : (
-              <AppText style={styles.primaryText}>Thanh toán PayOS</AppText>
+              <AppText style={styles.primaryText}>{t("mobile:wallet.cashflow.payWithPayOS")}</AppText>
             )}
           </Pressable>
         </View>
       ) : (
         <View style={styles.card}>
-          <AppText display style={styles.cardTitle}>Rút tiền về ngân hàng</AppText>
+          <AppText display style={styles.cardTitle}>{t("mobile:wallet.cashflow.withdrawTitle")}</AppText>
           <AppText style={styles.balanceLine}>
-            Số dư khả dụng: <AppText style={styles.balanceValue}>{formatMoney(balance)}</AppText>
+            {t("accountWallet:withdrawModal.available")}{" "}
+            <AppText style={styles.balanceValue}>{formatMoney(balance)}</AppText>
           </AppText>
           <AppText style={styles.muted}>
-            Về: {bank?.bankName ?? "-"} · {bank?.bankAccountNumber ?? "chưa thiết lập"}
+            {t("mobile:wallet.cashflow.toBank", {
+              bank: bank?.bankName ?? "-",
+              account: bank?.bankAccountNumber ?? t("mobile:wallet.cashflow.notSet"),
+            })}
           </AppText>
           {!bank?.bankAccountNumber && (
             <Pressable onPress={onNeedBank} style={styles.linkButton}>
-              <AppText style={styles.linkText}>Thiết lập ngân hàng ngay →</AppText>
+              <AppText style={styles.linkText}>{t("mobile:wallet.cashflow.setupBankLink")}</AppText>
             </Pressable>
           )}
           {activeWithdrawal && (
@@ -155,10 +168,13 @@ export default function WalletCashflowScreen({
               <TriangleAlert color="#F59E0B" size={18} />
               <View style={styles.flexOne}>
                 <AppText display style={styles.activeTitle}>
-                  Yêu cầu #{activeWithdrawal.id} đang {withdrawalStatusLabel(activeWithdrawal.status).toLowerCase()}
+                  {t("mobile:wallet.cashflow.activeRequest", {
+                    id: activeWithdrawal.id,
+                    status: withdrawalStatusLabel(activeWithdrawal.status).toLowerCase(),
+                  })}
                 </AppText>
                 <AppText style={styles.muted}>
-                  Vui lòng chờ hoàn tất hoặc hủy yêu cầu này trước khi tạo yêu cầu mới.
+                  {t("mobile:wallet.cashflow.activeRequestHint")}
                 </AppText>
               </View>
             </View>
@@ -166,7 +182,7 @@ export default function WalletCashflowScreen({
           <TextInput
             value={withdrawAmount}
             onChangeText={(v) => setWithdrawAmount(v.replace(/[^0-9]/g, ""))}
-            placeholder="Số tiền rút (đồng)"
+            placeholder={t("mobile:wallet.cashflow.withdrawPlaceholder")}
             placeholderTextColor={theme.placeholder}
             keyboardType="number-pad"
             editable={!activeWithdrawal}
@@ -174,14 +190,17 @@ export default function WalletCashflowScreen({
           />
           <View style={styles.withdrawMeta}>
             <AppText style={styles.hint}>
-              Tối thiểu {formatMoney(WITHDRAW_MIN_AMOUNT)} · tối đa {formatMoney(WITHDRAW_MAX_AMOUNT)}.
+              {t("mobile:wallet.cashflow.withdrawHint", {
+                min: formatMoney(WITHDRAW_MIN_AMOUNT),
+                max: formatMoney(WITHDRAW_MAX_AMOUNT),
+              })}
             </AppText>
             <Pressable
               onPress={() => setWithdrawAmount(String(balance))}
               disabled={activeWithdrawal != null}
               style={styles.linkButton}
             >
-              <AppText style={styles.linkText}>Rút tối đa</AppText>
+              <AppText style={styles.linkText}>{t("mobile:wallet.cashflow.withdrawMax")}</AppText>
             </Pressable>
           </View>
           <Pressable
@@ -192,7 +211,7 @@ export default function WalletCashflowScreen({
             {busy === "withdraw" ? (
               <ActivityIndicator color={theme.onBrand} />
             ) : (
-              <AppText style={styles.primaryText}>Tạo yêu cầu rút</AppText>
+              <AppText style={styles.primaryText}>{t("mobile:wallet.cashflow.withdrawSubmit")}</AppText>
             )}
           </Pressable>
         </View>
@@ -200,7 +219,7 @@ export default function WalletCashflowScreen({
 
       {pane === "withdraw" && withdrawals.length > 0 && (
         <View style={styles.card}>
-          <AppText display style={styles.cardTitle}>Yêu cầu rút tiền</AppText>
+          <AppText display style={styles.cardTitle}>{t("mobile:wallet.cashflow.pendingTitle")}</AppText>
           {withdrawals.map((w) => (
             <WithdrawalRow key={w.id} w={w} onCancel={handleCancelWithdrawal} />
           ))}
@@ -215,7 +234,7 @@ export default function WalletCashflowScreen({
           setConfirmVisible(false);
           void handleWithdraw();
         }}
-        verifyDescription="Nhập mã PIN của bạn để xác nhận yêu cầu rút tiền này."
+        verifyDescription={t("mobile:wallet.pin.verifyWithdraw")}
       />
     </ScrollView>
   );

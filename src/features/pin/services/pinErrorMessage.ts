@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { AppApiError } from "@/features/auth/services/authService";
 
 export const PIN_DIGIT_COUNT = 6;
@@ -11,34 +12,35 @@ export const PIN_LOCKED_CODE = "PIN_1104";
 export const PIN_LOCKOUT_FALLBACK_SECONDS = 15 * 60;
 
 /**
- * Maps backend/system error codes to user-friendly Vietnamese messages.
+ * Maps backend/system error codes to locale keys.
  * The UI must never show raw backend or English system errors.
+ * Keys are resolved at call time so the message follows the active language.
  */
-const FRIENDLY_MESSAGES: Record<string, string> = {
-  PIN_1101: "Bạn chưa thiết lập mã PIN. Vui lòng tạo mã PIN mới để tiếp tục.",
-  PIN_1102: "Mã PIN đã được thiết lập trước đó.",
-  PIN_1103: "Mã PIN không chính xác.",
-  PIN_1105: "Mã PIN phải gồm đúng 6 chữ số.",
-  AUTH_1010: "Bạn đã yêu cầu mã OTP quá nhiều lần. Vui lòng thử lại sau.",
-  AUTH_1011: "Mã OTP không đúng hoặc đã hết hạn. Vui lòng kiểm tra lại.",
-  AUTH_1012: "Mã OTP này đã được sử dụng. Vui lòng gửi mã mới.",
-  AUTH_1014: "Bạn đã nhập sai mã OTP quá nhiều lần. Vui lòng gửi mã mới.",
-  AUTH_1013: "Không gửi được email chứa mã OTP. Vui lòng thử lại sau.",
-  "422": "Thông tin nhập chưa hợp lệ. Vui lòng kiểm tra lại.",
-  VALIDATION_ERROR: "Thông tin nhập chưa hợp lệ. Vui lòng kiểm tra lại.",
-  "429": "Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.",
-  NETWORK: "Không có kết nối mạng. Vui lòng kiểm tra lại kết nối.",
-  "401": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-  UNAUTHORIZED: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-  "403": "Bạn không có quyền thực hiện thao tác này.",
-  FORBIDDEN: "Bạn không có quyền thực hiện thao tác này.",
-  "404": "Không tìm thấy dữ liệu yêu cầu.",
-  NOT_FOUND: "Không tìm thấy dữ liệu yêu cầu.",
-  "500": "Hệ thống đang bận. Vui lòng thử lại sau.",
-  INTERNAL_SERVER_ERROR: "Hệ thống đang bận. Vui lòng thử lại sau.",
+const FRIENDLY_MESSAGE_KEYS: Record<string, string> = {
+  PIN_1101: "accountSecurity:pin.errors.PIN_1101",
+  PIN_1102: "accountSecurity:pin.errors.PIN_1102",
+  PIN_1103: "accountSecurity:pin.errors.PIN_1103",
+  PIN_1105: "accountSecurity:pin.errors.PIN_1105",
+  AUTH_1010: "accountSecurity:pin.errors.AUTH_1010",
+  AUTH_1011: "accountSecurity:pin.errors.AUTH_1011",
+  AUTH_1012: "accountSecurity:pin.errors.AUTH_1012",
+  AUTH_1014: "accountSecurity:pin.errors.AUTH_1014",
+  AUTH_1013: "accountSecurity:pin.errors.AUTH_1013",
+  "422": "accountSecurity:pin.errors.invalid",
+  VALIDATION_ERROR: "accountSecurity:pin.errors.invalid",
+  "429": "accountSecurity:pin.errors.tooMany",
+  NETWORK: "accountSecurity:pin.errors.network",
+  "401": "accountSecurity:pin.errors.sessionExpired",
+  UNAUTHORIZED: "accountSecurity:pin.errors.sessionExpired",
+  "403": "accountSecurity:pin.errors.forbidden",
+  FORBIDDEN: "accountSecurity:pin.errors.forbidden",
+  "404": "accountSecurity:pin.errors.notFound",
+  NOT_FOUND: "accountSecurity:pin.errors.notFound",
+  "500": "accountSecurity:pin.errors.server",
+  INTERNAL_SERVER_ERROR: "accountSecurity:pin.errors.server",
 };
 
-const GENERIC_MESSAGE = "Có lỗi xảy ra. Vui lòng thử lại sau.";
+const GENERIC_MESSAGE_KEY = "accountSecurity:pin.errors.generic";
 
 /**
  * Backend messages already safe to show (curated Vietnamese,
@@ -61,12 +63,12 @@ export function getFriendlyPinMessage(error: unknown): string {
     if (TRUSTED_BACKEND_MESSAGE_CODES.has(error.code) && error.message) {
       return error.message;
     }
-    const mapped = FRIENDLY_MESSAGES[error.code];
-    if (mapped) {
-      return mapped;
+    const key = FRIENDLY_MESSAGE_KEYS[error.code];
+    if (key) {
+      return i18n.t(key);
     }
   }
-  return GENERIC_MESSAGE;
+  return i18n.t(GENERIC_MESSAGE_KEY);
 }
 
 export function formatCountdown(totalSeconds: number): string {

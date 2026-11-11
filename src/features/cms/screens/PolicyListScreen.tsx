@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 import { ArrowLeft, BookOpen, ChevronRight, Scale, Search, X } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
 import AppText from "@/components/AppText";
 import PolicyDetailScreen from "@/features/cms/screens/PolicyDetailScreen";
@@ -29,6 +30,7 @@ type PolicyListScreenProps = {
 
 export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScreenProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [items, setItems] = useState<CmsPageNavigationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,11 +46,11 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
     try {
       setItems(await getCmsPageNavigation());
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Không tải được danh sách.");
+      setError(failure instanceof Error ? failure.message : t("mobile:cms.list.loadError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -85,10 +87,10 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("mobile:cms.a11y.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <AppText display style={styles.topBarTitle}>Điều khoản & Chính sách</AppText>
+        <AppText display style={styles.topBarTitle}>{t("mobile:cms.policy.title")}</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
@@ -98,17 +100,17 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
         showsVerticalScrollIndicator={false}
       >
         <AppText style={styles.heroDescription}>
-          Tài liệu điều khoản, chính sách và hướng dẫn sử dụng MoveVN.
+          {t("mobile:cms.list.description")}
         </AppText>
 
         <View style={[styles.searchBox, searchFocused && styles.searchBoxFocused]}>
           <Search color={theme.faint} size={19} strokeWidth={2.3} />
           <TextInput
-            accessibilityLabel="Tìm kiếm tài liệu"
+            accessibilityLabel={t("mobile:cms.list.searchAria")}
             onBlur={() => setSearchFocused(false)}
             onChangeText={setQuery}
             onFocus={() => setSearchFocused(true)}
-            placeholder="Tìm tài liệu"
+            placeholder={t("mobile:cms.list.searchPlaceholder")}
             placeholderTextColor={theme.placeholder}
             returnKeyType="search"
             style={styles.searchInput}
@@ -116,7 +118,7 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
           />
           {query.length > 0 ? (
             <Pressable
-              accessibilityLabel="Xóa tìm kiếm"
+              accessibilityLabel={t("mobile:cms.searchClearAria")}
               accessibilityRole="button"
               onPress={() => setQuery("")}
               style={styles.clearButton}
@@ -131,24 +133,24 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
             <View style={styles.skeletonLine} />
             <View style={styles.skeletonLine} />
             <View style={[styles.skeletonLine, styles.skeletonShort]} />
-            <AppText style={styles.muted}>Đang tải danh sách...</AppText>
+            <AppText style={styles.muted}>{t("mobile:cms.list.loading")}</AppText>
           </View>
         ) : error ? (
           <View style={styles.stateCard}>
             <AppText style={styles.error}>{error}</AppText>
             <Pressable accessibilityRole="button" onPress={() => { void load(); }} style={styles.retryButton}>
-              <AppText style={styles.retryText}>Thử lại</AppText>
+              <AppText style={styles.retryText}>{t("common:retry")}</AppText>
             </Pressable>
           </View>
         ) : (
           <>
             <View style={styles.sectionHeader}>
-              <AppText display style={styles.sectionTitle}>Nhóm tài liệu</AppText>
+              <AppText display style={styles.sectionTitle}>{t("mobile:cms.list.sectionTitle")}</AppText>
               {groups.length > 0 ? (
                 <AppText style={styles.sectionCount}>
                   {searching
-                    ? `${groups.reduce((total, group) => total + group.items.length, 0)} kết quả`
-                    : `${groups.length} nhóm`}
+                    ? t("mobile:cms.resultCount", { count: groups.reduce((total, group) => total + group.items.length, 0) })
+                    : t("mobile:cms.list.groupCount", { count: groups.length })}
                 </AppText>
               ) : null}
             </View>
@@ -156,12 +158,10 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
             {groups.length === 0 ? (
               <View style={styles.stateCard}>
                 <AppText display style={styles.stateTitle}>
-                  {searching ? "Không tìm thấy tài liệu phù hợp" : "Chưa có nội dung điều khoản"}
+                  {searching ? t("mobile:cms.list.emptySearchTitle") : t("mobile:cms.list.emptyTitle")}
                 </AppText>
                 <AppText style={styles.muted}>
-                  {searching
-                    ? "Thử từ khóa khác."
-                    : "Danh mục này đang được cập nhật. Vui lòng quay lại sau."}
+                  {searching ? t("mobile:cms.searchEmptyHint") : t("faq:empty.description")}
                 </AppText>
               </View>
             ) : (
@@ -180,7 +180,7 @@ export default function PolicyListScreen({ onBack, initialSlug }: PolicyListScre
                       </View>
                       <View style={styles.groupInfo}>
                         <AppText display style={styles.groupTitle}>{group.title}</AppText>
-                        <AppText style={styles.groupMeta}>{`${group.items.length} văn bản`}</AppText>
+                        <AppText style={styles.groupMeta}>{t("mobile:cms.docCount", { count: group.items.length })}</AppText>
                       </View>
                       <ChevronRight color={theme.faint} size={19} strokeWidth={2.4} />
                     </Pressable>

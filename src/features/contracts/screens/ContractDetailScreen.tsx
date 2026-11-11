@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Download, History, KeyRound, LockKeyhole, PenLine, X } from "lucide-react-native";
 import { DetailButton, DetailHeader, DetailPill, DetailSectionHeader } from "@/features/booking/components/detail/BookingDetailUI";
@@ -31,6 +32,7 @@ export default function ContractDetailScreen({
   onBack: () => void;
 }) {
   const { p } = useDetailTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(p), [p]);
   const userId = useAuthStore((s) => s.user?.userId ?? 0);
@@ -73,7 +75,7 @@ export default function ContractDetailScreen({
         if (active) setAudit(items);
       })
       .catch((err) => {
-        if (active) setAuditError(getApiErrorMessage(err, "Không tải được lịch sử hợp đồng."));
+        if (active) setAuditError(getApiErrorMessage(err, t("mobile:contract.detail.historyLoadFailed")));
       })
       .finally(() => {
         if (active) setAuditLoading(false);
@@ -93,7 +95,7 @@ export default function ContractDetailScreen({
         setPinPurpose("download");
         setPinOpen(true);
       } else {
-        Alert.alert("Thất bại", getApiErrorMessage(err, "Không tải được PDF. Vui lòng thử lại."));
+        Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.block.downloadFailed")));
       }
     } finally {
       setFileBusy(false);
@@ -124,7 +126,7 @@ export default function ContractDetailScreen({
   return (
     <View style={styles.page}>
       <DetailHeader
-        kicker="Hợp đồng thuê xe"
+        kicker={t("contract:section.title")}
         title={summary.contractNumber}
         onBack={onBack}
         style={styles.header}
@@ -132,7 +134,7 @@ export default function ContractDetailScreen({
           <View style={styles.headerActions}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Lịch sử hợp đồng"
+              accessibilityLabel={t("mobile:contract.detail.historyA11y")}
               hitSlop={6}
               onPress={() => setAuditOpen(true)}
               style={styles.iconButton}
@@ -141,7 +143,7 @@ export default function ContractDetailScreen({
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Tải PDF hợp đồng"
+              accessibilityLabel={t("mobile:contract.detail.downloadA11y")}
               hitSlop={6}
               disabled={fileBusy}
               onPress={() => void handleDownload()}
@@ -159,28 +161,28 @@ export default function ContractDetailScreen({
 
       <View style={styles.toolbar}>
         <DetailPill label={statusLabel} tone={contractTone(summary.status)} />
-        <Text style={styles.toolbarMeta}>{signedCount}/2 bên đã ký</Text>
+        <Text style={styles.toolbarMeta}>{t("mobile:contract.detail.signedProgress", { signed: signedCount })}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollBody} showsVerticalScrollIndicator={false}>
         {phase === "loading" ? (
           <View style={styles.center}>
             <ActivityIndicator color={p.brand} />
-            <Text style={styles.centerText}>Đang mở hợp đồng…</Text>
+            <Text style={styles.centerText}>{t("mobile:contract.detail.loadingContent")}</Text>
           </View>
         ) : phase === "locked" ? (
           <View style={[styles.paper, styles.lockedPaper]}>
             <View style={styles.lockBadge}>
               <LockKeyhole color={p.brand} size={20} strokeWidth={2.1} />
             </View>
-            <Text style={styles.lockTitle}>Hợp đồng được bảo vệ</Text>
+            <Text style={styles.lockTitle}>{t("mobile:contract.detail.protectedTitle")}</Text>
             <Text style={styles.lockText}>
-              Nhập mã PIN của ứng dụng để mở nội dung hợp đồng. Mã OTP chỉ được dùng khi ký.
+              {t("mobile:contract.detail.protectedHint")}
             </Text>
             <View style={styles.lockActions}>
               <DetailButton
                 icon={KeyRound}
-                label="Mở khóa bằng PIN"
+                label={t("mobile:contract.detail.unlockWithPin")}
                 onPress={() => {
                   setPinPurpose("view");
                   setPinOpen(true);
@@ -188,7 +190,7 @@ export default function ContractDetailScreen({
                 style={styles.lockButton}
               />
               <Pressable accessibilityRole="button" onPress={() => void loadContent()} style={styles.lockRetry}>
-                <Text style={styles.lockRetryText}>Thử tải lại</Text>
+                <Text style={styles.lockRetryText}>{t("mobile:contract.detail.retry")}</Text>
               </Pressable>
             </View>
           </View>
@@ -203,7 +205,7 @@ export default function ContractDetailScreen({
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 10) }]}>
           <DetailButton
             icon={PenLine}
-            label="Ký hợp đồng"
+            label={t("contract:section.sign")}
             onPress={() => setSignOpen(true)}
             style={styles.footerButton}
           />
@@ -214,7 +216,7 @@ export default function ContractDetailScreen({
         <View style={styles.backdrop}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Đóng lịch sử hợp đồng"
+            accessibilityLabel={t("mobile:contract.detail.closeHistoryA11y")}
             style={StyleSheet.absoluteFill}
             onPress={() => setAuditOpen(false)}
           />
@@ -223,12 +225,12 @@ export default function ContractDetailScreen({
             <View style={styles.auditHeader}>
               <DetailSectionHeader
                 icon={History}
-                title="Lịch sử hợp đồng"
-                subtitle={auditLoading ? "Đang tải…" : `${audit.length} thao tác được ghi nhận`}
+                title={t("mobile:contract.detail.historyTitle")}
+                subtitle={auditLoading ? t("mobile:contract.detail.loading") : t("mobile:contract.detail.auditCount", { total: audit.length })}
               />
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Đóng"
+                accessibilityLabel={t("contract:drawer.close")}
                 hitSlop={6}
                 onPress={() => setAuditOpen(false)}
                 style={styles.auditClose}
@@ -241,7 +243,7 @@ export default function ContractDetailScreen({
             ) : auditError ? (
               <Text style={styles.auditEmpty}>{auditError}</Text>
             ) : audit.length === 0 ? (
-              <Text style={styles.auditEmpty}>Chưa có thao tác nào được ghi nhận.</Text>
+              <Text style={styles.auditEmpty}>{t("mobile:contract.detail.emptyAudit")}</Text>
             ) : (
               <ScrollView style={styles.auditScroll} contentContainerStyle={styles.auditList} showsVerticalScrollIndicator={false}>
                 {audit.map((entry, index) => {

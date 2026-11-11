@@ -1,5 +1,6 @@
 import { CircleAlert, CircleCheck, IdCard, MapPin, Repeat2, TriangleAlert } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, Switch, TextInput, View } from "react-native";
 import AppText from "@/components/AppText";
 import AddressAutocomplete, {
@@ -54,6 +55,7 @@ export default function CheckoutHandoverCard({
   onFocusNote,
 }: Props) {
   const { p } = useCheckoutTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(p), [p]);
 
   let deliveryLine: { tone: "muted" | "mint" | "danger"; text: string } | null = null;
@@ -61,17 +63,17 @@ export default function CheckoutHandoverCard({
     if (deliveryPreview.overMax) {
       deliveryLine = {
         tone: "danger",
-        text: `Cách xe ${deliveryPreview.distanceKm} km, vượt quá phạm vi giao xe ${config.maxKm} km.`,
+        text: t("mobile:checkout.handover.deliveryOverMax", { km: deliveryPreview.distanceKm, max: config.maxKm }),
       };
     } else if (deliveryPreview.fee > 0) {
       deliveryLine = {
         tone: "muted",
-        text: `Cách xe ${deliveryPreview.distanceKm} km · phí giao ${formatMoney(deliveryPreview.fee)}`,
+        text: t("mobile:checkout.handover.deliveryFee", { km: deliveryPreview.distanceKm, fee: formatMoney(deliveryPreview.fee) }),
       };
     } else {
       deliveryLine = {
         tone: "mint",
-        text: `Cách xe ${deliveryPreview.distanceKm} km · miễn phí giao trong ${config.freeKm} km`,
+        text: t("mobile:checkout.handover.deliveryFree", { km: deliveryPreview.distanceKm, free: config.freeKm }),
       };
     }
   }
@@ -80,18 +82,18 @@ export default function CheckoutHandoverCard({
     <View style={styles.card}>
       <CheckoutSectionHeader
         icon={Repeat2}
-        subtitle="Địa điểm bàn giao xe"
-        title="Nhận & trả xe"
+        subtitle={t("mobile:checkout.handover.subtitle")}
+        title={t("mobile:trip.detail.placesTitle")}
       />
 
       <View style={styles.block}>
-        <AppText style={styles.blockTitle}>Điểm nhận xe</AppText>
+        <AppText style={styles.blockTitle}>{t("mobile:trip.detail.pickupPoint")}</AppText>
         <AddressAutocomplete
           onChange={onChangePickup}
           onFocusInput={onFocusPickup}
           onManualChange={onManualPickup}
           onSelect={onSelectPickup}
-          placeholder="Tìm địa chỉ nhận xe"
+          placeholder={t("mobile:checkout.handover.pickupPlaceholder")}
           showLabel={false}
           value={pickupAddress}
         />
@@ -100,7 +102,7 @@ export default function CheckoutHandoverCard({
           <View style={styles.noteRow}>
             <TriangleAlert color={p.warning} size={14} strokeWidth={2.1} />
             <AppText style={styles.noteText}>
-              Chọn địa chỉ từ danh sách gợi ý để xác định khoảng cách giao xe.
+              {t("mobile:checkout.handover.pickupHint")}
             </AppText>
           </View>
         ) : null}
@@ -131,7 +133,7 @@ export default function CheckoutHandoverCard({
             </AppText>
           </View>
         ) : (
-          <AppText style={styles.hint}>Chủ xe chỉ nhận giao trong bán kính {config.maxKm} km.</AppText>
+          <AppText style={styles.hint}>{t("mobile:checkout.handover.radiusHint", { max: config.maxKm })}</AppText>
         )}
       </View>
 
@@ -140,13 +142,13 @@ export default function CheckoutHandoverCard({
       <View style={styles.block}>
         <View style={styles.switchRow}>
           <View style={styles.switchBody}>
-            <AppText style={styles.switchTitle}>Trả xe tại điểm nhận</AppText>
+            <AppText style={styles.switchTitle}>{t("mobile:checkout.handover.sameReturn")}</AppText>
             <AppText style={styles.switchHint}>
-              {sameReturn ? "Bạn sẽ trả xe đúng nơi đã nhận." : "Chọn địa chỉ trả xe bên dưới."}
+              {sameReturn ? t("mobile:checkout.handover.sameReturnOn") : t("mobile:checkout.handover.sameReturnOff")}
             </AppText>
           </View>
           <Switch
-            accessibilityLabel="Trả xe tại điểm nhận"
+            accessibilityLabel={t("mobile:checkout.handover.sameReturn")}
             ios_backgroundColor={p.surfaceAlt}
             onValueChange={onToggleSameReturn}
             thumbColor="#FFFFFF"
@@ -157,9 +159,9 @@ export default function CheckoutHandoverCard({
 
         {sameReturn ? (
           <View style={styles.sameBox}>
-            <AppText style={styles.sameLabel}>Địa điểm trả</AppText>
+            <AppText style={styles.sameLabel}>{t("mobile:checkout.handover.returnPlaceLabel")}</AppText>
             <AppText style={styles.sameValue} numberOfLines={2}>
-              {pickupAddress.trim() || "Chưa chọn điểm nhận xe"}
+              {pickupAddress.trim() || t("mobile:checkout.handover.pickupEmpty")}
             </AppText>
           </View>
         ) : (
@@ -169,7 +171,7 @@ export default function CheckoutHandoverCard({
               onFocusInput={onFocusReturn}
               onManualChange={onManualReturn}
               onSelect={onSelectReturn}
-              placeholder="Tìm địa chỉ trả xe"
+              placeholder={t("mobile:checkout.handover.returnPlaceholder")}
               showLabel={false}
               value={returnAddress}
             />
@@ -177,7 +179,7 @@ export default function CheckoutHandoverCard({
               <View style={styles.noteRow}>
                 <TriangleAlert color={p.warning} size={14} strokeWidth={2.1} />
                 <AppText style={styles.noteText}>
-                  Chọn địa chỉ trả xe từ danh sách gợi ý để xác nhận vị trí.
+                  {t("mobile:checkout.handover.returnHint")}
                 </AppText>
               </View>
             ) : null}
@@ -189,15 +191,15 @@ export default function CheckoutHandoverCard({
 
       <View style={styles.block}>
         <View style={styles.noteHead}>
-          <AppText style={styles.blockTitle}>Ghi chú cho chủ xe</AppText>
-          <AppText style={styles.optional}>Không bắt buộc</AppText>
+          <AppText style={styles.blockTitle}>{t("mobile:checkout.handover.noteTitle")}</AppText>
+          <AppText style={styles.optional}>{t("mobile:checkout.handover.noteOptional")}</AppText>
         </View>
         <TextInput
-          accessibilityLabel="Ghi chú cho chủ xe"
+          accessibilityLabel={t("mobile:checkout.handover.noteTitle")}
           multiline
           onChangeText={onChangeNote}
           onFocus={onFocusNote}
-          placeholder="Ví dụ: tôi đến sớm 15 phút, cần giao xe tận nơi…"
+          placeholder={t("mobile:checkout.handover.notePlaceholder")}
           placeholderTextColor={p.faint}
           selectionColor={p.brand}
           style={styles.input}
@@ -213,9 +215,9 @@ export default function CheckoutHandoverCard({
           <IdCard color={p.warning} size={16} strokeWidth={2.1} />
         </View>
         <View style={styles.noticeBody}>
-          <AppText style={styles.noticeTitle}>Lưu ý khi nhận xe</AppText>
+          <AppText style={styles.noticeTitle}>{t("mobile:checkout.handover.noticeTitle")}</AppText>
           <AppText style={styles.noticeText}>
-            Quý khách vui lòng mang theo CCCD và GPLX bản gốc để Chủ xe đối chiếu trực tiếp khi nhận xe. Xin cảm ơn!
+            {t("mobile:checkout.handover.noticeBody")}
           </AppText>
         </View>
       </View>

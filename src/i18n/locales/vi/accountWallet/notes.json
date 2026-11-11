@@ -1,0 +1,21 @@
+{
+  "notes": {
+    "bookingEarning": "Thu nhập từ booking {{code}}: +{{amount}} (Phí nền tảng: {{fee}})",
+    "platformFee": "Phí nền tảng từ booking {{code}}: {{fee}} (Chủ xe nhận: {{ownerAmount}})",
+    "cancelCompensation": "Bồi hoàn do khách hủy booking {{code}}",
+    "depositRefund": "Hoàn {{percent}}% tiền cọc booking {{code}}",
+    "cancelRefund": "Khách hủy booking: hoàn {{percent}}% tiền cọc.",
+    "walletDepositBooking": "Thanh toán cọc bằng ví cho booking {{code}}",
+    "depositPayment": "Thanh toán cọc cho booking {{code}}",
+    "awaitingExtraDeposit": "Chờ thanh toán cọc bổ sung khi gia hạn hợp đồng booking {{code}}",
+    "extraDeposit": "Thanh toán cọc bổ sung khi gia hạn booking {{code}}",
+    "extraDepositPayOS": "Thanh toán cọc bổ sung {{amount}} khi gia hạn hợp đồng (PayOS).",
+    "unallocatedRefund": "Đã nhận {{received}} (dự kiến {{expected}}) nhưng không phân bổ vào escrow; tiền được trả vào ví.",
+    "topUpPayOS": "Nạp tiền qua PayOS",
+    "walletDeposit": "Thanh toán cọc bằng ví MoveVN",
+    "autoCancelConflict": "Hệ thống tự động hủy do trùng lịch",
+    "replaceWithWallet": "Thay thế bằng thanh toán cọc qua ví MoveVN",
+    "expiredRefund": "Booking hết hiệu lực hoặc lịch xe không đáp ứng khoảng đệm 60 phút; tiền đã hoàn vào ví khách.",
+    "escrowClosedRefund": "Tiền đã nhận qua PayOS nhưng escrow của booking đã đóng; số tiền đã hoàn vào ví khách."
+  }
+}

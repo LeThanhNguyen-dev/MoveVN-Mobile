@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { bareApiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
 import type { ApiResponse } from "@/features/auth/types";
@@ -55,7 +56,7 @@ export async function getPublicVehicleImages(id: number) {
 
 export async function createPricingQuote(id: number, startDateTime: string, endDateTime: string) {
   const response = await bareApiClient.post<ApiResponse<PricingQuoteResponse>>(endpoints.publicVehicles.pricingQuote(id), { startDateTime, endDateTime });
-  if (!response.data.data) throw new Error("Không lấy được báo giá thuê xe.");
+  if (!response.data.data) throw new Error(i18n.t("mobile:vehicleList.errors.pricingQuote"));
   return response.data.data;
 }
 

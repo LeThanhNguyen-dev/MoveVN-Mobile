@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ArrowLeft } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
@@ -6,8 +7,9 @@ import { detailFont as font } from "@/features/vehicles/components/detail/detail
 
 export function BookingHeader({ title, onBack }: { title: string; onBack?: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   return <View style={styles.header}>
-    {onBack ? <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" hitSlop={6} onPress={onBack} style={({ pressed }) => [styles.back, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}><ArrowLeft color={theme.text} size={20} strokeWidth={2.2} /></Pressable> : null}
+    {onBack ? <Pressable accessibilityRole="button" accessibilityLabel={t("booking:detail.back")} hitSlop={6} onPress={onBack} style={({ pressed }) => [styles.back, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}><ArrowLeft color={theme.text} size={20} strokeWidth={2.2} /></Pressable> : null}
     <Text accessibilityRole="header" numberOfLines={1} style={[styles.title, { color: theme.text }]}>{title}</Text>
   </View>;
 }

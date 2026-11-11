@@ -1,0 +1,138 @@
+{
+  "promotions": {
+    "title": "Promotions",
+    "subtitle": "Create and manage promotion codes for your vehicles.",
+    "createNew": "Create code",
+    "tabs": {
+      "invitations": "Invitations ({{count}})",
+      "pending": "Awaiting my approval ({{count}})",
+      "mine": "My codes ({{count}})"
+    },
+    "common": {
+      "errorTitle": "Error",
+      "successTitle": "Success",
+      "loadListFailed": "Unable to load the list.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approveSuccessTitle": "Approved",
+      "approveSuccessMessage": "The promotion code has been approved.",
+      "approveErrorFallback": "Approval failed.",
+      "rejectSuccessTitle": "Rejected",
+      "rejectSuccessMessage": "The promotion code has been rejected.",
+      "rejectErrorFallback": "Rejection failed."
+    },
+    "badge": {
+      "approved": "Approved",
+      "pending": "Pending approval",
+      "rejected": "Rejected",
+      "participating": "Participating",
+      "participationRejected": "Declined",
+      "withdrawn": "Withdrawn",
+      "awaitingSignup": "Awaiting sign-up"
+    },
+    "option": {
+      "discountFixed": "Fixed",
+      "discountPercentage": "Percentage",
+      "vehicleAll": "All",
+      "vehicleMotorbike": "Motorbike",
+      "vehicleCar": "Car",
+      "whoBearsOwner": "Owner",
+      "whoBearsShared": "Shared"
+    },
+    "meta": {
+      "discount": "{{value}} off",
+      "maxDiscount": "(up to {{amount}})",
+      "maxDiscountInline": " (up to {{amount}})",
+      "fee": "Fee: {{value}}",
+      "vehicle": "Vehicle: {{value}}",
+      "minOrder": "Minimum order: {{amount}}",
+      "usage": "Used: {{used}}/{{max}}",
+      "validity": "Valid: {{range}}",
+      "unlimited": " (unlimited)",
+      "whoBearsSharedDetail": "Shared · Owner {{owner}}% · MoveVN {{system}}%",
+      "scopeOwnVehicles": "Scope: your vehicles only"
+    },
+    "pending": {
+      "emptyTitle": "No codes awaiting approval",
+      "emptyText": "There are no promotion codes for you to approve."
+    },
+    "invitations": {
+      "emptyTitle": "No invitations",
+      "emptyText": "No shared promotion campaign is inviting you to join yet.",
+      "howItWorksTitle": "How it works",
+      "howItWorksText": "Shared campaigns only apply to vehicles of owners who have signed up. You can withdraw while no booking has used the code; bookings already created keep their financial obligations.",
+      "paused": "Paused",
+      "expired": "Expired",
+      "closedTitle": "This campaign is no longer accepting sign-ups.",
+      "withdraw": "Withdraw",
+      "joinAgain": "Join again",
+      "join": "Join"
+    },
+    "mine": {
+      "emptyTitle": "No codes yet",
+      "emptyText": "You have not created any promotion codes yet."
+    },
+    "toast": {
+      "loadInvitationsFailed": "Unable to load invitations.",
+      "joinSuccessTitle": "Joined",
+      "joinSuccessMessage": "Your vehicles can now use this code.",
+      "withdrawSuccessTitle": "Withdrawn",
+      "withdrawSuccessMessage": "Your vehicles can no longer use this code for new bookings.",
+      "joinErrorFallback": "Unable to join the campaign.",
+      "withdrawErrorFallback": "Unable to withdraw from the campaign.",
+      "createSuccessMessage": "Promotion code created. Awaiting admin approval.",
+      "createErrorFallback": "Create failed."
+    },
+    "form": {
+      "title": "Create promotion code",
+      "code": "Code",
+      "codePlaceholder": "e.g. SUMMER2024",
+      "name": "Name",
+      "namePlaceholder": "e.g. Summer sale",
+      "description": "Description",
+      "descriptionPlaceholder": "Description...",
+      "discountType": "Discount type",
+      "value": "Value",
+      "valuePercentSuffix": "(%)",
+      "valueAmountSuffix": "(VND)",
+      "vehicleType": "Vehicle type",
+      "whoBears": "Who bears the cost",
+      "ownerBearsPercent": "Owner share (%)",
+      "ownerBearsHint": "MoveVN covers the rest ({{percent}}%). The owner must cover at least 10%.",
+      "ownerBearsBudgetWarning": "Warning: MoveVN covers more than 50% of the discount. An admin budget review is required.",
+      "startAt": "Start date",
+      "endAt": "End date",
+      "maxDiscountAmount": "Maximum discount (VND)",
+      "minOrderAmount": "Minimum order (VND)",
+      "optionalPlaceholder": "Optional",
+      "maxUsageCount": "Maximum uses",
+      "cancel": "Cancel",
+      "submit": "Create"
+    },
+    "validation": {
+      "codeAndNameRequired": "Please enter the code and name.",
+      "codeTooLong": "Promotion code cannot exceed {{max}} characters.",
+      "nameTooLong": "Promotion name cannot exceed {{max}} characters.",
+      "descriptionTooLong": "Description cannot exceed {{max}} characters.",
+      "discountValuePositive": "Discount value must be greater than 0.",
+      "percentTooHigh": "Percentage cannot exceed 100%.",
+      "discountAmountTooHigh": "Discount value cannot exceed {{amount}} VND.",
+      "maxUsageTooLow": "Usage count must be at least 1.",
+      "maxDiscountPositive": "Maximum discount must be greater than 0.",
+      "maxDiscountTooHigh": "Maximum discount cannot exceed {{amount}} VND.",
+      "minOrderNegative": "Minimum order cannot be negative.",
+      "minOrderTooHigh": "Minimum order cannot exceed {{amount}} VND.",
+      "ownerPercentRange": "Owner share must be from 10% to less than 100%.",
+      "startAtRequired": "Please select a start date."
+    },
+    "approval": {
+      "back": "Back",
+      "title": "Approve promotion codes",
+      "description": "Promotion codes that need your approval before they apply to your vehicles.",
+      "emptyTitle": "No codes awaiting approval",
+      "emptyText": "There are no promotion codes for you to approve right now.",
+      "ownerBearsPercent": "You cover {{percent}}%",
+      "ownerBearsAll": "You cover the full cost"
+    }
+  }
+}

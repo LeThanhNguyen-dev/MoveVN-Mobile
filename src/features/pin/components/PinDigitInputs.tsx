@@ -1,5 +1,6 @@
 import type { ComponentRef } from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, TextInput, View } from "react-native"
 import AppText from "@/components/AppText";
 import { PIN_DIGIT_COUNT } from "@/features/pin/services/pinErrorMessage";
@@ -34,6 +35,7 @@ const PinDigitInputs = forwardRef<PinDigitInputsHandle, PinDigitInputsProps>(fun
   },
   ref,
 ) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const inputRefs = useRef<Array<ComponentRef<typeof TextInput> | null>>([]);
@@ -105,7 +107,7 @@ const PinDigitInputs = forwardRef<PinDigitInputsHandle, PinDigitInputsProps>(fun
             ref={(node) => {
               inputRefs.current[index] = node;
             }}
-            accessibilityLabel={`${label} ô ${index + 1}`}
+            accessibilityLabel={t("accountSecurity:pin.digitAria", { label, index: index + 1 })}
             autoComplete="one-time-code"
             editable={!disabled}
             keyboardType="number-pad"

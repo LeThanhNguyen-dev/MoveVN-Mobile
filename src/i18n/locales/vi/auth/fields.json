@@ -1,0 +1,22 @@
+{
+  "closeDialog": "Đóng cửa sổ tài khoản",
+  "fields": {
+    "email": "Email",
+    "password": "Mật khẩu",
+    "fullName": "Họ và tên",
+    "phone": "Số điện thoại",
+    "newPassword": "Mật khẩu mới",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "confirmNewPassword": "Xác nhận mật khẩu mới",
+    "otp": "Mã OTP"
+  },
+  "placeholders": {
+    "email": "ban@email.com",
+    "emailLogin": "Nhập email của bạn",
+    "password": "Nhập mật khẩu",
+    "newPassword": "Tạo mật khẩu",
+    "confirmPassword": "Nhập lại mật khẩu",
+    "fullName": "Nguyễn Văn A",
+    "phone": "0912345678"
+  }
+}

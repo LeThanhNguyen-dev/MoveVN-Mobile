@@ -1,0 +1,100 @@
+{
+  "user": {
+    "header": {
+      "moreOptions": "More options"
+    },
+    "presence": {
+      "offline": "Offline"
+    },
+    "detail": {
+      "reviewsLabel": "Reviews",
+      "reviewsAria": "View all {{count}} reviews of this vehicle owner",
+      "productsLabel": "Products (vehicles)",
+      "vehiclesCount": "{{count}} vehicles",
+      "joinedLabel": "Joined",
+      "verifiedTitle": "Account is verified",
+      "unverifiedTitle": "Account is not verified",
+      "verifiedDesc": "This vehicle owner's profile has been verified by MoveVN.",
+      "unverifiedDesc": "This vehicle owner has not completed profile verification.",
+      "viewAllAria": "View all {{count}} vehicles",
+      "viewAll": "View all vehicles ({{count}})"
+    },
+    "reviews": {
+      "loadError": "Could not load reviews. Please try again.",
+      "loading": "Loading reviews…",
+      "actionsTitle": "Review options",
+      "reportViolation": "Report a violation",
+      "profileAria": "View {{name}}'s profile",
+      "emptyDescription": "Public reviews will appear after a rental is completed.",
+      "emptyStar": "No {{star}}-star reviews yet.",
+      "noComment": "No comment.",
+      "vehicleAria": "View vehicle {{name}}",
+      "rentedVehicle": "Rented vehicle",
+      "loadMoreWithCount": "Show more reviews (+{{count}})",
+      "loadMoreError": "Could not load more reviews."
+    },
+    "sort": {
+      "popular": "Popular",
+      "newest": "Newest",
+      "price": "Price",
+      "priceDesc": "Price: High → Low",
+      "priceAsc": "Price: Low → High",
+      "cellAria": "Sort by {{label}}",
+      "sortedBy": "Sorted by: {{label}}"
+    },
+    "vehicleCard": {
+      "viewAria": "View vehicle {{name}}"
+    },
+    "screen": {
+      "refreshErrorTitle": "Could not refresh profile",
+      "connectionRetry": "Please check your connection and try again.",
+      "noChatRoomTitle": "No chat room yet",
+      "noChatRoomBody": "Only chat rooms created from a booking can be opened. Book a vehicle or open a trip to start messaging.",
+      "openChatErrorTitle": "Could not open chat",
+      "detailTitle": "Owner details",
+      "detailAria": "View owner details",
+      "ownerReviewsTitle": "Owner reviews",
+      "renterReviewsTitle": "Renter reviews",
+      "chatOwner": "Chat with this owner",
+      "chatRenter": "Chat with this renter",
+      "tabProducts": "Products",
+      "tabCategories": "Categories",
+      "totalVehicles": "Total vehicles ({{count}})",
+      "results": "{{count}} results",
+      "noResultQuery": "No results for \"{{query}}\".",
+      "tripsUnit": "Trips",
+      "vehiclesUnit": "Vehicles",
+      "searchPlaceholder": "Search vehicles in this shop…",
+      "reviewsAria": "View {{count}} reviews",
+      "ownerReviewsEntry": "Reviews from vehicle owners",
+      "ownerReviewsHint": "{{count}} reviews after completed rentals",
+      "noReviewsYet": "No reviews yet"
+    },
+    "category": {
+      "title": "Category: {{name}}",
+      "cardAria": "{{name}}, {{count}} vehicles",
+      "total": "Total vehicles in this category ({{count}})",
+      "emptyTitle": "No vehicles in this category",
+      "emptyBody": "Approved vehicles in this category will appear here.",
+      "emptyCount": "0 vehicles",
+      "rentingCount": "{{count}} vehicles for rent"
+    },
+    "menu": {
+      "refresh": "Refresh profile",
+      "report": "Report a violation"
+    },
+    "share": {
+      "message": "{{name}} · {{role}} on MoveVN",
+      "ownerVehicles": "{{count}} vehicles for rent"
+    },
+    "vehicleGroup": {
+      "car": "Car",
+      "motorbike": "Motorbike"
+    },
+    "time": {
+      "unknown": "Unknown",
+      "years": "{{count}} years",
+      "underOneYear": "Less than 1 year"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { Check, RotateCcw } from "lucide-react-native";
 import { Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@/theme/useTheme";
 import { detailFont as font } from "@/features/vehicles/components/detail/detailTheme";
 import type { BookingResponse, InspectionReportResponse } from "../types";
@@ -7,29 +8,30 @@ import type { BookingResponse, InspectionReportResponse } from "../types";
 export default function ReturnProgress({ booking, report, role }: {
   booking: BookingResponse; report?: InspectionReportResponse; role: "Owner" | "Customer";
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   if (!["Returning", "Returned", "Completed"].includes(booking.status)) return null;
   const confirmed = ["Returned", "Completed"].includes(booking.status);
   const outstanding = report?.outstandingSurchargeAmount ?? booking.outstandingSurchargeAmount ?? 0;
   const steps = [
-    { title: "Khách xác nhận biên bản và trả xe", done: confirmed },
-    { title: "Thanh toán phụ thu (nếu có)", done: confirmed && outstanding <= 0 },
-    { title: "Chủ xe xác nhận nhận lại xe", done: booking.status === "Completed" },
+    { title: t("mobile:inspection.returnProgress.stepConfirm"), done: confirmed },
+    { title: t("mobile:inspection.returnProgress.stepPay"), done: confirmed && outstanding <= 0 },
+    { title: t("mobile:inspection.returnProgress.stepOwner"), done: booking.status === "Completed" },
   ];
   const guidance = booking.status === "Completed"
-    ? outstanding > 0 ? "Chuyến đã hoàn tất bàn giao; vẫn còn phụ thu cần thanh toán bên dưới." : "Hai bên đã hoàn tất bàn giao xe."
+    ? outstanding > 0 ? t("mobile:inspection.returnProgress.completedWithOutstanding") : t("mobile:inspection.returnProgress.completed")
     : confirmed
-      ? role === "Owner" ? "Khách đã xác nhận trả xe. Kiểm tra thanh toán phụ thu và bấm Xác nhận đã nhận xe để hoàn tất chuyến." : "Bạn đã xác nhận trả xe. Thanh toán phụ thu còn thiếu (nếu có), sau đó chờ chủ xe xác nhận nhận lại xe. Bạn không cần bấm trả xe lần nữa."
-      : report ? role === "Owner" ? "Chờ khách đồng ý biên bản trả xe. Phụ thu chỉ được thanh toán sau bước này." : "Kiểm tra biên bản, xác nhận đã bàn giao xe rồi chọn cách thanh toán phụ thu. Nếu không đồng ý, mở tranh chấp."
-      : role === "Owner" ? "Khách đã báo bàn giao xe. Hãy kiểm tra xe và lập biên bản trả xe." : "Đã báo bàn giao xe. Chờ chủ xe lập biên bản để bạn kiểm tra và xác nhận.";
+      ? role === "Owner" ? t("mobile:inspection.returnProgress.confirmedOwner") : t("mobile:inspection.returnProgress.confirmedCustomer")
+      : report ? role === "Owner" ? t("mobile:inspection.returnProgress.reportOwner") : t("mobile:inspection.returnProgress.reportCustomer")
+      : role === "Owner" ? t("mobile:inspection.returnProgress.noReportOwner") : t("mobile:inspection.returnProgress.noReportCustomer");
   const doneCount = steps.filter((step) => step.done).length;
   return <View style={{ backgroundColor: theme.infoSoft, borderRadius: 20, padding: 14, gap: 12, borderWidth: 1, borderColor: theme.infoBorder }}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 9 }}>
       <View style={{ width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: theme.surface }}>
         <RotateCcw color={theme.info} size={15} strokeWidth={2.1} />
       </View>
-      <Text accessibilityRole="header" style={{ flex: 1, color: theme.text, fontFamily: font.display, fontSize: 14, lineHeight: 19 }}>Tiến trình trả xe</Text>
-      <Text style={{ color: theme.info, fontFamily: font.bold, fontSize: 10 }}>{doneCount}/{steps.length} bước</Text>
+      <Text accessibilityRole="header" style={{ flex: 1, color: theme.text, fontFamily: font.display, fontSize: 14, lineHeight: 19 }}>{t("mobile:inspection.returnProgress.title")}</Text>
+      <Text style={{ color: theme.info, fontFamily: font.bold, fontSize: 10 }}>{t("mobile:inspection.returnProgress.progress", { done: doneCount, total: steps.length })}</Text>
     </View>
     <View style={{ gap: 9 }}>
       {steps.map((step, index) => (

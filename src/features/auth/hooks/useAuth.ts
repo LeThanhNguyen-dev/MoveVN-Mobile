@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import * as SecureStore from "@/services/deviceStorage";
 import { create } from "zustand";
 import type { AuthSession, AuthState, AuthUser, UserRole } from "@/features/auth/types";
@@ -29,7 +30,7 @@ function persist(session: AuthSession, role: UserRole | null) {
     useAuthStore.setState({ storageError: null });
   });
   storageQueue = operation.catch(() => {
-    useAuthStore.setState({ storageError: "Không thể cập nhật phiên đăng nhập trên thiết bị." });
+    useAuthStore.setState({ storageError: i18n.t("mobile:auth.errors.storage") });
   });
   return operation;
 }

@@ -1,0 +1,73 @@
+{
+  "vehicleList": {
+    "viewVehicleAria": "View {{title}}",
+    "bookVehicleAria": "Book {{title}}",
+    "header": {
+      "allCountry": "Nationwide"
+    },
+    "list": {
+      "searching": "Searching for vehicles...",
+      "countFound": "{{total}} vehicles found",
+      "countFoundDays": "{{total}} vehicles found · {{days}} days",
+      "loadError": "Couldn't load the vehicle list. Pull down to try again.",
+      "emptyHint": "Try changing the location, dates or filters.",
+      "nearby": "Within {{radius}}km"
+    },
+    "ai": {
+      "searchError": "Couldn't run the smart search. Try again or use the standard filters."
+    },
+    "filters": {
+      "closeAria": "Close filters",
+      "smartSearch": "Smart search",
+      "smartSearchPlaceholder": "e.g. 7-seat car under 1.5m, spacious...",
+      "clearSmartSearchAria": "Clear smart search",
+      "pickupPlaceholder": "Enter an address to filter by distance",
+      "radiusHint": "Choose a pick-up address above to filter by distance.",
+      "bodyTypeLabel": "Body style",
+      "reset": "Reset"
+    },
+    "area": {
+      "closeAria": "Close location picker",
+      "provinceTitle": "Choose a province or city",
+      "districtTitle": "Wards in {{province}}",
+      "subtitleEmpty": "Choose where you want to rent a vehicle",
+      "stepHint": "Province → Ward/commune (ward optional)",
+      "provincePlaceholder": "Search province or city...",
+      "districtPlaceholder": "Search ward or commune...",
+      "loading": "Loading locations...",
+      "loadError": "Couldn't load the location list. Please try again later.",
+      "emptyDistrict": "No wards or communes for this area yet.",
+      "clear": "Clear",
+      "changeProvince": "Change province"
+    },
+    "rentalPeriod": {
+      "dayBusy": "{{date}} is already booked or blocked.",
+      "legend": "● Selected  ░ In range  × Booked / blocked",
+      "availabilityLoading": "Loading vehicle availability…",
+      "availabilityError": "Couldn't load vehicle availability.",
+      "rangeBusy": "Your rental range includes a booked or blocked date."
+    },
+    "map": {
+      "recenterAria": "Back to pick-up point",
+      "loading": "Loading vehicles on the map...",
+      "mapError": "Couldn't load the map.",
+      "vehiclesError": "Couldn't load more vehicles on the map.",
+      "collapseAria": "Collapse vehicle list",
+      "expandAria": "Open vehicle list",
+      "onMapCount": "{{total}} vehicles on the map",
+      "sheetSubtitle": "{{total}} matching vehicles · showing only those with a location",
+      "distance": "{{distance}} km from the pick-up point"
+    },
+    "address": {
+      "placeholder": "Street address, building number...",
+      "clearAria": "Clear address"
+    },
+    "verify": {
+      "sessionChanged": "The registration verification session has expired or the vehicle details changed. Please verify again.",
+      "saveSessionError": "Couldn't save the registration verification session right now. Please try again."
+    },
+    "errors": {
+      "pricingQuote": "Couldn't load the rental quote."
+    }
+  }
+}

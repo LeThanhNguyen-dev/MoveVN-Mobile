@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Bell, CalendarCheck, CarFront, ChevronRight, CircleAlert, FileCheck2, Flag, Headphones, MessageSquare, Scale, Wallet } from "lucide-react-native";
 import AppText from "@/components/AppText";
@@ -15,6 +16,7 @@ function NotificationRow({ item, now, onOpen }: {
   now: number;
   onOpen: (item: NotificationItem) => void;
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const visual = notificationVisuals(item, theme);
   const Icon = visual.urgent ? CircleAlert : icons[visual.icon];
@@ -22,9 +24,13 @@ function NotificationRow({ item, now, onOpen }: {
   // The reference has its own line; don't repeat the same booking code in the preview.
   const code = reference?.slice(reference.indexOf(":") + 1).trim();
   const body = code && item.body.startsWith(`${code}:`) ? item.body.slice(code.length + 1).trim() : item.body;
+  const status = item.isRead ? t("mobile:notification.read") : t("mobile:notification.unread");
   return (
     <Pressable accessibilityRole="button"
-      accessibilityLabel={`${item.isRead ? "Đã đọc" : "Chưa đọc"}, ${visual.label}${visual.urgent ? ", Cảnh báo quá hạn" : ""}: ${item.title}`}
+      accessibilityLabel={t("mobile:notification.rowAria", {
+        status, category: visual.label, title: item.title,
+        urgent: visual.urgent ? t("mobile:notification.urgentSuffix") : "",
+      })}
       onPress={() => onOpen(item)}
       style={({ pressed }) => [styles.card, {
         backgroundColor: pressed ? theme.brandSoft : item.isRead ? theme.surface
@@ -47,7 +53,7 @@ function NotificationRow({ item, now, onOpen }: {
         <AppText numberOfLines={2} style={{ color: theme.mode === "light" ? "#526077" : theme.muted,
           fontSize: 12, lineHeight: 18, marginTop: 4 }}>{body}</AppText>
         {visual.urgent ? <View style={[styles.badge, { backgroundColor: visual.background, marginTop: 7, alignSelf: "flex-start" }]}>
-            <AppText style={{ color: visual.color, fontWeight: "600", fontSize: 10 }}>Cảnh báo quá hạn</AppText>
+            <AppText style={{ color: visual.color, fontWeight: "600", fontSize: 10 }}>{t("common:notifications.overdue")}</AppText>
           </View> : null}
         {reference ? <View style={[styles.line, { marginTop: 7 }]}>
           <AppText numberOfLines={1} style={{ flex: 1, color: theme.muted, fontSize: 11 }}>

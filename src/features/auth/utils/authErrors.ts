@@ -1,43 +1,47 @@
+import i18n from "@/i18n";
 import { toApiError } from "@/features/auth/services/authService";
 
-const errorMessages: Record<string, string> = {
-  "401": "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.",
-  "403": "Bạn không có quyền thực hiện thao tác này.",
-  "404": "Không tìm thấy dữ liệu phù hợp.",
-  "422": "Thông tin nhập chưa hợp lệ. Vui lòng kiểm tra lại.",
-  "429": "Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.",
-  "500": "Hệ thống đang bận. Vui lòng thử lại sau.",
-  AUTH_1001: "Email này đã tồn tại.",
-  AUTH_1002: "Email hoặc mật khẩu không đúng.",
-  AUTH_1003: "Email chưa được xác thực. Vui lòng xác thực OTP trước khi đăng nhập.",
-  AUTH_1004: "Không tìm thấy tài khoản với email này.",
-  AUTH_1005: "Tài khoản đã bị khóa.",
-  AUTH_1006: "Vai trò không hợp lệ.",
-  AUTH_1010: "Bạn đã yêu cầu OTP quá nhiều lần. Vui lòng thử lại sau.",
-  AUTH_1011: "OTP không đúng hoặc đã hết hạn.",
-  AUTH_1012: "OTP đã được sử dụng.",
-  AUTH_1014: "Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu mã mới.",
-  AUTH_1013: "Không gửi được email OTP. Vui lòng thử lại sau.",
-  AUTH_1020: "Refresh token không hợp lệ. Vui lòng đăng nhập lại.",
-  AUTH_1021: "Refresh token đã hết hạn. Vui lòng đăng nhập lại.",
-  AUTH_1030: "Mật khẩu xác nhận không khớp.",
-  AUTH_1031: "Mật khẩu hiện tại không đúng.",
-  AUTH_1040: "Đăng nhập Google thất bại. Vui lòng thử lại.",
-  GOOGLE_UNAVAILABLE: "Đăng nhập Google chỉ dùng được trên bản dev build/native build.",
-  DEVELOPER_ERROR: "Cấu hình Google OAuth chưa khớp package name, SHA-1 hoặc web client id.",
-  AUTH_1007: "Số điện thoại này đã tồn tại.",
-  NETWORK: "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.",
+const errorCodeKeys: Record<string, string> = {
+  "401": "auth:errors.401",
+  "403": "auth:errors.403",
+  "404": "auth:errors.404",
+  "422": "auth:errors.422",
+  "429": "auth:errors.429",
+  "500": "auth:errors.500",
+  AUTH_1001: "auth:errors.AUTH_1001",
+  AUTH_1002: "auth:errors.AUTH_1002",
+  AUTH_1003: "auth:errors.AUTH_1003",
+  AUTH_1004: "auth:errors.AUTH_1004",
+  AUTH_1005: "auth:errors.AUTH_1005",
+  AUTH_1006: "auth:errors.AUTH_1006",
+  AUTH_1010: "auth:errors.AUTH_1010",
+  AUTH_1011: "auth:errors.AUTH_1011",
+  AUTH_1012: "auth:errors.AUTH_1012",
+  AUTH_1014: "auth:errors.AUTH_1014",
+  AUTH_1013: "auth:errors.AUTH_1013",
+  AUTH_1020: "auth:errors.AUTH_1020",
+  AUTH_1021: "auth:errors.AUTH_1021",
+  AUTH_1030: "auth:errors.AUTH_1030",
+  AUTH_1031: "auth:errors.AUTH_1031",
+  AUTH_1040: "auth:errors.AUTH_1040",
+  GOOGLE_UNAVAILABLE: "mobile:auth.errors.GOOGLE_UNAVAILABLE",
+  DEVELOPER_ERROR: "mobile:auth.errors.DEVELOPER_ERROR",
+  AUTH_1007: "auth:errors.AUTH_1007",
+  NETWORK: "auth:errors.NETWORK",
 };
 
 export function getFriendlyAuthError(error: unknown) {
   const apiError = toApiError(error);
-  if (errorMessages[apiError.code]) {
-    return errorMessages[apiError.code];
+  const key = errorCodeKeys[apiError.code];
+  if (key) {
+    return i18n.t(key);
   }
 
-  if (apiError.message && apiError.message !== "Yêu cầu không thành công." && apiError.message !== "Đã có lỗi xảy ra. Vui lòng thử lại.") {
+  const requestFailedShort = i18n.t("mobile:auth.errors.requestFailedShort");
+  const generic = i18n.t("mobile:auth.errors.generic");
+  if (apiError.message && apiError.message !== requestFailedShort && apiError.message !== generic) {
     return apiError.message;
   }
 
-  return "Yêu cầu không thành công. Vui lòng thử lại.";
+  return i18n.t("auth:errors.UNKNOWN");
 }

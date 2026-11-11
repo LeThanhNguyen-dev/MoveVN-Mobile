@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { usePushNavigation } from "@/features/notifications/pushNavigation";
 import { CalendarCheck, CarFront, LayoutDashboard, MessageSquare, UserRound } from "lucide-react-native";
 import { BackHandler, StyleSheet, View } from "react-native";
@@ -21,15 +22,19 @@ import { useTheme } from "@/theme/useTheme";
 
 type OwnerTabKey = "vehicles" | "bookings" | "overview" | "messages" | "account";
 
-const ownerTabs: MobileTabItem<OwnerTabKey>[] = [
-  { key: "vehicles", label: "Xe của tôi", icon: CarFront },
-  { key: "bookings", label: "Đơn thuê", icon: CalendarCheck },
-  { key: "overview", label: "Tổng quan", icon: LayoutDashboard, prominent: true },
-  { key: "messages", label: "Tin nhắn", icon: MessageSquare },
-  { key: "account", label: "Tài khoản", icon: UserRound },
-];
-
 export default function OwnerNavigator({ user }: { user: AuthUser }) {
+  const { t, i18n } = useTranslation();
+  // Nhãn tab phải dựng trong component để đổi theo ngôn ngữ đang chọn.
+  const ownerTabs = useMemo<MobileTabItem<OwnerTabKey>[]>(
+    () => [
+      { key: "vehicles", label: t("mobile:navigation.ownerVehicles"), icon: CarFront },
+      { key: "bookings", label: t("mobile:navigation.ownerBookings"), icon: CalendarCheck },
+      { key: "overview", label: t("mobile:navigation.ownerOverview"), icon: LayoutDashboard, prominent: true },
+      { key: "messages", label: t("mobile:navigation.messages"), icon: MessageSquare },
+      { key: "account", label: t("mobile:navigation.account"), icon: UserRound },
+    ],
+    [t, i18n.language],
+  );
   const [activeTab, setActiveTab] = useState<OwnerTabKey>("overview");
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);

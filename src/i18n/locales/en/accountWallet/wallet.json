@@ -1,0 +1,57 @@
+{
+  "error": "Unable to load wallet information. Please try again later.",
+  "loadMoreError": "Unable to load more transaction history.",
+  "topUpSuccess": "Top-up completed successfully!",
+  "topUpChecking": "Checking the top-up result from PayOS...",
+  "topUpMinAmount": "The minimum top-up amount is 10,000₫",
+  "paymentErrorTitle": "Payment error",
+  "paymentErrorMessage": "Unable to create a payment link right now.",
+  "title": "My wallet",
+  "subtitle": "Manage your balance, top up, withdraw and keep your linked bank account up to date.",
+  "availableBalance": "Available balance",
+  "topUp": "Top up",
+  "withdraw": "Withdraw",
+  "withdrawNeedBank": "You need to link a bank account before withdrawing",
+  "totalSpent": "Total withdrawn / spent",
+  "totalEarned": "Total earnings received",
+  "bankCard": {
+    "title": "Linked bank account",
+    "bank": "Bank:",
+    "accountNumber": "Account number:",
+    "holder": "Account holder:",
+    "notSet": "No payout account set up. You need to add one to withdraw.",
+    "update": "Update bank",
+    "setup": "Set up now"
+  },
+  "tabs": {
+    "transactions": "Transaction history",
+    "withdrawals": "Withdrawal requests"
+  },
+  "status": {
+    "Pending": "Pending",
+    "NeedsManualReview": "Reconciling the bank transfer",
+    "Approved": "Approved",
+    "Completed": "Completed",
+    "Rejected": "Rejected"
+  },
+  "toasts": {
+    "successTitle": "Success",
+    "errorTitle": "Error",
+    "withdrawErrorTitle": "Withdrawal error",
+    "wrongMin": "The minimum withdrawal amount is {{min}}.",
+    "wrongMax": "The maximum withdrawal amount is {{max}}.",
+    "insufficient": "Your available balance is not enough.",
+    "withdrawSuccessMessage": "Your withdrawal request has been sent. Please wait for staff approval.",
+    "withdrawError": "Failed to create the withdrawal request.",
+    "cancelConfirm": "Are you sure you want to cancel this withdrawal request?",
+    "cancelSuccess": "The withdrawal request has been cancelled.",
+    "cancelError": "Failed to cancel the request.",
+    "bankMissing": "Please enter your full bank account details.",
+    "otpSentTitle": "OTP sent",
+    "otpSentMessage": "The OTP has been sent to your email.",
+    "otpSendError": "Unable to send OTP. Please try again.",
+    "otpMissing": "Please enter the OTP.",
+    "bankSaved": "Your payout account has been updated.",
+    "otpVerifyError": "OTP verification failed."
+  }
+}

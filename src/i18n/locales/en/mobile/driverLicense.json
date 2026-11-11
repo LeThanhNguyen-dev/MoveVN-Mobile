@@ -1,0 +1,35 @@
+{
+  "driverLicense": {
+    "cooldown": {
+      "days": "{{count}} days",
+      "hours": "{{count}} hours",
+      "minutes": "{{count}} minutes",
+      "shortly": "in a few minutes",
+      "retryAfter": "You can resubmit after {{duration}}.",
+      "retryAfterAt": "You can resubmit after {{time}}."
+    },
+    "statusError": "Could not load license status.",
+    "cameraPermission": "Camera access is needed to photograph your license.",
+    "libraryPermission": "Photo library access is needed to choose a license image.",
+    "invalidFileType": "Only JPG, PNG or WebP files are accepted.",
+    "processImageError": "Could not process this image. Please try another photo.",
+    "photoRequired": "Please choose a license image before submitting.",
+    "pendingReviewNotice": "Your application is awaiting staff review.",
+    "verifyFailed": "License verification did not pass. Please retake a clearer photo.",
+    "submitError": "Could not submit the license image. Please try again.",
+    "reloadAria": "Reload status",
+    "statusTitle": "Verification status",
+    "loadingStatus": "Loading status...",
+    "licenseNumberWithType": "License number ({{type}})",
+    "revealDisabledHint": "This document is not verified for display.",
+    "verifiedVehicleTypes": "Verified vehicle types",
+    "pendingNotice": "Your application is awaiting staff review. Please come back later.",
+    "uploadTitle": "Submit a new license photo",
+    "uploadHint": "Capture a clear front side of your license, up to 5MB (JPG/PNG/WebP).",
+    "noImageSelected": "No image selected yet",
+    "processingImage": "Processing image...",
+    "capture": "Take photo",
+    "library": "Library",
+    "submitting": "Submitting..."
+  }
+}

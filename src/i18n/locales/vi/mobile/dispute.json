@@ -1,0 +1,120 @@
+{
+  "dispute": {
+    "a11y": {
+      "back": "Quay lại danh sách",
+      "backToAccount": "Quay lại Tài khoản",
+      "backToForm": "Quay lại form tạo",
+      "refresh": "Làm mới tranh chấp"
+    },
+    "filters": {
+      "all": "Tất cả"
+    },
+    "list": {
+      "clearKeyword": "Xóa",
+      "resetCount": "Xóa lọc ({{count}})",
+      "sectionFine": "Trạng thái hồ sơ phạt nguội",
+      "activeKeyword": "Lọc: “{{keyword}}”",
+      "adminManaged": "Admin xử lý",
+      "fineSubmitted": "Chờ xác minh",
+      "fineAwaitingCustomer": "Chờ khách xác nhận",
+      "fineDisputed": "Khách phản đối",
+      "fineAwaitingPayment": "Chờ chứng từ",
+      "fineAwaitingProof": "Chờ duyệt chứng từ",
+      "fineResolved": "Hoàn tất",
+      "fineRejected": "Bị từ chối"
+    },
+    "detail": {
+      "infoTitle": "Thông tin",
+      "customerUpper": "KHÁCH HÀNG",
+      "ownerUpper": "CHỦ XE",
+      "openedAt": "Mở lúc {{date}}",
+      "overdue": "Quá hạn",
+      "refresh": "Làm mới",
+      "followUpOverdue": " · Quá hạn, cần nhân viên/Admin xử lý; không tự ghi nhận đã thanh toán.",
+      "responseLabel": "Nội dung phản hồi",
+      "pickEvidence": "Chọn ảnh ({{count}}/{{max}})",
+      "removeFile": "Xóa",
+      "escalateReasonLabel": "Lý do chuyển Admin (không đồng ý cách xử lý)",
+      "escalateReasonPlaceholder": "Lý do...",
+      "closeHint": "Chạm để đóng"
+    },
+    "stepper": {
+      "open": "Mở",
+      "investigating": "Điều tra",
+      "needMoreEvidence": "Bổ sung",
+      "decision": "Kết quả",
+      "settlement": "Quyết toán",
+      "done": "✓ Đã xử lý hoàn tất",
+      "escalated": "Đã chuyển Admin xử lý"
+    },
+    "create": {
+      "bookingLabel": "Booking khiếu nại",
+      "bookingEmpty": "Chưa chọn booking. Bấm nút bên dưới để chọn.",
+      "changeBooking": "Đổi booking khác",
+      "pickBooking": "Chọn booking",
+      "depositScope": "Tiền cọc booking",
+      "chooseImages": "Chọn ảnh từ thư viện",
+      "validationRequired": "Chọn booking và nhập mô tả sự việc.",
+      "confirmTrafficFine": "Kiểm tra thông báo, biển số, thời điểm vi phạm và ảnh chứng từ. Hồ sơ được gửi để xác minh."
+    },
+    "selectBooking": {
+      "title": "Chọn booking",
+      "searchPlaceholder": "Tìm theo mã booking...",
+      "hintTrafficFine": "Booking đã/đang thuê đều được chấp nhận cho phạt nguội.",
+      "hintCompleted": "Chỉ booking đã hoàn tất / đã trả xe.",
+      "count": "{{count}} booking",
+      "empty": "Không có booking phù hợp.",
+      "picked": "✓ Đang chọn"
+    },
+    "fine": {
+      "legacyDescription": "Hồ sơ chưa có thông tin thông báo và chứng từ thanh toán theo luồng mới. Cần lập hồ sơ phạt nguội mới có đầy đủ thông tin để theo dõi.",
+      "rentalEstimated": "Có sử dụng giờ dự kiến/biên bản.",
+      "paymentModeReimburse": "Khách hoàn trả đúng khoản chủ xe đã nộp phạt. Chủ xe xác nhận đã nhận đủ tiền.",
+      "paymentModeDirect": "Khách tự nộp phạt cho cơ quan xử lý và gửi biên lai.",
+      "receiptPhotos": " · {{count}} ảnh biên lai",
+      "rejectionReason": "Lý do từ chối hồ sơ: {{reason}}.",
+      "dissentReasonLabel": "Lý do (bắt buộc khi phản đối)",
+      "paidAtLabel": "Thời điểm thanh toán (VD: 2026-10-05 14:30)",
+      "pickProof": "Chọn ảnh chứng từ ({{count}}/{{max}})",
+      "proofRequired": "Cần ngày thanh toán (YYYY-MM-DD HH:mm), mã biên lai và 1–6 ảnh JPG/PNG/WebP, mỗi ảnh tối đa 5 MB."
+    },
+    "fineForm": {
+      "violationAtLabel": "Thời điểm vi phạm (VD: 2026-10-01 14:30)",
+      "dueAtLabel": "Hạn xử lý theo thông báo (VD: 2026-10-31)",
+      "customerPays": "Khách tự nộp",
+      "reimburseOwner": "Hoàn trả chủ xe",
+      "ownerPaidAtLabel": "Thời điểm chủ xe đã nộp phạt (VD: 2026-10-05 09:00)",
+      "pickReceipts": "Chọn biên lai ({{count}} ảnh)",
+      "noticeHint": "Bắt buộc đính kèm ảnh thông báo phạt ở phần bằng chứng bên dưới.",
+      "errors": {
+        "required": "Nhập số thông báo, đơn vị thông báo và biển số xe.",
+        "violationAt": "Thời điểm vi phạm sai định dạng (YYYY-MM-DD HH:mm).",
+        "dueAt": "Hạn xử lý sai định dạng (YYYY-MM-DD).",
+        "amount": "Số tiền phạt phải là số nguyên VND dương.",
+        "ownerPaidAt": "Nhập thời điểm chủ xe đã nộp phạt.",
+        "receipts": "Cần 1–6 ảnh biên lai chủ xe đã nộp phạt."
+      }
+    },
+    "legacy": {
+      "problem": {
+        "Damage": "Hư hỏng",
+        "LateReturn": "Trả trễ"
+      },
+      "status": {
+        "Investigating": "Đang xử lý",
+        "DecisionIssued": "Chờ xác nhận",
+        "Closed": "Đã đóng"
+      }
+    },
+    "summary": {
+      "title": "Phụ thu theo quyết định",
+      "surcharge": "Phụ thu #{{id}}",
+      "refundNote": "Phần chênh lệch đã trả trực tiếp được hoàn từ ví chủ xe vào ví khách.",
+      "appliedAt": "Đã áp dụng: {{date}}",
+      "pending": "Chờ quyết định có hiệu lực; chưa điều chỉnh hoặc hoàn tiền."
+    },
+    "errors": {
+      "escalateFailed": "Không thể chuyển Admin."
+    }
+  }
+}

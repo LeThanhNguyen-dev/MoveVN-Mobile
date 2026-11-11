@@ -1,0 +1,124 @@
+{
+  "ownerAnalytics": {
+    "tabs": {
+      "overview": "Overview",
+      "trends": "Charts",
+      "vehicles": "Fleet",
+      "reports": "Reports"
+    },
+    "header": {
+      "backAria": "Go back",
+      "title": "Fleet analytics"
+    },
+    "hero": {
+      "title": "Fleet performance",
+      "description": "Your income, rentals and ratings."
+    },
+    "errors": {
+      "loadFailed": "Unable to load analytics. Please try again.",
+      "exportFailed": "Could not export Excel. Please try again.",
+      "shareUnsupported": "This device does not support sharing Excel files."
+    },
+    "period": {
+      "customizeAria": "Customize reporting period",
+      "customize": "Customize",
+      "timezone": "Vietnam time",
+      "viewAll": "View entire fleet",
+      "vehiclePickerAria": "Select vehicle for analytics",
+      "vehicleNumber": "Vehicle #{{id}}"
+    },
+    "comparisonPeriod": "Versus previous period: {{from}} – {{to}}",
+    "granularity": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "groupAria": "Group by {{unit}}"
+    },
+    "metrics": {
+      "incomeNote": "Recorded transactions, not profit or money already transferred to a bank.",
+      "newRequests": "{{count}} new requests",
+      "completedTripsHint": "By completion date",
+      "bookedDaysHint": "{{booked}}/{{fleet}} fleet days"
+    },
+    "disputes": {
+      "description": "Records created in the period; status reflects the current state of this record group.",
+      "pickVehicle": "Select a vehicle to view individual records and booking history."
+    },
+    "ranking": {
+      "topBookedDescription": "By valid bookings among new requests in the period.",
+      "topIncomeDescription": "By income actually recorded via wallet in the period."
+    },
+    "vehicles": {
+      "description": "{{count}} vehicles · Includes vehicles without bookings",
+      "sortIncome": "Income",
+      "sortAria": "Sort by {{label}}",
+      "confirmedPerRequest": "Valid bookings / Requests",
+      "completedPerCancelled": "Completed / Cancelled",
+      "bookedDaysValue": "{{booked}}/{{fleet}} days · {{percent}}",
+      "disputesValue": "{{created}} records / {{open}} open",
+      "viewDetails": "View detailed analytics"
+    },
+    "pagination": {
+      "page": "Page {{page}}/{{total}}",
+      "pageSpaced": "Page {{page}} / {{total}}",
+      "prev": "Previous page",
+      "next": "Next page",
+      "prevAria": "{{label}}: previous page",
+      "nextAria": "{{label}}: next page"
+    },
+    "insight": {
+      "missingBookings": "{{without}}/{{total}} vehicles had no valid bookings created in the period. You can review availability, rental price and listing content.",
+      "allHaveBookings": "All vehicles had valid bookings in the period. Keep tracking income and cancellation rate to assess performance."
+    },
+    "reports": {
+      "completedWithoutDate": "{{count}} completed trips are missing their recorded completion time in legacy data. These trips are not included in the daily analytics."
+    },
+    "definitions": {
+      "aria": "How metrics are calculated and notes"
+    },
+    "actions": {
+      "exporting": "Exporting Excel…"
+    },
+    "footer": "Updated {{time}}",
+    "picker": {
+      "closeAria": "Close vehicle filter",
+      "title": "Select vehicle for analytics",
+      "searchAria": "Search vehicles",
+      "searchPlaceholder": "License plate or vehicle name",
+      "selectAria": "Select {{plate}}"
+    },
+    "trend": {
+      "metricCompletedTripValue": "Completed value",
+      "chartAria": "{{metric}} chart",
+      "tripsValue": "{{count}} trips",
+      "bookingsValue": "{{count}} bookings",
+      "hint": "Tap a bar to view its value. Swipe horizontally for more periods."
+    },
+    "details": {
+      "bookingStatus": {
+        "Pending": "Pending approval",
+        "Approved": "Approved",
+        "Confirmed": "Confirmed",
+        "DepositPaid": "Deposit paid",
+        "InProgress": "Renting",
+        "Returning": "Returning",
+        "Returned": "Returned",
+        "Completed": "Completed",
+        "Cancelled": "Cancelled",
+        "Rejected": "Rejected"
+      },
+      "disputes": {
+        "description": "Records created in the period. Status shown is current.",
+        "viewAria": "View dispute {{id}}"
+      },
+      "history": {
+        "description": "Requests created in the period. Booking value is not owner income.",
+        "viewAria": "View booking {{code}}",
+        "createdAt": "Created {{time}}"
+      }
+    },
+    "exportDialog": {
+      "title": "Save or share owner analytics"
+    }
+  }
+}

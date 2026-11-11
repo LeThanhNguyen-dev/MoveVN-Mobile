@@ -1,0 +1,108 @@
+{
+  "explore": {
+    "searchCta": "FIND A VEHICLE",
+    "locationPlaceholder": "Select province / city, ward / commune",
+    "errors": {
+      "pickLocation": "Please choose a rental location.",
+      "pickPeriod": "Please choose a rental period."
+    },
+    "banner": {
+      "detailFallback": "Promotion details",
+      "closeDetail": "Close promotion details",
+      "copyCode": "Copy code {{code}}",
+      "copied": "Copied!",
+      "discount": "{{discount}} off",
+      "validUntil": "Valid until {{date}}",
+      "vehicleAll": "All vehicles"
+    },
+    "promotions": {
+      "title": "Promotions",
+      "seeAll": "See all deals"
+    },
+    "destinations": {
+      "title": "Popular destinations",
+      "viewAll": "View all vehicles",
+      "lovedBadge": "Loved destination",
+      "searchAria": "Search vehicles in {{name}}",
+      "hanoi": {
+        "description": "Trips through the old quarter and lush green suburbs."
+      },
+      "hoChiMinh": {
+        "description": "Discover the city's vibrant pace on your own terms."
+      },
+      "daNang": {
+        "description": "From blue seas to the winding roads around the peninsula."
+      },
+      "nhaTrang": {
+        "description": "Plan your sunny coastal journey with the right vehicle."
+      },
+      "daLat": {
+        "description": "Catch the early mist and inspiring mountain passes."
+      },
+      "phuQuoc": {
+        "description": "Drive along the coast and explore the pearl island at your own pace."
+      }
+    },
+    "services": {
+      "title": "MoveVN featured services",
+      "car": {
+        "title": "Car rental",
+        "desc": "Enjoy private, stylish and convenient trips with your family across a diverse fleet.",
+        "cta": "Find a car"
+      },
+      "motorbike": {
+        "title": "Motorbike rental",
+        "desc": "Light, budget-friendly and flexible for city rides and short road trips.",
+        "cta": "Find a motorbike"
+      }
+    },
+    "advantages": {
+      "title": "Why choose MoveVN",
+      "shield": {
+        "title": "Absolute safety",
+        "desc": "Every vehicle is inspected and covered by insurance before each trip.",
+        "aria": "Absolute safety"
+      },
+      "card": {
+        "title": "Flexible payments",
+        "desc": "Clear, flexible payments through secure methods on MoveVN.",
+        "aria": "Flexible payments"
+      },
+      "pin": {
+        "title": "Door-to-door delivery",
+        "desc": "Pick up your vehicle at the airport, train station or right at home.",
+        "aria": "Door-to-door delivery"
+      },
+      "car": {
+        "title": "Diverse fleet",
+        "desc": "From light motorbikes to sedans and SUVs for every travel need.",
+        "aria": "Diverse fleet"
+      },
+      "file": {
+        "title": "Simple paperwork",
+        "desc": "Fast verification, clear contracts and all your details stored in the app.",
+        "aria": "Simple paperwork"
+      },
+      "support": {
+        "title": "Support all the way",
+        "desc": "Track pick-up and return schedules with support throughout your trip.",
+        "aria": "Support all the way"
+      }
+    },
+    "featured": {
+      "title": "Featured vehicles for you",
+      "viewAll": "View all",
+      "error": "Couldn't load featured vehicles. Check your connection and try again.",
+      "empty": "No featured vehicles yet. Try searching by location."
+    },
+    "host": {
+      "aria": "Become a host",
+      "imageAria": "List your vehicle on MoveVN",
+      "eyebrow": "FOR VEHICLE OWNERS",
+      "title": "Want to rent out your vehicle?",
+      "description": "Over 15,000 owners are earning with MoveVN.",
+      "toastTitle": "You're not a vehicle owner yet",
+      "toastMessage": "Verify your national ID to register as an owner, then add your driver's license and vehicle documents."
+    }
+  }
+}

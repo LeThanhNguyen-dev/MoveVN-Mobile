@@ -1,4 +1,5 @@
 import type { Theme } from "@/theme/tokens";
+import i18n from "@/i18n";
 import type { NotificationItem } from "./types";
 import { notificationCategory } from "./notificationPresentation";
 
@@ -35,7 +36,7 @@ export function notificationVisuals(item: NotificationItem, theme: Theme) {
   const [color, background] = palettes[tone][theme.mode];
   return {
     color, background, urgent,
-    label: contract ? "Hợp đồng" : dispute ? "Tranh chấp" : violation ? "Báo cáo vi phạm" : category.label,
+    label: contract ? i18n.t("mobile:notification.labels.contract") : dispute ? i18n.t("mobile:notification.labels.dispute") : violation ? i18n.t("mobile:notification.labels.violation") : category.label,
     icon: contract ? "contract" as const : dispute ? "dispute" as const : violation ? "violation" as const : category.icon,
   };
 }

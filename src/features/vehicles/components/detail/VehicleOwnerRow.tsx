@@ -2,6 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ChevronRight } from "lucide-react-native";
 import { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { detailFont, useDetailTheme } from "./detailTheme";
 
@@ -20,10 +21,11 @@ function initials(name: string): string {
 }
 
 export default function VehicleOwnerRow({ ownerName, ownerId, onOpenProfile }: Props) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(p), [p]);
   const canOpen = Boolean(onOpenProfile && ownerId);
-  const displayName = ownerName || "Chưa cập nhật";
+  const displayName = ownerName || t("mobile:vehicleDetail.owner.fallback");
 
   const body = (
     <>
@@ -35,7 +37,8 @@ export default function VehicleOwnerRow({ ownerName, ownerId, onOpenProfile }: P
           {displayName}
         </AppText>
         <AppText style={styles.role} numberOfLines={1}>
-          Chủ xe{canOpen ? " · Xem hồ sơ" : ""}
+          {t("mobile:vehicleDetail.owner.role")}
+          {canOpen ? t("mobile:vehicleDetail.owner.profileSuffix") : ""}
         </AppText>
       </View>
       {canOpen ? <ChevronRight color={p.faint} size={17} strokeWidth={2.1} /> : null}
@@ -46,7 +49,7 @@ export default function VehicleOwnerRow({ ownerName, ownerId, onOpenProfile }: P
     return (
       <Pressable
         accessibilityRole="link"
-        accessibilityLabel={`Xem hồ sơ chủ xe ${displayName}`}
+        accessibilityLabel={t("mobile:vehicleDetail.owner.profileAria", { name: displayName })}
         onPress={() => onOpenProfile(ownerId)}
         style={({ pressed }) => [styles.row, pressed && styles.pressed]}
       >

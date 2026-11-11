@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useDetailTheme } from "./detailTheme";
 
 function Pulse({
@@ -69,6 +70,7 @@ export default function VehicleDetailSkeleton({
   bottomInset: number;
   onBack: () => void;
 }) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(p, width), [p, width]);
@@ -83,7 +85,7 @@ export default function VehicleDetailSkeleton({
         <View style={[styles.topbar, { paddingTop: 10 }]}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Quay lại"
+            accessibilityLabel={t("vehicleDetail:back")}
             hitSlop={6}
             onPress={onBack}
             style={styles.back}

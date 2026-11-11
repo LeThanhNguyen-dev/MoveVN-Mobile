@@ -1,0 +1,40 @@
+{
+  "topUpModal": {
+    "title": "Top up your wallet",
+    "amountLabel": "Amount to top up (VND)",
+    "placeholder": "e.g. 500000",
+    "secureNote": "Pay securely through PayOS by scanning a QR code with any banking app.",
+    "submit": "Continue to payment"
+  },
+  "withdrawModal": {
+    "title": "Withdrawal request",
+    "toAccount": "Withdraw to payout account:",
+    "bank": "Bank:",
+    "accountNumber": "Account number:",
+    "holder": "Account holder:",
+    "amountLabel": "Withdrawal amount (VND)",
+    "placeholder": "Amount to withdraw, minimum {{min}}",
+    "available": "Available balance:",
+    "hintEnter": "Please enter the amount to withdraw (minimum {{min}}, maximum {{max}})",
+    "hintMin": "The minimum withdrawal amount is {{min}}",
+    "hintInsufficient": "Insufficient balance. Short by {{missing}}",
+    "submit": "Send withdrawal request"
+  },
+  "bankModal": {
+    "title": "Update payout account",
+    "bankName": "Bank name",
+    "selectBank": "Select a bank",
+    "accountNumber": "Account number",
+    "accountPlaceholder": "Enter your bank account number",
+    "holder": "Account holder name (no diacritics)",
+    "holderPlaceholder": "e.g. NGUYEN VAN A",
+    "bin": "Bank BIN code (optional)",
+    "binPlaceholder": "e.g. 970422",
+    "sendOtp": "Send verification OTP",
+    "otpNote": "We have sent a 6-digit OTP to your email. Please check it and enter the code below to finish updating.",
+    "otpLabel": "OTP verification code",
+    "otpPlaceholder": "Enter the 6-digit OTP",
+    "back": "Back",
+    "confirm": "Confirm and save"
+  }
+}

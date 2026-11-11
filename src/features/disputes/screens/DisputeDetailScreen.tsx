@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useRef, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   AppState,
@@ -59,6 +60,7 @@ export default function DisputeDetailScreen({
   onBack: () => void;
 }) {
   const { theme, mode } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const userId = useAuthStore((state) => state.user?.userId);
 
@@ -83,12 +85,12 @@ export default function DisputeDetailScreen({
       const result = await getDisputeById(disputeId);
       if (current === requestId.current) setDetail(result);
     } catch (err) {
-      if (current === requestId.current && !silent) setError(getApiErrorMessage(err, "Không thể tải chi tiết tranh chấp."));
+      if (current === requestId.current && !silent) setError(getApiErrorMessage(err, t("disputes:errors.loadDetailFailed")));
       await load(true);
     } finally {
       if (current === requestId.current) setLoading(false);
     }
-  }, [disputeId]);
+  }, [disputeId, t]);
 
   useEffect(() => {
     void load();
@@ -124,7 +126,7 @@ export default function DisputeDetailScreen({
     try {
       setDetail(await acceptDisputeResolution(detail.id, detail.updatedAt));
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể xác nhận kết quả."));
+      setError(getApiErrorMessage(err, t("disputes:errors.acceptResultFailed")));
       await load(true);
     } finally {
       actionLock.current = false;
@@ -141,7 +143,7 @@ export default function DisputeDetailScreen({
     try {
       setDetail(await confirmExternalSettlement(detail.id, detail.updatedAt));
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể xác nhận thanh toán."));
+      setError(getApiErrorMessage(err, t("disputes:errors.confirmSettlementFailed")));
       await load(true);
     } finally {
       actionLock.current = false;
@@ -166,7 +168,7 @@ export default function DisputeDetailScreen({
       );
       setEscalationReason("");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể chuyển Admin."));
+      setError(getApiErrorMessage(err, t("mobile:dispute.errors.escalateFailed")));
       await load(true);
     } finally {
       actionLock.current = false;
@@ -190,7 +192,7 @@ export default function DisputeDetailScreen({
       (f) => !["image/jpeg", "image/png", "image/webp"].includes(f.mime) || (f.size != null && f.size > MAX_EVIDENCE_IMAGE_SIZE),
     );
     if (invalid) {
-      setError("Chỉ nhận JPG, PNG, WebP và mỗi ảnh phải dưới 5MB.");
+      setError(t("disputes:toast.invalidImageMessage"));
       return;
     }
     setEvidenceFiles((prev) => [...prev, ...picked].slice(0, MAX_EVIDENCE_IMAGES));
@@ -219,7 +221,7 @@ export default function DisputeDetailScreen({
       setEvidenceFiles([]);
       setEvidenceMessage("");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể bổ sung bằng chứng."));
+      setError(getApiErrorMessage(err, t("disputes:errors.submitEvidenceFailed")));
       await load(true);
     } finally {
       actionLock.current = false;
@@ -240,10 +242,10 @@ export default function DisputeDetailScreen({
       <View style={styles.center}>
         <Text style={styles.error}>{error}</Text>
         <Pressable onPress={() => void load()} style={styles.retryButton}>
-          <Text style={styles.retryText}>Thử lại</Text>
+          <Text style={styles.retryText}>{t("common:retry")}</Text>
         </Pressable>
         <Pressable onPress={onBack} style={styles.ghostButton}>
-          <Text style={styles.ghostText}>Quay lại</Text>
+          <Text style={styles.ghostText}>{t("booking:detail.back")}</Text>
         </Pressable>
       </View>
     );
@@ -263,14 +265,14 @@ export default function DisputeDetailScreen({
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Quay lại danh sách"
+          accessibilityLabel={t("mobile:dispute.a11y.back")}
           onPress={onBack}
           style={styles.backButton}
         >
           <Text style={styles.backText}>‹</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Chi tiết tranh chấp</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Làm mới tranh chấp" disabled={busy} onPress={() => void load(true)}><Text style={styles.link}>Làm mới</Text></Pressable>
+        <Text style={styles.headerTitle}>{t("disputes:detail.title")}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:dispute.a11y.refresh")} disabled={busy} onPress={() => void load(true)}><Text style={styles.link}>{t("mobile:dispute.detail.refresh")}</Text></Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.scrollBody}>
       <View style={styles.headerCard}>
@@ -296,23 +298,23 @@ export default function DisputeDetailScreen({
           </View>
           {detail.adminManaged ? (
             <View style={styles.adminChip}>
-              <Text style={styles.adminChipText}>Do Admin xử lý</Text>
+              <Text style={styles.adminChipText}>{t("disputes:detail.adminManaged")}</Text>
             </View>
           ) : null}
           {detail.reportType === "TrafficFine" && detail.trafficFine?.isOverdue ? (
             <View style={styles.overdueChip}>
-              <Text style={styles.overdueChipText}>Quá hạn</Text>
+              <Text style={styles.overdueChipText}>{t("mobile:dispute.detail.overdue")}</Text>
             </View>
           ) : null}
         </View>
         <StatusStepper status={detail.status} />
       </View>
-      {detail.followUpDueAt ? <Text style={detail.followUpOverdue ? styles.error : styles.muted}>Hạn phản hồi/theo dõi: {formatDisputeDateTime(detail.followUpDueAt)}{detail.followUpOverdue ? " · Quá hạn, cần nhân viên/Admin xử lý; không tự ghi nhận đã thanh toán." : ""}</Text> : null}
+      {detail.followUpDueAt ? <Text style={detail.followUpOverdue ? styles.error : styles.muted}>{t("disputes:detail.followUpDueAt")} {formatDisputeDateTime(detail.followUpDueAt)}{detail.followUpOverdue ? t("mobile:dispute.detail.followUpOverdue") : ""}</Text> : null}
       <BookingAssistance key={detail.bookingId} bookingId={detail.bookingId} bookingCode={detail.bookingCode} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Collapsible
-        title="Thông tin"
+        title={t("mobile:dispute.detail.infoTitle")}
         icon="◉"
         accent={theme.brand}
         open={openSections.has("info")}
@@ -320,23 +322,23 @@ export default function DisputeDetailScreen({
       >
         <View style={styles.partyRow}>
           <View style={styles.partyBox}>
-            <Text style={styles.partyLabel}>KHÁCH HÀNG</Text>
+            <Text style={styles.partyLabel}>{t("mobile:dispute.detail.customerUpper")}</Text>
             <Text style={styles.value}>{detail.customerName}</Text>
           </View>
           <View style={styles.partyBox}>
-            <Text style={styles.partyLabel}>CHỦ XE</Text>
+            <Text style={styles.partyLabel}>{t("mobile:dispute.detail.ownerUpper")}</Text>
             <Text style={styles.value}>{detail.ownerName}</Text>
           </View>
         </View>
         <View style={styles.descBox}>
           <Text style={styles.body}>{detail.description}</Text>
         </View>
-        <Text style={styles.muted}>Mở lúc {formatDisputeDateTime(detail.createdAt)}</Text>
+        <Text style={styles.muted}>{t("mobile:dispute.detail.openedAt", { date: formatDisputeDateTime(detail.createdAt) })}</Text>
       </Collapsible>
 
       {evidenceList(detail.evidenceUrls).length > 0 ? (
         <Collapsible
-          title={`Bằng chứng ban đầu · ${evidenceList(detail.evidenceUrls).length}`}
+          title={`${t("disputes:detail.initialEvidence")} · ${evidenceList(detail.evidenceUrls).length}`}
           icon="▣"
           accent="#0284C7"
           open={openSections.has("evidence")}
@@ -354,7 +356,7 @@ export default function DisputeDetailScreen({
 
       {detail.inspectionReports.length > 0 ? (
         <Collapsible
-          title={`Biên bản giao/nhận xe · ${detail.inspectionReports.length}`}
+          title={`${t("disputes:detail.reportsTitle")} · ${detail.inspectionReports.length}`}
           icon="▤"
           accent="#059669"
           open={openSections.has("reports")}
@@ -374,7 +376,7 @@ export default function DisputeDetailScreen({
 
       {detail.resolution ? (
         <Collapsible
-          title="Kết quả xử lý"
+          title={t("disputes:detail.resolutionTitle")}
           icon="✓"
           accent="#059669"
           open={openSections.has("resolution")}
@@ -385,15 +387,20 @@ export default function DisputeDetailScreen({
           </View>
           <CheckoutDecisionSummary json={detail.checkoutAdjustmentJson} appliedAt={detail.checkoutAdjustmentAppliedAt} report={detail.inspectionReports.find(r => r.type === "CheckOut")} />
           {detail.reportType === "Payment" && detail.paymentAdjustmentNote ? (
-            <Text style={styles.body}>Ghi chú đề xuất điều chỉnh thanh toán: {detail.paymentAdjustmentNote}</Text>
+            <Text style={styles.body}>{t("disputes:detail.paymentAdjustmentNote")} {detail.paymentAdjustmentNote}</Text>
           ) : null}
           {detail.reportType !== "TrafficFine" && detail.reportType !== "Payment" ? (
             <>
               <Text style={styles.body}>{compensationDirectionLabels[detail.compensationDirection]}</Text>
-              <Text style={styles.value}>Số tiền bồi thường tham khảo: {formatDisputeMoney(detail.finalCompensationAmount)}</Text>
+              <Text style={styles.value}>{t("disputes:detail.referenceCompensation")} {formatDisputeMoney(detail.finalCompensationAmount)}</Text>
               <Text style={styles.muted}>{settlementMethodLabels[detail.settlementMethod]}</Text>
-              <Text style={styles.body}>{detail.platformSettlementCompletedAt ? "Đã thanh toán qua ví" : "Dự kiến thanh toán qua ví"}: {formatDisputeMoney(detail.platformSettledAmount)}</Text>
-              <Text style={styles.body}>Quyết toán trực tiếp: {formatDisputeMoney(detail.externalSettlementAmount)}</Text>
+              <Text style={styles.body}>
+                {detail.platformSettlementCompletedAt
+                  ? t("disputes:detail.platformSettled")
+                  : t("disputes:detail.platformSettlementPending")}
+                : {formatDisputeMoney(detail.platformSettledAmount)}
+              </Text>
+              <Text style={styles.body}>{t("disputes:detail.externalSettlement")} {formatDisputeMoney(detail.externalSettlementAmount)}</Text>
             </>
           ) : null}
         </Collapsible>
@@ -401,7 +408,7 @@ export default function DisputeDetailScreen({
 
       {detail.evidenceSubmissions.length > 0 ? (
         <Collapsible
-          title={`Phản hồi bằng chứng · ${detail.evidenceSubmissions.length}`}
+          title={`${t("disputes:detail.submissionsTitle")} · ${detail.evidenceSubmissions.length}`}
           icon="✉"
           accent="#7C3AED"
           open={openSections.has("submissions")}
@@ -431,14 +438,16 @@ export default function DisputeDetailScreen({
 
       {detail.reportType !== "TrafficFine" && detail.status === "DecisionIssued" ? (
         <View style={styles.actionBox}>
-          <Text style={styles.title}>Chờ xác nhận kết quả</Text>
+          <Text style={styles.title}>{t("disputes:decision.title")}</Text>
           <Text style={styles.body}>
-            Khách: {detail.customerAccepted ? "Đã chấp nhận" : "Chưa chấp nhận"} · Chủ xe:{" "}
-            {detail.ownerAccepted ? "Đã chấp nhận" : "Chưa chấp nhận"}
+            {t("disputes:decision.customer")}{" "}
+            {detail.customerAccepted ? t("disputes:decision.accepted") : t("disputes:decision.notAccepted")} ·{" "}
+            {t("disputes:decision.owner")}{" "}
+            {detail.ownerAccepted ? t("disputes:decision.accepted") : t("disputes:decision.notAccepted")}
           </Text>
           {partyRole ? (
             <Pressable disabled={busy || myAccepted} onPress={() => void acceptResult()} style={[styles.primaryButton, (busy || myAccepted) && styles.disabled]}>
-              {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>Chấp nhận kết quả xử lý</Text>}
+              {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>{t("disputes:decision.accept")}</Text>}
             </Pressable>
           ) : null}
         </View>
@@ -446,18 +455,22 @@ export default function DisputeDetailScreen({
 
       {detail.reportType !== "TrafficFine" && detail.status === "AwaitingExternalSettlement" ? (
         <Collapsible
-          title="Chờ xác nhận quyết toán"
+          title={t("disputes:settlementConfirm.title")}
           icon="₫"
           accent="#A21CAF"
           open={openSections.has("settlement")}
           onToggle={() => toggleSection("settlement")}
         >
           {detail.compensationDirection === "CustomerPaysOwner" && partyRole === "Customer" && !detail.customerExternalConfirmed ? (
-            <Text style={styles.body}>Toàn bộ {formatDisputeMoney(detail.externalSettlementAmount)} do hai bên tự thanh toán bên ngoài hệ thống.</Text>
+            <Text style={styles.body}>
+              {t("disputes:settlementConfirm.externalFullAmount", { amount: formatDisputeMoney(detail.externalSettlementAmount) })}
+            </Text>
           ) : null}
           <Text style={styles.body}>
-            Khách: {detail.customerExternalConfirmed ? "Đã xác nhận" : "Chưa xác nhận"} · Chủ xe:{" "}
-            {detail.ownerExternalConfirmed ? "Đã xác nhận" : "Chưa xác nhận"}
+            {t("disputes:settlementConfirm.customer")}{" "}
+            {detail.customerExternalConfirmed ? t("disputes:settlementConfirm.confirmed") : t("disputes:settlementConfirm.notConfirmed")} ·{" "}
+            {t("disputes:settlementConfirm.owner")}{" "}
+            {detail.ownerExternalConfirmed ? t("disputes:settlementConfirm.confirmed") : t("disputes:settlementConfirm.notConfirmed")}
           </Text>
           {partyRole && !myExternalConfirmed ? (
             <Pressable disabled={busy} onPress={() => void confirmExternal()} style={[styles.primaryButton, busy && styles.disabled]}>
@@ -466,8 +479,8 @@ export default function DisputeDetailScreen({
               ) : (
                 <Text style={styles.primaryText}>
                   {(partyRole === "Customer") === (detail.compensationDirection === "CustomerPaysOwner")
-                    ? "Xác nhận đã thanh toán"
-                    : "Xác nhận đã nhận tiền"}
+                    ? t("disputes:settlementConfirm.confirmPaid")
+                    : t("disputes:settlementConfirm.confirmReceived")}
                 </Text>
               )}
             </Pressable>
@@ -477,17 +490,17 @@ export default function DisputeDetailScreen({
 
       {requestedParty && detail.status === "NeedMoreEvidence" ? (
         <Collapsible
-          title="Cần bổ sung bằng chứng"
+          title={t("disputes:evidenceSubmit.title")}
           icon="↑"
           accent="#EA580C"
           open={openSections.has("evidenceRequest")}
           onToggle={() => toggleSection("evidenceRequest")}
         >
           {detail.evidenceRequestMessage ? <Text style={styles.warn}>{detail.evidenceRequestMessage}</Text> : null}
-          <Text style={styles.label}>Nội dung phản hồi</Text>
-          <TextInput value={evidenceMessage} onChangeText={setEvidenceMessage} multiline placeholder="Nội dung phản hồi..." placeholderTextColor={theme.placeholder} style={[styles.input, styles.multiline]} />
+          <Text style={styles.label}>{t("mobile:dispute.detail.responseLabel")}</Text>
+          <TextInput value={evidenceMessage} onChangeText={setEvidenceMessage} multiline placeholder={t("disputes:evidenceSubmit.messagePlaceholder")} placeholderTextColor={theme.placeholder} style={[styles.input, styles.multiline]} />
           <Pressable onPress={() => void pickEvidence()} style={styles.secondaryButton}>
-            <Text style={styles.secondaryText}>Chọn ảnh ({evidenceFiles.length}/6)</Text>
+            <Text style={styles.secondaryText}>{t("mobile:dispute.detail.pickEvidence", { count: evidenceFiles.length, max: MAX_EVIDENCE_IMAGES })}</Text>
           </Pressable>
           {evidenceFiles.map((file, index) => (
             <View key={`${file.uri}-${index}`} style={styles.fileRow}>
@@ -495,7 +508,7 @@ export default function DisputeDetailScreen({
                 {file.name}
               </Text>
               <Pressable onPress={() => setEvidenceFiles((prev) => prev.filter((_, i) => i !== index))}>
-                <Text style={styles.removeText}>Xóa</Text>
+                <Text style={styles.removeText}>{t("mobile:dispute.detail.removeFile")}</Text>
               </Pressable>
             </View>
           ))}
@@ -504,24 +517,24 @@ export default function DisputeDetailScreen({
             onPress={() => void submitEvidence()}
             style={[styles.primaryButton, (busy || (!evidenceMessage.trim() && evidenceFiles.length === 0)) && styles.disabled]}
           >
-            {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>Gửi bổ sung</Text>}
+            {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>{t("disputes:evidenceSubmit.submit")}</Text>}
           </Pressable>
         </Collapsible>
       ) : null}
 
       {partyRole && !detail.adminManaged && ["Open", "Investigating", "NeedMoreEvidence", "DecisionIssued"].includes(detail.status) ? (
         <View style={styles.actionBox}>
-          <Text style={styles.label}>Lý do chuyển Admin (không đồng ý cách xử lý)</Text>
-          <TextInput value={escalationReason} onChangeText={setEscalationReason} multiline placeholder="Lý do..." placeholderTextColor={theme.placeholder} style={[styles.input, styles.multiline]} />
+          <Text style={styles.label}>{t("mobile:dispute.detail.escalateReasonLabel")}</Text>
+          <TextInput value={escalationReason} onChangeText={setEscalationReason} multiline placeholder={t("mobile:dispute.detail.escalateReasonPlaceholder")} placeholderTextColor={theme.placeholder} style={[styles.input, styles.multiline]} />
           <Pressable disabled={busy || !escalationReason.trim()} onPress={() => void submitEscalate()} style={[styles.secondaryButton, (busy || !escalationReason.trim()) && styles.disabled]}>
-            {busy ? <ActivityIndicator color={theme.brand} size="small" /> : <Text style={styles.secondaryText}>Chuyển Admin</Text>}
+            {busy ? <ActivityIndicator color={theme.brand} size="small" /> : <Text style={styles.secondaryText}>{t("disputes:detail.escalate")}</Text>}
           </Pressable>
         </View>
       ) : null}
 
       {detail.auditLogs.length > 0 ? (
         <Collapsible
-          title={`Lịch sử thao tác · ${detail.auditLogs.length}`}
+          title={`${t("disputes:audit.title")} · ${detail.auditLogs.length}`}
           icon="◷"
           accent={theme.muted}
           open={openSections.has("audit")}
@@ -565,7 +578,7 @@ export default function DisputeDetailScreen({
       <Modal visible={viewingImage !== null} transparent animationType="fade" onRequestClose={() => setViewingImage(null)}>
         <Pressable onPress={() => setViewingImage(null)} style={styles.viewer}>
           {viewingImage ? <Image source={{ uri: viewingImage }} resizeMode="contain" style={styles.fullImage} /> : null}
-          <Text style={styles.viewerHint}>Chạm để đóng</Text>
+          <Text style={styles.viewerHint}>{t("mobile:dispute.detail.closeHint")}</Text>
         </Pressable>
       </Modal>
       </ScrollView>
@@ -575,26 +588,27 @@ export default function DisputeDetailScreen({
 
 function StatusStepper({ status }: { status: string }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const steps = ["Open", "Investigating", "NeedMoreEvidence", "DecisionIssued", "AwaitingExternalSettlement"];
   const labels: Record<string, string> = {
-    Open: "Mở",
-    Investigating: "Điều tra",
-    NeedMoreEvidence: "Bổ sung",
-    DecisionIssued: "Kết quả",
-    AwaitingExternalSettlement: "Quyết toán",
+    Open: t("mobile:dispute.stepper.open"),
+    Investigating: t("mobile:dispute.stepper.investigating"),
+    NeedMoreEvidence: t("mobile:dispute.stepper.needMoreEvidence"),
+    DecisionIssued: t("mobile:dispute.stepper.decision"),
+    AwaitingExternalSettlement: t("mobile:dispute.stepper.settlement"),
   };
   if (status === "Resolved") {
     return (
       <View style={styles.stepperDone}>
-        <Text style={styles.stepperDoneText}>✓ Đã xử lý hoàn tất</Text>
+        <Text style={styles.stepperDoneText}>{t("mobile:dispute.stepper.done")}</Text>
       </View>
     );
   }
   if (status === "Escalated") {
     return (
       <View style={styles.stepperEscalated}>
-        <Text style={styles.stepperEscalatedText}>Đã chuyển Admin xử lý</Text>
+        <Text style={styles.stepperEscalatedText}>{t("mobile:dispute.stepper.escalated")}</Text>
       </View>
     );
   }

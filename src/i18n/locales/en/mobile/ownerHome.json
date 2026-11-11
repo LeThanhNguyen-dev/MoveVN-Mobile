@@ -1,0 +1,64 @@
+{
+  "ownerHome": {
+    "hero": {
+      "eyebrow": "VEHICLE OWNER SPACE",
+      "title": "Manage your rentals",
+      "description": "Stay on top of rental schedules and take care of your fleet.",
+      "caption": "Everything within reach.",
+      "refreshAria": "Refresh overview"
+    },
+    "shortcuts": {
+      "analytics": "Analytics"
+    },
+    "operations": {
+      "title": "Needs your attention",
+      "viewAll": "All bookings",
+      "pending": "Pending approval",
+      "returned": "Awaiting vehicle return",
+      "active": "Currently rented",
+      "viewBookingAria": "View booking {{code}}",
+      "confirmReturn": "Confirm vehicle return",
+      "newRequest": "New rental request",
+      "returnSchedule": "Return:",
+      "pickupSchedule": "Pick-up:",
+      "moreTasks": "View other bookings to handle",
+      "emptyTitle": "No bookings need attention",
+      "emptyHint": "Nothing is awaiting approval or return right now."
+    },
+    "business": {
+      "title": "This month's business",
+      "viewAnalytics": "View analytics",
+      "walletIncome": "Income recorded through the wallet",
+      "loading": "Compiling figures…",
+      "disclaimer": "Vietnam time. Wallet income is not profit or the amount withdrawn."
+    },
+    "fleet": {
+      "title": "Your fleet",
+      "manage": "Manage",
+      "emptyTitle": "Start with your first vehicle",
+      "emptyHint": "List a vehicle so customers can find you."
+    },
+    "errors": {
+      "operations": "Could not load your tasks and fleet.",
+      "business": "Could not load this month's income.",
+      "uploadFailed": "Image upload failed. Please try again.",
+      "submitApplication": "Could not submit your application."
+    },
+    "verification": {
+      "title": "ID card verification",
+      "loadStatusError": "Could not load ID card verification status.",
+      "fullName": "Full name",
+      "cameraPermission": "Camera access is needed to photograph your ID card.",
+      "libraryPermission": "Photo library access is needed to choose an ID card image.",
+      "photoRequired": "Please choose a front-side ID card image before submitting.",
+      "aiVerified": "AI verified your ID card successfully.",
+      "pendingNoticeShort": "Your ID card image is awaiting staff review.",
+      "pendingNotice": "Your ID card image is awaiting staff review. Please come back later.",
+      "verifyFailed": "ID card verification did not pass. Please retake a clearer photo.",
+      "submitError": "Could not submit the ID card image. Please try again.",
+      "retryHint": "{{status}}: please retake a clearer photo.",
+      "uploadTitle": "Submit a new ID card photo",
+      "uploadHint": "Capture a clear front side of your ID card, up to 5MB (JPG/PNG/WebP)."
+    }
+  }
+}

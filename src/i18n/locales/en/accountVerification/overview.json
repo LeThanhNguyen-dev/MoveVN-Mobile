@@ -1,0 +1,26 @@
+{
+  "overview": {
+    "loader": "Loading...",
+    "eyebrow": "Identity center",
+    "title": "Identity verification",
+    "description": "Track the verification steps required to rent a vehicle, register as an owner and receive payouts safely on MoveVN.",
+    "statusBadge": "{{verified}}/{{total}} verified",
+    "checklistTitle": "Verification checklist",
+    "checklistDescription": "Complete the remaining items to unlock every feature of your account.",
+    "items": {
+      "email": "Email",
+      "cccd": "ID card",
+      "cccdDescription": "Citizen identity card",
+      "license": "Driver's license",
+      "licenseClass": "Class {{class}}",
+      "licenseAll": "All license classes",
+      "bank": "Bank",
+      "bankDescription": "Payout account"
+    },
+    "verified": "Verified",
+    "unverified": "Not verified",
+    "readyTitle": "Your account is ready",
+    "pendingTitle": "Verification steps remaining",
+    "footerDescription": "Verification reduces risk when booking, speeds up application reviews and protects transactions between renters and vehicle owners."
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "vehicleList": {
+    "viewVehicleAria": "Xem xe {{title}}",
+    "bookVehicleAria": "Đặt xe {{title}}",
+    "header": {
+      "allCountry": "Toàn quốc"
+    },
+    "list": {
+      "searching": "Đang tìm xe...",
+      "countFound": "Tìm thấy {{total}} xe",
+      "countFoundDays": "Tìm thấy {{total}} xe · {{days}} ngày",
+      "loadError": "Không tải được danh sách xe. Kéo xuống để thử lại.",
+      "emptyHint": "Thử đổi địa điểm, thời gian hoặc bộ lọc.",
+      "nearby": "Quanh đây {{radius}}km"
+    },
+    "ai": {
+      "searchError": "Không xử lý được tìm kiếm thông minh. Thử lại hoặc dùng bộ lọc thường."
+    },
+    "filters": {
+      "closeAria": "Đóng bộ lọc",
+      "smartSearch": "Tìm kiếm thông minh",
+      "smartSearchPlaceholder": "Ví dụ: xe 7 chỗ dưới 1tr5, rộng rãi...",
+      "clearSmartSearchAria": "Xóa tìm kiếm thông minh",
+      "pickupPlaceholder": "Nhập địa chỉ để lọc theo khoảng cách",
+      "radiusHint": "Chọn địa chỉ nhận xe ở trên để áp dụng lọc khoảng cách.",
+      "bodyTypeLabel": "Kiểu thân xe",
+      "reset": "Reset"
+    },
+    "area": {
+      "closeAria": "Đóng chọn địa điểm",
+      "provinceTitle": "Chọn tỉnh / thành phố",
+      "districtTitle": "Xã tại {{province}}",
+      "subtitleEmpty": "Chọn nơi bạn muốn thuê xe",
+      "stepHint": "Tỉnh → Phường/Xã (xã tùy chọn)",
+      "provincePlaceholder": "Tìm tỉnh / thành phố...",
+      "districtPlaceholder": "Tìm phường / xã...",
+      "loading": "Đang tải khu vực...",
+      "loadError": "Không tải được danh sách khu vực. Thử lại sau.",
+      "emptyDistrict": "Chưa có phường / xã cho khu vực này.",
+      "clear": "Xóa",
+      "changeProvince": "Đổi tỉnh"
+    },
+    "rentalPeriod": {
+      "dayBusy": "Ngày {{date}} đã có người đặt hoặc bị khóa.",
+      "legend": "● Ngày đã chọn  ░ Trong khoảng  × Đã đặt / khóa",
+      "availabilityLoading": "Đang tải lịch trống của xe…",
+      "availabilityError": "Không tải được lịch trống của xe.",
+      "rangeBusy": "Khoảng thuê có ngày đã đặt hoặc bị khóa."
+    },
+    "map": {
+      "recenterAria": "Về điểm nhận xe",
+      "loading": "Đang tải xe trên bản đồ...",
+      "mapError": "Không tải được bản đồ.",
+      "vehiclesError": "Không tải thêm được xe trên bản đồ.",
+      "collapseAria": "Thu gọn danh sách xe",
+      "expandAria": "Mở danh sách xe",
+      "onMapCount": "{{total}} xe trên bản đồ",
+      "sheetSubtitle": "{{total}} xe phù hợp · chỉ hiện xe có vị trí",
+      "distance": "Cách điểm nhận {{distance}} km"
+    },
+    "address": {
+      "placeholder": "Số nhà, đường...",
+      "clearAria": "Xóa địa chỉ"
+    },
+    "verify": {
+      "sessionChanged": "Phiên xác thực cà vẹt đã hết hạn hoặc thông tin xe đã thay đổi. Vui lòng xác thực lại.",
+      "saveSessionError": "Không thể lưu phiên xác thực cà vẹt lúc này. Vui lòng thử lại."
+    },
+    "errors": {
+      "pricingQuote": "Không lấy được báo giá thuê xe."
+    }
+  }
+}

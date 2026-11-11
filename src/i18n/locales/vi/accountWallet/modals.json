@@ -1,0 +1,40 @@
+{
+  "topUpModal": {
+    "title": "Nạp tiền vào ví",
+    "amountLabel": "Số tiền cần nạp (VNĐ)",
+    "placeholder": "VD: 500000",
+    "secureNote": "Thanh toán an toàn qua cổng PayOS bằng tính năng quét mã QR của mọi ứng dụng ngân hàng.",
+    "submit": "Tiếp tục thanh toán"
+  },
+  "withdrawModal": {
+    "title": "Yêu cầu rút tiền",
+    "toAccount": "Rút về tài khoản nhận tiền:",
+    "bank": "Ngân hàng:",
+    "accountNumber": "Số tài khoản:",
+    "holder": "Chủ tài khoản:",
+    "amountLabel": "Số tiền rút (VNĐ)",
+    "placeholder": "Số tiền cần rút, tối thiểu {{min}}",
+    "available": "Số dư khả dụng:",
+    "hintEnter": "Vui lòng nhập số tiền cần rút (tối thiểu {{min}}, tối đa {{max}})",
+    "hintMin": "Số tiền rút tối thiểu là {{min}}",
+    "hintInsufficient": "Số dư không đủ. Còn thiếu {{missing}}",
+    "submit": "Gửi yêu cầu rút tiền"
+  },
+  "bankModal": {
+    "title": "Cập nhật tài khoản nhận tiền",
+    "bankName": "Tên ngân hàng",
+    "selectBank": "Chọn ngân hàng",
+    "accountNumber": "Số tài khoản",
+    "accountPlaceholder": "Nhập số tài khoản ngân hàng",
+    "holder": "Tên chủ tài khoản (Không dấu)",
+    "holderPlaceholder": "VD: NGUYEN VAN A",
+    "bin": "Mã BIN ngân hàng (Tùy chọn)",
+    "binPlaceholder": "VD: 970422",
+    "sendOtp": "Gửi mã OTP xác thực",
+    "otpNote": "Hệ thống đã gửi một mã OTP gồm 6 chữ số vào email của bạn. Vui lòng kiểm tra và nhập bên dưới để hoàn tất cập nhật.",
+    "otpLabel": "Mã xác thực OTP",
+    "otpPlaceholder": "Nhập mã OTP 6 số",
+    "back": "Quay lại",
+    "confirm": "Xác nhận lưu"
+  }
+}

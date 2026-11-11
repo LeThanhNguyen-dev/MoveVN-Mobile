@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import i18n from "@/i18n";
 import { getOwnerAnalytics } from "@/features/ownerAnalytics/service";
 import { datePreset, defaultFilters, type OwnerAnalytics } from "@/features/ownerAnalytics/types";
 import { getApiErrorMessage } from "@/services/apiClient";
@@ -22,10 +23,10 @@ export function useOwnerDashboard(userId: number, enabled: boolean) {
     // Thống kê lỗi vẫn cho phép xem công việc vận hành và ngược lại.
     void Promise.allSettled([
       getOwnerOperations().then(result => { if (active) setOperations(result); })
-        .catch(error => { if (active) setOperationsError(getApiErrorMessage(error, "Chưa tải được công việc và đội xe.")); }),
+        .catch(error => { if (active) setOperationsError(getApiErrorMessage(error, i18n.t("mobile:ownerHome.errors.operations"))); }),
       getOwnerAnalytics({ ...defaultFilters(), ...datePreset("month"), pageSize: 3 }, controller.signal)
         .then(result => { if (active) setBusiness(result); })
-        .catch(error => { if (active) setBusinessError(getApiErrorMessage(error, "Chưa tải được thu nhập tháng này.")); }),
+        .catch(error => { if (active) setBusinessError(getApiErrorMessage(error, i18n.t("mobile:ownerHome.errors.business"))); }),
     ]).then(() => { if (active) setLoading(false); });
     return () => { active = false; controller.abort(); };
   }, [userId, enabled, revision]);

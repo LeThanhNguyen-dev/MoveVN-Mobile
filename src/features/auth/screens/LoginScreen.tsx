@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LockKeyhole, Mail } from "lucide-react-native";
 import { Pressable, StyleSheet, View } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { AuthButton, AuthField, AuthNotice } from "../components/AuthControls";
 import { AuthScreenHeader } from "../components/AuthScreenHeader";
@@ -19,6 +20,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 
 export default function LoginScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,29 +28,29 @@ export default function LoginScreen({ navigation, route }: Props) {
   const [busy, setBusy] = useState(false);
   const submit = async () => {
     const emailError = validateEmail(email);
-    if (emailError || !password) { setError(emailError || "Vui lòng nhập mật khẩu."); return; }
+    if (emailError || !password) { setError(emailError || t("auth:login.passwordRequired")); return; }
     setBusy(true); setError("");
     try { await completeSignIn(await login({ email: email.trim(), password })); }
-    catch (failure) { setError(getFriendlyAuthError(failure) ?? "Đăng nhập không thành công."); }
+    catch (failure) { setError(getFriendlyAuthError(failure) ?? t("mobile:auth.errors.loginFailed")); }
     finally { setBusy(false); }
   };
   const google = async () => {
     setBusy(true); setError("");
     try { const result = await signInWithGoogle(); if (result) await completeSignIn(result); }
-    catch (failure) { setError(getFriendlyAuthError(failure) ?? "Đăng nhập Google không thành công."); }
+    catch (failure) { setError(getFriendlyAuthError(failure) ?? t("mobile:auth.errors.googleLoginFailed")); }
     finally { setBusy(false); }
   };
   return <AuthScreenLayout><View style={styles.stack}>
-    <AuthScreenHeader description="Chào mừng bạn quay lại MoveVN!" title="Đăng nhập" />
+    <AuthScreenHeader description={t("auth:login.description")} title={t("auth:login.title")} />
     {route.params?.notice ? <AuthNotice message={route.params.notice} /> : null}{error ? <AuthNotice error message={error} /> : null}
-    <AuthField autoComplete="email" editable={!busy} icon={<Mail color={theme.muted} size={19} />} keyboardType="email-address" label="Email" onChangeText={setEmail} placeholder="ban@email.com" value={email} />
-    <AuthField autoComplete="current-password" editable={!busy} icon={<LockKeyhole color={theme.muted} size={19} />} label="Mật khẩu" onChangeText={setPassword} password placeholder="Nhập mật khẩu" value={password} />
-    <View style={styles.options}><AppText style={styles.remember}>Ghi nhớ đăng nhập</AppText><Pressable onPress={() => navigation.navigate("ForgotPassword")}><AppText style={styles.link}>Quên mật khẩu?</AppText></Pressable></View>
-    <AuthButton busy={busy} onPress={() => { void submit(); }} title="Đăng nhập" />
-    <Pressable disabled={busy} onPress={() => { void google(); }} style={styles.google}><AppText style={styles.googleMark}>G</AppText><AppText style={styles.googleText}>Tiếp tục với Google</AppText></Pressable>
-    <View style={styles.divider}><View style={styles.line} /><AppText style={styles.dividerText}>hoặc</AppText><View style={styles.line} /></View>
-    <Pressable onPress={() => navigation.navigate("Register")}><AppText style={styles.bottom}>Chưa có tài khoản? <AppText style={styles.link}>Đăng ký ngay</AppText></AppText></Pressable>
-    <Pressable onPress={() => navigation.navigate("VerifyEmail", { email, purpose: "VerifyEmail" })}><AppText style={styles.mutedCenter}>Xác thực email</AppText></Pressable>
+    <AuthField autoComplete="email" editable={!busy} icon={<Mail color={theme.muted} size={19} />} keyboardType="email-address" label={t("auth:fields.email")} onChangeText={setEmail} placeholder={t("auth:placeholders.email")} value={email} />
+    <AuthField autoComplete="current-password" editable={!busy} icon={<LockKeyhole color={theme.muted} size={19} />} label={t("auth:fields.password")} onChangeText={setPassword} password placeholder={t("auth:placeholders.password")} value={password} />
+    <View style={styles.options}><AppText style={styles.remember}>{t("auth:login.rememberMe")}</AppText><Pressable onPress={() => navigation.navigate("ForgotPassword")}><AppText style={styles.link}>{t("auth:login.forgotPassword")}</AppText></Pressable></View>
+    <AuthButton busy={busy} onPress={() => { void submit(); }} title={t("auth:login.submit")} />
+    <Pressable disabled={busy} onPress={() => { void google(); }} style={styles.google}><AppText style={styles.googleMark}>G</AppText><AppText style={styles.googleText}>{t("mobile:auth.flow.continueWithGoogle")}</AppText></Pressable>
+    <View style={styles.divider}><View style={styles.line} /><AppText style={styles.dividerText}>{t("mobile:auth.flow.or")}</AppText><View style={styles.line} /></View>
+    <Pressable onPress={() => navigation.navigate("Register")}><AppText style={styles.bottom}>{t("auth:login.noAccount")} <AppText style={styles.link}>{t("auth:login.registerNow")}</AppText></AppText></Pressable>
+    <Pressable onPress={() => navigation.navigate("VerifyEmail", { email, purpose: "VerifyEmail" })}><AppText style={styles.mutedCenter}>{t("auth:verify.title")}</AppText></Pressable>
   </View></AuthScreenLayout>;
 }
 

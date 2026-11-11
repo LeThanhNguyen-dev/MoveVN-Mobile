@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { Image } from "expo-image";
 import { ArrowRight, BarChart3, CalendarCheck, CarFront, CheckCheck, ChevronRight, ClipboardList, Plus, RefreshCw, RotateCcw, Wallet } from "lucide-react-native";
@@ -25,15 +26,16 @@ type Props = {
 };
 
 export default function OwnerOverviewScreen({ user, onAvatarPress, onOpenVehicles, onOpenVehicle, onOpenBookings, onOpenBooking, onOpenWallet, onOpenAnalytics }: Props) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createDashboardStyles(theme), [theme]);
   const { operations, business, operationsError, businessError, loading, refresh } = useOwnerDashboard(user.userId, true);
 
   const shortcuts = [
-    { label: "Thêm xe", icon: Plus, onPress: () => onOpenVehicles(true), color: theme.brand, background: theme.brandSoft },
-    { label: "Đơn thuê", icon: CalendarCheck, onPress: onOpenBookings, color: theme.info, background: theme.infoSoft },
-    { label: "Ví của tôi", icon: Wallet, onPress: onOpenWallet, color: theme.success, background: theme.successSoft },
-    { label: "Thống kê", icon: BarChart3, onPress: onOpenAnalytics, color: theme.brand, background: theme.brandSoft },
+    { label: t("owner:home.actions.addVehicle"), icon: Plus, onPress: () => onOpenVehicles(true), color: theme.brand, background: theme.brandSoft },
+    { label: t("owner:analytics.actions.bookings"), icon: CalendarCheck, onPress: onOpenBookings, color: theme.info, background: theme.infoSoft },
+    { label: t("accountWallet:title"), icon: Wallet, onPress: onOpenWallet, color: theme.success, background: theme.successSoft },
+    { label: t("mobile:ownerHome.shortcuts.analytics"), icon: BarChart3, onPress: onOpenAnalytics, color: theme.brand, background: theme.brandSoft },
   ];
 
   return <View style={styles.root}>
@@ -43,16 +45,16 @@ export default function OwnerOverviewScreen({ user, onAvatarPress, onOpenVehicle
       <View style={styles.hero}>
         <View pointerEvents="none" style={styles.heroDecoration} />
         <View style={styles.heroTop}>
-          <AppText style={styles.eyebrow}>KHÔNG GIAN CHỦ XE</AppText>
-          <Pressable accessibilityRole="button" accessibilityLabel="Làm mới tổng quan" onPress={refresh} disabled={loading} style={styles.iconButton}>
+          <AppText style={styles.eyebrow}>{t("mobile:ownerHome.hero.eyebrow")}</AppText>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:ownerHome.hero.refreshAria")} onPress={refresh} disabled={loading} style={styles.iconButton}>
             {loading ? <ActivityIndicator size="small" color={theme.brand} /> : <RefreshCw size={17} color={theme.brand} />}
           </Pressable>
         </View>
         <View style={styles.heroBody}>
           <View style={styles.flex}>
-            <AppText display style={styles.heading}>Quản lý cho thuê</AppText>
-            <AppText style={styles.description}>Chủ động lịch thuê, chăm chút đội xe.</AppText>
-            <AppText style={styles.heroCaption}>Mọi việc trong tầm tay bạn.</AppText>
+            <AppText display style={styles.heading}>{t("mobile:ownerHome.hero.title")}</AppText>
+            <AppText style={styles.description}>{t("mobile:ownerHome.hero.description")}</AppText>
+            <AppText style={styles.heroCaption}>{t("mobile:ownerHome.hero.caption")}</AppText>
           </View>
           <View style={styles.heroArtwork} pointerEvents="none" accessible={false}>
             <Image source={OWNER_FLEET_ILLUSTRATION} style={styles.heroImage} contentFit="contain" accessible={false} />
@@ -67,49 +69,49 @@ export default function OwnerOverviewScreen({ user, onAvatarPress, onOpenVehicle
       </View>
 
       <View style={styles.sectionHeading}>
-        <AppText display style={styles.sectionTitle}>Cần bạn xử lý</AppText>
-        <Pressable accessibilityRole="button" onPress={onOpenBookings} style={styles.linkButton}><AppText style={styles.link}>Tất cả đơn</AppText><ArrowRight size={14} color={theme.brand} /></Pressable>
+        <AppText display style={styles.sectionTitle}>{t("mobile:ownerHome.operations.title")}</AppText>
+        <Pressable accessibilityRole="button" onPress={onOpenBookings} style={styles.linkButton}><AppText style={styles.link}>{t("mobile:ownerHome.operations.viewAll")}</AppText><ArrowRight size={14} color={theme.brand} /></Pressable>
       </View>
-      {operationsError ? <View style={styles.panel}><AppText accessibilityRole="alert" style={styles.error}>{operationsError}</AppText><Pressable onPress={refresh} accessibilityRole="button" style={styles.linkButton}><AppText style={styles.link}>Thử lại</AppText></Pressable></View> : <>
+      {operationsError ? <View style={styles.panel}><AppText accessibilityRole="alert" style={styles.error}>{operationsError}</AppText><Pressable onPress={refresh} accessibilityRole="button" style={styles.linkButton}><AppText style={styles.link}>{t("common:retry")}</AppText></Pressable></View> : <>
         <View style={styles.operationGrid}>
-          <View style={styles.operation}><View style={[styles.smallIcon, { backgroundColor: theme.brandSoft }]}><ClipboardList color={theme.brand} size={18} /></View><AppText style={styles.count}>{operations ? number(operations.pendingCount) : "—"}</AppText><AppText style={styles.caption}>Đơn chờ duyệt</AppText></View>
-          <View style={styles.operation}><View style={[styles.smallIcon, { backgroundColor: theme.infoSoft }]}><RotateCcw color={theme.info} size={18} /></View><AppText style={styles.count}>{operations ? number(operations.returnedCount) : "—"}</AppText><AppText style={styles.caption}>Chờ nhận lại xe</AppText></View>
-          <View style={styles.operation}><View style={[styles.smallIcon, { backgroundColor: theme.successSoft }]}><CarFront color={theme.success} size={18} /></View><AppText style={styles.count}>{operations ? number(operations.activeCount) : "—"}</AppText><AppText style={styles.caption}>Đang thuê</AppText></View>
+          <View style={styles.operation}><View style={[styles.smallIcon, { backgroundColor: theme.brandSoft }]}><ClipboardList color={theme.brand} size={18} /></View><AppText style={styles.count}>{operations ? number(operations.pendingCount) : "—"}</AppText><AppText style={styles.caption}>{t("mobile:ownerHome.operations.pending")}</AppText></View>
+          <View style={styles.operation}><View style={[styles.smallIcon, { backgroundColor: theme.infoSoft }]}><RotateCcw color={theme.info} size={18} /></View><AppText style={styles.count}>{operations ? number(operations.returnedCount) : "—"}</AppText><AppText style={styles.caption}>{t("mobile:ownerHome.operations.returned")}</AppText></View>
+          <View style={styles.operation}><View style={[styles.smallIcon, { backgroundColor: theme.successSoft }]}><CarFront color={theme.success} size={18} /></View><AppText style={styles.count}>{operations ? number(operations.activeCount) : "—"}</AppText><AppText style={styles.caption}>{t("mobile:ownerHome.operations.active")}</AppText></View>
         </View>
         {operations && (operations.tasks.length ? <View style={styles.panel}>
-          {operations.tasks.map((booking, index) => <Pressable key={booking.id} accessibilityRole="button" accessibilityLabel={`Xem đơn ${booking.bookingCode}`} onPress={() => onOpenBooking(booking.id)} style={[styles.task, index > 0 && styles.taskDivider]}>
+          {operations.tasks.map((booking, index) => <Pressable key={booking.id} accessibilityRole="button" accessibilityLabel={t("mobile:ownerHome.operations.viewBookingAria", { code: booking.bookingCode })} onPress={() => onOpenBooking(booking.id)} style={[styles.task, index > 0 && styles.taskDivider]}>
             <View style={styles.taskIcon}>{booking.vehicleImage ? <Image source={booking.vehicleImage} style={styles.taskImage} contentFit="cover" /> : <CarFront size={22} color={theme.brand} />}</View>
             <View style={styles.flex}>
-              <AppText style={[styles.taskStatus, { color: booking.status === "Returned" ? theme.info : theme.brand }]}>{booking.status === "Returned" ? "Xác nhận nhận lại xe" : "Yêu cầu thuê mới"}</AppText>
-              <AppText numberOfLines={1} style={styles.taskTitle}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</AppText>
+              <AppText style={[styles.taskStatus, { color: booking.status === "Returned" ? theme.info : theme.brand }]}>{booking.status === "Returned" ? t("mobile:ownerHome.operations.confirmReturn") : t("mobile:ownerHome.operations.newRequest")}</AppText>
+              <AppText numberOfLines={1} style={styles.taskTitle}>{booking.vehicleName || t("owner:home.worklists.vehicleFallback", { id: booking.vehicleId })}</AppText>
               <AppText numberOfLines={1} style={styles.caption}>{booking.customerName || booking.bookingCode}</AppText>
-              <AppText style={styles.smallText}>{booking.status === "Returned" ? "Lịch trả: " : "Lịch nhận: "}{formatDateTime(booking.status === "Returned" ? booking.endDate : booking.startDate)}</AppText>
+              <AppText style={styles.smallText}>{(booking.status === "Returned" ? t("mobile:ownerHome.operations.returnSchedule") : t("mobile:ownerHome.operations.pickupSchedule")) + " "}{formatDateTime(booking.status === "Returned" ? booking.endDate : booking.startDate)}</AppText>
             </View><ChevronRight size={17} color={theme.faint} />
           </Pressable>)}
-          {operations.pendingCount + operations.returnedCount > operations.tasks.length && <Pressable accessibilityRole="button" onPress={onOpenBookings} style={styles.allTasks}><AppText style={styles.link}>Xem các đơn cần xử lý khác</AppText><ArrowRight size={14} color={theme.brand} /></Pressable>}
-        </View> : <View style={styles.caughtUp}><View style={[styles.smallIcon, { backgroundColor: theme.successSoft }]}><CheckCheck size={22} color={theme.success} /></View><View style={styles.flex}><AppText style={styles.taskTitle}>Không có đơn chờ xử lý</AppText><AppText style={styles.caption}>Hiện không có đơn chờ duyệt hoặc chờ nhận lại.</AppText></View></View>)}
+          {operations.pendingCount + operations.returnedCount > operations.tasks.length && <Pressable accessibilityRole="button" onPress={onOpenBookings} style={styles.allTasks}><AppText style={styles.link}>{t("mobile:ownerHome.operations.moreTasks")}</AppText><ArrowRight size={14} color={theme.brand} /></Pressable>}
+        </View> : <View style={styles.caughtUp}><View style={[styles.smallIcon, { backgroundColor: theme.successSoft }]}><CheckCheck size={22} color={theme.success} /></View><View style={styles.flex}><AppText style={styles.taskTitle}>{t("mobile:ownerHome.operations.emptyTitle")}</AppText><AppText style={styles.caption}>{t("mobile:ownerHome.operations.emptyHint")}</AppText></View></View>)}
       </>}
 
-      <View style={styles.sectionHeading}><AppText display style={styles.sectionTitle}>Kinh doanh tháng này</AppText><Pressable accessibilityRole="button" onPress={onOpenAnalytics} style={styles.linkButton}><AppText style={styles.link}>Xem thống kê</AppText><ArrowRight size={14} color={theme.brand} /></Pressable></View>
-      {businessError ? <View style={styles.panel}><AppText accessibilityRole="alert" style={styles.error}>{businessError}</AppText><Pressable accessibilityRole="button" onPress={refresh} style={styles.linkButton}><AppText style={styles.link}>Thử lại</AppText></Pressable></View> : <View style={styles.business}>
-        <View style={styles.linkButton}><Wallet color={theme.brand} size={17} /><AppText style={styles.businessLabel}>Thu nhập ghi nhận qua ví</AppText></View>
+      <View style={styles.sectionHeading}><AppText display style={styles.sectionTitle}>{t("mobile:ownerHome.business.title")}</AppText><Pressable accessibilityRole="button" onPress={onOpenAnalytics} style={styles.linkButton}><AppText style={styles.link}>{t("mobile:ownerHome.business.viewAnalytics")}</AppText><ArrowRight size={14} color={theme.brand} /></Pressable></View>
+      {businessError ? <View style={styles.panel}><AppText accessibilityRole="alert" style={styles.error}>{businessError}</AppText><Pressable accessibilityRole="button" onPress={refresh} style={styles.linkButton}><AppText style={styles.link}>{t("common:retry")}</AppText></Pressable></View> : <View style={styles.business}>
+        <View style={styles.linkButton}><Wallet color={theme.brand} size={17} /><AppText style={styles.businessLabel}>{t("mobile:ownerHome.business.walletIncome")}</AppText></View>
         <AppText display style={styles.income}>{business ? money(business.summary.walletIncome) : "—"}</AppText>
-        <AppText style={styles.caption}>{business ? comparison(business.summary.walletIncome, business.previousSummary.walletIncome) : "Đang tổng hợp số liệu…"}</AppText>
+        <AppText style={styles.caption}>{business ? comparison(business.summary.walletIncome, business.previousSummary.walletIncome) : t("mobile:ownerHome.business.loading")}</AppText>
         {business && <AppText style={styles.smallText}>{shortDate(business.period.fromDate)} – {shortDate(business.period.toDate)}</AppText>}
         <View style={styles.businessMetrics}>
-          <View style={styles.flex}><AppText style={styles.metricValue}>{business ? number(business.summary.completedTrips) : "—"}</AppText><AppText style={styles.caption}>Chuyến hoàn tất</AppText></View>
+          <View style={styles.flex}><AppText style={styles.metricValue}>{business ? number(business.summary.completedTrips) : "—"}</AppText><AppText style={styles.caption}>{t("owner:analytics.metrics.completedTrips")}</AppText></View>
           <View style={styles.metricDivider} />
-          <View style={styles.flex}><AppText style={styles.metricValue}>{business ? (business.summary.averageRating == null ? "Chưa có" : `${number(business.summary.averageRating)}/5`) : "—"}</AppText><AppText style={styles.caption}>Đánh giá xe</AppText></View>
+          <View style={styles.flex}><AppText style={styles.metricValue}>{business ? (business.summary.averageRating == null ? t("owner:analytics.metrics.noRating") : `${number(business.summary.averageRating)}/5`) : "—"}</AppText><AppText style={styles.caption}>{t("owner:analytics.metrics.rating")}</AppText></View>
         </View>
-        <AppText style={styles.smallText}>Theo giờ Việt Nam. Thu nhập qua ví không phải lợi nhuận hay số tiền đã rút.</AppText>
+        <AppText style={styles.smallText}>{t("mobile:ownerHome.business.disclaimer")}</AppText>
       </View>}
 
-      <View style={styles.sectionHeading}><AppText display style={styles.sectionTitle}>Đội xe của bạn{operations ? ` · ${operations.vehicleCount}` : ""}</AppText><Pressable accessibilityRole="button" onPress={() => onOpenVehicles()} style={styles.linkButton}><AppText style={styles.link}>Quản lý</AppText><ArrowRight size={14} color={theme.brand} /></Pressable></View>
+      <View style={styles.sectionHeading}><AppText display style={styles.sectionTitle}>{t("mobile:ownerHome.fleet.title")}{operations ? ` · ${operations.vehicleCount}` : ""}</AppText><Pressable accessibilityRole="button" onPress={() => onOpenVehicles()} style={styles.linkButton}><AppText style={styles.link}>{t("mobile:ownerHome.fleet.manage")}</AppText><ArrowRight size={14} color={theme.brand} /></Pressable></View>
       {operations && <View style={styles.panel}>
         {operations.vehicles.length ? operations.vehicles.map((vehicle, index) => <Pressable key={vehicle.id} accessibilityRole="button" onPress={() => onOpenVehicle(vehicle.id)} style={[styles.task, index > 0 && styles.taskDivider]}>
           <View style={styles.taskIcon}>{vehicle.featuredImage ? <Image source={vehicle.featuredImage} style={styles.taskImage} contentFit="cover" /> : <CarFront size={22} color={theme.brand} />}</View>
           <View style={styles.flex}><AppText numberOfLines={1} style={styles.taskTitle}>{vehicle.brandName} {vehicle.modelName}</AppText><AppText style={styles.caption}>{vehicle.licensePlate}</AppText></View><ChevronRight size={17} color={theme.faint} />
-        </Pressable>) : <View style={styles.empty}><CarFront size={30} color={theme.brand} /><AppText style={styles.taskTitle}>Bắt đầu với chiếc xe đầu tiên</AppText><AppText style={styles.caption}>Đăng xe để khách hàng tìm thấy bạn.</AppText><Pressable accessibilityRole="button" onPress={() => onOpenVehicles(true)} style={styles.addButton}><Plus color={theme.onBrand} size={17} /><AppText style={styles.addText}>Thêm xe</AppText></Pressable></View>}
+        </Pressable>) : <View style={styles.empty}><CarFront size={30} color={theme.brand} /><AppText style={styles.taskTitle}>{t("mobile:ownerHome.fleet.emptyTitle")}</AppText><AppText style={styles.caption}>{t("mobile:ownerHome.fleet.emptyHint")}</AppText><Pressable accessibilityRole="button" onPress={() => onOpenVehicles(true)} style={styles.addButton}><Plus color={theme.onBrand} size={17} /><AppText style={styles.addText}>{t("owner:home.actions.addVehicle")}</AppText></Pressable></View>}
       </View>}
     </ScrollView>
   </View>;

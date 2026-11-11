@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import { detailFont as font } from "@/features/vehicles/components/detail/detailTheme";
@@ -12,6 +13,7 @@ import { DetailButton, DetailNotice, DetailPill, DetailSectionHeader } from "./d
 export default function OutstandingSurchargePayment({ booking, report, role, onUpdated, onOpenWallet }: {
   booking: BookingResponse; report?: InspectionReportResponse; role?: "Owner" | "Customer"; onUpdated?: () => void | Promise<void>; onOpenWallet?: () => void;
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const [busy, setBusy] = useState(false), [error, setError] = useState(""), [note, setNote] = useState("");
   const lock = useRef(false);
@@ -23,40 +25,40 @@ export default function OutstandingSurchargePayment({ booking, report, role, onU
     try {
       const updated = await settleCheckoutSurcharges(booking.id, { action, expectedVersion: report.version ?? 1, ...(action === "ConfirmExternal" ? { note: note.trim() } : {}) });
       await onUpdated?.(); setNote("");
-      if (action === "Wallet" && (updated.outstandingSurchargeAmount ?? 0) > 0) setError("Ví chưa đủ thanh toán hết phụ thu. Nạp thêm vào ví hoặc chọn trả trực tiếp phần còn lại.");
-    } catch (e) { setError(getApiErrorMessage(e, "Chưa cập nhật được thanh toán. Tải lại để kiểm tra trước khi thử lại.")); }
+      if (action === "Wallet" && (updated.outstandingSurchargeAmount ?? 0) > 0) setError(t("booking:checkout.outstandingWalletInsufficient"));
+    } catch (e) { setError(getApiErrorMessage(e, t("booking:checkout.outstandingUpdateError"))); }
     finally { lock.current = false; setBusy(false); }
   }
   if (amount <= 0 || !["Returned", "Completed"].includes(booking.status)) return null;
   const ownerConfirm = role === "Owner" && external > 0;
   return <View accessibilityRole="alert" style={{ backgroundColor: theme.surface, borderRadius: 24, borderWidth: 1, borderColor: theme.dangerBorder, padding: 16, gap: 12 }}>
     <DetailSectionHeader
-      title={ownerConfirm ? "Xác nhận nhận tiền phụ thu trực tiếp" : "Thanh toán phụ thu trả xe"}
-      subtitle="Chỉ áp dụng cho phụ thu phát sinh khi trả xe"
+      title={ownerConfirm ? t("booking:checkout.outstandingOwnerTitle") : t("booking:checkout.outstandingTitle")}
+      subtitle={t("mobile:inspection.outstanding.subtitle")}
       right={<DetailPill label={formatMoney(amount)} tone="warn" />}
     />
 
     <View style={{ borderRadius: 16, borderWidth: 1, borderColor: theme.dangerBorder, backgroundColor: theme.dangerSoft, padding: 12, gap: 3 }}>
-      <Text style={{ color: theme.muted, fontFamily: font.bold, fontSize: 8.5, letterSpacing: 0.6, textTransform: "uppercase" }}>Còn phụ phí chưa thanh toán</Text>
+      <Text style={{ color: theme.muted, fontFamily: font.bold, fontSize: 8.5, letterSpacing: 0.6, textTransform: "uppercase" }}>{t("mobile:inspection.outstanding.remainingLabel")}</Text>
       <Text style={{ color: theme.danger, fontFamily: font.display, fontSize: 20, lineHeight: 25, letterSpacing: -0.4 }}>{formatMoney(amount)}</Text>
       <Text style={{ color: theme.muted, fontFamily: font.regular, fontSize: 10, lineHeight: 15 }}>
-        {external > 0 ? `Đã chọn trả trực tiếp: ${formatMoney(external)}, chờ chủ xe xác nhận đã nhận đủ tiền. Không trừ ví cho khoản này.` : "Khách chọn thanh toán qua ví MoveVN hoặc trả trực tiếp cho chủ xe."}
+        {external > 0 ? t("mobile:inspection.outstanding.externalPending", { amount: formatMoney(external) }) : t("mobile:inspection.outstanding.walletHint")}
       </Text>
     </View>
 
     {role === "Customer" && report ? <>
-      <DetailButton label="Thanh toán qua ví MoveVN" busy={busy} onPress={() => void pay("Wallet")} />
-      <DetailButton variant="secondary" label="Chọn trả trực tiếp" disabled={busy || external >= amount} onPress={() => void pay("External")} />
-      {onOpenWallet && <DetailButton variant="ghost" label="Nạp tiền vào ví" disabled={busy} onPress={onOpenWallet} />}
-      <Text style={{ color: theme.muted, fontFamily: font.regular, fontSize: 10, lineHeight: 15 }}>Nếu ví thiếu tiền, vào Ví MoveVN để nạp thêm rồi thanh toán khoản còn lại.</Text>
+      <DetailButton label={t("booking:checkout.outstandingPayWallet")} busy={busy} onPress={() => void pay("Wallet")} />
+      <DetailButton variant="secondary" label={t("booking:checkout.outstandingChooseExternal")} disabled={busy || external >= amount} onPress={() => void pay("External")} />
+      {onOpenWallet && <DetailButton variant="ghost" label={t("booking:checkout.outstandingTopUp")} disabled={busy} onPress={onOpenWallet} />}
+      <Text style={{ color: theme.muted, fontFamily: font.regular, fontSize: 10, lineHeight: 15 }}>{t("mobile:inspection.outstanding.topUpHint")}</Text>
     </> : null}
     {ownerConfirm && report ? <>
-      <BookingField label="Ghi chú nhận tiền trực tiếp" value={note} onChangeText={setNote} multiline editable={!busy} />
-      <DetailButton label="Xác nhận đã nhận đủ tiền phụ thu trực tiếp" busy={busy} disabled={!note.trim()} onPress={() => void pay("ConfirmExternal")} />
+      <BookingField label={t("booking:checkout.outstandingNoteLabel")} value={note} onChangeText={setNote} multiline editable={!busy} />
+      <DetailButton label={t("booking:checkout.outstandingConfirmExternal")} busy={busy} disabled={!note.trim()} onPress={() => void pay("ConfirmExternal")} />
     </> : null}
 
-    {booking.status === "Returned" ? <DetailNotice title="Bước tiếp theo" tone="brand">
-      {role === "Owner" ? "Xác nhận nhận tiền chỉ ghi nhận thanh toán. Sau khi kiểm tra xe, bấm Xác nhận đã nhận xe để hoàn tất chuyến." : "Bạn đã xác nhận trả xe. Sau khi thanh toán phụ thu, chờ chủ xe xác nhận nhận lại xe; bạn không cần xác nhận trả xe lần nữa."}
+    {booking.status === "Returned" ? <DetailNotice title={t("mobile:inspection.outstanding.nextStepTitle")} tone="brand">
+      {role === "Owner" ? t("mobile:inspection.outstanding.nextStepOwner") : t("mobile:inspection.outstanding.nextStepCustomer")}
     </DetailNotice> : null}
     {error ? <Text accessibilityRole="alert" style={{ color: theme.danger, fontFamily: font.medium, fontSize: 10.5, lineHeight: 15 }}>{error}</Text> : null}
   </View>;

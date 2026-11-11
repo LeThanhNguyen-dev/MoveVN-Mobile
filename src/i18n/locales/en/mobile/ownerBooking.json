@@ -1,0 +1,79 @@
+{
+  "ownerBooking": {
+    "detail": {
+      "loadError": "Could not load booking details.",
+      "kicker": "Rental booking",
+      "chatA11y": "Message the renter",
+      "vehicleFallback": "Vehicle #{{id}}",
+      "customerNote": "Customer note",
+      "viewGps": "View vehicle location (GPS)"
+    },
+    "handover": {
+      "placeholderSubtitle": "The record appears once you create it"
+    },
+    "checkIn": {
+      "earlyPickupHint": "The vehicle is free: you can pick up up to 2 hours early. You can create the pickup record right away. Return time and rental price stay as booked.",
+      "reloadHint": "Reload to check pickup availability.",
+      "opensAt": " Early pickup opens at {{time}}."
+    },
+    "actions": {
+      "createCheckIn": "Create pickup record",
+      "createCheckInRevision": "Redo and resend the pickup record",
+      "createCheckOut": "Create return record",
+      "receiptConfirmed": "Pickup confirmed.",
+      "rejected": "Booking request rejected.",
+      "cancelled": "Cancelled. The full deposit is refunded to the customer's wallet.",
+      "approve": "Approve booking",
+      "approving": "Approving...",
+      "approved": "Approved. A contract is created for both parties to sign.",
+      "reject": "Reject",
+      "cancelBookingFullRefund": "Cancel booking (full deposit refund)"
+    },
+    "progress": {
+      "overdueTitle": "The renter is overdue on return"
+    },
+    "pending": {
+      "title": "Rental request awaiting your approval",
+      "subtitle": "Respond early so the renter can pay the deposit",
+      "deadlineTitle": "Response deadline",
+      "deadlineBody": "Please respond before {{time}}. After {{hours}} hours the system declines the request automatically.",
+      "riskTitle": "Renter risk factors"
+    },
+    "cost": {
+      "title": "Costs & payment",
+      "scheduleTitle": "Payment schedule",
+      "depositSent": "Deposit transferred",
+      "depositDue": "Deposit required",
+      "customerPaysOnPickup": "Renter pays at pickup",
+      "securityDeposit": "Security deposit (refunded on return)",
+      "paymentDueAt": "Deposit due: {{time}}"
+    },
+    "settle": {
+      "holdHint": "The deposit is held for reconciliation. It can be released in about {{hours}} more hours.",
+      "action": "Release deposit",
+      "done": "Escrow released."
+    },
+    "topUp": {
+      "title": "Additional deposit pending for the extension",
+      "subtitle": "The renter's extension request",
+      "body": "The renter must pay {{amount}}{{due}}. If it is overdue, the extension request is cancelled and the current contract stays in effect.",
+      "beforeDue": " before {{time}}"
+    },
+    "review": {
+      "title": "Review the renter",
+      "notReviewed": "You have not reviewed the renter for this booking yet.",
+      "reviewerFallback": "Owner",
+      "submitted": "You have already reviewed this booking.",
+      "starsHint": "Choose an overall star rating (required)",
+      "starA11y": "{{count}} stars",
+      "commentPlaceholder": "Comment about the renter...",
+      "ratingRequired": "Please choose 1 to 5 stars."
+    },
+    "reason": {
+      "required": "Please enter a reason.",
+      "rejectTitle": "Reject booking request",
+      "cancelBody": "The full deposit is refunded to the customer's wallet.",
+      "placeholder": "Enter a reason..."
+    }
+  }
+}

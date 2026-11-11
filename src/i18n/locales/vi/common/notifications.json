@@ -1,0 +1,43 @@
+{
+  "notifications": {
+    "justNow": "Vừa xong",
+    "minutesAgo": "{{total}} phút trước",
+    "hoursAgo": "{{total}} giờ trước",
+    "categories": {
+      "support": "Hỗ trợ",
+      "availability": "Xe trống",
+      "dispute": "An toàn & tranh chấp",
+      "payment": "Thanh toán",
+      "booking": "Chuyến thuê",
+      "system": "Hệ thống"
+    },
+    "overdue": "Cảnh báo quá hạn",
+    "loadError": "Không thể tải thông báo.",
+    "markAllError": "Chưa thể đánh dấu đã đọc. Vui lòng thử lại.",
+    "triggerAria": "Thông báo",
+    "unreadCount": "{{total}} thông báo chưa đọc",
+    "title": "Thông báo",
+    "titleAll": "Tất cả thông báo",
+    "unreadSummary": "Bạn có {{total}} thông báo chưa đọc",
+    "allRead": "Bạn đã đọc hết thông báo",
+    "closeAria": "Đóng thông báo",
+    "filterGroup": "Lọc thông báo",
+    "filter": {
+      "all": "Tất cả",
+      "unread": "Chưa đọc"
+    },
+    "markAll": "Đọc tất cả",
+    "loading": "Đang tải thông báo...",
+    "retry": "Thử lại",
+    "emptyUnread": "Không còn thông báo chưa đọc",
+    "emptyAll": "Chưa có thông báo",
+    "emptyHint": "Các cập nhật về chuyến thuê và hỗ trợ sẽ xuất hiện tại đây.",
+    "unreadSuffix": ", chưa đọc",
+    "viewAll": "Xem tất cả thông báo",
+    "collapse": "Thu gọn",
+    "paginationGroup": "Phân trang thông báo",
+    "page": "Trang {{page}} / {{total}}",
+    "prevPage": "Trang thông báo trước",
+    "nextPage": "Trang thông báo sau"
+  }
+}
