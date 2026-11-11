@@ -3,6 +3,7 @@ import {
   getSessionGeneration,
   getToken,
 } from "@/features/auth/hooks/useAuth";
+import i18n from "@/i18n";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useNotificationStore } from "@/features/notifications/useNotifications";
 import * as service from "./chatService";
@@ -70,7 +71,7 @@ export async function refreshChatRooms() {
       store.setState({
         roomsError: getApiErrorMessage(
           error,
-          "Không tải được danh sách tin nhắn. Vui lòng thử lại.",
+          i18n.t("mobile:chat.errors.loadRooms"),
         ),
       });
   } finally {
@@ -126,7 +127,7 @@ export async function loadChatHistory(roomId: string, more = false) {
             ...state.histories[roomId]!,
             error: getApiErrorMessage(
               error,
-              "Không tải được tin nhắn. Vui lòng thử lại.",
+              i18n.t("mobile:chat.errors.loadMessages"),
             ),
           },
         },
@@ -189,7 +190,7 @@ export function readChatRoom(roomId: string): Promise<void> {
         store.setState((latest) => ({
           readErrors: {
             ...latest.readErrors,
-            [roomId]: "Chưa thể đánh dấu đã đọc. Nhấn để thử lại.",
+            [roomId]: i18n.t("mobile:chat.errors.readFailed"),
           },
         }));
     }
@@ -261,7 +262,10 @@ export async function submitChatMessage(roomId: string) {
           senderId: message.senderId,
           sentAt: message.sentAt,
           text:
-            message.content || `Đã gửi ${message.attachments?.length ?? 1} ảnh`,
+            message.content ||
+            i18n.t("mobile:chat.errors.sentImages", {
+              n: message.attachments?.length ?? 1,
+            }),
         },
       },
     });
@@ -277,7 +281,7 @@ export async function submitChatMessage(roomId: string) {
           ...latest.sendErrors,
           [roomId]: getApiErrorMessage(
             error,
-            "Chưa gửi được tin nhắn. Bản nháp được giữ lại; nhấn Gửi để thử lại.",
+            i18n.t("mobile:chat.errors.sendFailed"),
           ),
         },
       }));

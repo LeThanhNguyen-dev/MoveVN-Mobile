@@ -1,0 +1,219 @@
+{
+  "assistant": {
+    "status": {
+      "botActive": "Chatting with AI",
+      "waitingForStaff": "Waiting for staff",
+      "staffActive": "Staff is assisting",
+      "closed": "Conversation ended"
+    },
+    "header": {
+      "title": "MoveVN Assistant",
+      "history": "Chat history",
+      "newChat": "New conversation",
+      "close": "Close assistant"
+    },
+    "quickBook": {
+      "label": "Quick booking"
+    },
+    "guest": {
+      "title": "Hi, I'm the MoveVN assistant",
+      "body": "Sign in to start chatting."
+    },
+    "history": {
+      "back": "‹ Back",
+      "title": "Chat history",
+      "ticket": "Ticket #{{id}}",
+      "generic": "Chat with MoveVN",
+      "empty": "No conversations yet."
+    },
+    "welcome": {
+      "title": "How can I help you?",
+      "body": "Let's find a suitable vehicle or answer questions about your trip."
+    },
+    "earlier": "Load earlier messages",
+    "botLabel": {
+      "staff": "MoveVN staff",
+      "ai": "MoveVN AI"
+    },
+    "vote": {
+      "helpful": "Helpful answer",
+      "notHelpful": "Not a helpful answer"
+    },
+    "failed": "No answer received",
+    "progress": {
+      "searching": "MoveVN is looking for an answer…",
+      "vehicles": "Searching vehicles…",
+      "availability": "Checking available dates…",
+      "pricing": "Calculating trip price…",
+      "preparing": "Preparing confirmation…",
+      "processing": "MoveVN is processing…",
+      "uncertain": "The connection was interrupted. Your message is kept; MoveVN will check the status again.",
+      "committed": "The result was recorded. MoveVN is syncing the details…",
+      "stale": "The status could not be confirmed. You can check again; your message is kept as is."
+    },
+    "staff": {
+      "waiting": "Your request was sent. You can keep messaging while waiting for staff.",
+      "active": "Staff has joined. Continue the conversation here.",
+      "confirmTitle": "Transfer to staff?",
+      "confirmPlaceholder": "What do you need help with?",
+      "back": "Back",
+      "confirm": "Confirm transfer",
+      "startNew": "Start a new conversation",
+      "meet": "Talk to staff"
+    },
+    "composer": {
+      "toStaff": "Message staff…",
+      "toAssistant": "Ask MoveVN…",
+      "send": "Send message"
+    },
+    "retry": "Try again",
+    "errors": {
+      "connectFailed": "Could not connect to the server. Please try again.",
+      "acceptedButUnloaded": "Your message was received. The result could not be loaded; please check the status again.",
+      "sendUnconfirmed": "Could not confirm that the message was received. Retrying keeps the same message ID.",
+      "loadConversation": "Could not load the conversation.",
+      "loadEarlier": "Could not load earlier messages.",
+      "loadHistory": "Could not load history.",
+      "handoff": "Could not transfer your request. Please try again.",
+      "feedback": "Could not send your feedback.",
+      "quickBook": "Could not open quick booking. Please try again.",
+      "fallback": "Could not answer right now. Please try again or talk to staff.",
+      "codes": {
+        "AI_SCHEMA_NOT_READY": "The assistant is being updated and is temporarily unavailable. Please try again in a few minutes.",
+        "AI_OUT_OF_SCOPE": "I can help with vehicles, bookings, payments and MoveVN policies. Which part would you like help with?",
+        "ASSISTANT_CONFLICT": "The conversation just changed or still has a message in progress. Please check the status and try again.",
+        "AI_STATE_SYNC_PENDING": "The result is still syncing. Please check the status before sending again.",
+        "AI_QUEUE_DEADLINE_EXCEEDED": "The queue is taking too long. Your message was not received; please try again later.",
+        "AI_QUEUE_BUSY": "The queue is full. Your message is kept; please try sending again shortly.",
+        "AI_UNAVAILABLE": "The assistant is not connected to AI. Please try again later or contact staff.",
+        "AI_INVALID_KEY": "The assistant is having a connection issue. Please try again later or contact staff.",
+        "AI_RATE_LIMITED": "I'm receiving many requests and can't answer immediately. Please wait a moment and try again.",
+        "AI_TIMEOUT": "This took longer than expected, so I couldn't answer in time. Please try again; your rental details are still in the conversation.",
+        "AI_SOURCE_STALE": "The policy has been updated. Please ask again to get the latest information.",
+        "AI_NO_EVIDENCE": "I don't have enough verified information to answer this. Please share more details about the vehicle, booking or policy you need.",
+        "AI_PROVIDER_ERROR": "Could not connect to the assistant. Please try again later or contact staff.",
+        "AI_INVALID_RESPONSE": "I didn't receive a valid answer. Please try again or ask staff for help.",
+        "AI_MISSING_SOURCES": "I couldn't verify the policy source for this answer. You can ask again or request staff help.",
+        "AI_INVALID_SOURCE": "The policy source needs to be checked again. Please ask again or request staff help.",
+        "AI_PROCESSING_ERROR": "Something went wrong while processing the question. Please try again or request staff help."
+      },
+      "http": {
+        "400": "The request is invalid. Please check the content and try again.",
+        "401": "Your session has expired. Please sign in again to continue.",
+        "403": "You don't have permission to do this. You can contact staff for help.",
+        "404": "The conversation or data could not be found. Please check again or start a new conversation.",
+        "413": "The content is too long. Please shorten the message and try again.",
+        "422": "The request is invalid. Please check the content and try again."
+      }
+    },
+    "details": {
+      "lookupUnavailable": "Lookup is temporarily unavailable. Please try again.",
+      "basePrice": "Base price; pickup and return dates are needed to check availability.",
+      "rentalPeriod": "Rental period: {{start}} – {{end}}",
+      "reviews": "★ {{rating}}/5 · {{n}} reviews",
+      "noReviews": "This vehicle has no public reviews yet.",
+      "noPromotions": "No promo codes available right now.",
+      "refund": "Estimated refund: {{amount}} · {{policy}}",
+      "discountPercent": "{{value}}% off",
+      "discountPercentCapped": "{{value}}% off (up to {{max}})",
+      "discountAmount": "{{amount}} off",
+      "minOrder": "Minimum order: {{amount}}",
+      "expiry": "Valid until: {{date}}",
+      "perDay": "{{amount}}/day",
+      "perDays": "{{amount}} / {{days}} days",
+      "seats": "{{n}} seats",
+      "viewBooking": "View booking",
+      "viewDetail": "View details",
+      "bookVehicle": "Book this vehicle",
+      "bookVehicleKeep": "Book this vehicle · keep selected dates",
+      "usePromo": "Use this code",
+      "viewVehicle": "View vehicle",
+      "moreVehicles": "View more vehicles"
+    },
+    "booking": {
+      "quoteTitle": "Trip quote",
+      "rental": "Rental fee: {{amount}}",
+      "rentalDiscount": "Long-term discount: −{{amount}}",
+      "promotion": "Promotion: −{{amount}}",
+      "deliveryFee": "Delivery fee: {{amount}}",
+      "deliveryFeeDistance": "Delivery fee ({{km}} km): {{amount}}",
+      "free": "Free",
+      "total": "Total rental: {{amount}}",
+      "deposit": "Pay upfront: {{amount}}",
+      "securityDeposit": "Security deposit: {{amount}}",
+      "deliveryNote": "Delivery{{address}}. The price is checked again on confirmation.",
+      "deliveryAddressSuffix": ": {{address}}",
+      "deliveryAddressFallback": " to the selected address",
+      "pickupNote": "Pick up at the owner's address. The price is checked again on confirmation.",
+      "returnAddress": "Return: {{address}}",
+      "payment": {
+        "viewBooking": "View booking #{{id}}",
+        "qr": "Payment QR code",
+        "openCheckout": "Open payment page",
+        "getLink": "Get payment link",
+        "checkPaid": "I've paid — check now",
+        "invalidLink": "The payment link is invalid.",
+        "connectFailed": "Could not connect to payment. You can open the booking to try again.",
+        "notRecorded": "Payment not recorded yet.",
+        "recorded": "Payment recorded.",
+        "checkFailed": "Could not check the payment."
+      },
+      "confirm": {
+        "cancelTitle": "Confirm cancellation of booking #{{id}}",
+        "refund": "Refund: {{amount}} · Deduction: {{forfeited}}",
+        "rose": "The price increased from the previous quote. I accept the new price.",
+        "cancelled": "Booking cancelled.",
+        "created": "Booking created; you can pay below.",
+        "cancelAction": "Confirm cancellation",
+        "bookAction": "Confirm booking",
+        "requote": "Re-quote",
+        "priceChanged": "The price changed. Please confirm again.",
+        "expired": "This confirmation expired or the details changed. Please request a new quote.",
+        "requoteFailed": "Could not re-quote right now.",
+        "draftSaved": "Booking details saved. You can continue in chat or open Quick booking."
+      }
+    },
+    "funnel": {
+      "title": "Quick booking",
+      "close": "Close",
+      "steps": {
+        "dates": "Rental dates",
+        "vehicle": "Choose vehicle",
+        "promo": "Promotion",
+        "pickup": "Pickup",
+        "confirm": "Confirm"
+      },
+      "datesInvalid": "Choose a future pickup date and a return date after pickup.",
+      "vehicleMissing": "Please choose a vehicle to continue.",
+      "pickupMissing": "Choose a pickup method and enter an address if delivery is needed.",
+      "pickupGeoMissing": "Choose a delivery address from the suggestions to calculate the distance fee.",
+      "returnGeoMissing": "Choose a return address from the suggestions, or leave it empty to return at the pickup point.",
+      "loadError": "Could not load booking details.",
+      "saveError": "The details changed or are invalid. Please check again.",
+      "startAt": "Pickup date: {{date}}",
+      "endAt": "Return date: {{date}}",
+      "notChosen": "Not selected",
+      "choosePeriod": "Choose rental dates and times",
+      "noVehicles": "Ask the assistant to find a vehicle in chat; results will appear here.",
+      "selectedVehicle": "Selected vehicle #{{id}}",
+      "promoTitle": "Promo code (optional)",
+      "promoLabel": "Promo code",
+      "promoHint": "The code is checked when quoting.",
+      "pickupTitle": "Pickup method",
+      "pickupSelf": "Pick up from the owner",
+      "pickupDelivery": "Delivery to you — distance-based fee",
+      "deliveryAddress": "Delivery address",
+      "deliveryFeeHint": "The delivery fee follows the booking configuration and is shown before confirmation.",
+      "returnAddress": "Return address (if different from pickup)",
+      "note": "Note",
+      "back": "Back",
+      "saving": "Saving…",
+      "next": "Continue"
+    },
+    "fab": {
+      "open": "Open MoveVN assistant",
+      "hide": "Hide MoveVN assistant",
+      "close": "Close MoveVN assistant"
+    }
+  }
+}

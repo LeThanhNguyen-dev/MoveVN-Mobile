@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import { Reply } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@/theme/useTheme";
 import { chatTime } from "../chatPresentation";
 import ChatImage from "./ChatImage";
@@ -30,6 +31,7 @@ export default function ChatMessageCard({
   onPhoto: (photo: ChatPhoto) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const own = Number(message.senderId) === Number(userId);
   const hasImages = Boolean(message.attachments?.length);
   const foreground = own && !hasImages ? theme.onBrand : theme.text;
@@ -64,7 +66,7 @@ export default function ChatMessageCard({
         {message.replyToId ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Xem tin nhắn được trả lời"
+            accessibilityLabel={t("mobile:chat.message.viewQuoted")}
             disabled={!message.replyTo || !onQuote}
             onPress={() => onQuote?.(message.replyToId!)}
             style={{
@@ -79,12 +81,14 @@ export default function ChatMessageCard({
             <AppText
               style={{ color: foreground, fontWeight: "700", fontSize: 12 }}
             >
-              {message.replyTo?.senderName ?? "Tin nhắn không còn khả dụng"}
+              {message.replyTo?.senderName ?? t("mobile:chat.message.unavailable")}
             </AppText>
             <AppText numberOfLines={2} style={{ color: foreground, fontSize: 12 }}>
               {message.replyTo?.content ||
                 (message.replyTo?.attachments?.length
-                  ? `📷 ${message.replyTo.attachments.length} ảnh`
+                  ? t("mobile:chat.message.imageCount", {
+                      n: message.replyTo.attachments.length,
+                    })
                   : "")}
             </AppText>
           </Pressable>
@@ -122,7 +126,7 @@ export default function ChatMessageCard({
           </View>
         ) : null}
         {!message.content && !message.attachments?.length ? (
-          <AppText style={{ color: foreground }}>Tin nhắn ảnh</AppText>
+          <AppText style={{ color: foreground }}>{t("mobile:chat.message.imageOnly")}</AppText>
         ) : null}
       </View>
       <View
@@ -136,17 +140,23 @@ export default function ChatMessageCard({
       >
         <AppText style={{ color: theme.muted, fontSize: 10 }}>
           {chatTime(message.sentAt)}
-          {own ? message.isRead ? " · Đã xem" : " · Đã gửi" : ""}
+          {own
+            ? message.isRead
+              ? t("mobile:chat.message.read")
+              : t("mobile:chat.message.sent")
+            : ""}
         </AppText>
         {onReply ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Trả lời tin nhắn ${message.id}`}
+            accessibilityLabel={t("mobile:chat.message.replyLabel", {
+              id: message.id,
+            })}
             onPress={() => onReply(message)}
             style={{ flexDirection: "row", gap: 4, paddingVertical: 8 }}
           >
             <Reply size={14} color={theme.brand} />
-            <AppText style={{ color: theme.brand, fontSize: 11 }}>Trả lời</AppText>
+            <AppText style={{ color: theme.brand, fontSize: 11 }}>{t("mobile:chat.message.reply")}</AppText>
           </Pressable>
         ) : null}
       </View>

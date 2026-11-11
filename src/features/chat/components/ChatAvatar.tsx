@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from "react";
 import { Image } from "expo-image";
 import { View } from "react-native";
 import AppText from "@/components/AppText";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@/theme/useTheme";
 
 function ChatAvatar({ name, uri, size = 48, online }: {
@@ -11,6 +12,7 @@ function ChatAvatar({ name, uri, size = 48, online }: {
   online?: boolean;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [uri]);
   const initials = name.trim().split(/\s+/).slice(-2)
@@ -22,7 +24,7 @@ function ChatAvatar({ name, uri, size = 48, online }: {
         alignItems: "center", justifyContent: "center" }}>
         {uri && !failed ? (
           <Image source={{ uri }} contentFit="cover" recyclingKey={uri}
-            onError={() => setFailed(true)} accessibilityLabel={`Ảnh đại diện ${name}`}
+            onError={() => setFailed(true)} accessibilityLabel={t("mobile:chat.avatar.a11y", { name })}
             style={{ width: size, height: size }} />
         ) : (
           <AppText style={{ color: theme.brand, fontSize: size * 0.32, fontWeight: "700" }}>

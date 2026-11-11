@@ -10,14 +10,13 @@ const VI =
   /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ]/;
 
 // Ngoài phạm vi song ngữ theo quyết định dự án:
-// - chatbot/assistant + chat realtime giữ tiếng Việt (bắt trước web)
+// - nội dung chatbot (prompt, câu trả lời gợi ý, tiêu đề handoff) giữ tiếng Việt
 // - văn bản hợp đồng pháp lý, dữ liệu ngân hàng, HTML bản đồ trong WebView
 // - file locale
 const EXCLUSIONS = [
   "i18n/locales",
   "features/admin",
-  "features/assistant",
-  "features/chat",
+  "features/assistant/assistantContent.ts",
   "features/contracts/components/ContractDocument.tsx",
   "features/wallets/data/banks.ts",
 ];

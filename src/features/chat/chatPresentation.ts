@@ -1,3 +1,5 @@
+import i18n from "@/i18n";
+import { getFormatLocale } from "@/i18n/formatLocale";
 import type { ChatMessage, ChatRoom, ChatPickedImage } from "./types";
 
 const time = (value?: string) => (value ? Date.parse(value) || 0 : 0);
@@ -37,7 +39,11 @@ export function chatCounterpart(room: ChatRoom, userId: number) {
     participant?.fullName?.trim();
   return {
     id,
-    name: name || `${owner ? "Khách thuê" : "Chủ xe"} #${id}`,
+    name:
+      name ||
+      i18n.t(owner ? "mobile:chat.counterpart.owner" : "mobile:chat.counterpart.customer", {
+        id,
+      }),
     avatarUrl: participant?.avatarUrl,
     isOnline: participant?.isOnline ?? false,
     lastSeenAt: participant?.lastSeenAt,
@@ -45,15 +51,18 @@ export function chatCounterpart(room: ChatRoom, userId: number) {
 }
 
 export function chatPresenceLabel(isOnline: boolean, lastSeenAt?: string | null) {
-  if (isOnline) return "Đang hoạt động";
+  if (isOnline) return i18n.t("mobile:chat.presence.online");
   const lastSeen = lastSeenAt ? Date.parse(lastSeenAt) : NaN;
-  if (!Number.isFinite(lastSeen)) return "Hiện không hoạt động";
+  if (!Number.isFinite(lastSeen)) return i18n.t("mobile:chat.presence.offline");
   const minutes = Math.max(0, Math.floor((Date.now() - lastSeen) / 60_000));
-  if (minutes < 1) return "Vừa hoạt động";
-  if (minutes < 60) return `Hoạt động ${minutes} phút trước`;
+  if (minutes < 1) return i18n.t("mobile:chat.presence.justNow");
+  if (minutes < 60)
+    return i18n.t("mobile:chat.presence.minutes", { n: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Hoạt động ${hours} giờ trước`;
-  return `Hoạt động ${Math.floor(hours / 24)} ngày trước`;
+  if (hours < 24) return i18n.t("mobile:chat.presence.hours", { n: hours });
+  return i18n.t("mobile:chat.presence.days", {
+    n: Math.floor(hours / 24),
+  });
 }
 
 export function normalizeChatSearch(value: string) {
@@ -69,7 +78,7 @@ export function chatTime(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? ""
-    : new Intl.DateTimeFormat("vi-VN", {
+    : new Intl.DateTimeFormat(getFormatLocale(), {
         day: "2-digit",
         month: "2-digit",
         hour: "2-digit",
@@ -78,25 +87,25 @@ export function chatTime(value: string) {
 }
 
 export function validateChatImages(images: ChatPickedImage[]) {
-  if (images.length > 4) return "Mỗi tin nhắn chỉ gửi tối đa 4 ảnh.";
+  if (images.length > 4) return i18n.t("mobile:chat.validation.maxImages");
   for (const image of images) {
     if (!["image/jpeg", "image/png", "image/webp"].includes(image.type))
-      return "Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP.";
+      return i18n.t("mobile:chat.validation.unsupportedType");
     if (
       !Number.isFinite(image.size) ||
       image.size <= 0 ||
       image.size > 5 * 1024 * 1024
     )
-      return "Mỗi ảnh phải có dữ liệu và không vượt quá 5 MB.";
+      return i18n.t("mobile:chat.validation.invalidSize");
   }
   return null;
 }
 
 export function validateChatDraft(content: string, images: ChatPickedImage[]) {
   if (!content.trim() && !images.length)
-    return "Nhập tin nhắn hoặc chọn ảnh trước khi gửi.";
+    return i18n.t("mobile:chat.validation.emptyDraft");
   if (content.trim().length > 2000)
-    return "Tin nhắn không vượt quá 2.000 ký tự.";
+    return i18n.t("mobile:chat.validation.tooLong");
   return validateChatImages(images);
 }
 

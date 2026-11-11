@@ -32,142 +32,146 @@ import vi_28 from "./locales/vi/contract.json";
 import vi_29 from "./locales/vi/disputes.json";
 import vi_30 from "./locales/vi/faq.json";
 import vi_31 from "./locales/vi/mobile/account.json";
-import vi_32 from "./locales/vi/mobile/auth.json";
-import vi_33 from "./locales/vi/mobile/availabilityAlerts.json";
-import vi_34 from "./locales/vi/mobile/bookingDetail.json";
-import vi_35 from "./locales/vi/mobile/bookingList.json";
-import vi_36 from "./locales/vi/mobile/checkout.json";
-import vi_37 from "./locales/vi/mobile/cms.json";
-import vi_38 from "./locales/vi/mobile/contract.json";
-import vi_39 from "./locales/vi/mobile/dispute.json";
-import vi_40 from "./locales/vi/mobile/driverLicense.json";
-import vi_41 from "./locales/vi/mobile/explore.json";
-import vi_42 from "./locales/vi/mobile/favorites.json";
-import vi_43 from "./locales/vi/mobile/gps.json";
-import vi_44 from "./locales/vi/mobile/inspection.json";
-import vi_45 from "./locales/vi/mobile/navigation.json";
-import vi_46 from "./locales/vi/mobile/notification.json";
-import vi_47 from "./locales/vi/mobile/ownerAnalytics.json";
-import vi_48 from "./locales/vi/mobile/ownerBooking.json";
-import vi_49 from "./locales/vi/mobile/ownerHome.json";
-import vi_50 from "./locales/vi/mobile/ownerVehicle.json";
-import vi_51 from "./locales/vi/mobile/pdf.json";
-import vi_52 from "./locales/vi/mobile/pin.json";
-import vi_53 from "./locales/vi/mobile/supportTicket.json";
-import vi_54 from "./locales/vi/mobile/trip.json";
-import vi_55 from "./locales/vi/mobile/user.json";
-import vi_56 from "./locales/vi/mobile/vehicleDetail.json";
-import vi_57 from "./locales/vi/mobile/vehicleList.json";
-import vi_58 from "./locales/vi/mobile/violation.json";
-import vi_59 from "./locales/vi/mobile/voucher.json";
-import vi_60 from "./locales/vi/mobile/wallet.json";
-import vi_61 from "./locales/vi/owner/analytics.json";
-import vi_62 from "./locales/vi/owner/bookings.json";
-import vi_63 from "./locales/vi/owner/calendar.json";
-import vi_64 from "./locales/vi/owner/home.json";
-import vi_65 from "./locales/vi/owner/promotions.json";
-import vi_66 from "./locales/vi/owner/vehicles.json";
-import vi_67 from "./locales/vi/payments.json";
-import vi_68 from "./locales/vi/policy.json";
-import vi_69 from "./locales/vi/profile.json";
-import vi_70 from "./locales/vi/promo.json";
-import vi_71 from "./locales/vi/support.json";
-import vi_72 from "./locales/vi/tracking.json";
-import vi_73 from "./locales/vi/users.json";
-import vi_74 from "./locales/vi/vehicleDetail/booking.json";
-import vi_75 from "./locales/vi/vehicleDetail/info.json";
-import vi_76 from "./locales/vi/vehicleDetail/media.json";
-import vi_77 from "./locales/vi/vehicleDetail/pricing.json";
-import vi_78 from "./locales/vi/vehicleDetail/reviews.json";
-import vi_79 from "./locales/vi/vehicleList/filters.json";
-import vi_80 from "./locales/vi/vehicleList/map.json";
-import vi_81 from "./locales/vi/vehicleList/results.json";
-import vi_82 from "./locales/vi/vehicleList/search.json";
-import vi_83 from "./locales/vi/violations.json";
-import en_84 from "./locales/en/account.json";
-import en_85 from "./locales/en/accountProfile.json";
-import en_86 from "./locales/en/accountSecurity/logout.json";
-import en_87 from "./locales/en/accountSecurity/password.json";
-import en_88 from "./locales/en/accountSecurity/pin.json";
-import en_89 from "./locales/en/accountSecurity/sessions.json";
-import en_90 from "./locales/en/accountVerification/bank.json";
-import en_91 from "./locales/en/accountVerification/cccd.json";
-import en_92 from "./locales/en/accountVerification/driverLicense.json";
-import en_93 from "./locales/en/accountVerification/driverMeta.json";
-import en_94 from "./locales/en/accountVerification/overview.json";
-import en_95 from "./locales/en/accountWallet/modals.json";
-import en_96 from "./locales/en/accountWallet/notes.json";
-import en_97 from "./locales/en/accountWallet/transactions.json";
-import en_98 from "./locales/en/accountWallet/wallet.json";
-import en_99 from "./locales/en/admin/system.json";
-import en_100 from "./locales/en/app/settings.json";
-import en_101 from "./locales/en/auth/errors.json";
-import en_102 from "./locales/en/auth/fields.json";
-import en_103 from "./locales/en/auth/login.json";
-import en_104 from "./locales/en/auth/verify.json";
-import en_105 from "./locales/en/booking.json";
-import en_106 from "./locales/en/common/app.json";
-import en_107 from "./locales/en/common/forms.json";
-import en_108 from "./locales/en/common/notifications.json";
-import en_109 from "./locales/en/common/reviewReply.json";
-import en_110 from "./locales/en/common/surcharge.json";
-import en_111 from "./locales/en/common/vehicles.json";
-import en_112 from "./locales/en/contract.json";
-import en_113 from "./locales/en/disputes.json";
-import en_114 from "./locales/en/faq.json";
-import en_115 from "./locales/en/mobile/account.json";
-import en_116 from "./locales/en/mobile/auth.json";
-import en_117 from "./locales/en/mobile/availabilityAlerts.json";
-import en_118 from "./locales/en/mobile/bookingDetail.json";
-import en_119 from "./locales/en/mobile/bookingList.json";
-import en_120 from "./locales/en/mobile/checkout.json";
-import en_121 from "./locales/en/mobile/cms.json";
-import en_122 from "./locales/en/mobile/contract.json";
-import en_123 from "./locales/en/mobile/dispute.json";
-import en_124 from "./locales/en/mobile/driverLicense.json";
-import en_125 from "./locales/en/mobile/explore.json";
-import en_126 from "./locales/en/mobile/favorites.json";
-import en_127 from "./locales/en/mobile/gps.json";
-import en_128 from "./locales/en/mobile/inspection.json";
-import en_129 from "./locales/en/mobile/navigation.json";
-import en_130 from "./locales/en/mobile/notification.json";
-import en_131 from "./locales/en/mobile/ownerAnalytics.json";
-import en_132 from "./locales/en/mobile/ownerBooking.json";
-import en_133 from "./locales/en/mobile/ownerHome.json";
-import en_134 from "./locales/en/mobile/ownerVehicle.json";
-import en_135 from "./locales/en/mobile/pdf.json";
-import en_136 from "./locales/en/mobile/pin.json";
-import en_137 from "./locales/en/mobile/supportTicket.json";
-import en_138 from "./locales/en/mobile/trip.json";
-import en_139 from "./locales/en/mobile/user.json";
-import en_140 from "./locales/en/mobile/vehicleDetail.json";
-import en_141 from "./locales/en/mobile/vehicleList.json";
-import en_142 from "./locales/en/mobile/violation.json";
-import en_143 from "./locales/en/mobile/voucher.json";
-import en_144 from "./locales/en/mobile/wallet.json";
-import en_145 from "./locales/en/owner/analytics.json";
-import en_146 from "./locales/en/owner/bookings.json";
-import en_147 from "./locales/en/owner/calendar.json";
-import en_148 from "./locales/en/owner/home.json";
-import en_149 from "./locales/en/owner/promotions.json";
-import en_150 from "./locales/en/owner/vehicles.json";
-import en_151 from "./locales/en/payments.json";
-import en_152 from "./locales/en/policy.json";
-import en_153 from "./locales/en/profile.json";
-import en_154 from "./locales/en/promo.json";
-import en_155 from "./locales/en/support.json";
-import en_156 from "./locales/en/tracking.json";
-import en_157 from "./locales/en/users.json";
-import en_158 from "./locales/en/vehicleDetail/booking.json";
-import en_159 from "./locales/en/vehicleDetail/info.json";
-import en_160 from "./locales/en/vehicleDetail/media.json";
-import en_161 from "./locales/en/vehicleDetail/pricing.json";
-import en_162 from "./locales/en/vehicleDetail/reviews.json";
-import en_163 from "./locales/en/vehicleList/filters.json";
-import en_164 from "./locales/en/vehicleList/map.json";
-import en_165 from "./locales/en/vehicleList/results.json";
-import en_166 from "./locales/en/vehicleList/search.json";
-import en_167 from "./locales/en/violations.json";
+import vi_32 from "./locales/vi/mobile/assistant.json";
+import vi_33 from "./locales/vi/mobile/auth.json";
+import vi_34 from "./locales/vi/mobile/availabilityAlerts.json";
+import vi_35 from "./locales/vi/mobile/bookingDetail.json";
+import vi_36 from "./locales/vi/mobile/bookingList.json";
+import vi_37 from "./locales/vi/mobile/chat.json";
+import vi_38 from "./locales/vi/mobile/checkout.json";
+import vi_39 from "./locales/vi/mobile/cms.json";
+import vi_40 from "./locales/vi/mobile/contract.json";
+import vi_41 from "./locales/vi/mobile/dispute.json";
+import vi_42 from "./locales/vi/mobile/driverLicense.json";
+import vi_43 from "./locales/vi/mobile/explore.json";
+import vi_44 from "./locales/vi/mobile/favorites.json";
+import vi_45 from "./locales/vi/mobile/gps.json";
+import vi_46 from "./locales/vi/mobile/inspection.json";
+import vi_47 from "./locales/vi/mobile/navigation.json";
+import vi_48 from "./locales/vi/mobile/notification.json";
+import vi_49 from "./locales/vi/mobile/ownerAnalytics.json";
+import vi_50 from "./locales/vi/mobile/ownerBooking.json";
+import vi_51 from "./locales/vi/mobile/ownerHome.json";
+import vi_52 from "./locales/vi/mobile/ownerVehicle.json";
+import vi_53 from "./locales/vi/mobile/pdf.json";
+import vi_54 from "./locales/vi/mobile/pin.json";
+import vi_55 from "./locales/vi/mobile/supportTicket.json";
+import vi_56 from "./locales/vi/mobile/trip.json";
+import vi_57 from "./locales/vi/mobile/user.json";
+import vi_58 from "./locales/vi/mobile/vehicleDetail.json";
+import vi_59 from "./locales/vi/mobile/vehicleList.json";
+import vi_60 from "./locales/vi/mobile/violation.json";
+import vi_61 from "./locales/vi/mobile/voucher.json";
+import vi_62 from "./locales/vi/mobile/wallet.json";
+import vi_63 from "./locales/vi/owner/analytics.json";
+import vi_64 from "./locales/vi/owner/bookings.json";
+import vi_65 from "./locales/vi/owner/calendar.json";
+import vi_66 from "./locales/vi/owner/home.json";
+import vi_67 from "./locales/vi/owner/promotions.json";
+import vi_68 from "./locales/vi/owner/vehicles.json";
+import vi_69 from "./locales/vi/payments.json";
+import vi_70 from "./locales/vi/policy.json";
+import vi_71 from "./locales/vi/profile.json";
+import vi_72 from "./locales/vi/promo.json";
+import vi_73 from "./locales/vi/support.json";
+import vi_74 from "./locales/vi/tracking.json";
+import vi_75 from "./locales/vi/users.json";
+import vi_76 from "./locales/vi/vehicleDetail/booking.json";
+import vi_77 from "./locales/vi/vehicleDetail/info.json";
+import vi_78 from "./locales/vi/vehicleDetail/media.json";
+import vi_79 from "./locales/vi/vehicleDetail/pricing.json";
+import vi_80 from "./locales/vi/vehicleDetail/reviews.json";
+import vi_81 from "./locales/vi/vehicleList/filters.json";
+import vi_82 from "./locales/vi/vehicleList/map.json";
+import vi_83 from "./locales/vi/vehicleList/results.json";
+import vi_84 from "./locales/vi/vehicleList/search.json";
+import vi_85 from "./locales/vi/violations.json";
+import en_86 from "./locales/en/account.json";
+import en_87 from "./locales/en/accountProfile.json";
+import en_88 from "./locales/en/accountSecurity/logout.json";
+import en_89 from "./locales/en/accountSecurity/password.json";
+import en_90 from "./locales/en/accountSecurity/pin.json";
+import en_91 from "./locales/en/accountSecurity/sessions.json";
+import en_92 from "./locales/en/accountVerification/bank.json";
+import en_93 from "./locales/en/accountVerification/cccd.json";
+import en_94 from "./locales/en/accountVerification/driverLicense.json";
+import en_95 from "./locales/en/accountVerification/driverMeta.json";
+import en_96 from "./locales/en/accountVerification/overview.json";
+import en_97 from "./locales/en/accountWallet/modals.json";
+import en_98 from "./locales/en/accountWallet/notes.json";
+import en_99 from "./locales/en/accountWallet/transactions.json";
+import en_100 from "./locales/en/accountWallet/wallet.json";
+import en_101 from "./locales/en/admin/system.json";
+import en_102 from "./locales/en/app/settings.json";
+import en_103 from "./locales/en/auth/errors.json";
+import en_104 from "./locales/en/auth/fields.json";
+import en_105 from "./locales/en/auth/login.json";
+import en_106 from "./locales/en/auth/verify.json";
+import en_107 from "./locales/en/booking.json";
+import en_108 from "./locales/en/common/app.json";
+import en_109 from "./locales/en/common/forms.json";
+import en_110 from "./locales/en/common/notifications.json";
+import en_111 from "./locales/en/common/reviewReply.json";
+import en_112 from "./locales/en/common/surcharge.json";
+import en_113 from "./locales/en/common/vehicles.json";
+import en_114 from "./locales/en/contract.json";
+import en_115 from "./locales/en/disputes.json";
+import en_116 from "./locales/en/faq.json";
+import en_117 from "./locales/en/mobile/account.json";
+import en_118 from "./locales/en/mobile/assistant.json";
+import en_119 from "./locales/en/mobile/auth.json";
+import en_120 from "./locales/en/mobile/availabilityAlerts.json";
+import en_121 from "./locales/en/mobile/bookingDetail.json";
+import en_122 from "./locales/en/mobile/bookingList.json";
+import en_123 from "./locales/en/mobile/chat.json";
+import en_124 from "./locales/en/mobile/checkout.json";
+import en_125 from "./locales/en/mobile/cms.json";
+import en_126 from "./locales/en/mobile/contract.json";
+import en_127 from "./locales/en/mobile/dispute.json";
+import en_128 from "./locales/en/mobile/driverLicense.json";
+import en_129 from "./locales/en/mobile/explore.json";
+import en_130 from "./locales/en/mobile/favorites.json";
+import en_131 from "./locales/en/mobile/gps.json";
+import en_132 from "./locales/en/mobile/inspection.json";
+import en_133 from "./locales/en/mobile/navigation.json";
+import en_134 from "./locales/en/mobile/notification.json";
+import en_135 from "./locales/en/mobile/ownerAnalytics.json";
+import en_136 from "./locales/en/mobile/ownerBooking.json";
+import en_137 from "./locales/en/mobile/ownerHome.json";
+import en_138 from "./locales/en/mobile/ownerVehicle.json";
+import en_139 from "./locales/en/mobile/pdf.json";
+import en_140 from "./locales/en/mobile/pin.json";
+import en_141 from "./locales/en/mobile/supportTicket.json";
+import en_142 from "./locales/en/mobile/trip.json";
+import en_143 from "./locales/en/mobile/user.json";
+import en_144 from "./locales/en/mobile/vehicleDetail.json";
+import en_145 from "./locales/en/mobile/vehicleList.json";
+import en_146 from "./locales/en/mobile/violation.json";
+import en_147 from "./locales/en/mobile/voucher.json";
+import en_148 from "./locales/en/mobile/wallet.json";
+import en_149 from "./locales/en/owner/analytics.json";
+import en_150 from "./locales/en/owner/bookings.json";
+import en_151 from "./locales/en/owner/calendar.json";
+import en_152 from "./locales/en/owner/home.json";
+import en_153 from "./locales/en/owner/promotions.json";
+import en_154 from "./locales/en/owner/vehicles.json";
+import en_155 from "./locales/en/payments.json";
+import en_156 from "./locales/en/policy.json";
+import en_157 from "./locales/en/profile.json";
+import en_158 from "./locales/en/promo.json";
+import en_159 from "./locales/en/support.json";
+import en_160 from "./locales/en/tracking.json";
+import en_161 from "./locales/en/users.json";
+import en_162 from "./locales/en/vehicleDetail/booking.json";
+import en_163 from "./locales/en/vehicleDetail/info.json";
+import en_164 from "./locales/en/vehicleDetail/media.json";
+import en_165 from "./locales/en/vehicleDetail/pricing.json";
+import en_166 from "./locales/en/vehicleDetail/reviews.json";
+import en_167 from "./locales/en/vehicleList/filters.json";
+import en_168 from "./locales/en/vehicleList/map.json";
+import en_169 from "./locales/en/vehicleList/results.json";
+import en_170 from "./locales/en/vehicleList/search.json";
+import en_171 from "./locales/en/violations.json";
 
 export const localeModules = {
   vi: {
@@ -203,143 +207,147 @@ export const localeModules = {
     "disputes.json": vi_29,
     "faq.json": vi_30,
     "mobile/account.json": vi_31,
-    "mobile/auth.json": vi_32,
-    "mobile/availabilityAlerts.json": vi_33,
-    "mobile/bookingDetail.json": vi_34,
-    "mobile/bookingList.json": vi_35,
-    "mobile/checkout.json": vi_36,
-    "mobile/cms.json": vi_37,
-    "mobile/contract.json": vi_38,
-    "mobile/dispute.json": vi_39,
-    "mobile/driverLicense.json": vi_40,
-    "mobile/explore.json": vi_41,
-    "mobile/favorites.json": vi_42,
-    "mobile/gps.json": vi_43,
-    "mobile/inspection.json": vi_44,
-    "mobile/navigation.json": vi_45,
-    "mobile/notification.json": vi_46,
-    "mobile/ownerAnalytics.json": vi_47,
-    "mobile/ownerBooking.json": vi_48,
-    "mobile/ownerHome.json": vi_49,
-    "mobile/ownerVehicle.json": vi_50,
-    "mobile/pdf.json": vi_51,
-    "mobile/pin.json": vi_52,
-    "mobile/supportTicket.json": vi_53,
-    "mobile/trip.json": vi_54,
-    "mobile/user.json": vi_55,
-    "mobile/vehicleDetail.json": vi_56,
-    "mobile/vehicleList.json": vi_57,
-    "mobile/violation.json": vi_58,
-    "mobile/voucher.json": vi_59,
-    "mobile/wallet.json": vi_60,
-    "owner/analytics.json": vi_61,
-    "owner/bookings.json": vi_62,
-    "owner/calendar.json": vi_63,
-    "owner/home.json": vi_64,
-    "owner/promotions.json": vi_65,
-    "owner/vehicles.json": vi_66,
-    "payments.json": vi_67,
-    "policy.json": vi_68,
-    "profile.json": vi_69,
-    "promo.json": vi_70,
-    "support.json": vi_71,
-    "tracking.json": vi_72,
-    "users.json": vi_73,
-    "vehicleDetail/booking.json": vi_74,
-    "vehicleDetail/info.json": vi_75,
-    "vehicleDetail/media.json": vi_76,
-    "vehicleDetail/pricing.json": vi_77,
-    "vehicleDetail/reviews.json": vi_78,
-    "vehicleList/filters.json": vi_79,
-    "vehicleList/map.json": vi_80,
-    "vehicleList/results.json": vi_81,
-    "vehicleList/search.json": vi_82,
-    "violations.json": vi_83,
+    "mobile/assistant.json": vi_32,
+    "mobile/auth.json": vi_33,
+    "mobile/availabilityAlerts.json": vi_34,
+    "mobile/bookingDetail.json": vi_35,
+    "mobile/bookingList.json": vi_36,
+    "mobile/chat.json": vi_37,
+    "mobile/checkout.json": vi_38,
+    "mobile/cms.json": vi_39,
+    "mobile/contract.json": vi_40,
+    "mobile/dispute.json": vi_41,
+    "mobile/driverLicense.json": vi_42,
+    "mobile/explore.json": vi_43,
+    "mobile/favorites.json": vi_44,
+    "mobile/gps.json": vi_45,
+    "mobile/inspection.json": vi_46,
+    "mobile/navigation.json": vi_47,
+    "mobile/notification.json": vi_48,
+    "mobile/ownerAnalytics.json": vi_49,
+    "mobile/ownerBooking.json": vi_50,
+    "mobile/ownerHome.json": vi_51,
+    "mobile/ownerVehicle.json": vi_52,
+    "mobile/pdf.json": vi_53,
+    "mobile/pin.json": vi_54,
+    "mobile/supportTicket.json": vi_55,
+    "mobile/trip.json": vi_56,
+    "mobile/user.json": vi_57,
+    "mobile/vehicleDetail.json": vi_58,
+    "mobile/vehicleList.json": vi_59,
+    "mobile/violation.json": vi_60,
+    "mobile/voucher.json": vi_61,
+    "mobile/wallet.json": vi_62,
+    "owner/analytics.json": vi_63,
+    "owner/bookings.json": vi_64,
+    "owner/calendar.json": vi_65,
+    "owner/home.json": vi_66,
+    "owner/promotions.json": vi_67,
+    "owner/vehicles.json": vi_68,
+    "payments.json": vi_69,
+    "policy.json": vi_70,
+    "profile.json": vi_71,
+    "promo.json": vi_72,
+    "support.json": vi_73,
+    "tracking.json": vi_74,
+    "users.json": vi_75,
+    "vehicleDetail/booking.json": vi_76,
+    "vehicleDetail/info.json": vi_77,
+    "vehicleDetail/media.json": vi_78,
+    "vehicleDetail/pricing.json": vi_79,
+    "vehicleDetail/reviews.json": vi_80,
+    "vehicleList/filters.json": vi_81,
+    "vehicleList/map.json": vi_82,
+    "vehicleList/results.json": vi_83,
+    "vehicleList/search.json": vi_84,
+    "violations.json": vi_85,
   },
   en: {
-    "account.json": en_84,
-    "accountProfile.json": en_85,
-    "accountSecurity/logout.json": en_86,
-    "accountSecurity/password.json": en_87,
-    "accountSecurity/pin.json": en_88,
-    "accountSecurity/sessions.json": en_89,
-    "accountVerification/bank.json": en_90,
-    "accountVerification/cccd.json": en_91,
-    "accountVerification/driverLicense.json": en_92,
-    "accountVerification/driverMeta.json": en_93,
-    "accountVerification/overview.json": en_94,
-    "accountWallet/modals.json": en_95,
-    "accountWallet/notes.json": en_96,
-    "accountWallet/transactions.json": en_97,
-    "accountWallet/wallet.json": en_98,
-    "admin/system.json": en_99,
-    "app/settings.json": en_100,
-    "auth/errors.json": en_101,
-    "auth/fields.json": en_102,
-    "auth/login.json": en_103,
-    "auth/verify.json": en_104,
-    "booking.json": en_105,
-    "common/app.json": en_106,
-    "common/forms.json": en_107,
-    "common/notifications.json": en_108,
-    "common/reviewReply.json": en_109,
-    "common/surcharge.json": en_110,
-    "common/vehicles.json": en_111,
-    "contract.json": en_112,
-    "disputes.json": en_113,
-    "faq.json": en_114,
-    "mobile/account.json": en_115,
-    "mobile/auth.json": en_116,
-    "mobile/availabilityAlerts.json": en_117,
-    "mobile/bookingDetail.json": en_118,
-    "mobile/bookingList.json": en_119,
-    "mobile/checkout.json": en_120,
-    "mobile/cms.json": en_121,
-    "mobile/contract.json": en_122,
-    "mobile/dispute.json": en_123,
-    "mobile/driverLicense.json": en_124,
-    "mobile/explore.json": en_125,
-    "mobile/favorites.json": en_126,
-    "mobile/gps.json": en_127,
-    "mobile/inspection.json": en_128,
-    "mobile/navigation.json": en_129,
-    "mobile/notification.json": en_130,
-    "mobile/ownerAnalytics.json": en_131,
-    "mobile/ownerBooking.json": en_132,
-    "mobile/ownerHome.json": en_133,
-    "mobile/ownerVehicle.json": en_134,
-    "mobile/pdf.json": en_135,
-    "mobile/pin.json": en_136,
-    "mobile/supportTicket.json": en_137,
-    "mobile/trip.json": en_138,
-    "mobile/user.json": en_139,
-    "mobile/vehicleDetail.json": en_140,
-    "mobile/vehicleList.json": en_141,
-    "mobile/violation.json": en_142,
-    "mobile/voucher.json": en_143,
-    "mobile/wallet.json": en_144,
-    "owner/analytics.json": en_145,
-    "owner/bookings.json": en_146,
-    "owner/calendar.json": en_147,
-    "owner/home.json": en_148,
-    "owner/promotions.json": en_149,
-    "owner/vehicles.json": en_150,
-    "payments.json": en_151,
-    "policy.json": en_152,
-    "profile.json": en_153,
-    "promo.json": en_154,
-    "support.json": en_155,
-    "tracking.json": en_156,
-    "users.json": en_157,
-    "vehicleDetail/booking.json": en_158,
-    "vehicleDetail/info.json": en_159,
-    "vehicleDetail/media.json": en_160,
-    "vehicleDetail/pricing.json": en_161,
-    "vehicleDetail/reviews.json": en_162,
-    "vehicleList/filters.json": en_163,
-    "vehicleList/map.json": en_164,
-    "vehicleList/results.json": en_165,
-    "vehicleList/search.json": en_166,
-    "violations.json": en_167,
+    "account.json": en_86,
+    "accountProfile.json": en_87,
+    "accountSecurity/logout.json": en_88,
+    "accountSecurity/password.json": en_89,
+    "accountSecurity/pin.json": en_90,
+    "accountSecurity/sessions.json": en_91,
+    "accountVerification/bank.json": en_92,
+    "accountVerification/cccd.json": en_93,
+    "accountVerification/driverLicense.json": en_94,
+    "accountVerification/driverMeta.json": en_95,
+    "accountVerification/overview.json": en_96,
+    "accountWallet/modals.json": en_97,
+    "accountWallet/notes.json": en_98,
+    "accountWallet/transactions.json": en_99,
+    "accountWallet/wallet.json": en_100,
+    "admin/system.json": en_101,
+    "app/settings.json": en_102,
+    "auth/errors.json": en_103,
+    "auth/fields.json": en_104,
+    "auth/login.json": en_105,
+    "auth/verify.json": en_106,
+    "booking.json": en_107,
+    "common/app.json": en_108,
+    "common/forms.json": en_109,
+    "common/notifications.json": en_110,
+    "common/reviewReply.json": en_111,
+    "common/surcharge.json": en_112,
+    "common/vehicles.json": en_113,
+    "contract.json": en_114,
+    "disputes.json": en_115,
+    "faq.json": en_116,
+    "mobile/account.json": en_117,
+    "mobile/assistant.json": en_118,
+    "mobile/auth.json": en_119,
+    "mobile/availabilityAlerts.json": en_120,
+    "mobile/bookingDetail.json": en_121,
+    "mobile/bookingList.json": en_122,
+    "mobile/chat.json": en_123,
+    "mobile/checkout.json": en_124,
+    "mobile/cms.json": en_125,
+    "mobile/contract.json": en_126,
+    "mobile/dispute.json": en_127,
+    "mobile/driverLicense.json": en_128,
+    "mobile/explore.json": en_129,
+    "mobile/favorites.json": en_130,
+    "mobile/gps.json": en_131,
+    "mobile/inspection.json": en_132,
+    "mobile/navigation.json": en_133,
+    "mobile/notification.json": en_134,
+    "mobile/ownerAnalytics.json": en_135,
+    "mobile/ownerBooking.json": en_136,
+    "mobile/ownerHome.json": en_137,
+    "mobile/ownerVehicle.json": en_138,
+    "mobile/pdf.json": en_139,
+    "mobile/pin.json": en_140,
+    "mobile/supportTicket.json": en_141,
+    "mobile/trip.json": en_142,
+    "mobile/user.json": en_143,
+    "mobile/vehicleDetail.json": en_144,
+    "mobile/vehicleList.json": en_145,
+    "mobile/violation.json": en_146,
+    "mobile/voucher.json": en_147,
+    "mobile/wallet.json": en_148,
+    "owner/analytics.json": en_149,
+    "owner/bookings.json": en_150,
+    "owner/calendar.json": en_151,
+    "owner/home.json": en_152,
+    "owner/promotions.json": en_153,
+    "owner/vehicles.json": en_154,
+    "payments.json": en_155,
+    "policy.json": en_156,
+    "profile.json": en_157,
+    "promo.json": en_158,
+    "support.json": en_159,
+    "tracking.json": en_160,
+    "users.json": en_161,
+    "vehicleDetail/booking.json": en_162,
+    "vehicleDetail/info.json": en_163,
+    "vehicleDetail/media.json": en_164,
+    "vehicleDetail/pricing.json": en_165,
+    "vehicleDetail/reviews.json": en_166,
+    "vehicleList/filters.json": en_167,
+    "vehicleList/map.json": en_168,
+    "vehicleList/results.json": en_169,
+    "vehicleList/search.json": en_170,
+    "violations.json": en_171,
   },
 };

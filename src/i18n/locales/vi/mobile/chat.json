@@ -1,0 +1,128 @@
+{
+  "chat": {
+    "list": {
+      "title": "Tin nhắn",
+      "subtitle": "Trao đổi trong từng chuyến đi",
+      "refresh": "Làm mới danh sách chat",
+      "searchLabel": "Tìm người trò chuyện, mã đặt xe hoặc xe",
+      "searchPlaceholder": "Tìm tên, mã đặt xe hoặc xe…",
+      "emptySearch": "Không tìm thấy booking",
+      "emptyTitle": "Chưa có cuộc trò chuyện",
+      "emptyBody": "Mở chi tiết chuyến đi hoặc đơn thuê và chọn Nhắn tin để bắt đầu."
+    },
+    "room": {
+      "back": "Quay lại",
+      "viewProfile": "Xem hồ sơ {{name}}",
+      "viewProfileFallback": "Xem hồ sơ người trò chuyện",
+      "counterpartFallback": "Người trò chuyện",
+      "titleFallback": "Chat booking",
+      "opening": "Đang mở cuộc trò chuyện…",
+      "search": "Tìm trong chat booking",
+      "gallery": "Thư viện ảnh booking",
+      "viewBooking": "Xem đơn thuê",
+      "bookingFallback": "Đơn thuê xe",
+      "bookingLink": "Xem đơn →",
+      "connecting": "Đang kết nối tin nhắn…",
+      "offline": "Chưa có kết nối trực tiếp · Tự cập nhật mỗi 30 giây",
+      "retryOpen": "Thử mở lại chat",
+      "retry": "Thử lại",
+      "emptyTitle": "Bắt đầu cuộc trò chuyện",
+      "emptyBody": "Trao đổi về lịch nhận xe, địa điểm hoặc chuyến đi của bạn.",
+      "retryHistory": "Thử tải lại tin nhắn",
+      "loadOlder": "Tải tin nhắn cũ",
+      "latest": "Đến tin nhắn mới nhất",
+      "latestLabel": "Tin mới nhất",
+      "retryRead": "Thử đánh dấu chat đã đọc",
+      "replyTo": "Trả lời {{name}}",
+      "imageCount": "📷 {{n}} ảnh",
+      "removeImage": "Bỏ ảnh {{name}}",
+      "cancelReply": "Hủy trả lời",
+      "processingImages": "Đang xử lý ảnh…",
+      "uploadingImages": "Đang gửi ảnh {{progress}}%",
+      "pickImage": "Chọn ảnh",
+      "takePhoto": "Chụp ảnh",
+      "inputLabel": "Nội dung tin nhắn",
+      "inputPlaceholder": "Nhập tin nhắn…",
+      "send": "Gửi tin nhắn",
+      "closed": "Cuộc trò chuyện đã đóng. Bạn vẫn có thể xem lịch sử.",
+      "closePhoto": "Đóng ảnh",
+      "closeQuote": "Đóng tin nhắn gốc",
+      "quoteTitle": "Tin nhắn gốc",
+      "openError": "Không mở được chat booking. Vui lòng thử lại.",
+      "quoteError": "Tin nhắn không còn khả dụng hoặc chưa tải được.",
+      "pickError": "Không chọn được ảnh."
+    },
+    "tools": {
+      "close": "Đóng công cụ chat",
+      "searchTitle": "Tìm trong booking",
+      "galleryTitle": "Ảnh của booking",
+      "keywordLabel": "Từ khóa tìm tin nhắn",
+      "keywordPlaceholder": "Nội dung hoặc tên ảnh…",
+      "search": "Tìm tin nhắn",
+      "retry": "Thử lại công cụ chat",
+      "errorWithRetry": "{{error}} Nhấn thử lại.",
+      "summary": "{{total}} tin nhắn · Trang {{page}}/{{pages}}",
+      "prompt": "Nhập từ khóa để tìm trong toàn bộ lịch sử booking.",
+      "emptySearch": "Không có tin nhắn phù hợp.",
+      "emptyGallery": "Booking này chưa có ảnh.",
+      "prev": "Trang trước",
+      "next": "Trang sau",
+      "loadError": "Chưa tải được dữ liệu. Kiểm tra Backend đã cập nhật rồi thử lại.",
+      "keywordTooLong": "Từ khóa tối đa 120 ký tự."
+    },
+    "message": {
+      "viewQuoted": "Xem tin nhắn được trả lời",
+      "unavailable": "Tin nhắn không còn khả dụng",
+      "imageCount": "📷 {{n}} ảnh",
+      "imageOnly": "Tin nhắn ảnh",
+      "read": " · Đã xem",
+      "sent": " · Đã gửi",
+      "reply": "Trả lời",
+      "replyLabel": "Trả lời tin nhắn {{id}}"
+    },
+    "row": {
+      "ownPrefix": "Bạn: ",
+      "photoOnly": "Đã gửi ảnh",
+      "start": "Bắt đầu trò chuyện",
+      "a11y": "{{name}}, {{presence}}, {{code}}, {{n}} chưa đọc",
+      "bookingFallback": "Đơn thuê xe"
+    },
+    "image": {
+      "reload": "Tải lại ảnh {{name}}",
+      "open": "Xem ảnh {{name}}",
+      "error": "Chưa tải được ảnh. Nhấn thử lại."
+    },
+    "avatar": {
+      "a11y": "Ảnh đại diện {{name}}"
+    },
+    "presence": {
+      "online": "Đang hoạt động",
+      "offline": "Hiện không hoạt động",
+      "justNow": "Vừa hoạt động",
+      "minutes": "Hoạt động {{n}} phút trước",
+      "hours": "Hoạt động {{n}} giờ trước",
+      "days": "Hoạt động {{n}} ngày trước"
+    },
+    "counterpart": {
+      "customer": "Khách thuê #{{id}}",
+      "owner": "Chủ xe #{{id}}"
+    },
+    "picker": {
+      "cameraPermission": "Cho phép MoveVN dùng máy ảnh trong Cài đặt để chụp ảnh."
+    },
+    "validation": {
+      "maxImages": "Mỗi tin nhắn chỉ gửi tối đa 4 ảnh.",
+      "unsupportedType": "Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP.",
+      "invalidSize": "Mỗi ảnh phải có dữ liệu và không vượt quá 5 MB.",
+      "emptyDraft": "Nhập tin nhắn hoặc chọn ảnh trước khi gửi.",
+      "tooLong": "Tin nhắn không vượt quá 2.000 ký tự."
+    },
+    "errors": {
+      "loadRooms": "Không tải được danh sách tin nhắn. Vui lòng thử lại.",
+      "loadMessages": "Không tải được tin nhắn. Vui lòng thử lại.",
+      "readFailed": "Chưa thể đánh dấu đã đọc. Nhấn để thử lại.",
+      "sentImages": "Đã gửi {{n}} ảnh",
+      "sendFailed": "Chưa gửi được tin nhắn. Bản nháp được giữ lại; nhấn Gửi để thử lại."
+    }
+  }
+}

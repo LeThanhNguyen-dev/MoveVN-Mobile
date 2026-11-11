@@ -29,6 +29,8 @@ import {
   X,
 } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { useNotificationStore } from "@/features/notifications/useNotifications";
 import { getApiErrorMessage } from "@/services/apiClient";
@@ -64,6 +66,7 @@ export default function ChatRoomScreen({
   onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const userId = useAuthStore((auth) => auth.user?.userId ?? 0);
@@ -144,7 +147,7 @@ export default function ChatRoomScreen({
             setOpenError(
               getApiErrorMessage(
                 error,
-                "Không mở được chat booking. Vui lòng thử lại.",
+                i18n.t("mobile:chat.room.openError"),
               ),
             );
           }
@@ -188,7 +191,7 @@ export default function ChatRoomScreen({
         return;
       const latest = store.getState().drafts[capturedRoom] ?? emptyDraft;
       if (latest.images.length + selected.length > 4)
-        throw new Error("Mỗi tin nhắn chỉ gửi tối đa 4 ảnh.");
+        throw new Error(i18n.t("mobile:chat.validation.maxImages"));
       if (selected.length)
         store.getState().patchDraft(capturedRoom, {
           images: [...latest.images, ...selected],
@@ -196,7 +199,9 @@ export default function ChatRoomScreen({
     } catch (error) {
       if (current() && focused.current)
         setPickerError(
-          error instanceof Error ? error.message : "Không chọn được ảnh.",
+          error instanceof Error
+            ? error.message
+            : i18n.t("mobile:chat.room.pickError"),
         );
     } finally {
       if (current()) setPicking(false);
@@ -220,7 +225,7 @@ export default function ChatRoomScreen({
         setQuoteError(
           getApiErrorMessage(
             error,
-            "Tin nhắn không còn khả dụng hoặc chưa tải được.",
+            i18n.t("mobile:chat.room.quoteError"),
           ),
         );
     }
@@ -265,7 +270,7 @@ export default function ChatRoomScreen({
       <View style={[styles.header, { borderColor: theme.border, backgroundColor: theme.surface }]}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Quay lại"
+          accessibilityLabel={t("mobile:chat.room.back")}
           onPress={onBack}
           style={styles.icon}
         >
@@ -273,18 +278,22 @@ export default function ChatRoomScreen({
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Xem hồ sơ ${person?.name ?? "người trò chuyện"}`}
+          accessibilityLabel={t("mobile:chat.room.viewProfile", {
+            name: person?.name ?? t("mobile:chat.room.counterpartFallback"),
+          })}
           disabled={!onOpenUserProfile || !person?.id}
           onPress={() => person && onOpenUserProfile?.(person.id)}
         >
-          <ChatAvatar name={person?.name ?? "Người trò chuyện"} uri={person?.avatarUrl}
+          <ChatAvatar name={person?.name ?? t("mobile:chat.room.counterpartFallback")} uri={person?.avatarUrl}
             size={40} online={person ? presence.isOnline : undefined} />
         </Pressable>
         <View style={{ flex: 1, minWidth: 0, marginLeft: 5 }}>
           {onOpenUserProfile && person?.id ? (
             <Pressable
               accessibilityRole="link"
-              accessibilityLabel={`Xem hồ sơ ${person?.name ?? ""}`}
+              accessibilityLabel={t("mobile:chat.room.viewProfile", {
+                name: person?.name ?? "",
+              })}
               onPress={() => onOpenUserProfile(person!.id)}
               style={styles.personLink}
             >
@@ -292,7 +301,7 @@ export default function ChatRoomScreen({
                 numberOfLines={1}
                 style={{ color: theme.text, fontSize: 15, fontWeight: "700" }}
               >
-                {person?.name ?? "Chat booking"}
+                {person?.name ?? t("mobile:chat.room.titleFallback")}
               </AppText>
             </Pressable>
           ) : (
@@ -300,29 +309,29 @@ export default function ChatRoomScreen({
               numberOfLines={1}
               style={{ color: theme.text, fontSize: 15, fontWeight: "700" }}
             >
-              {person?.name ?? "Chat booking"}
+              {person?.name ?? t("mobile:chat.room.titleFallback")}
             </AppText>
           )}
           <AppText numberOfLines={1} style={{
             color: presence.isOnline ? theme.success : theme.muted,
             fontSize: 11, marginTop: 4,
-          }}>{person ? presence.label : "Đang mở cuộc trò chuyện…"}</AppText>
+          }}>{person ? presence.label : t("mobile:chat.room.opening")}</AppText>
         </View>
         {iconButton(
-          "Tìm trong chat booking",
+          t("mobile:chat.room.search"),
           Search,
           () => { Keyboard.dismiss(); setTools("search"); },
           !room,
         )}
         {iconButton(
-          "Thư viện ảnh booking",
+          t("mobile:chat.room.gallery"),
           Images,
           () => { Keyboard.dismiss(); setTools("gallery"); },
           !room,
         )}
       </View>
       {room ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Xem đơn thuê"
+        <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:chat.room.viewBooking")}
           onPress={() => { Keyboard.dismiss(); onBookingPress(room.bookingId); }}
           style={{ flexDirection: "row", alignItems: "center", gap: 8,
             paddingHorizontal: 16, paddingVertical: 9,
@@ -331,9 +340,9 @@ export default function ChatRoomScreen({
             {room.bookingCode}
           </AppText>
           <AppText numberOfLines={1} style={{ flex: 1, color: theme.muted, fontSize: 11 }}>
-            {room.vehicleName || "Đơn thuê xe"}
+            {room.vehicleName || t("mobile:chat.room.bookingFallback")}
           </AppText>
-          <AppText style={{ color: theme.brand, fontSize: 11 }}>Xem đơn →</AppText>
+          <AppText style={{ color: theme.brand, fontSize: 11 }}>{t("mobile:chat.room.bookingLink")}</AppText>
         </Pressable>
       ) : null}
       {state.connectionStatus !== "connected" ? (
@@ -346,8 +355,8 @@ export default function ChatRoomScreen({
           }}
         >
           {state.connectionStatus === "connecting"
-            ? "Đang kết nối tin nhắn…"
-            : "Chưa có kết nối trực tiếp · Tự cập nhật mỗi 30 giây"}
+            ? t("mobile:chat.room.connecting")
+            : t("mobile:chat.room.offline")}
         </AppText>
       ) : null}
       {opening ? (
@@ -358,11 +367,11 @@ export default function ChatRoomScreen({
           {notice(openError)}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Thử mở lại chat"
+            accessibilityLabel={t("mobile:chat.room.retryOpen")}
             onPress={() => setRetry((value) => value + 1)}
             style={{ padding: 16 }}
           >
-            <AppText style={{ color: theme.brand }}>Thử lại</AppText>
+            <AppText style={{ color: theme.brand }}>{t("mobile:chat.room.retry")}</AppText>
           </Pressable>
         </View>
       ) : null}
@@ -418,9 +427,9 @@ export default function ChatRoomScreen({
                       alignItems: "center", justifyContent: "center" }}>
                       <MessageSquare size={26} color={theme.brand} />
                     </View>
-                    <AppText style={{ color: theme.text, fontWeight: "600", fontSize: 15 }}>Bắt đầu cuộc trò chuyện</AppText>
+                    <AppText style={{ color: theme.text, fontWeight: "600", fontSize: 15 }}>{t("mobile:chat.room.emptyTitle")}</AppText>
                     <AppText style={{ color: theme.muted, textAlign: "center", fontSize: 13, lineHeight: 20 }}>
-                      Trao đổi về lịch nhận xe, địa điểm hoặc chuyến đi của bạn.
+                      {t("mobile:chat.room.emptyBody")}
                     </AppText>
                   </>
                 ) : null}
@@ -433,7 +442,7 @@ export default function ChatRoomScreen({
                     {notice(history.error)}
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel="Thử tải lại tin nhắn"
+                      accessibilityLabel={t("mobile:chat.room.retryHistory")}
                       onPress={() => {
                         void loadChatHistory(
                           roomId,
@@ -442,14 +451,14 @@ export default function ChatRoomScreen({
                       }}
                       style={{ padding: 12 }}
                     >
-                      <AppText style={{ color: theme.brand }}>Thử lại</AppText>
+                      <AppText style={{ color: theme.brand }}>{t("mobile:chat.room.retry")}</AppText>
                     </Pressable>
                   </View>
                 ) : null}
                 {history.page > 0 && history.page < history.totalPages ? (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Tải tin nhắn cũ"
+                    accessibilityLabel={t("mobile:chat.room.loadOlder")}
                     disabled={history.loading}
                     onPress={() => {
                       void loadChatHistory(roomId, true);
@@ -460,7 +469,7 @@ export default function ChatRoomScreen({
                       <ActivityIndicator color={theme.brand} />
                     ) : (
                       <AppText style={{ color: theme.brand }}>
-                        Tải tin nhắn cũ
+                        {t("mobile:chat.room.loadOlder")}
                       </AppText>
                     )}
                   </Pressable>
@@ -471,7 +480,7 @@ export default function ChatRoomScreen({
           {awayFromBottom ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Đến tin nhắn mới nhất"
+              accessibilityLabel={t("mobile:chat.room.latest")}
               onPress={() =>
                 list.current?.scrollToOffset({ offset: 0, animated: true })
               }
@@ -485,13 +494,13 @@ export default function ChatRoomScreen({
               }}
             >
               <ArrowDown size={16} color={theme.brand} />
-              <AppText style={{ color: theme.brand }}>Tin mới nhất</AppText>
+              <AppText style={{ color: theme.brand }}>{t("mobile:chat.room.latestLabel")}</AppText>
             </Pressable>
           ) : null}
           {state.readErrors[roomId] ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Thử đánh dấu chat đã đọc"
+              accessibilityLabel={t("mobile:chat.room.retryRead")}
               onPress={() => {
                 void readChatRoom(roomId);
               }}
@@ -526,18 +535,22 @@ export default function ChatRoomScreen({
                         fontSize: 12,
                       }}
                     >
-                      Trả lời {draft.reply.senderName}
+                      {t("mobile:chat.room.replyTo", {
+                        name: draft.reply.senderName,
+                      })}
                     </AppText>
                     <AppText
                       numberOfLines={2}
                       style={{ color: theme.text, fontSize: 12 }}
                     >
                       {draft.reply.content ||
-                        `📷 ${draft.reply.attachments?.length ?? 1} ảnh`}
+                        t("mobile:chat.room.imageCount", {
+                          n: draft.reply.attachments?.length ?? 1,
+                        })}
                     </AppText>
                   </View>
                   {iconButton(
-                    "Hủy trả lời",
+                    t("mobile:chat.room.cancelReply"),
                     X,
                     () =>
                       store.getState().patchDraft(roomId, { reply: undefined }),
@@ -559,7 +572,9 @@ export default function ChatRoomScreen({
                       />
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel={`Bỏ ảnh ${image.name}`}
+                        accessibilityLabel={t("mobile:chat.room.removeImage", {
+                          name: image.name,
+                        })}
                         disabled={Boolean(sending)}
                         onPress={() =>
                           store.getState().patchDraft(roomId, {
@@ -590,15 +605,17 @@ export default function ChatRoomScreen({
               {sending && draft.images.length ? (
                 <AppText style={{ color: theme.brand, fontSize: 12 }}>
                   {sending.progress >= 100
-                    ? "Đang xử lý ảnh…"
-                    : `Đang gửi ảnh ${sending.progress}%`}
+                    ? t("mobile:chat.room.processingImages")
+                    : t("mobile:chat.room.uploadingImages", {
+                        progress: sending.progress,
+                      })}
                 </AppText>
               ) : null}
               <View
                 style={{ flexDirection: "row", alignItems: "flex-end", gap: 6 }}
               >
                 {iconButton(
-                  "Chọn ảnh",
+                  t("mobile:chat.room.pickImage"),
                   ImagePlus,
                   () => {
                     void pick("library");
@@ -606,7 +623,7 @@ export default function ChatRoomScreen({
                   Boolean(sending) || picking || draft.images.length >= 4,
                 )}
                 {iconButton(
-                  "Chụp ảnh",
+                  t("mobile:chat.room.takePhoto"),
                   Camera,
                   () => {
                     void pick("camera");
@@ -615,7 +632,7 @@ export default function ChatRoomScreen({
                 )}
                 <TextInput
                   ref={input}
-                  accessibilityLabel="Nội dung tin nhắn"
+                  accessibilityLabel={t("mobile:chat.room.inputLabel")}
                   multiline
                   maxLength={2001}
                   value={draft.content}
@@ -623,7 +640,7 @@ export default function ChatRoomScreen({
                   onChangeText={(content) =>
                     store.getState().patchDraft(roomId, { content })
                   }
-                  placeholder="Nhập tin nhắn…"
+                  placeholder={t("mobile:chat.room.inputPlaceholder")}
                   placeholderTextColor={theme.placeholder}
                   style={{
                     flex: 1,
@@ -643,7 +660,7 @@ export default function ChatRoomScreen({
                 />
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Gửi tin nhắn"
+                  accessibilityLabel={t("mobile:chat.room.send")}
                   disabled={
                     Boolean(sending) ||
                     picking ||
@@ -694,7 +711,7 @@ export default function ChatRoomScreen({
               style={{ color: theme.muted, padding: 16,
                 paddingBottom: Math.max(insets.bottom, 16), textAlign: "center" }}
             >
-              Cuộc trò chuyện đã đóng. Bạn vẫn có thể xem lịch sử.
+              {t("mobile:chat.room.closed")}
             </AppText>
           )}
         </View>
@@ -723,7 +740,7 @@ export default function ChatRoomScreen({
               <View style={styles.header}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Đóng ảnh"
+                  accessibilityLabel={t("mobile:chat.room.closePhoto")}
                   onPress={() => setPhoto(null)}
                   style={styles.icon}
                 >
@@ -762,7 +779,7 @@ export default function ChatRoomScreen({
               <View style={styles.header}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Đóng tin nhắn gốc"
+                  accessibilityLabel={t("mobile:chat.room.closeQuote")}
                   onPress={() => {
                     quoteRequest.current?.abort();
                     setQuoteVisible(false);
@@ -774,7 +791,7 @@ export default function ChatRoomScreen({
                 <AppText
                   style={{ color: theme.text, fontSize: 18, fontWeight: "700" }}
                 >
-                  Tin nhắn gốc
+                  {t("mobile:chat.room.quoteTitle")}
                 </AppText>
               </View>
               <ScrollView>

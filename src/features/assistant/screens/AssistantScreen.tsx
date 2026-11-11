@@ -16,8 +16,12 @@ import { Bot, CalendarCheck, Headphones, History, Plus, RotateCcw, Send, ThumbsD
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { getFormatLocale } from "@/i18n/formatLocale";
 import { subscribeAssistant } from "@/features/assistant/assistantConnection";
 import { getAssistantReplies } from "@/features/assistant/assistantPresentation";
+import { ASSISTANT_PROMPTS } from "@/features/assistant/assistantContent";
 import BookingFunnel from "@/features/assistant/components/BookingFunnel";
 import PolicyDetailScreen from "@/features/cms/screens/PolicyDetailScreen";
 import { Image } from "expo-image";
@@ -42,17 +46,8 @@ import { answerActionsAllowed, applyMessageResult, assistantSendCanRetry, isPend
 // Port từ FrontEnd AssistantWidget.tsx, gồm cả booking (đặt xe nhanh,
 // xác nhận trong chat, thanh toán) như bản web.
 
-const statusText: Record<string, string> = {
-  BotActive: "Tư vấn cùng AI",
-  WaitingForStaff: "Đang chờ nhân viên",
-  StaffActive: "Nhân viên đang hỗ trợ",
-  Closed: "Cuộc trò chuyện đã kết thúc",
-};
-
-const prompts = ["Thuê xe cần giấy tờ gì?", "Tìm xe phù hợp với tôi", "Tôi muốn xem booking của mình"];
-
 const money = (value: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
+  new Intl.NumberFormat(getFormatLocale(), { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
 
 function newClientId() {
   // Backend SendAssistantMessageRequest.ClientMessageId là Guid.
@@ -109,7 +104,14 @@ export default function AssistantScreen({
 }) {
   const user = useAuthStore((state) => state.user);
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const statusText: Record<string, string> = {
+    BotActive: t("mobile:assistant.status.botActive"),
+    WaitingForStaff: t("mobile:assistant.status.waitingForStaff"),
+    StaffActive: t("mobile:assistant.status.staffActive"),
+    Closed: t("mobile:assistant.status.closed"),
+  };
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -121,7 +123,9 @@ export default function AssistantScreen({
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [connected, setConnected] = useState(false);
-  const [progress, setProgress] = useState("MoveVN đang tìm câu trả lời…");
+  const [progress, setProgress] = useState(() =>
+    i18n.t("mobile:assistant.progress.searching"),
+  );
   const [confirmStaff, setConfirmStaff] = useState(false);
   const [staffNote, setStaffNote] = useState("");
   const [firstPage, setFirstPage] = useState(1);
@@ -214,7 +218,7 @@ export default function AssistantScreen({
         hydrated.current = true;
       })
       .catch((err) => {
-        if (!abort.signal.aborted) { retryAction.current = () => void showHistory(); setError(assistantFailure(err, "Chưa kết nối được với máy chủ. Bạn thử lại nhé.")); }
+        if (!abort.signal.aborted) { retryAction.current = () => void showHistory(); setError(assistantFailure(err, i18n.t("mobile:assistant.errors.connectFailed"))); }
       })
       .finally(() => {
         if (!abort.signal.aborted) setLoading(false);
@@ -230,12 +234,12 @@ export default function AssistantScreen({
       (event) => {
         if (event.conversationId !== conversation.id || abort.signal.aborted) return;
         const labels: Record<string, string> = {
-          "vehicles.search": "Đang tìm xe…",
-          "vehicles.availability": "Đang kiểm tra ngày trống…",
-          "pricing.quote": "Đang tính giá chuyến đi…",
-          "booking.draft.prepare": "Đang chuẩn bị xác nhận…",
+          "vehicles.search": i18n.t("mobile:assistant.progress.vehicles"),
+          "vehicles.availability": i18n.t("mobile:assistant.progress.availability"),
+          "pricing.quote": i18n.t("mobile:assistant.progress.pricing"),
+          "booking.draft.prepare": i18n.t("mobile:assistant.progress.preparing"),
         };
-        setProgress(labels[event.status] ?? "MoveVN đang xử lý…");
+        setProgress(labels[event.status] ?? i18n.t("mobile:assistant.progress.processing"));
         if (["Completed", "Failed", "Cancelled", "DraftUpdated", "Finishing"].includes(event.status)) {
           void refresh(conversation, abort.signal).catch(() => undefined);
           void listConversations(abort.signal).then(page => { const current = page.items.find(item => item.id === conversation.id); if (current && !abort.signal.aborted) setConversation(previous => previous?.status === current.status ? previous : current); }).catch(() => undefined);
@@ -278,7 +282,7 @@ export default function AssistantScreen({
           const current = page.items.find(item => item.id === conversation.id);
           if (current && !abort.signal.aborted) setConversation(previous => previous?.status === current.status ? previous : current);
         }
-      } catch { if (!abort.signal.aborted) setUncertain("Kết nối đang gián đoạn. Tin nhắn vẫn được giữ; MoveVN sẽ kiểm tra lại trạng thái."); }
+      } catch { if (!abort.signal.aborted) setUncertain(i18n.t("mobile:assistant.progress.uncertain")); }
       if (!abort.signal.aborted) timer = setTimeout(poll, connected && conversation.status === "BotActive" ? 5000 : 3000);
     };
     timer = setTimeout(poll, 3000);
@@ -319,12 +323,12 @@ export default function AssistantScreen({
       await refresh(current);
     } catch (err) {
       if (!alive.current || epoch !== conversationEpoch.current) return;
-      if (acceptedConversation) { const accepted = acceptedConversation; retryAction.current = () => { void refresh(accepted).catch(() => undefined); }; setError("Tin nh\u1eafn \u0111\u00e3 \u0111\u01b0\u1ee3c nh\u1eadn. Ch\u01b0a t\u1ea3i \u0111\u01b0\u1ee3c k\u1ebft qu\u1ea3; h\u00e3y ki\u1ec3m tra l\u1ea1i tr\u1ea1ng th\u00e1i."); return; }
+      if (acceptedConversation) { const accepted = acceptedConversation; retryAction.current = () => { void refresh(accepted).catch(() => undefined); }; setError(i18n.t("mobile:assistant.errors.acceptedButUnloaded")); return; }
       if (!draft.trim()) setDraft(content);
       const retryable = assistantSendCanRetry(err);
       if (!retryable && attempt.current) { attempts.current.delete(attempt.current.conversationId + "\0" + attempt.current.content); attempt.current = null; }
       retryAction.current = retryable ? () => void send(content) : null;
-      setError(assistantFailure(err, "Chưa xác nhận tin nhắn đã được nhận. Thử gửi lại sẽ giữ nguyên mã tin nhắn."));
+      setError(assistantFailure(err, i18n.t("mobile:assistant.errors.sendUnconfirmed")));
     } finally {
       sendLock.current = false;
       if (alive.current && epoch === conversationEpoch.current) setBusy(false);
@@ -365,7 +369,7 @@ export default function AssistantScreen({
     try {
       await refresh(current);
     } catch (err) {
-      retryAction.current = () => void choose(current); setError(assistantFailure(err, "Không tải được hội thoại."));
+      retryAction.current = () => void choose(current); setError(assistantFailure(err, i18n.t("mobile:assistant.errors.loadConversation")));
     } finally {
       setLoading(false);
     }
@@ -384,7 +388,7 @@ export default function AssistantScreen({
       });
       setFirstPage(firstPage - 1);
     } catch (err) {
-      retryAction.current = () => void earlier(); setError(assistantFailure(err, "Chưa tải được tin nhắn cũ."));
+      retryAction.current = () => void earlier(); setError(assistantFailure(err, i18n.t("mobile:assistant.errors.loadEarlier")));
     } finally {
       setLoading(false);
     }
@@ -396,7 +400,7 @@ export default function AssistantScreen({
     try {
       setConversations((await listConversations()).items);
     } catch (err) {
-      retryAction.current = () => void showHistory(); setError(assistantFailure(err, "Không tải được lịch sử."));
+      retryAction.current = () => void showHistory(); setError(assistantFailure(err, i18n.t("mobile:assistant.errors.loadHistory")));
     } finally {
       setLoading(false);
     }
@@ -416,7 +420,7 @@ export default function AssistantScreen({
       hydrated.current = true;
       await refresh(updated);
     } catch (err) {
-      retryAction.current = () => void transfer(); setError(assistantFailure(err, "Chưa chuyển được yêu cầu. Bạn thử lại nhé."));
+      retryAction.current = () => void transfer(); setError(assistantFailure(err, i18n.t("mobile:assistant.errors.handoff")));
     } finally {
       sendLock.current = false;
       setBusy(false);
@@ -429,7 +433,7 @@ export default function AssistantScreen({
       await sendFeedback(conversation.id, messageId, helpful);
       setVotes((old) => ({ ...old, [messageId]: helpful }));
     } catch (err) {
-      retryAction.current = () => void vote(messageId, helpful); setError(assistantFailure(err, "Chưa gửi được đánh giá."));
+      retryAction.current = () => void vote(messageId, helpful); setError(assistantFailure(err, i18n.t("mobile:assistant.errors.feedback")));
     }
   }
 
@@ -448,7 +452,7 @@ export default function AssistantScreen({
       }
       setFunnelOpen(true);
     } catch (err) {
-      setError(assistantFailure(err, "Chưa mở được đặt xe nhanh. Bạn thử lại nhé."));
+      setError(assistantFailure(err, i18n.t("mobile:assistant.errors.quickBook")));
     } finally {
       sendLock.current = false;
       setBusy(false);
@@ -497,44 +501,44 @@ export default function AssistantScreen({
       <View style={styles.header}>
         <View style={styles.headerIcon}>{staff ? <Headphones color={theme.brand} size={22} /> : <Bot color={theme.brand} size={23} />}</View>
         <View style={styles.headerInfo}>
-          <Text numberOfLines={1} style={styles.headerTitle}>Trợ lý MoveVN</Text>
+          <Text numberOfLines={1} style={styles.headerTitle}>{t("mobile:assistant.header.title")}</Text>
           <Text numberOfLines={1} style={styles.headerSub}>{statusText[conversation?.status ?? "BotActive"]}</Text>
         </View>
-        <Pressable accessibilityLabel="Lịch sử trò chuyện" disabled={busy || loading} onPress={() => void showHistory()} style={styles.iconButton}>
+        <Pressable accessibilityLabel={t("mobile:assistant.header.history")} disabled={busy || loading} onPress={() => void showHistory()} style={styles.iconButton}>
           <History color={theme.muted} size={18} />
         </Pressable>
-        <Pressable accessibilityLabel="Cuộc trò chuyện mới" disabled={busy || loading} onPress={newConversation} style={styles.iconButton}>
+        <Pressable accessibilityLabel={t("mobile:assistant.header.newChat")} disabled={busy || loading} onPress={newConversation} style={styles.iconButton}>
           <Plus color={theme.muted} size={20} />
         </Pressable>
-        <Pressable accessibilityLabel="Đóng trợ lý" onPress={onBack} style={styles.iconButton}>
+        <Pressable accessibilityLabel={t("mobile:assistant.header.close")} onPress={onBack} style={styles.iconButton}>
           <X color={theme.muted} size={20} />
         </Pressable>
       </View>
 
       {isCustomer && !!onQuickBook && !historyOpen && (
         <Pressable
-          accessibilityLabel="Đặt xe nhanh"
+          accessibilityLabel={t("mobile:assistant.quickBook.label")}
           disabled={busy || loading}
           onPress={() => void openQuickBook()}
           style={[styles.bookingBanner, (busy || loading) && styles.disabled]}
         >
           <CalendarCheck color="#fff" size={18} />
-          <Text style={styles.bookingBannerText}>Đặt xe nhanh</Text>
+          <Text style={styles.bookingBannerText}>{t("mobile:assistant.quickBook.label")}</Text>
         </Pressable>
       )}
 
       {!user ? (
         <View style={styles.center}>
-          <Text style={styles.title}>Chào bạn, mình là trợ lý MoveVN</Text>
-          <Text style={styles.muted}>Đăng nhập để trò chuyện nhé.</Text>
+          <Text style={styles.title}>{t("mobile:assistant.guest.title")}</Text>
+          <Text style={styles.muted}>{t("mobile:assistant.guest.body")}</Text>
         </View>
       ) : historyOpen ? (
         <View style={styles.history}>
           <Pressable onPress={() => setHistoryOpen(false)}>
-            <Text style={styles.link}>‹ Quay lại</Text>
+            <Text style={styles.link}>{t("mobile:assistant.history.back")}</Text>
           </Pressable>
-          <Text style={styles.sectionTitle}>Lịch sử trò chuyện</Text>
-          {error && <View style={styles.errorBox}><Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>{retryAction.current && <Pressable disabled={loading} onPress={() => { setError(null); retryAction.current?.(); }}><Text style={styles.retryText}>Thử lại</Text></Pressable>}</View>}
+          <Text style={styles.sectionTitle}>{t("mobile:assistant.history.title")}</Text>
+          {error && <View style={styles.errorBox}><Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>{retryAction.current && <Pressable disabled={loading} onPress={() => { setError(null); retryAction.current?.(); }}><Text style={styles.retryText}>{t("mobile:assistant.retry")}</Text></Pressable>}</View>}
           {loading ? (
             <ActivityIndicator color={theme.brand} />
           ) : (
@@ -543,13 +547,13 @@ export default function AssistantScreen({
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <Pressable onPress={() => void choose(item)} style={styles.historyRow}>
-                  <Text style={styles.historyName}>{item.ticketId ? `Yêu cầu #${item.ticketId}` : "Trò chuyện với MoveVN"}</Text>
+                  <Text style={styles.historyName}>{item.ticketId ? t("mobile:assistant.history.ticket", { id: item.ticketId }) : t("mobile:assistant.history.generic")}</Text>
                   <Text style={styles.muted}>
-                    {new Date(item.createdAt).toLocaleString("vi-VN")} · {statusText[item.status]}
+                    {new Date(item.createdAt).toLocaleString(getFormatLocale())} · {statusText[item.status]}
                   </Text>
                 </Pressable>
               )}
-              ListEmptyComponent={<Text style={styles.muted}>Chưa có cuộc trò chuyện.</Text>}
+              ListEmptyComponent={<Text style={styles.muted}>{t("mobile:assistant.history.empty")}</Text>}
             />
           )}
         </View>
@@ -564,7 +568,7 @@ export default function AssistantScreen({
             ListHeaderComponent={
               firstPage > 1 ? (
                 <Pressable disabled={loading} onPress={() => void earlier()} style={styles.earlierButton}>
-                  <Text style={styles.link}>Xem tin trước</Text>
+                  <Text style={styles.link}>{t("mobile:assistant.earlier")}</Text>
                 </Pressable>
               ) : undefined
             }
@@ -575,9 +579,9 @@ export default function AssistantScreen({
                 </View>
               ) : (
                 <View style={styles.welcome}>
-                  <Text style={styles.title}>Mình có thể giúp gì cho bạn?</Text>
-                  <Text style={styles.muted}>Cùng tìm chiếc xe phù hợp hoặc giải đáp về chuyến đi của bạn.</Text>
-                  {prompts.map((text) => (
+                  <Text style={styles.title}>{t("mobile:assistant.welcome.title")}</Text>
+                  <Text style={styles.muted}>{t("mobile:assistant.welcome.body")}</Text>
+                  {ASSISTANT_PROMPTS.map((text) => (
                     <Pressable key={text} disabled={busy || pending} onPress={() => void send(text)} style={styles.promptChip}>
                       <Text style={styles.promptText}>{text}</Text>
                     </Pressable>
@@ -588,7 +592,7 @@ export default function AssistantScreen({
             renderItem={({ item }) => (
               <View style={[styles.bubbleRow, item.role === "user" && styles.bubbleRowRight]}>
                 <View style={[styles.bubble, item.role === "user" ? styles.bubbleUser : styles.bubbleBot]}>
-                  {item.role !== "user" && <Text style={styles.botLabel}>{item.role === "staff" ? "Nhân viên MoveVN" : "MoveVN AI"}</Text>}
+                  {item.role !== "user" && <Text style={styles.botLabel}>{item.role === "staff" ? t("mobile:assistant.botLabel.staff") : t("mobile:assistant.botLabel.ai")}</Text>}
                   <Text style={[styles.message, item.role === "user" && styles.messageUser]}>
                     {item.status === "Stale"
                       ? assistantError("AI_SOURCE_STALE")
@@ -615,7 +619,7 @@ export default function AssistantScreen({
                       {[true, false].map((helpful) => (
                         <Pressable
                           key={String(helpful)}
-                          accessibilityLabel={helpful ? "Câu trả lời hữu ích" : "Câu trả lời chưa hữu ích"}
+                          accessibilityLabel={helpful ? t("mobile:assistant.vote.helpful") : t("mobile:assistant.vote.notHelpful")}
                           onPress={() => void vote(item.requestId!, helpful)}
                           style={[styles.voteButton, votes[item.requestId!] === helpful && styles.voteActive]}
                         >
@@ -624,7 +628,7 @@ export default function AssistantScreen({
                       ))}
                     </View>
                   )}
-                  {item.role === "user" && item.status === "Failed" && <Text style={styles.failedHint}>Chưa nhận được câu trả lời</Text>}
+                  {item.role === "user" && item.status === "Failed" && <Text style={styles.failedHint}>{t("mobile:assistant.failed")}</Text>}
                 </View>
               </View>
             )}
@@ -641,8 +645,8 @@ export default function AssistantScreen({
           {staff && (
             <Text style={styles.staffBanner}>
               {conversation?.status === "WaitingForStaff"
-                ? "Yêu cầu đã được gửi. Bạn có thể nhắn thêm trong lúc chờ nhân viên."
-                : "Nhân viên đã tiếp nhận. Bạn tiếp tục trao đổi tại đây nhé."}
+                ? t("mobile:assistant.staff.waiting")
+                : t("mobile:assistant.staff.active")}
             </Text>
           )}
 
@@ -657,16 +661,16 @@ export default function AssistantScreen({
                 style={styles.retryRow}
               >
                 <RotateCcw color={theme.danger} size={12} />
-                <Text style={styles.retryText}>Thử lại</Text>
+                <Text style={styles.retryText}>{t("mobile:assistant.retry")}</Text>
               </Pressable>}
             </View>
           )}
 
           {confirmStaff ? (
             <View style={styles.staffForm}>
-              <Text style={styles.title}>Chuyển sang nhân viên?</Text>
+              <Text style={styles.title}>{t("mobile:assistant.staff.confirmTitle")}</Text>
               <TextInput
-                placeholder="Bạn cần hỗ trợ vấn đề gì?"
+                placeholder={t("mobile:assistant.staff.confirmPlaceholder")}
                 value={staffNote}
                 onChangeText={setStaffNote}
                 maxLength={4000}
@@ -675,16 +679,16 @@ export default function AssistantScreen({
               />
               <View style={styles.staffActions}>
                 <Pressable disabled={busy} onPress={() => setConfirmStaff(false)}>
-                  <Text style={styles.muted}>Quay lại</Text>
+                  <Text style={styles.muted}>{t("mobile:assistant.staff.back")}</Text>
                 </Pressable>
                 <Pressable disabled={busy || !staffNote.trim()} onPress={() => void transfer()} style={styles.primaryButton}>
-                  <Text style={styles.primaryText}>Đồng ý chuyển</Text>
+                  <Text style={styles.primaryText}>{t("mobile:assistant.staff.confirm")}</Text>
                 </Pressable>
               </View>
             </View>
           ) : closed ? (
             <Pressable onPress={newConversation} style={styles.primaryButton}>
-              <Text style={styles.primaryText}>Bắt đầu trò chuyện mới</Text>
+              <Text style={styles.primaryText}>{t("mobile:assistant.staff.startNew")}</Text>
             </Pressable>
           ) : (
             <View style={styles.composer}>
@@ -695,12 +699,12 @@ export default function AssistantScreen({
                   onChangeText={setDraft}
                   maxLength={2000}
                   multiline
-                  placeholder={staff ? "Nhắn cho nhân viên…" : "Hỏi MoveVN…"}
+                  placeholder={staff ? t("mobile:assistant.composer.toStaff") : t("mobile:assistant.composer.toAssistant")}
                   placeholderTextColor={theme.placeholder}
                   style={styles.input}
                 />
                 <Pressable
-                  accessibilityLabel="Gửi tin nhắn"
+                  accessibilityLabel={t("mobile:assistant.composer.send")}
                   disabled={busy || !draft.trim()}
                   onPress={() => void send()}
                   style={[styles.sendButton, (!draft.trim() || busy) && styles.sendDisabled]}
@@ -719,7 +723,7 @@ export default function AssistantScreen({
                       setConfirmStaff(true);
                     }}
                   >
-                    <Text style={styles.link}>Gặp nhân viên</Text>
+                    <Text style={styles.link}>{t("mobile:assistant.staff.meet")}</Text>
                   </Pressable>
                 )}
               </View>
@@ -775,6 +779,7 @@ function AnswerDetails({
   actionsDisabled?: boolean;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.cards}>
@@ -790,22 +795,22 @@ function AnswerDetails({
       ) : null}
       {answer.cards.map((group, index) => group.data.lookupStatus === "unavailable" ? (
         <View key={`${group.name}-${index}`} style={styles.cardGroup}>
-          <Text style={styles.warn}>Tra cứu đang gián đoạn. Bạn thử lại nhé.</Text>
+          <Text style={styles.warn}>{t("mobile:assistant.details.lookupUnavailable")}</Text>
         </View>
       ) : (
         <View key={`${group.name}-${index}`} style={styles.cardGroup}>
           {group.name.startsWith("vehicles.") && group.data.availabilityChecked === false && (
-            <Text style={styles.muted}>Giá cơ bản; cần ngày nhận và trả để kiểm tra lịch trống.</Text>
+            <Text style={styles.muted}>{t("mobile:assistant.details.basePrice")}</Text>
           )}
-          {group.data.availabilityChecked && group.data.startDate && group.data.endDate && <Text style={styles.muted}>Lịch thuê: {new Date(group.data.startDate).toLocaleString("vi-VN")} – {new Date(group.data.endDate).toLocaleString("vi-VN")}</Text>}
-          {group.name === "vehicles.reviews" && group.data.averageRating != null && <Text style={styles.promo}>★ {group.data.averageRating}/5 · {group.data.totalCount ?? group.data.items?.length ?? 0} đánh giá</Text>}
-          {group.name === "vehicles.reviews" && !group.data.items?.length && <Text style={styles.muted}>Xe này chưa có đánh giá công khai.</Text>}
-          {group.name === "promotions.list" && !group.data.items?.length && <Text style={styles.muted}>Hiện chưa có mã giảm giá nào.</Text>}
+          {group.data.availabilityChecked && group.data.startDate && group.data.endDate && <Text style={styles.muted}>{t("mobile:assistant.details.rentalPeriod", { start: new Date(group.data.startDate).toLocaleString(getFormatLocale()), end: new Date(group.data.endDate).toLocaleString(getFormatLocale()) })}</Text>}
+          {group.name === "vehicles.reviews" && group.data.averageRating != null && <Text style={styles.promo}>{t("mobile:assistant.details.reviews", { rating: group.data.averageRating, n: group.data.totalCount ?? group.data.items?.length ?? 0 })}</Text>}
+          {group.name === "vehicles.reviews" && !group.data.items?.length && <Text style={styles.muted}>{t("mobile:assistant.details.noReviews")}</Text>}
+          {group.name === "promotions.list" && !group.data.items?.length && <Text style={styles.muted}>{t("mobile:assistant.details.noPromotions")}</Text>}
           {(group.data.items ?? [group.data])
             .filter((card) => card.id)
             .map((card: ResourceCard, cardIndex) => {
               const title = card.bookingCode || card.vehicleName || `${card.brandName ?? ""} ${card.modelName ?? ""}`.trim() || `#${card.id}`;
-              const meta = [card.seatCount ? `${card.seatCount} chỗ` : null, card.transmission, card.fuelType, card.areaName]
+              const meta = [card.seatCount ? t("mobile:assistant.details.seats", { n: card.seatCount }) : null, card.transmission, card.fuelType, card.areaName]
                 .filter(Boolean)
                 .join(" · ");
               const isVehicle = group.name.startsWith("vehicles.") && group.name !== "vehicles.reviews";
@@ -817,17 +822,17 @@ function AnswerDetails({
                   {(card.featuredImage || card.vehicleImage) && <Image source={card.featuredImage || card.vehicleImage} style={{ width: "100%", height: 100, borderRadius: 8 }} contentFit="cover" />}
                   {group.name !== "vehicles.reviews" && <Text style={styles.cardTitle}>{title}</Text>}
                   {card.status && <Text style={styles.muted}>{card.status}</Text>}
-                  {card.quote && <Text style={styles.muted}>Dự kiến hoàn: {money(card.quote.refundAmount)} · {card.quote.policyMessage}</Text>}
+                  {card.quote && <Text style={styles.muted}>{t("mobile:assistant.details.refund", { amount: money(card.quote.refundAmount), policy: card.quote.policyMessage })}</Text>}
                   {card.rating != null && <Text style={styles.promo}>{"★".repeat(Math.max(0, Math.min(5, Math.round(card.rating))))} · {card.rating}/5</Text>}
                   {card.description && <Text style={styles.muted}>{card.description}</Text>}
-                  {card.code && card.discountValue != null && <Text style={styles.promo}>{card.discountType === "Percent" ? `Giảm ${card.discountValue}%${card.maxDiscountAmount ? ` (tối đa ${money(card.maxDiscountAmount)})` : ""}` : `Giảm ${money(card.discountValue)}`}</Text>}
-                  {card.minOrderAmount != null && <Text style={styles.muted}>Đơn tối thiểu: {money(card.minOrderAmount)}</Text>}
-                  {card.code && card.endAt && <Text style={styles.muted}>HSD: {new Date(card.endAt).toLocaleDateString("vi-VN")}</Text>}
+                  {card.code && card.discountValue != null && <Text style={styles.promo}>{card.discountType === "Percent" ? card.maxDiscountAmount ? t("mobile:assistant.details.discountPercentCapped", { value: card.discountValue, max: money(card.maxDiscountAmount) }) : t("mobile:assistant.details.discountPercent", { value: card.discountValue }) : t("mobile:assistant.details.discountAmount", { amount: money(card.discountValue) })}</Text>}
+                  {card.minOrderAmount != null && <Text style={styles.muted}>{t("mobile:assistant.details.minOrder", { amount: money(card.minOrderAmount) })}</Text>}
+                  {card.code && card.endAt && <Text style={styles.muted}>{t("mobile:assistant.details.expiry", { date: new Date(card.endAt).toLocaleDateString(getFormatLocale()) })}</Text>}
                   {meta ? <Text style={styles.muted}>{meta}</Text> : null}
-                  {card.pricePerDay != null && <Text style={styles.price}>{money(card.pricePerDay)}/ngày</Text>}
+                  {card.pricePerDay != null && <Text style={styles.price}>{t("mobile:assistant.details.perDay", { amount: money(card.pricePerDay) })}</Text>}
                   {card.totalDynamicPrice != null && (
                     <Text style={styles.price}>
-                      {money(card.totalDynamicPrice)} / {card.rentalDays} ngày
+                      {t("mobile:assistant.details.perDays", { amount: money(card.totalDynamicPrice), days: card.rentalDays })}
                     </Text>
                   )}
                   {card.totalAmount != null && <Text style={styles.price}>{money(card.totalAmount)}</Text>}
@@ -840,7 +845,7 @@ function AnswerDetails({
                   {canOpen ? <Pressable accessibilityRole="link" onPress={() => {
                     if (isVehicle) onViewVehicle?.(card.id);
                     else if (isBooking) onViewBooking?.(card.id);
-                  }}><Text style={styles.link}>{isBooking ? "Xem booking" : "Xem chi tiết"}</Text></Pressable> : null}
+                  }}><Text style={styles.link}>{isBooking ? t("mobile:assistant.details.viewBooking") : t("mobile:assistant.details.viewDetail")}</Text></Pressable> : null}
                   {isVehicle && onBookVehicle ? (
                     <Pressable
                       disabled={disabled}
@@ -848,7 +853,9 @@ function AnswerDetails({
                       style={[styles.bookButton, disabled && styles.disabled]}
                     >
                       <Text style={styles.bookButtonText}>
-                        Đặt xe này{group.data.availabilityChecked && group.data.startDate && group.data.endDate ? " · giữ ngày đã chọn" : ""}
+                        {group.data.availabilityChecked && group.data.startDate && group.data.endDate
+                          ? t("mobile:assistant.details.bookVehicleKeep")
+                          : t("mobile:assistant.details.bookVehicle")}
                       </Text>
                     </Pressable>
                   ) : null}
@@ -858,7 +865,7 @@ function AnswerDetails({
                       onPress={() => onUsePromo(card.code!)}
                       style={[styles.bookButton, disabled && styles.disabled]}
                     >
-                      <Text style={styles.bookButtonText}>Dùng mã này</Text>
+                      <Text style={styles.bookButtonText}>{t("mobile:assistant.details.usePromo")}</Text>
                     </Pressable>
                   ) : null}
                 </>
@@ -869,8 +876,8 @@ function AnswerDetails({
                 </View>
               );
             })}
-          {group.name === "vehicles.reviews" && group.data.id && onViewVehicle && <Pressable onPress={() => onViewVehicle(group.data.id)}><Text style={styles.link}>Xem xe</Text></Pressable>}
-          {group.data.hasMore && <Pressable disabled={disabled} onPress={onMore}><Text style={styles.link}>Xem thêm xe</Text></Pressable>}
+          {group.name === "vehicles.reviews" && group.data.id && onViewVehicle && <Pressable onPress={() => onViewVehicle(group.data.id)}><Text style={styles.link}>{t("mobile:assistant.details.viewVehicle")}</Text></Pressable>}
+          {group.data.hasMore && <Pressable disabled={disabled} onPress={onMore}><Text style={styles.link}>{t("mobile:assistant.details.moreVehicles")}</Text></Pressable>}
         </View>
       ))}
       {answer.sources.length > 0 && (
