@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { ArrowLeft, Monitor, RefreshCw, ShieldCheck, Smartphone } from "lucide-react-native";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import AppText from "@/components/AppText";
 import { clearSession, useAuthStore } from "../hooks/useAuth";
 import { getLoginSessions, revokeLoginSession, revokeOtherLoginSessions, type LoginSession } from "../services/loginSessionService";
@@ -10,7 +12,7 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
 function describeDevice(deviceType?: string | null) {
-  if (!deviceType) return { label: "Thiết bị không xác định", mobile: false };
+  if (!deviceType) return { label: i18n.t("accountSecurity:sessions.deviceUnknown"), mobile: false };
   const mobile = /android|iphone|ipad|mobile/i.test(deviceType);
   return { label: deviceType, mobile };
 }
@@ -23,6 +25,7 @@ function formatDate(value: string) {
 
 export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const currentSessionId = useAuthStore((state) => state.token?.sessionId ?? "");
   const [sessions, setSessions] = useState<LoginSession[]>([]);
@@ -39,7 +42,7 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
     try {
       setSessions(await getLoginSessions());
     } catch (failure) {
-      setError(getApiErrorMessage(failure, "Không thể tải danh sách phiên đăng nhập."));
+      setError(getApiErrorMessage(failure, t("accountSecurity:sessions.loadError")));
     } finally {
       setLoading(false);
     }
@@ -51,8 +54,8 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
 
   function confirmAction(title: string, message: string, onConfirm: () => void) {
     Alert.alert(title, message, [
-      { text: "Hủy", style: "cancel" },
-      { text: "Đăng xuất", style: "destructive", onPress: onConfirm },
+      { text: t("common:cancel"), style: "cancel" },
+      { text: t("accountSecurity:sessions.signOut"), style: "destructive", onPress: onConfirm },
     ]);
   }
 
@@ -69,9 +72,9 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
       setSessions((items) =>
         items.map((item) => (item.sessionId === session.sessionId ? { ...item, isActive: false } : item)),
       );
-      setNotice("Đã đăng xuất thiết bị. Phiên đăng nhập trên thiết bị đã được thu hồi.");
+      setNotice(t("mobile:auth.sessions.revokedNotice"));
     } catch (failure) {
-      setError(getApiErrorMessage(failure, "Không thể thu hồi phiên đăng nhập."));
+      setError(getApiErrorMessage(failure, t("accountSecurity:sessions.revokeError")));
     } finally {
       setBusyId("");
     }
@@ -87,9 +90,9 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
       setSessions((items) =>
         items.map((item) => (item.sessionId === currentSessionId ? item : { ...item, isActive: false })),
       );
-      setNotice("Đã đăng xuất các thiết bị khác. Tài khoản chỉ còn hoạt động trên thiết bị này.");
+      setNotice(t("mobile:auth.sessions.revokedOthersNotice"));
     } catch (failure) {
-      setError(getApiErrorMessage(failure, "Không thể thu hồi các phiên đăng nhập khác."));
+      setError(getApiErrorMessage(failure, t("accountSecurity:sessions.revokeOthersError")));
     } finally {
       setBusyId("");
     }
@@ -98,12 +101,12 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("mobile:auth.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <AppText display style={styles.topBarTitle}>Phiên đăng nhập</AppText>
+        <AppText display style={styles.topBarTitle}>{t("accountSecurity:sessions.title")}</AppText>
         <Pressable
-          accessibilityLabel="Tải lại"
+          accessibilityLabel={t("mobile:auth.sessions.refreshA11y")}
           accessibilityRole="button"
           disabled={loading}
           onPress={() => { void load(); }}
@@ -120,8 +123,8 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
               <Monitor color="#2563EB" size={22} strokeWidth={2.3} />
             </View>
             <View style={styles.cardTitleWrap}>
-              <AppText display style={styles.cardTitle}>Phiên đăng nhập</AppText>
-              <AppText style={styles.cardDescription}>Kiểm tra và đăng xuất các thiết bị đang truy cập tài khoản.</AppText>
+              <AppText display style={styles.cardTitle}>{t("accountSecurity:sessions.title")}</AppText>
+              <AppText style={styles.cardDescription}>{t("accountSecurity:sessions.subtitle")}</AppText>
             </View>
           </View>
 
@@ -129,12 +132,12 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
             accessibilityRole="button"
             disabled={!currentSessionId || activeSessions.length < 2 || busyId !== ""}
             onPress={() =>
-              confirmAction("Đăng xuất thiết bị khác?", "Đăng xuất tất cả thiết bị khác?", () => { void handleRevokeOthers(); })
+              confirmAction(t("mobile:auth.sessions.revokeOthersTitle"), t("accountSecurity:sessions.confirmRevokeOthers"), () => { void handleRevokeOthers(); })
             }
             style={[styles.outlineButton, (!currentSessionId || activeSessions.length < 2 || busyId !== "") && styles.disabled]}
           >
             <AppText style={styles.outlineText}>
-              {busyId === "others" ? "Đang xử lý..." : "Đăng xuất thiết bị khác"}
+              {busyId === "others" ? t("mobile:auth.sessions.processing") : t("accountSecurity:sessions.revokeOthers")}
             </AppText>
           </Pressable>
 
@@ -142,9 +145,9 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
           {notice ? <AppText style={styles.notice}>{notice}</AppText> : null}
 
           {loading ? (
-            <AppText style={styles.muted}>Đang tải danh sách...</AppText>
+            <AppText style={styles.muted}>{t("mobile:auth.sessions.loadingList")}</AppText>
           ) : sessions.length === 0 ? (
-            <AppText style={styles.muted}>Chưa có dữ liệu phiên đăng nhập mới.</AppText>
+            <AppText style={styles.muted}>{t("accountSecurity:sessions.empty")}</AppText>
           ) : (
             <View style={styles.list}>
               {sessions.map((session) => {
@@ -165,28 +168,28 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
                         {isCurrent ? (
                           <View style={styles.currentPill}>
                             <ShieldCheck color={theme.success} size={12} strokeWidth={2.5} />
-                            <AppText style={styles.currentPillText}>Thiết bị này</AppText>
+                            <AppText style={styles.currentPillText}>{t("accountSecurity:sessions.thisDevice")}</AppText>
                           </View>
                         ) : null}
                         {!session.isActive ? (
                           <View style={styles.expiredPill}>
-                            <AppText style={styles.expiredPillText}>Đã hết phiên</AppText>
+                            <AppText style={styles.expiredPillText}>{t("accountSecurity:sessions.expired")}</AppText>
                           </View>
                         ) : null}
                       </View>
-                      <AppText style={styles.rowMeta}>IP: {session.ipAddress || "Không xác định"}</AppText>
-                      <AppText style={styles.rowMetaSmall}>Đăng nhập lúc {formatDate(session.signedInAt)}</AppText>
+                      <AppText style={styles.rowMeta}>{t("accountSecurity:sessions.ip", { ip: session.ipAddress || t("accountSecurity:sessions.ipUnknown") })}</AppText>
+                      <AppText style={styles.rowMetaSmall}>{t("accountSecurity:sessions.signedInAt", { date: formatDate(session.signedInAt) })}</AppText>
                     </View>
                     {session.isActive ? (
                       <Pressable
                         accessibilityRole="button"
                         disabled={busy}
                         onPress={() =>
-                          confirmAction("Đăng xuất thiết bị?", "Bạn có chắc muốn đăng xuất thiết bị này?", () => { void handleRevoke(session); })
+                          confirmAction(t("mobile:auth.sessions.revokeTitle"), t("accountSecurity:sessions.confirmRevoke"), () => { void handleRevoke(session); })
                         }
                         style={[styles.smallButton, busy && styles.disabled]}
                       >
-                        <AppText style={styles.smallButtonText}>{busy ? "..." : "Đăng xuất"}</AppText>
+                        <AppText style={styles.smallButtonText}>{busy ? "..." : t("accountSecurity:sessions.signOut")}</AppText>
                       </Pressable>
                     ) : null}
                   </View>

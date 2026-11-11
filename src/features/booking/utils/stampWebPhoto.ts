@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { formatVietnamDateTime, type InspectionType } from "../bookingDisplay";
 import { getServerTimeISO } from "./serverTime";
 
@@ -11,7 +12,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Không đọc được ảnh."));
+    img.onerror = () => reject(new Error(i18n.t("mobile:inspection.stamp.imageLoad")));
     img.src = url;
   });
 }
@@ -22,7 +23,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  */
 export async function stampWebPhoto(source: Blob, lines: string[]): Promise<WebStampedPhoto> {
   const capturedAt = await getServerTimeISO();
-  const timeLine = `CHỤP ẢNH: ${formatVietnamDateTime(capturedAt)} (UTC+07:00)`;
+  const timeLine = i18n.t("booking:inspection.watermarkLine", { time: formatVietnamDateTime(capturedAt) });
   const url = URL.createObjectURL(source);
   try {
     const img = await loadImage(url);
@@ -33,13 +34,13 @@ export async function stampWebPhoto(source: Blob, lines: string[]): Promise<WebS
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Thiết bị không hỗ trợ xử lý ảnh.");
+    if (!ctx) throw new Error(i18n.t("mobile:inspection.stamp.unsupported"));
     ctx.drawImage(img, 0, 0, width, height);
 
     const allLines = [...lines, timeLine];
 
     const blob = await drawStampedBitmap(canvas, width, height, allLines);
-    if (!blob || blob.size === 0) throw new Error("Không đóng dấu được ảnh.");
+    if (!blob || blob.size === 0) throw new Error(i18n.t("mobile:inspection.stamp.failed"));
     return { blob, previewUrl: URL.createObjectURL(blob), capturedAt };
   } finally {
     URL.revokeObjectURL(url);
@@ -54,7 +55,7 @@ function drawStampedBitmap(
   lines: string[],
 ): Promise<Blob | null> {
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Thiết bị không hỗ trợ xử lý ảnh.");
+  if (!ctx) throw new Error(i18n.t("mobile:inspection.stamp.unsupported"));
   const fontSize = Math.max(13, Math.round(width * 0.024));
   const lineHeight = Math.round(fontSize * 1.45);
   const padX = Math.round(fontSize * 0.7);

@@ -1,0 +1,57 @@
+{
+  "error": "Không thể tải thông tin ví. Vui lòng thử lại sau.",
+  "loadMoreError": "Không thể tải thêm lịch sử giao dịch.",
+  "topUpSuccess": "Nạp tiền vào ví thành công!",
+  "topUpChecking": "Đang kiểm tra kết quả nạp tiền từ PayOS...",
+  "topUpMinAmount": "Số tiền nạp tối thiểu là 10.000đ",
+  "paymentErrorTitle": "Lỗi thanh toán",
+  "paymentErrorMessage": "Không thể tạo liên kết thanh toán lúc này.",
+  "title": "Ví của tôi",
+  "subtitle": "Quản lý số dư, thực hiện nạp rút và quản lý tài khoản ngân hàng liên kết.",
+  "availableBalance": "Số dư khả dụng",
+  "topUp": "Nạp tiền",
+  "withdraw": "Rút tiền",
+  "withdrawNeedBank": "Bạn cần liên kết tài khoản ngân hàng trước khi rút tiền",
+  "totalSpent": "Tổng đã rút / đã tiêu",
+  "totalEarned": "Tổng doanh thu nhận được",
+  "bankCard": {
+    "title": "Tài khoản ngân hàng liên kết",
+    "bank": "Ngân hàng:",
+    "accountNumber": "Số tài khoản:",
+    "holder": "Chủ tài khoản:",
+    "notSet": "Chưa thiết lập tài khoản nhận tiền. Bạn cần cập nhật để rút tiền về.",
+    "update": "Cập nhật ngân hàng",
+    "setup": "Thiết lập ngay"
+  },
+  "tabs": {
+    "transactions": "Lịch sử giao dịch",
+    "withdrawals": "Yêu cầu rút tiền"
+  },
+  "status": {
+    "Pending": "Chờ xử lý",
+    "NeedsManualReview": "Đang đối soát chuyển tiền",
+    "Approved": "Đã duyệt",
+    "Completed": "Thành công",
+    "Rejected": "Đã từ chối"
+  },
+  "toasts": {
+    "successTitle": "Thành công",
+    "errorTitle": "Lỗi",
+    "withdrawErrorTitle": "Lỗi rút tiền",
+    "wrongMin": "Số tiền rút tối thiểu là {{min}}.",
+    "wrongMax": "Số tiền rút tối đa là {{max}}.",
+    "insufficient": "Số dư khả dụng không đủ.",
+    "withdrawSuccessMessage": "Yêu cầu rút tiền đã được gửi. Vui lòng chờ nhân viên duyệt.",
+    "withdrawError": "Tạo yêu cầu rút tiền thất bại.",
+    "cancelConfirm": "Bạn có chắc muốn hủy yêu cầu rút tiền này?",
+    "cancelSuccess": "Đã hủy yêu cầu rút tiền.",
+    "cancelError": "Hủy yêu cầu thất bại.",
+    "bankMissing": "Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng.",
+    "otpSentTitle": "Đã gửi OTP",
+    "otpSentMessage": "Mã OTP đã được gửi về email của bạn.",
+    "otpSendError": "Không thể gửi OTP. Vui lòng thử lại.",
+    "otpMissing": "Vui lòng nhập mã OTP.",
+    "bankSaved": "Đã cập nhật thông tin tài khoản nhận tiền.",
+    "otpVerifyError": "Xác thực OTP thất bại."
+  }
+}

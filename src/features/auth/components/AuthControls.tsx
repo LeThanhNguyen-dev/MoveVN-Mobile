@@ -1,6 +1,7 @@
 import type { ComponentRef } from "react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type TextInputProps } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { ArrowRight, CheckCircle2, CircleAlert, Eye, EyeOff } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
@@ -20,6 +21,7 @@ export function AuthButton({ title, onPress, disabled, busy, variant = "primary"
 
 export function AuthField({ label, error, password, icon, ...props }: TextInputProps & { label: string; error?: string; password?: boolean; icon: ReactNode }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [visible, setVisible] = useState(false);
   return <View style={styles.field}>
@@ -28,7 +30,7 @@ export function AuthField({ label, error, password, icon, ...props }: TextInputP
       <View style={styles.leadingIcon}>{icon}</View>
       <TextInput {...props} accessibilityLabel={label} accessibilityHint={error} autoCapitalize="none" autoCorrect={false}
         placeholderTextColor={theme.placeholder} secureTextEntry={password && !visible} style={styles.input} />
-      {password ? <Pressable accessibilityRole="button" accessibilityLabel={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"} disabled={props.editable === false}
+      {password ? <Pressable accessibilityRole="button" accessibilityLabel={visible ? t("common:password.hide") : t("common:password.show")} disabled={props.editable === false}
         hitSlop={8} onPress={() => setVisible((current) => !current)} style={styles.trailingIcon}>
         {visible ? <EyeOff size={19} color={theme.muted} /> : <Eye size={19} color={theme.muted} />}
       </Pressable> : null}
@@ -39,13 +41,14 @@ export function AuthField({ label, error, password, icon, ...props }: TextInputP
 
 export function OtpField({ value, error, disabled, onChange }: { value: string; error?: string; disabled?: boolean; onChange: (value: string) => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   return <View style={styles.field}>
-    <AppText style={styles.label}>Mã OTP</AppText>
-    <Pressable accessibilityRole="button" accessibilityLabel="Nhập mã OTP" disabled={disabled} onPress={() => input.current?.focus()} style={styles.otpRow}>
+    <AppText style={styles.label}>{t("common:otp.label")}</AppText>
+    <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:auth.otp.inputA11y")} disabled={disabled} onPress={() => input.current?.focus()} style={styles.otpRow}>
       {Array.from({ length: 6 }, (_, index) => <View key={index} style={[styles.otpCell, Boolean(error) && styles.otpInvalid, value[index] ? styles.otpFilled : null]}><AppText style={styles.otpText}>{value[index] ?? ""}</AppText></View>)}
-      <TextInput ref={input} accessibilityLabel="Mã OTP" accessibilityHint={error} editable={!disabled} keyboardType="number-pad" maxLength={6}
+      <TextInput ref={input} accessibilityLabel={t("common:otp.label")} accessibilityHint={error} editable={!disabled} keyboardType="number-pad" maxLength={6}
         onChangeText={(next) => onChange(next.replace(/\D/g, ""))} style={styles.otpNativeInput} textContentType="oneTimeCode" value={value} />
     </Pressable>
     {error ? <AppText accessibilityRole="alert" style={styles.error}>{error}</AppText> : null}

@@ -1,4 +1,5 @@
 import { Bell } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
@@ -6,12 +7,13 @@ import { useTheme } from "@/theme/useTheme";
 import { useNotificationStore } from "../useNotifications";
 
 export default function NotificationBell() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const userId = useAuthStore((state) => state.user?.userId);
   const count = useNotificationStore((state) => state.userId === userId ? state.unreadCount : 0);
   return <Pressable
     accessibilityRole="button"
-    accessibilityLabel={count > 0 ? `Thông báo, ${count} chưa đọc` : "Thông báo"}
+    accessibilityLabel={count > 0 ? t("mobile:notification.bellAriaUnread", { total: count }) : t("common:notifications.triggerAria")}
     onPress={() => useNotificationStore.setState({ centerOpen: true })}
     style={styles.button}
   >

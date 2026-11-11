@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ArrowRight, Sparkles } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Pressable,
@@ -12,6 +13,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native"
+import i18n from "@/i18n";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -34,15 +36,9 @@ type DealsNav = NativeStackNavigationProp<DealsStackParamList>;
 type VehicleFilter = "All" | "Car" | "Motorbike";
 type SortOrder = "latest" | "ending";
 
-const VEHICLE_FILTERS: { value: VehicleFilter; label: string }[] = [
-  { value: "All", label: "Tất cả" },
-  { value: "Car", label: "Ô tô" },
-  { value: "Motorbike", label: "Xe máy" },
-];
-
-const SORT_OPTIONS = [
-  { value: "latest", label: "Mới nhất" },
-  { value: "ending", label: "Hạn gần nhất" },
+const SORT_OPTIONS: { value: SortOrder; labelKey: string }[] = [
+  { value: "latest", labelKey: "promo:promotions.sortLatest" },
+  { value: "ending", labelKey: "promo:promotions.sortEnding" },
 ];
 
 function toDetailSlide(p: Promotion): PromotionDetailSlide {
@@ -54,7 +50,7 @@ function toDetailSlide(p: Promotion): PromotionDetailSlide {
     code: p.code,
     popupTitle: p.name,
     popupDescription: p.description ?? null,
-    popupCtaLabel: "Săn voucher ngay",
+    popupCtaLabel: i18n.t("promo:promotions.ctaClaim"),
     promotionName: p.name,
     discountType: p.discountType,
     discountValue: p.discountValue,
@@ -96,6 +92,7 @@ function HeroCarousel({
   onOpen: (s: PromotionDetailSlide) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { width } = useWindowDimensions();
   const cardWidth = width - 40;
@@ -141,13 +138,15 @@ function HeroCarousel({
             />
             <View style={styles.heroBadge}>
               <Sparkles color="#FCD34D" size={11} />
-              <AppText style={styles.heroBadgeText}>ƯU ĐÃI NỔI BẬT</AppText>
+              <AppText style={styles.heroBadgeText}>
+                {t("promo:promotions.featuredBadge").toLocaleUpperCase()}
+              </AppText>
             </View>
             <AppText display style={styles.heroTitle} numberOfLines={1}>
               {s.title}
             </AppText>
             <View style={styles.heroCta}>
-              <AppText style={styles.heroCtaText}>Xem ưu đãi</AppText>
+              <AppText style={styles.heroCtaText}>{t("promo:promotions.viewOffer")}</AppText>
               <ArrowRight color="#6B21A8" size={14} />
             </View>
           </Pressable>
@@ -167,6 +166,7 @@ function HeroCarousel({
 export default function CustomerPromotionsScreen() {
   const navigation = useNavigation<DealsNav>();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [items, setItems] = useState<Promotion[]>([]);
@@ -193,7 +193,7 @@ export default function CustomerPromotionsScreen() {
         setBanners(Array.isArray(bannerList) ? bannerList : []);
       })
       .catch(() => {
-        if (!cancelled) setError("Không thể tải danh sách khuyến mãi. Vui lòng thử lại sau.");
+        if (!cancelled) setError(i18n.t("promo:promotions.loadError"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -277,12 +277,22 @@ export default function CustomerPromotionsScreen() {
 
   const filters = useMemo(
     () => [
-      { value: "All", label: "Tất cả", count: items.length },
-      { value: "Car", label: "Ô tô", count: carCount },
-      { value: "Motorbike", label: "Xe máy", count: motorbikeCount },
-      { value: "expiring", label: "Sắp hết hạn", count: expiringCount, tone: "amber" as const },
+      { value: "All", label: t("promo:promotions.filterAll"), count: items.length },
+      { value: "Car", label: t("promo:promotions.filterCar"), count: carCount },
+      { value: "Motorbike", label: t("promo:promotions.filterMotorbike"), count: motorbikeCount },
+      {
+        value: "expiring",
+        label: t("promo:promotions.expiring"),
+        count: expiringCount,
+        tone: "amber" as const,
+      },
     ],
-    [items.length, carCount, motorbikeCount, expiringCount],
+    [items.length, carCount, motorbikeCount, expiringCount, t],
+  );
+
+  const sortOptions = useMemo(
+    () => SORT_OPTIONS.map((option) => ({ value: option.value, label: t(option.labelKey) })),
+    [t],
   );
 
   const activeFilter = expiringOnly ? "expiring" : vehicleFilter;
@@ -298,9 +308,9 @@ export default function CustomerPromotionsScreen() {
   }, []);
 
   const sectionTitle = useMemo(() => {
-    if (expiringOnly) return "Đang lọc ưu đãi sắp hết hạn";
-    return "Các ưu đãi đang diễn ra";
-  }, [expiringOnly]);
+    if (expiringOnly) return t("promo:promotions.filteringExpiring");
+    return t("promo:promotions.activeTitle");
+  }, [expiringOnly, t]);
 
   return (
     <View style={styles.root}>
@@ -310,7 +320,7 @@ export default function CustomerPromotionsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <AppText display style={styles.pageTitle}>
-          Khuyến mãi
+          {t("mobile:voucher.nav.promotions")}
         </AppText>
 
         <DealsSegmentedNav />
@@ -322,12 +332,12 @@ export default function CustomerPromotionsScreen() {
         <DealsFilterBar
           search={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Tìm ưu đãi, mã voucher..."
+          searchPlaceholder={t("promo:promotions.searchPlaceholder")}
           filters={filters}
           activeFilter={activeFilter}
           onFilterChange={handleFilterChange}
           sortValue={sortOrder}
-          sortOptions={SORT_OPTIONS}
+          sortOptions={sortOptions}
           onSortChange={(value) => setSortOrder(value as SortOrder)}
         />
 
@@ -345,16 +355,18 @@ export default function CustomerPromotionsScreen() {
               <Sparkles color={theme.brand} size={26} />
             </View>
             <AppText display style={styles.emptyTitle}>
-              Chưa có ưu đãi đang diễn ra
+              {t("promo:promotions.emptyTitle")}
             </AppText>
             <AppText style={styles.emptyDesc}>
-              Các chương trình mới sẽ xuất hiện tại đây. Bạn có thể xem những voucher hiện đang chờ nhận.
+              {t("promo:promotions.emptyDescription")}
             </AppText>
             <Pressable
               onPress={() => navigation.navigate("VoucherHunt")}
               style={styles.emptyLinkTouch}
             >
-              <AppText style={styles.emptyLink}>Khám phá voucher →</AppText>
+              <AppText style={styles.emptyLink}>
+                {t("promo:promotions.exploreVouchers")} →
+              </AppText>
             </Pressable>
           </View>
         ) : (
@@ -369,17 +381,17 @@ export default function CustomerPromotionsScreen() {
                 </View>
               </View>
               <AppText style={styles.sectionDesc}>
-                Chọn một voucher để xem điều kiện và cách nhận.
+                {t("promo:promotions.selectHint")}
               </AppText>
             </View>
 
             {filtered.length === 0 ? (
               <View style={styles.emptyBox}>
                 <AppText display style={styles.emptyTitle}>
-                  Không tìm thấy ưu đãi phù hợp
+                  {t("promo:promotions.noMatchTitle")}
                 </AppText>
                 <AppText style={styles.emptyDesc}>
-                  Thử đổi từ khóa hoặc chọn bộ lọc khác.
+                  {t("promo:promotions.noMatchDescription")}
                 </AppText>
               </View>
             ) : (

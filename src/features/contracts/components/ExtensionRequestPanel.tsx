@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
@@ -19,6 +20,7 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
   onBookingChanged?: () => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const user = useAuthStore((s) => s.user);
   const isOwner = user?.userId === booking.ownerId;
@@ -54,17 +56,20 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
   async function handleRequest() {
     const parsed = Number(days);
     if (!/^\d+$/.test(days.trim()) || !Number.isInteger(parsed) || parsed < 1 || parsed > 90) {
-      setError("Số ngày gia hạn phải từ 1 đến 90.");
+      setError(t("mobile:contract.errors.extendDays"));
       return;
     }
     setBusy("request"); setError("");
     try {
       await createExtensionRequest(booking.id, parsed, note.trim() || undefined);
-      Alert.alert("Đã gửi yêu cầu", `Yêu cầu gia hạn ${parsed} ngày đã được gửi cho chủ xe.`);
+      Alert.alert(
+        t("contract:extensionRequest.sentToastTitle"),
+        t("contract:extensionRequest.sentToastMessage", { count: parsed }),
+      );
       setShowRequestModal(false);
       await loadRequests();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể gửi yêu cầu gia hạn."));
+      setError(getApiErrorMessage(err, t("contract:extensionRequest.failed")));
     } finally {
       setBusy("");
     }
@@ -75,11 +80,17 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
     setBusy("approve"); setError("");
     try {
       await approveExtensionRequest(request.id);
-      Alert.alert("Đã duyệt gia hạn", `Đã tạo hợp đồng phiên bản mới cho ${request.additionalDays} ngày gia hạn. Hai bên cần ký lại bằng OTP.`);
+      Alert.alert(
+        t("contract:extensionRequest.approvedToastTitle"),
+        t("contract:extensionRequest.approvedToastMessage", { count: request.additionalDays }),
+      );
       await loadRequests();
       onBookingChanged?.();
     } catch (err) {
-      Alert.alert("Không thể duyệt", getApiErrorMessage(err, "Không thể duyệt yêu cầu gia hạn."));
+      Alert.alert(
+        t("contract:extensionRequest.approveFailedTitle"),
+        getApiErrorMessage(err, t("contract:extensionRequest.approveFailedMessage")),
+      );
       await loadRequests();
     } finally {
       setBusy("");
@@ -91,11 +102,11 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
     setBusy("reject"); setError("");
     try {
       await rejectExtensionRequest(rejectTarget.id, reason.trim());
-      Alert.alert("Đã từ chối", "Yêu cầu gia hạn đã bị từ chối.");
+      Alert.alert(t("contract:extensionRequest.rejectedToastTitle"), t("contract:extensionRequest.rejectedToastMessage"));
       setRejectTarget(null);
       await loadRequests();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể từ chối yêu cầu gia hạn."));
+      setError(getApiErrorMessage(err, t("contract:extensionRequest.rejectFailed")));
     } finally {
       setBusy("");
     }
@@ -106,16 +117,16 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
       {isOwner && pending ? (
         <View style={[styles.banner, styles.infoBanner]}>
           <Text style={[styles.bannerTitle, { color: theme.info }]}>
-            Khách thuê yêu cầu gia hạn thêm {pending.additionalDays} ngày
+            {t("contract:extensionRequest.pendingOwner", { count: pending.additionalDays })}
           </Text>
-          {pending.note ? <Text style={styles.muted}>Ghi chú: {pending.note}</Text> : null}
-          <Text style={styles.muted}>Duyệt sẽ kiểm tra lịch xe và tạo hợp đồng phiên bản mới để hai bên ký lại.</Text>
+          {pending.note ? <Text style={styles.muted}>{t("contract:extensionRequest.note")} {pending.note}</Text> : null}
+          <Text style={styles.muted}>{t("contract:extensionRequest.approveHint")}</Text>
           <View style={styles.bannerActions}>
             <View style={styles.flexButton}>
-              <BookingButton title="Duyệt" busy={busy === "approve"} onPress={() => void handleApprove(pending)} />
+              <BookingButton title={t("contract:extensionRequest.approve")} busy={busy === "approve"} onPress={() => void handleApprove(pending)} />
             </View>
             <View style={styles.flexButton}>
-              <BookingButton title="Từ chối" secondary disabled={busy !== ""} onPress={() => { setError(""); setReason(""); setRejectTarget(pending); }} />
+              <BookingButton title={t("contract:extensionRequest.reject")} secondary disabled={busy !== ""} onPress={() => { setError(""); setReason(""); setRejectTarget(pending); }} />
             </View>
           </View>
         </View>
@@ -124,16 +135,16 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
       {isCustomer && pending ? (
         <View style={[styles.banner, styles.infoBanner]}>
           <Text style={[styles.bannerTitle, { color: theme.info }]}>
-            Yêu cầu gia hạn thêm {pending.additionalDays} ngày đang chờ chủ xe duyệt
+            {t("contract:extensionRequest.pendingCustomer", { count: pending.additionalDays })}
           </Text>
-          {pending.note ? <Text style={styles.muted}>Ghi chú: {pending.note}</Text> : null}
+          {pending.note ? <Text style={styles.muted}>{t("contract:extensionRequest.note")} {pending.note}</Text> : null}
         </View>
       ) : null}
 
       {isOwner && !pending && latest && latest.status === "Approved" ? (
         <View style={[styles.banner, styles.successBanner]}>
           <Text style={[styles.bannerTitle, { color: theme.success }]}>
-            Đã duyệt yêu cầu gia hạn {latest.additionalDays} ngày. Hợp đồng phiên bản mới đang chờ hai bên ký lại.
+            {t("contract:extensionRequest.approvedInfo", { count: latest.additionalDays })}
           </Text>
         </View>
       ) : null}
@@ -141,32 +152,32 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
       {isCustomer && !pending && latest && latest.status === "Rejected" ? (
         <View style={[styles.banner, styles.dangerBanner]}>
           <Text style={[styles.bannerTitle, { color: theme.danger }]}>
-            Yêu cầu gia hạn {latest.additionalDays} ngày đã bị chủ xe từ chối
+            {t("contract:extensionRequest.rejectedInfo", { count: latest.additionalDays })}
           </Text>
-          {latest.rejectReason ? <Text style={styles.muted}>Lý do: {latest.rejectReason}</Text> : null}
+          {latest.rejectReason ? <Text style={styles.muted}>{t("contract:extensionRequest.reason")} {latest.rejectReason}</Text> : null}
         </View>
       ) : null}
 
       {canRequest ? (
-        <BookingButton title="Yêu cầu gia hạn hợp đồng" onPress={() => { setError(""); setDays(""); setNote(""); setShowRequestModal(true); }} />
+        <BookingButton title={t("contract:extensionRequest.title")} onPress={() => { setError(""); setDays(""); setNote(""); setShowRequestModal(true); }} />
       ) : null}
 
       <Modal visible={showRequestModal} transparent animationType="fade" onRequestClose={() => { if (!busy) setShowRequestModal(false); }}>
         <View style={styles.backdrop}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Yêu cầu gia hạn hợp đồng</Text>
+            <Text style={styles.modalTitle}>{t("contract:extensionRequest.title")}</Text>
             <Text style={styles.muted}>
-              Gửi yêu cầu gia hạn cho chủ xe. Nếu chủ xe duyệt, hệ thống sẽ kiểm tra lịch xe và tạo phiên bản hợp đồng mới để hai bên ký lại bằng OTP.
+              {t("contract:extensionRequest.description")}
             </Text>
-            <BookingField label="Số ngày muốn gia hạn" numeric value={days} onChangeText={setDays} editable={!busy} />
-            <BookingField label="Ghi chú cho chủ xe (không bắt buộc)" value={note} onChangeText={setNote} multiline editable={!busy} />
+            <BookingField label={t("contract:extensionRequest.daysLabel")} numeric value={days} onChangeText={setDays} editable={!busy} />
+            <BookingField label={t("contract:extensionRequest.noteLabel")} value={note} onChangeText={setNote} multiline editable={!busy} />
             {error ? <Text accessibilityRole="alert" style={{ color: theme.danger }}>{error}</Text> : null}
             <View style={styles.modalActions}>
               <Pressable onPress={() => setShowRequestModal(false)} disabled={busy !== ""} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Hủy</Text>
+                <Text style={styles.ghostText}>{t("contract:extensionRequest.cancel")}</Text>
               </Pressable>
               <Pressable onPress={() => void handleRequest()} disabled={busy !== "" || !days} style={[styles.primaryButton, (busy !== "" || !days) && styles.disabled]}>
-                <Text style={styles.primaryText}>Gửi yêu cầu</Text>
+                <Text style={styles.primaryText}>{t("contract:extensionRequest.submit")}</Text>
               </Pressable>
             </View>
           </View>
@@ -176,15 +187,15 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
       <Modal visible={rejectTarget !== null} transparent animationType="fade" onRequestClose={() => { if (!busy) setRejectTarget(null); }}>
         <View style={styles.backdrop}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Từ chối yêu cầu gia hạn {rejectTarget?.additionalDays ?? 0} ngày</Text>
-            <BookingField label="Lý do từ chối" value={reason} onChangeText={setReason} multiline editable={!busy} />
+            <Text style={styles.modalTitle}>{t("contract:extensionRequest.rejectTitle", { count: rejectTarget?.additionalDays ?? 0 })}</Text>
+            <BookingField label={t("contract:extensionRequest.rejectReason")} value={reason} onChangeText={setReason} multiline editable={!busy} />
             {error ? <Text accessibilityRole="alert" style={{ color: theme.danger }}>{error}</Text> : null}
             <View style={styles.modalActions}>
               <Pressable onPress={() => setRejectTarget(null)} disabled={busy !== ""} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Hủy</Text>
+                <Text style={styles.ghostText}>{t("contract:extensionRequest.cancel")}</Text>
               </Pressable>
               <Pressable onPress={() => void handleReject()} disabled={busy !== "" || !reason.trim()} style={[styles.primaryButton, styles.dangerButton, (busy !== "" || !reason.trim()) && styles.disabled]}>
-                <Text style={styles.primaryText}>Xác nhận từ chối</Text>
+                <Text style={styles.primaryText}>{t("contract:extensionRequest.confirmReject")}</Text>
               </Pressable>
             </View>
           </View>

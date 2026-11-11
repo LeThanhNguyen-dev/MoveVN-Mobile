@@ -1,0 +1,64 @@
+{
+  "ownerHome": {
+    "hero": {
+      "eyebrow": "KHÔNG GIAN CHỦ XE",
+      "title": "Quản lý cho thuê",
+      "description": "Chủ động lịch thuê, chăm chút đội xe.",
+      "caption": "Mọi việc trong tầm tay bạn.",
+      "refreshAria": "Làm mới tổng quan"
+    },
+    "shortcuts": {
+      "analytics": "Thống kê"
+    },
+    "operations": {
+      "title": "Cần bạn xử lý",
+      "viewAll": "Tất cả đơn",
+      "pending": "Đơn chờ duyệt",
+      "returned": "Chờ nhận lại xe",
+      "active": "Đang thuê",
+      "viewBookingAria": "Xem đơn {{code}}",
+      "confirmReturn": "Xác nhận nhận lại xe",
+      "newRequest": "Yêu cầu thuê mới",
+      "returnSchedule": "Lịch trả:",
+      "pickupSchedule": "Lịch nhận:",
+      "moreTasks": "Xem các đơn cần xử lý khác",
+      "emptyTitle": "Không có đơn chờ xử lý",
+      "emptyHint": "Hiện không có đơn chờ duyệt hoặc chờ nhận lại."
+    },
+    "business": {
+      "title": "Kinh doanh tháng này",
+      "viewAnalytics": "Xem thống kê",
+      "walletIncome": "Thu nhập ghi nhận qua ví",
+      "loading": "Đang tổng hợp số liệu…",
+      "disclaimer": "Theo giờ Việt Nam. Thu nhập qua ví không phải lợi nhuận hay số tiền đã rút."
+    },
+    "fleet": {
+      "title": "Đội xe của bạn",
+      "manage": "Quản lý",
+      "emptyTitle": "Bắt đầu với chiếc xe đầu tiên",
+      "emptyHint": "Đăng xe để khách hàng tìm thấy bạn."
+    },
+    "errors": {
+      "operations": "Chưa tải được công việc và đội xe.",
+      "business": "Chưa tải được thu nhập tháng này.",
+      "uploadFailed": "Tải ảnh thất bại. Vui lòng thử lại.",
+      "submitApplication": "Gửi hồ sơ thất bại."
+    },
+    "verification": {
+      "title": "Xác minh CCCD",
+      "loadStatusError": "Không tải được trạng thái CCCD.",
+      "fullName": "Họ tên",
+      "cameraPermission": "Cần quyền camera để chụp ảnh CCCD.",
+      "libraryPermission": "Cần quyền truy cập thư viện ảnh để chọn ảnh CCCD.",
+      "photoRequired": "Vui lòng chọn ảnh mặt trước CCCD trước khi gửi.",
+      "aiVerified": "AI đã xác thực CCCD thành công.",
+      "pendingNoticeShort": "Ảnh CCCD của bạn đang chờ nhân viên kiểm tra.",
+      "pendingNotice": "Ảnh CCCD của bạn đang chờ nhân viên kiểm tra. Vui lòng quay lại sau.",
+      "verifyFailed": "Xác thực CCCD chưa đạt. Vui lòng chụp lại ảnh rõ hơn.",
+      "submitError": "Gửi ảnh CCCD thất bại. Vui lòng thử lại.",
+      "retryHint": "{{status}}: vui lòng chụp lại ảnh rõ hơn.",
+      "uploadTitle": "Nộp ảnh CCCD mới",
+      "uploadHint": "Chụp mặt trước CCCD rõ nét, dung lượng tối đa 5MB (JPG/PNG/WebP)."
+    }
+  }
+}

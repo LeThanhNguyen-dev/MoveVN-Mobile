@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Clipboard from "expo-clipboard";
 import { CalendarDays, Car, Check, Copy, Expand, TicketPercent, X } from "lucide-react-native";
 import { memo, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
@@ -53,6 +54,7 @@ type PromotionDetailSheetProps = {
  */
 function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [claimed, setClaimed] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -69,7 +71,8 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
   const endLabel = formatEndDate(slide.endAt);
   const startLabel = formatEndDate(slide.startAt);
   const code = slide.code ?? null;
-  const effectiveTitle = slide.promotionName || slide.popupTitle || slide.title || "Chi tiết khuyến mãi";
+  const effectiveTitle =
+    slide.promotionName || slide.popupTitle || slide.title || t("mobile:voucher.detail.fallbackTitle");
   const hasPromotion =
     slide.promotionId != null && (slide.code != null || slide.promotionName != null);
   const usagePercent =
@@ -78,29 +81,40 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
       : null;
 
   // Danh sách điều kiện áp dụng (mirror web PromotionDetailModal conditions).
+  const vehicleLower = vehicleLabel
+    ? vehicleLabel.toLocaleLowerCase("vi-VN")
+    : t("mobile:voucher.detail.allVehiclesLower");
   const conditions: string[] = [];
   if (discount) {
     conditions.push(
       slide.maxDiscountAmount != null && slide.maxDiscountAmount > 0
-        ? `${discount} trên mỗi chuyến đi hợp lệ, tối đa ${formatVnd(slide.maxDiscountAmount)}.`
-        : `${discount} trên mỗi chuyến đi hợp lệ.`,
+        ? t("mobile:voucher.detail.conditionDiscountMax", {
+            discount,
+            maxDiscountAmount: formatVnd(slide.maxDiscountAmount),
+          })
+        : t("mobile:voucher.detail.conditionDiscount", { discount }),
     );
   }
   conditions.push(
     slide.minOrderAmount != null && slide.minOrderAmount > 0
-      ? `Chỉ áp dụng cho đơn chuyến đi có giá trị tối thiểu ${formatVnd(slide.minOrderAmount)}.`
-      : "Không yêu cầu giá trị đơn chuyến đi tối thiểu.",
+      ? t("mobile:voucher.detail.conditionMinOrder", {
+          minOrderAmount: formatVnd(slide.minOrderAmount),
+        })
+      : t("mobile:voucher.detail.conditionNoMinOrder"),
   );
-  if (vehicleLabel) conditions.push(`Áp dụng cho ${vehicleLabel.toLocaleLowerCase("vi-VN")} của MoveVN.`);
+  if (vehicleLabel) {
+    conditions.push(t("mobile:voucher.detail.conditionVehicle", { vehicle: vehicleLower }));
+  }
   if (usagePercent !== null) {
     conditions.push(
-      `Số lượt phát hành giới hạn ${Number(slide.maxUsageCount).toLocaleString("vi-VN")} lượt, hiện đã dùng ${Number(
-        slide.usageCount,
-      ).toLocaleString("vi-VN")} lượt.`,
+      t("mobile:voucher.detail.conditionUsageLimit", {
+        maxUsage: Number(slide.maxUsageCount).toLocaleString("vi-VN"),
+        usage: Number(slide.usageCount).toLocaleString("vi-VN"),
+      }),
     );
   }
-  conditions.push("Mỗi tài khoản chỉ được dùng tối đa 1 lần cho mỗi mã ưu đãi.");
-  conditions.push("Không áp dụng đồng thời với chương trình ưu đãi khác và không quy đổi được thành tiền mặt.");
+  conditions.push(t("mobile:voucher.detail.conditionOncePerAccount"));
+  conditions.push(t("mobile:voucher.detail.conditionNoStacking"));
 
   function handleCta() {
     if (claimed || slide?.promotionId == null) return;
@@ -113,7 +127,7 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
     if (!code) return;
     await Clipboard.setStringAsync(code);
     setCopied(true);
-    showToast({ type: "success", title: "Đã sao chép mã", message: code });
+    showToast({ type: "success", title: t("promo:hunt.copiedTitle"), message: code });
     setTimeout(() => setCopied(false), 1800);
   }
 
@@ -131,7 +145,7 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
           style={StyleSheet.absoluteFill}
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Đóng chi tiết khuyến mãi"
+          accessibilityLabel={t("mobile:voucher.detail.closeAria")}
         />
         <View style={styles.sheet}>
           <View style={styles.dragHandle} />
@@ -139,7 +153,7 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
             onPress={onClose}
             style={styles.closeButton}
             accessibilityRole="button"
-            accessibilityLabel="Đóng"
+            accessibilityLabel={t("common:closeAction")}
             hitSlop={8}
           >
             <X color={theme.mode === "dark" ? "#E4E4E7" : "#3F3F46"} size={18} />
@@ -168,7 +182,7 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
                 end={{ x: 1, y: 0 }}
                 style={StyleSheet.absoluteFill}
               />
-              <AppText style={styles.heroEyebrow}>CHI TIẾT ƯU ĐÃI</AppText>
+              <AppText style={styles.heroEyebrow}>{t("mobile:voucher.detail.eyebrow")}</AppText>
               <AppText display style={styles.heroTitle}>
                 {effectiveTitle}
               </AppText>
@@ -177,17 +191,19 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
                   {slide.popupDescription}
                 </AppText>
               ) : (
-                <AppText style={styles.heroDesc}>Ưu đãi MoveVN đang diễn ra.</AppText>
+                <AppText style={styles.heroDesc}>
+                  {t("mobile:voucher.detail.fallbackDescription")}
+                </AppText>
               )}
               <AppText style={styles.heroVehicle}>
-                Áp dụng cho {vehicleLabel ? vehicleLabel.toLocaleLowerCase("vi-VN") : "tất cả xe"}.
+                {t("mobile:voucher.detail.applicableTo", { vehicle: vehicleLower })}
               </AppText>
             </View>
 
             {code ? (
               <View style={styles.codeRow}>
                 <View style={styles.codeBox}>
-                  <AppText style={styles.codeLabel}>MÃ ƯU ĐÃI</AppText>
+                  <AppText style={styles.codeLabel}>{t("mobile:voucher.detail.codeLabel")}</AppText>
                   <AppText style={styles.codeText} numberOfLines={1}>
                     {code}
                   </AppText>
@@ -196,14 +212,16 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
                   onPress={handleCopy}
                   style={styles.copyButton}
                   accessibilityRole="button"
-                  accessibilityLabel="Sao chép mã ưu đãi"
+                  accessibilityLabel={t("mobile:voucher.detail.copyCodeAria")}
                 >
                   {copied ? (
                     <Check color="#FFFFFF" size={14} />
                   ) : (
                     <Copy color="#FFFFFF" size={14} />
                   )}
-                  <AppText style={styles.copyButtonText}>{copied ? "Đã sao chép" : "Sao chép"}</AppText>
+                  <AppText style={styles.copyButtonText}>
+                    {copied ? t("mobile:voucher.detail.copied") : t("mobile:voucher.detail.copy")}
+                  </AppText>
                 </Pressable>
               </View>
             ) : null}
@@ -211,10 +229,14 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
             {usagePercent !== null ? (
               <View style={styles.usageWrap}>
                 <View style={styles.usageHead}>
-                  <AppText style={styles.usageLabel}>Đã dùng {Math.round(usagePercent)}%</AppText>
+                  <AppText style={styles.usageLabel}>
+                    {t("mobile:voucher.detail.usedPercent", { percent: Math.round(usagePercent) })}
+                  </AppText>
                   <AppText style={styles.usageCount}>
-                    {Number(slide.usageCount).toLocaleString("vi-VN")}/
-                    {Number(slide.maxUsageCount).toLocaleString("vi-VN")} lượt
+                    {t("mobile:voucher.detail.usageCount", {
+                      used: Number(slide.usageCount).toLocaleString("vi-VN"),
+                      maxUsage: Number(slide.maxUsageCount).toLocaleString("vi-VN"),
+                    })}
                   </AppText>
                 </View>
                 <View style={styles.usageTrack}>
@@ -232,25 +254,35 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
               <View style={styles.metaCell}>
                 <View style={styles.metaLabelRow}>
                   <CalendarDays color={theme.faint} size={12} />
-                  <AppText style={styles.metaLabel}>Thời hạn</AppText>
+                  <AppText style={styles.metaLabel}>{t("mobile:voucher.detail.validityLabel")}</AppText>
                 </View>
                 <AppText style={styles.metaValue}>
-                  {endLabel ? `Đến ${endLabel}` : startLabel ? `Từ ${startLabel}` : "Không giới hạn"}
+                  {endLabel
+                    ? t("mobile:voucher.detail.untilDate", { date: endLabel })
+                    : startLabel
+                      ? t("mobile:voucher.detail.fromDate", { date: startLabel })
+                      : t("mobile:voucher.detail.unlimited")}
                 </AppText>
               </View>
               <View style={styles.metaCell}>
                 <View style={styles.metaLabelRow}>
                   <Car color={theme.faint} size={12} />
-                  <AppText style={styles.metaLabel}>Phương tiện</AppText>
+                  <AppText style={styles.metaLabel}>
+                    {t("mobile:voucher.detail.vehicleFieldLabel")}
+                  </AppText>
                 </View>
-                <AppText style={styles.metaValue}>{vehicleLabel ?? "Tất cả xe"}</AppText>
+                <AppText style={styles.metaValue}>
+                  {vehicleLabel ?? t("mobile:voucher.detail.allVehicles")}
+                </AppText>
               </View>
             </View>
 
             <View style={styles.conditionsBox}>
               <View style={styles.conditionsTitleRow}>
                 <View style={styles.conditionsDot} />
-                <AppText style={styles.conditionsTitle}>ĐIỀU KIỆN ÁP DỤNG</AppText>
+                <AppText style={styles.conditionsTitle}>
+                  {t("mobile:voucher.detail.conditionsTitle")}
+                </AppText>
               </View>
               {conditions.map((condition) => (
                 <View key={condition} style={styles.conditionRow}>
@@ -268,7 +300,7 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
                 disabled={claimed}
                 style={styles.ctaTouch}
                 accessibilityRole="button"
-                accessibilityLabel={slide.popupCtaLabel || "Nhận voucher"}
+                accessibilityLabel={slide.popupCtaLabel || t("promo:hunt.claim")}
               >
                 <LinearGradient
                   colors={
@@ -281,11 +313,15 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
                   style={styles.ctaBg}
                 >
                   {claimed ? (
-                    <AppText style={styles.ctaText}>Đang mở săn voucher... ✓</AppText>
+                    <AppText style={styles.ctaText}>
+                      {t("mobile:voucher.detail.openingClaim")}
+                    </AppText>
                   ) : (
                     <>
                       <TicketPercent color="#FFFFFF" size={15} />
-                      <AppText style={styles.ctaText}>{slide.popupCtaLabel || "Nhận voucher"}</AppText>
+                      <AppText style={styles.ctaText}>
+                        {slide.popupCtaLabel || t("promo:hunt.claim")}
+                      </AppText>
                     </>
                   )}
                 </LinearGradient>

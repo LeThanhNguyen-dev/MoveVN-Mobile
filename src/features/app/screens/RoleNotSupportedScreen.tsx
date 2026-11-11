@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import { ShieldAlert } from "lucide-react-native";
@@ -9,6 +10,7 @@ import type { UserRole } from "@/features/auth/types";
 import NotificationBell from "@/features/notifications/components/NotificationBell";
 
 export default function RoleNotSupportedScreen({ role }: { role: UserRole }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const user = useAuthStore((s) => s.user);
@@ -16,17 +18,16 @@ export default function RoleNotSupportedScreen({ role }: { role: UserRole }) {
   return (
     <View style={styles.screen}>
       <ShieldAlert color={theme.brand} size={48} />
-      <AppText display style={styles.title}>Vai trò chưa hỗ trợ trên app</AppText>
+      <AppText display style={styles.title}>{t("mobile:navigation.roleNotSupported.title")}</AppText>
       <AppText style={styles.muted}>
-        Tài khoản {user?.email ?? ""} có quyền {role}. Ứng dụng di động hiện chỉ phục vụ Khách thuê và
-        Chủ xe — vui lòng dùng bản web để tiếp tục.
+        {t("mobile:navigation.roleNotSupported.description", { email: user?.email ?? "", role })}
       </AppText>
       <View style={styles.notifications}>
-        <AppText style={styles.muted}>Thông báo của bạn</AppText>
+        <AppText style={styles.muted}>{t("mobile:navigation.yourNotifications")}</AppText>
         <NotificationBell />
       </View>
       <Pressable onPress={() => clearSession()} style={styles.button}>
-        <AppText style={styles.buttonText}>Đăng xuất</AppText>
+        <AppText style={styles.buttonText}>{t("accountSecurity:sessions.signOut")}</AppText>
       </Pressable>
     </View>
   );

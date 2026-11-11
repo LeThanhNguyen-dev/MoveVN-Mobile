@@ -1,5 +1,6 @@
 import { Camera, ClipboardCheck, Fuel, Gauge, ShieldCheck, TriangleAlert } from "lucide-react-native";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/theme/useTheme";
@@ -14,15 +15,16 @@ import { DetailCard, DetailDivider, DetailNotice, DetailPill, DetailSectionHeade
 import { BookingButton } from "./BookingControls";
 
 export default function InspectionReportCard({ booking, report }: { booking?: BookingResponse; report: InspectionReportResponse }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const [selected, setSelected] = useState<string | null>(null);
   const tone = report.requiresRevision ? "danger" : report.isCustomerConfirmed ? "mint" : "warn";
-  const statusLabel = report.requiresRevision ? "Yêu cầu lập lại" : report.isCustomerConfirmed ? "Khách đã xác nhận" : "Chờ khách xác nhận";
+  const statusLabel = report.requiresRevision ? t("mobile:inspection.report.statusRevision") : report.isCustomerConfirmed ? t("booking:inspection.statusConfirmed") : t("booking:inspection.statusAwaiting");
   return <DetailCard>
     <DetailSectionHeader
       icon={ClipboardCheck}
-      subtitle={`Lập lúc ${formatVietnamDateTime(report.createdAt)} · Giờ Việt Nam`}
-      title={report.type === "CheckIn" ? "Biên bản nhận xe" : "Biên bản trả xe"}
+      subtitle={t("mobile:inspection.report.subtitle", { time: formatVietnamDateTime(report.createdAt) })}
+      title={t(report.type === "CheckIn" ? "mobile:inspection.report.titleCheckIn" : "mobile:inspection.report.titleCheckOut")}
       right={<DetailPill label={`v${report.version ?? 1}`} tone="brand" />}
     />
 
@@ -31,23 +33,23 @@ export default function InspectionReportCard({ booking, report }: { booking?: Bo
     </View>
 
     {report.requiresRevision ? (
-      <DetailNotice icon={TriangleAlert} title="Khách yêu cầu lập lại biên bản" tone="danger">
-        {report.revisionReason || "Chủ xe cần gửi biên bản mới trước khi khách xác nhận."}
+      <DetailNotice icon={TriangleAlert} title={t("mobile:inspection.report.revisionTitle")} tone="danger">
+        {report.revisionReason || t("mobile:inspection.report.revisionFallback")}
       </DetailNotice>
     ) : null}
 
     <View style={styles.stats}>
-      <DetailStat icon={Gauge} label="Số km" value={report.odometerKm != null ? `${report.odometerKm.toLocaleString("vi-VN")} km` : "Chưa ghi"} />
-      <DetailStat icon={Fuel} label="Nhiên liệu" value={report.fuelLevel || "Chưa ghi"} tone="brand" />
+      <DetailStat icon={Gauge} label={t("mobile:inspection.report.odometer")} value={report.odometerKm != null ? t("mobile:inspection.report.odometerValue", { km: report.odometerKm.toLocaleString("vi-VN") }) : t("mobile:inspection.report.missing")} />
+      <DetailStat icon={Fuel} label={t("booking:inspection.fuel")} value={report.fuelLevel || t("mobile:inspection.report.missing")} tone="brand" />
     </View>
 
     {report.damageNoted ? (
-      <DetailNotice icon={TriangleAlert} title="Có hư hại / trầy xước" tone="danger">
-        {report.damageDescription || "Chưa mô tả chi tiết."}
+      <DetailNotice icon={TriangleAlert} title={t("mobile:inspection.report.damageTitle")} tone="danger">
+        {report.damageDescription || t("mobile:inspection.report.damageFallback")}
       </DetailNotice>
     ) : (
-      <DetailNotice icon={ShieldCheck} title="Không ghi nhận hư hại" tone="mint">
-        Tình trạng xe được ghi nhận bình thường tại thời điểm lập biên bản.
+      <DetailNotice icon={ShieldCheck} title={t("mobile:inspection.report.noDamageTitle")} tone="mint">
+        {t("mobile:inspection.report.noDamageBody")}
       </DetailNotice>
     )}
 
@@ -59,27 +61,27 @@ export default function InspectionReportCard({ booking, report }: { booking?: Bo
 
     <View style={styles.photosHead}>
       <Camera color={theme.muted} size={14} strokeWidth={2.1} />
-      <Text style={[styles.photosTitle, { color: theme.text }]}>Ảnh biên bản ({report.images.length})</Text>
+      <Text style={[styles.photosTitle, { color: theme.text }]}>{t("mobile:inspection.report.photosTitle", { total: report.images.length })}</Text>
     </View>
     <View style={styles.grid}>
       {report.images.map((photo, index) => (
         <Pressable
           key={photo.id}
           accessibilityRole="button"
-          accessibilityLabel={`Xem ảnh biên bản ${index + 1}`}
+          accessibilityLabel={t("booking:inspection.gallery.viewAria", { index: index + 1 })}
           onPress={() => setSelected(photo.imageUrl)}
           style={styles.photo}
         >
-          <InspectionPhoto key={photo.imageUrl} uri={photo.imageUrl} label={`Ảnh biên bản ${index + 1}`} />
+          <InspectionPhoto key={photo.imageUrl} uri={photo.imageUrl} label={t("booking:inspection.gallery.alt", { index: index + 1 })} />
         </Pressable>
       ))}
     </View>
-    <Text style={[styles.hint, { color: theme.muted }]}>Chạm vào ảnh để kiểm tra ngày giờ và tình trạng xe.</Text>
+    <Text style={[styles.hint, { color: theme.muted }]}>{t("mobile:inspection.report.photosHint")}</Text>
 
     {selected ? <Modal visible animationType="fade" onRequestClose={() => setSelected(null)}>
       <SafeAreaView style={styles.viewer}>
-        <Image accessibilityLabel="Ảnh biên bản xe" source={{ uri: inspectionImageUrl(selected) }} resizeMode="contain" style={styles.fullPhoto} />
-        <View style={styles.viewerActions}><BookingButton title="Đóng ảnh" onPress={() => setSelected(null)} /></View>
+        <Image accessibilityLabel={t("mobile:inspection.report.photoAlt")} source={{ uri: inspectionImageUrl(selected) }} resizeMode="contain" style={styles.fullPhoto} />
+        <View style={styles.viewerActions}><BookingButton title={t("common:imagePreview.close")} onPress={() => setSelected(null)} /></View>
       </SafeAreaView>
     </Modal> : null}
   </DetailCard>;

@@ -11,6 +11,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import FavoriteVehicleButton from "@/features/favorites/components/FavoriteVehicleButton";
 import { detailFont, useDetailTheme } from "./detailTheme";
@@ -36,6 +37,7 @@ export default function VehicleDetailHero({
   onIndexChange,
   onOpenPhoto,
 }: Props) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const { width } = useWindowDimensions();
   const height = Math.min(width * 0.84, 430);
@@ -65,7 +67,10 @@ export default function VehicleDetailHero({
           renderItem={({ item, index }) => (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Xem ảnh ${index + 1} trên ${photos.length} của xe`}
+              accessibilityLabel={t("mobile:vehicleDetail.hero.viewPhotoAria", {
+                index: index + 1,
+                total: photos.length,
+              })}
               onPress={() => onOpenPhoto(index)}
             >
               <Image
@@ -82,7 +87,7 @@ export default function VehicleDetailHero({
       ) : (
         <View style={[styles.empty, { width, height }]}>
           <VehicleIcon color="rgba(255,255,255,0.72)" size={44} />
-          <AppText style={styles.emptyText}>Xe chưa có ảnh</AppText>
+          <AppText style={styles.emptyText}>{t("mobile:vehicleDetail.hero.noPhotos")}</AppText>
         </View>
       )}
 
@@ -96,7 +101,7 @@ export default function VehicleDetailHero({
       <View style={[styles.topbar, { paddingTop: 10 }]}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Quay lại"
+          accessibilityLabel={t("vehicleDetail:back")}
           hitSlop={6}
           onPress={onBack}
           style={({ pressed }) => [styles.glassButton, pressed && styles.pressed]}
@@ -106,7 +111,7 @@ export default function VehicleDetailHero({
         <View style={styles.topActions}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Chia sẻ xe"
+            accessibilityLabel={t("mobile:vehicleDetail.hero.shareAria")}
             hitSlop={6}
             onPress={onShare}
             style={({ pressed }) => [styles.glassButton, pressed && styles.pressed]}
@@ -126,12 +131,14 @@ export default function VehicleDetailHero({
         <View style={styles.footer}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Xem toàn bộ ${photos.length} ảnh`}
+            accessibilityLabel={t("mobile:vehicleDetail.hero.viewAllAria", { total: photos.length })}
             onPress={() => onOpenPhoto(imageIndex)}
             style={({ pressed }) => [styles.pill, pressed && styles.pressed]}
           >
             <Images color="#FFFFFF" size={13} strokeWidth={2.1} />
-            <AppText style={styles.pillText}>Xem {photos.length} ảnh</AppText>
+            <AppText style={styles.pillText}>
+              {t("mobile:vehicleDetail.hero.viewAll", { total: photos.length })}
+            </AppText>
           </Pressable>
           <View style={styles.pill}>
             <AppText style={styles.pillText}>

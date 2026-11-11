@@ -1,0 +1,14 @@
+{
+  "startup": {
+    "opening": "Opening MoveVN...",
+    "sessionError": "We couldn't check your session. Check your connection and try again.",
+    "retry": "Try again"
+  },
+  "language": {
+    "label": "Language",
+    "vi": "Tiếng Việt",
+    "en": "English",
+    "switchToEnglish": "Switch to English",
+    "switchToVietnamese": "Switch to Vietnamese"
+  }
+}

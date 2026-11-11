@@ -1,0 +1,25 @@
+{
+  "pricing": {
+    "rentPrice": "Rental price",
+    "perDay": "{{price}}/day",
+    "includedFee": "Price includes the platform fee.",
+    "deposit": "Deposit:",
+    "depositPercent": "{{percent}}% of total rental",
+    "notRequired": "Not required",
+    "collateral": "Collateral:",
+    "collateralAmount": "{{amount}} VND",
+    "turnaroundNote": "The vehicle needs 60 minutes for inspection and cleaning between trips. This time is not charged.",
+    "pickup": "Pick-up",
+    "return": "Return",
+    "notSelected": "Not selected",
+    "days": "Days",
+    "daysCount": "{{days}} day(s)",
+    "lineItemDays": "{{name}} ({{days}} day(s))",
+    "quoteLoading": "Calculating daily prices...",
+    "discount": "Discount ({{percent}}%)",
+    "platformFee": "Platform fee (included in price)",
+    "deliveryFee": "Delivery fee ({{distance}} km)",
+    "total": "Total",
+    "totalShort": "Total"
+  }
+}

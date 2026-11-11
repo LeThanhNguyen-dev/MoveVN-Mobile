@@ -1,5 +1,6 @@
 import { EMPTY_SEARCH } from "../components/BookingSearchFilters";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
@@ -13,6 +14,7 @@ const filters = ["", "Pending", "Approved", "DepositPaid", "InProgress", "Return
 
 export default function BookingListScreen({ role, onOpen }: { role: BookingRole; onOpen: (id: number) => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [status, setStatus] = useState("");
   const search = EMPTY_SEARCH;
   const [page, setPage] = useState(1);
@@ -29,37 +31,37 @@ export default function BookingListScreen({ role, onOpen }: { role: BookingRole;
       const result = await (role === "Owner" ? getOwnerBookings : getMyBookings)({ ...search, status: status || undefined, page, pageSize: PAGE_SIZE });
       if (mounted.current && request === requestId.current) { setItems(result.items); setTotal(result.totalCount); }
     } catch (err) {
-      if (mounted.current && request === requestId.current) { setItems([]); setError(getApiErrorMessage(err, "Không tải được danh sách đơn thuê.")); }
+      if (mounted.current && request === requestId.current) { setItems([]); setError(getApiErrorMessage(err, t("mobile:bookingList.legacy.errorLoad"))); }
     } finally { if (mounted.current && request === requestId.current) setLoading(false); }
-  }, [role, status, page]);
+  }, [role, status, page, t]);
   useEffect(() => { mounted.current = true; void load(); return () => { mounted.current = false; requestId.current++; }; }, [load]);
 
   return <View style={{ flex: 1, backgroundColor: theme.background }}>
-    <BookingHeader title={role === "Owner" ? "Đơn thuê của khách" : "Chuyến đi của tôi"} />
+    <BookingHeader title={role === "Owner" ? t("mobile:bookingList.titles.ownerTab") : t("mobile:bookingList.titles.customerTrips")} />
     <View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
       {filters.map((value) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: status === value }} onPress={() => { setStatus(value); setPage(1); }}
-        style={[styles.filter, { backgroundColor: value === status ? theme.brand : theme.surfaceAlt }]}><Text style={{ color: value === status ? theme.onBrand : theme.text, fontWeight: "600" }}>{BOOKING_STATUS_LABELS[value] || "Tất cả"}</Text></Pressable>)}
+        style={[styles.filter, { backgroundColor: value === status ? theme.brand : theme.surfaceAlt }]}><Text style={{ color: value === status ? theme.onBrand : theme.text, fontWeight: "600" }}>{BOOKING_STATUS_LABELS[value] || t("booking:status.all")}</Text></Pressable>)}
     </ScrollView></View>
     <FlatList data={loading ? [] : items} keyExtractor={(item) => String(item.id)} contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor={theme.brand} />}
       ListEmptyComponent={<View style={styles.empty}>{loading ? <ActivityIndicator color={theme.brand} /> : <>
-        <Text accessibilityRole={error ? "alert" : undefined} style={{ color: error ? theme.danger : theme.muted, textAlign: "center" }}>{error || (status ? "Chưa có đơn thuê ở trạng thái này." : "Bạn chưa có đơn thuê nào.")}</Text>
-        {error ? <BookingButton title="Thử lại" onPress={() => void load()} /> : <Text style={{ color: theme.muted, textAlign: "center" }}>{role === "Owner" ? "Yêu cầu thuê xe sẽ xuất hiện tại đây." : "Chọn xe trong mục Khám phá để tạo yêu cầu thuê."}</Text>}
+        <Text accessibilityRole={error ? "alert" : undefined} style={{ color: error ? theme.danger : theme.muted, textAlign: "center" }}>{error || (status ? t("mobile:bookingList.legacy.emptyStatus") : t("mobile:bookingList.legacy.empty"))}</Text>
+        {error ? <BookingButton title={t("common:retry")} onPress={() => void load()} /> : <Text style={{ color: theme.muted, textAlign: "center" }}>{role === "Owner" ? t("mobile:bookingList.legacy.ownerHint") : t("mobile:bookingList.legacy.customerHint")}</Text>}
       </>}</View>}
-      renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityLabel={`Xem đơn ${item.bookingCode}`} onPress={() => onOpen(item.id)} style={[styles.booking, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:bookingList.legacy.openBookingAria", { code: item.bookingCode })} onPress={() => onOpen(item.id)} style={[styles.booking, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         {item.vehicleImage ? <Image source={{ uri: item.vehicleImage }} style={styles.image} /> : null}
         <View style={styles.copy}><Text style={{ color: theme.muted, fontSize: 12 }}>{item.bookingCode}</Text>
-          <Text style={{ color: theme.text, fontWeight: "800", fontSize: 16 }}>{item.vehicleName || `Xe #${item.vehicleId}`}</Text>
+          <Text style={{ color: theme.text, fontWeight: "800", fontSize: 16 }}>{item.vehicleName || t("booking:list.vehicleFallback", { id: item.vehicleId })}</Text>
           <Text style={{ color: theme.brand, fontWeight: "600" }}>{BOOKING_STATUS_LABELS[item.status] || item.status}</Text>
-          <Text style={{ color: theme.muted, fontSize: 12 }}>Nhận: {formatVietnamDateTime(item.startDate)}</Text>
-          <Text style={{ color: theme.muted, fontSize: 12 }}>Trả: {formatVietnamDateTime(item.endDate)}</Text>
+          <Text style={{ color: theme.muted, fontSize: 12 }}>{t("mobile:bookingList.legacy.pickupLine", { time: formatVietnamDateTime(item.startDate) })}</Text>
+          <Text style={{ color: theme.muted, fontSize: 12 }}>{t("mobile:bookingList.legacy.returnLine", { time: formatVietnamDateTime(item.endDate) })}</Text>
           <Text style={{ color: theme.text, fontWeight: "700" }}>{formatMoney(item.totalAmount)}</Text>
         </View>
       </Pressable>}
       ListFooterComponent={!loading && !error && total > 0 ? <View style={styles.pagination}>
-        <Text style={{ color: theme.muted, textAlign: "center" }}>{total} đơn · Trang {page}/{Math.max(1, Math.ceil(total / PAGE_SIZE))}</Text>
-        <View style={styles.pages}><View style={{ flex: 1 }}><BookingButton secondary title="Trang trước" disabled={page <= 1} onPress={() => setPage(page - 1)} /></View>
-          <View style={{ flex: 1 }}><BookingButton secondary title="Trang sau" disabled={page * PAGE_SIZE >= total} onPress={() => setPage(page + 1)} /></View></View>
+        <Text style={{ color: theme.muted, textAlign: "center" }}>{t("mobile:bookingList.legacy.pageSummary", { total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) })}</Text>
+        <View style={styles.pages}><View style={{ flex: 1 }}><BookingButton secondary title={t("booking:list.previousPage")} disabled={page <= 1} onPress={() => setPage(page - 1)} /></View>
+          <View style={{ flex: 1 }}><BookingButton secondary title={t("booking:list.nextPage")} disabled={page * PAGE_SIZE >= total} onPress={() => setPage(page + 1)} /></View></View>
       </View> : undefined} />
   </View>;
 }

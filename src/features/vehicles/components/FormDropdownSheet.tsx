@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Search, X } from "lucide-react-native";
 import { memo, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
 import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -31,6 +32,7 @@ function FormDropdownSheet({
   disabled = false,
   searchable = true,
 }: FormDropdownSheetProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -81,7 +83,7 @@ function FormDropdownSheet({
                 <TextInput
                   value={keyword}
                   onChangeText={setKeyword}
-                  placeholder="Tìm kiếm..."
+                  placeholder={t("mobile:ownerVehicle.dropdown.searchPlaceholder")}
                   placeholderTextColor={theme.placeholder}
                   style={styles.searchInput}
                 />
@@ -107,7 +109,7 @@ function FormDropdownSheet({
                   </Pressable>
                 );
               })}
-              {filtered.length === 0 ? <AppText style={styles.empty}>Không có lựa chọn nào.</AppText> : null}
+              {filtered.length === 0 ? <AppText style={styles.empty}>{t("mobile:ownerVehicle.dropdown.empty")}</AppText> : null}
             </ScrollView>
           </View>
         </View>

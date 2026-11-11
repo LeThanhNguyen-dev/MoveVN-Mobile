@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { AppApiError, googleLogin } from "./authService";
@@ -7,7 +8,7 @@ export const googleAvailable = Platform.OS !== "web" && Constants.executionEnvir
   && (Platform.OS !== "ios" || Boolean(process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID));
 
 export async function signInWithGoogle() {
-  if (!googleAvailable) throw new AppApiError({ code: "GOOGLE_UNAVAILABLE", message: "Đăng nhập Google chưa sẵn sàng trên bản ứng dụng này." });
+  if (!googleAvailable) throw new AppApiError({ code: "GOOGLE_UNAVAILABLE", message: i18n.t("mobile:auth.errors.googleNotReady") });
   // Load only in a native build; Expo Go does not contain the Google native module.
   const { GoogleSignin, isSuccessResponse, isErrorWithCode, statusCodes } = await import("@react-native-google-signin/google-signin");
   GoogleSignin.configure({

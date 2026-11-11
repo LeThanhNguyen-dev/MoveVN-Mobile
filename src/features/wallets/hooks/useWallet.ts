@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AppState } from "react-native";
+import i18n from "@/i18n";
 import {
   cancelWithdrawal,
   createWithdrawal,
@@ -85,7 +86,10 @@ export function useWallet() {
       setWdTotal(wd.totalCount);
       setBank(bankInfo);
     } catch (err) {
-      Alert.alert("Lỗi", getApiErrorMessage(err, "Không tải được ví."));
+      Alert.alert(
+        i18n.t("accountWallet:toasts.errorTitle"),
+        getApiErrorMessage(err, i18n.t("mobile:wallet.errors.loadWallet")),
+      );
     } finally {
       setLoading(false);
     }
@@ -103,7 +107,10 @@ export function useWallet() {
         setTxPage(tx.page);
         setTxTotal(tx.totalCount);
       } catch (err) {
-        Alert.alert("Lỗi", getApiErrorMessage(err, "Không tải được lịch sử giao dịch."));
+        Alert.alert(
+          i18n.t("accountWallet:toasts.errorTitle"),
+          getApiErrorMessage(err, i18n.t("mobile:wallet.errors.loadHistory")),
+        );
       } finally {
         setLoadingMore(false);
       }
@@ -134,13 +141,19 @@ export function useWallet() {
           const res = await checkPaymentStatus(orderCode);
           if (res.isConfirmed) {
             setPendingOrderCode(null);
-            Alert.alert("Thành công", "Đã nạp tiền vào ví.");
+            Alert.alert(
+              i18n.t("accountWallet:toasts.successTitle"),
+              i18n.t("mobile:wallet.alerts.topUpDone"),
+            );
             await reload();
             return;
           }
           if (["Cancelled", "Expired", "Failed"].includes(res.status)) {
             setPendingOrderCode(null);
-            Alert.alert("Thông báo", res.message || "Giao dịch đã kết thúc.");
+            Alert.alert(
+              i18n.t("mobile:wallet.alerts.noticeTitle"),
+              res.message || i18n.t("mobile:wallet.alerts.paymentEnded"),
+            );
             await reload();
             return;
           }
@@ -151,7 +164,10 @@ export function useWallet() {
           pollTopUp(orderCode, attempt + 1);
         } else {
           setPendingOrderCode(null);
-          Alert.alert("Hết thời gian chờ", "Mở lại màn ví để kiểm tra số dư.");
+          Alert.alert(
+            i18n.t("mobile:wallet.alerts.timeoutTitle"),
+            i18n.t("mobile:wallet.alerts.checkBalanceHint"),
+          );
           await reload();
         }
       }, 3000);
@@ -170,20 +186,27 @@ export function useWallet() {
   async function handleTopUp(onSuccess?: () => void) {
     const amount = Number(topUpAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      Alert.alert("Số tiền chưa đúng", "Vui lòng nhập số tiền nạp (đồng).");
+      Alert.alert(
+        i18n.t("mobile:wallet.alerts.invalidAmountTitle"),
+        i18n.t("mobile:wallet.alerts.topUpAmountRequired"),
+      );
       return;
     }
     if (amount < TOPUP_MIN_AMOUNT) {
       Alert.alert(
-        "Số tiền quá nhỏ",
-        `Số tiền nạp tối thiểu là ${TOPUP_MIN_AMOUNT.toLocaleString("vi-VN")}đ.`
+        i18n.t("mobile:wallet.alerts.amountTooSmallTitle"),
+        i18n.t("mobile:wallet.alerts.topUpMin", {
+          amount: TOPUP_MIN_AMOUNT.toLocaleString("vi-VN"),
+        }),
       );
       return;
     }
     if (amount > TOPUP_MAX_AMOUNT) {
       Alert.alert(
-        "Số tiền quá lớn",
-        `Số tiền nạp tối đa là ${TOPUP_MAX_AMOUNT.toLocaleString("vi-VN")}đ.`
+        i18n.t("mobile:wallet.alerts.amountTooLargeTitle"),
+        i18n.t("mobile:wallet.alerts.topUpMax", {
+          amount: TOPUP_MAX_AMOUNT.toLocaleString("vi-VN"),
+        }),
       );
       return;
     }
@@ -197,7 +220,10 @@ export function useWallet() {
       pollTopUp(link.orderCode);
       onSuccess?.();
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không tạo được link nạp tiền."));
+      Alert.alert(
+        i18n.t("mobile:wallet.alerts.failedTitle"),
+        getApiErrorMessage(err, i18n.t("mobile:wallet.alerts.topUpCreateFailed")),
+      );
     } finally {
       setBusy(null);
     }
@@ -206,38 +232,50 @@ export function useWallet() {
   async function handleWithdraw() {
     const amount = Number(withdrawAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      Alert.alert("Số tiền chưa đúng", "Vui lòng nhập số tiền rút (đồng).");
+      Alert.alert(
+        i18n.t("mobile:wallet.alerts.invalidAmountTitle"),
+        i18n.t("mobile:wallet.alerts.withdrawAmountRequired"),
+      );
       return false;
     }
     if (amount < WITHDRAW_MIN_AMOUNT) {
       Alert.alert(
-        "Số tiền quá nhỏ",
-        `Số tiền rút tối thiểu là ${WITHDRAW_MIN_AMOUNT.toLocaleString("vi-VN")}đ.`
+        i18n.t("mobile:wallet.alerts.amountTooSmallTitle"),
+        i18n.t("mobile:wallet.alerts.withdrawMin", {
+          amount: WITHDRAW_MIN_AMOUNT.toLocaleString("vi-VN"),
+        }),
       );
       return false;
     }
     if (amount > WITHDRAW_MAX_AMOUNT) {
       Alert.alert(
-        "Số tiền quá lớn",
-        `Số tiền rút tối đa là ${WITHDRAW_MAX_AMOUNT.toLocaleString("vi-VN")}đ.`
+        i18n.t("mobile:wallet.alerts.amountTooLargeTitle"),
+        i18n.t("mobile:wallet.alerts.withdrawMax", {
+          amount: WITHDRAW_MAX_AMOUNT.toLocaleString("vi-VN"),
+        }),
       );
       return false;
     }
     if (!bank?.bankAccountNumber) {
-      Alert.alert("Chưa có tài khoản nhận", "Hãy thiết lập tài khoản ngân hàng trước khi rút.");
+      Alert.alert(
+        i18n.t("mobile:wallet.alerts.noPayoutAccountTitle"),
+        i18n.t("mobile:wallet.alerts.noPayoutAccountMessage"),
+      );
       return false;
     }
     if (wallet && amount > wallet.balance) {
       Alert.alert(
-        "Số dư không đủ",
-        `Số dư khả dụng: ${wallet.balance.toLocaleString("vi-VN")}đ.`
+        i18n.t("mobile:wallet.alerts.insufficientTitle"),
+        i18n.t("mobile:wallet.alerts.insufficientMessage", {
+          balance: wallet.balance.toLocaleString("vi-VN"),
+        }),
       );
       return false;
     }
     if (activeWithdrawal) {
       Alert.alert(
-        "Đang có yêu cầu chờ xử lý",
-        `Yêu cầu #${activeWithdrawal.id} đang ở trạng thái chờ. Vui lòng chờ hoàn tất hoặc hủy trước khi tạo yêu cầu mới.`
+        i18n.t("mobile:wallet.alerts.pendingRequestTitle"),
+        i18n.t("mobile:wallet.alerts.pendingRequestMessage", { id: activeWithdrawal.id }),
       );
       return false;
     }
@@ -246,11 +284,17 @@ export function useWallet() {
     try {
       await createWithdrawal(Math.round(amount));
       setWithdrawAmount("");
-      Alert.alert("Thành công", "Đã tạo yêu cầu rút tiền. Nhân viên duyệt xong tiền sẽ về tài khoản.");
+      Alert.alert(
+        i18n.t("accountWallet:toasts.successTitle"),
+        i18n.t("mobile:wallet.alerts.withdrawCreated"),
+      );
       await reload();
       return true;
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không tạo được yêu cầu rút tiền."));
+      Alert.alert(
+        i18n.t("mobile:wallet.alerts.failedTitle"),
+        getApiErrorMessage(err, i18n.t("mobile:wallet.alerts.withdrawCreateFailed")),
+      );
       return false;
     } finally {
       setBusy(null);
@@ -258,23 +302,30 @@ export function useWallet() {
   }
 
   async function handleCancelWithdrawal(id: number) {
-    Alert.alert("Hủy yêu cầu", "Tiền đang giữ sẽ hoàn lại ví ngay.", [
-      { text: "Giữ lại", style: "cancel" },
-      {
-        text: "Xác nhận hủy",
-        style: "destructive",
-        onPress: () => {
-          void (async () => {
-            try {
-              await cancelWithdrawal(id);
-              await reload();
-            } catch (err) {
-              Alert.alert("Thất bại", getApiErrorMessage(err, "Không hủy được yêu cầu."));
-            }
-          })();
+    Alert.alert(
+      i18n.t("mobile:wallet.alerts.cancelRequestTitle"),
+      i18n.t("mobile:wallet.alerts.cancelRequestBody"),
+      [
+        { text: i18n.t("mobile:wallet.alerts.keep"), style: "cancel" },
+        {
+          text: i18n.t("mobile:wallet.alerts.confirmCancel"),
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              try {
+                await cancelWithdrawal(id);
+                await reload();
+              } catch (err) {
+                Alert.alert(
+                  i18n.t("mobile:wallet.alerts.failedTitle"),
+                  getApiErrorMessage(err, i18n.t("mobile:wallet.alerts.cancelRequestFailed")),
+                );
+              }
+            })();
+          },
         },
-      },
-    ]);
+      ],
+    );
   }
 
   function openBankSetup() {
@@ -288,7 +339,10 @@ export function useWallet() {
 
   async function handleRequestBankOtp(onSent?: () => void) {
     if (!bankName.trim() || !accountNumber.trim() || !holderName.trim()) {
-      Alert.alert("Thiếu thông tin", "Nhập đủ ngân hàng, số tài khoản và chủ tài khoản.");
+      Alert.alert(
+        i18n.t("accountVerification:bank.toastMissingInfoTitle"),
+        i18n.t("mobile:wallet.alerts.bankMissingInfo"),
+      );
       return;
     }
     if (busy) return;
@@ -296,10 +350,16 @@ export function useWallet() {
     try {
       await requestBankAccountOtp();
       setBankStep("otp");
-      Alert.alert("Đã gửi", "Mã OTP đã gửi đến email của bạn.");
+      Alert.alert(
+        i18n.t("mobile:wallet.alerts.otpSentTitle"),
+        i18n.t("mobile:wallet.alerts.otpSentMessage"),
+      );
       onSent?.();
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không gửi được mã OTP."));
+      Alert.alert(
+        i18n.t("mobile:wallet.alerts.failedTitle"),
+        getApiErrorMessage(err, i18n.t("mobile:wallet.alerts.otpSendFailed")),
+      );
     } finally {
       setBusy(null);
     }
@@ -307,7 +367,10 @@ export function useWallet() {
 
   async function handleSaveBank() {
     if (bankOtp.trim().length < 6) {
-      Alert.alert("Thiếu mã", "Vui lòng nhập đủ mã OTP.");
+      Alert.alert(
+        i18n.t("mobile:wallet.alerts.missingOtpTitle"),
+        i18n.t("mobile:wallet.alerts.otpRequired"),
+      );
       return false;
     }
     if (busy) return false;
@@ -321,11 +384,17 @@ export function useWallet() {
         bankAccountHolderName: holderName.trim(),
         bankBin: bankBin || picked?.bin,
       });
-      Alert.alert("Thành công", "Đã lưu tài khoản ngân hàng.");
+      Alert.alert(
+        i18n.t("accountWallet:toasts.successTitle"),
+        i18n.t("mobile:wallet.alerts.bankSaved"),
+      );
       await reload();
       return true;
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không lưu được tài khoản."));
+      Alert.alert(
+        i18n.t("mobile:wallet.alerts.failedTitle"),
+        getApiErrorMessage(err, i18n.t("mobile:wallet.alerts.bankSaveFailed")),
+      );
       return false;
     } finally {
       setBusy(null);

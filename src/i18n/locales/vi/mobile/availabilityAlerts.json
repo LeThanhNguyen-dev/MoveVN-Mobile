@@ -1,0 +1,41 @@
+{
+  "availabilityAlerts": {
+    "center": {
+      "title": "Thông báo xe trống",
+      "closeAria": "Đóng thông báo xe trống"
+    },
+    "status": {
+      "active": "Đang theo dõi",
+      "notified": "Đã thông báo",
+      "cancelled": "Đã hủy",
+      "expired": "Đã hết hạn",
+      "booked": "Đã có đơn thuê"
+    },
+    "list": {
+      "intro": "MoveVN báo trong app một lần khi toàn bộ khoảng thuê còn trống. Thông báo không giữ chỗ; lịch xe được kiểm tra lại khi đặt.",
+      "loadError": "Không tải được đăng ký.",
+      "empty": "Chưa có đăng ký. Mở chi tiết xe và chọn “Nhận thông báo khi xe trống”.",
+      "viewVehicle": "Xem xe",
+      "cancelError": "Không hủy được đăng ký.",
+      "unwatch": "Hủy theo dõi"
+    },
+    "panel": {
+      "toggle": "Nhận thông báo khi xe trống",
+      "intro": "Chọn ngày giờ mong muốn, kể cả khi xe bận. MoveVN báo trong app một lần khi cả khoảng thuê trống. Thông báo không giữ chỗ.",
+      "periodHint": "Chạm để chọn lịch · Giờ Việt Nam",
+      "saved": "Đã đăng ký theo dõi khoảng thuê này.",
+      "registerError": "Không đăng ký được thông báo.",
+      "subscribe": "Đăng ký theo dõi",
+      "manage": "Xem và hủy đăng ký của tôi →"
+    },
+    "errors": {
+      "period": "Chọn ngày nhận ở tương lai và ngày trả sau ngày nhận.",
+      "invalidPageOrVehicle": "Trang hoặc mã xe không hợp lệ.",
+      "invalidList": "Không tải được danh sách theo dõi hợp lệ. Vui lòng thử lại.",
+      "invalidVehicle": "Mã xe không hợp lệ.",
+      "registerUnconfirmed": "Máy chủ chưa xác nhận đúng đăng ký. Hãy làm mới danh sách theo dõi.",
+      "invalidRegistration": "Mã đăng ký không hợp lệ.",
+      "cancelUnconfirmed": "Máy chủ chưa xác nhận hủy đăng ký. Vui lòng thử lại."
+    }
+  }
+}

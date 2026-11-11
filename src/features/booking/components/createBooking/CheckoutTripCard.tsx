@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import AppText from "@/components/AppText";
 import { formatCheckoutDate, formatCheckoutMeta } from "@/features/booking/utils/checkoutFormat";
@@ -47,6 +48,7 @@ export default function CheckoutTripCard({
   onApplyNextAvailable,
 }: Props) {
   const { p } = useCheckoutTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(p), [p]);
 
   const photo = vehicle.featuredImage || vehicle.images?.[0]?.imageUrl || null;
@@ -57,14 +59,14 @@ export default function CheckoutTripCard({
     .join(" · ");
 
   const status: { tone: "ready" | "busy" | "warn" | "loading"; text: string } = availabilityLoading
-    ? { tone: "loading", text: "Đang kiểm tra lịch trống…" }
+    ? { tone: "loading", text: t("mobile:checkout.trip.statusLoading") }
     : availabilityError
-      ? { tone: "warn", text: "Chưa tải được lịch xe" }
+      ? { tone: "warn", text: t("mobile:checkout.trip.statusError") }
       : overlapped
-        ? { tone: "busy", text: "Xe đã bận trong khoảng này" }
+        ? { tone: "busy", text: t("mobile:checkout.trip.statusBusy") }
         : days <= 0
-          ? { tone: "warn", text: "Chọn ngày nhận & trả xe" }
-          : { tone: "ready", text: "Xe còn trống" };
+          ? { tone: "warn", text: t("mobile:checkout.trip.statusNoPeriod") }
+          : { tone: "ready", text: t("mobile:checkout.trip.statusReady") };
 
   const tone =
     status.tone === "ready"
@@ -75,14 +77,14 @@ export default function CheckoutTripCard({
           ? { fg: p.warning, bg: p.warningSoft, border: p.warningBorder }
           : { fg: p.brand, bg: p.brandSoft, border: p.brandBorder };
 
-  const subtitle = days > 0 ? `${days} ngày thuê` : "Chọn thời gian nhận và trả xe";
+  const subtitle = days > 0 ? t("mobile:checkout.trip.subtitleDays", { days }) : t("mobile:checkout.trip.subtitleNoPeriod");
 
   return (
     <View style={styles.card}>
       <CheckoutSectionHeader
         icon={VehicleIcon}
         subtitle={subtitle}
-        title="Chuyến đi"
+        title={t("mobile:navigation.trips")}
       />
 
       <View style={styles.vehicle}>
@@ -110,7 +112,7 @@ export default function CheckoutTripCard({
           <View style={styles.areaRow}>
             <MapPin color={p.muted} size={12} strokeWidth={2.1} />
             <AppText style={styles.area} numberOfLines={1}>
-              {vehicle.areaName || vehicle.address || "Chưa cập nhật khu vực"}
+              {vehicle.areaName || vehicle.address || t("common:areaUpdating")}
             </AppText>
           </View>
         </View>
@@ -119,7 +121,7 @@ export default function CheckoutTripCard({
           <AppText style={styles.price} numberOfLines={1}>
             {formatVnd(dailyPrice)}
           </AppText>
-          <AppText style={styles.priceUnit}>/ngày</AppText>
+          <AppText style={styles.priceUnit}>{t("mobile:checkout.trip.perDay")}</AppText>
         </View>
       </View>
 
@@ -141,28 +143,28 @@ export default function CheckoutTripCard({
       <View style={styles.divider} />
 
       <Pressable
-        accessibilityHint="Mở lịch chọn ngày và giờ nhận trả xe"
-        accessibilityLabel="Thời gian thuê"
+        accessibilityHint={t("mobile:checkout.trip.periodAriaHint")}
+        accessibilityLabel={t("booking:detail.rentalDuration")}
         accessibilityRole="button"
         onPress={onOpenPeriod}
         style={({ pressed }) => [styles.period, pressed && styles.pressed]}
       >
         <View style={styles.periodHead}>
-          <AppText style={styles.periodTitle}>Thời gian thuê</AppText>
+          <AppText style={styles.periodTitle}>{t("booking:detail.rentalDuration")}</AppText>
           <View style={styles.editPill}>
             <Clock3 color={p.brand} size={12} strokeWidth={2.2} />
-            <AppText style={styles.editText}>Đổi</AppText>
+            <AppText style={styles.editText}>{t("mobile:checkout.trip.edit")}</AppText>
           </View>
         </View>
 
         <View style={styles.periodRow}>
           <View style={styles.periodCol}>
-            <AppText style={styles.periodLabel}>Nhận xe</AppText>
+            <AppText style={styles.periodLabel}>{t("booking:detail.pickup")}</AppText>
             <AppText style={[styles.periodDate, !startDate && styles.periodPlaceholder]} numberOfLines={1}>
-              {startDate ? formatCheckoutDate(startDate) : "Chọn ngày"}
+              {startDate ? formatCheckoutDate(startDate) : t("mobile:checkout.trip.datePlaceholder")}
             </AppText>
             <AppText style={styles.periodMeta} numberOfLines={1}>
-              {startDate ? formatCheckoutMeta(startDate) : "Chọn giờ"}
+              {startDate ? formatCheckoutMeta(startDate) : t("mobile:checkout.trip.timePlaceholder")}
             </AppText>
           </View>
 
@@ -171,12 +173,12 @@ export default function CheckoutTripCard({
           </View>
 
           <View style={styles.periodCol}>
-            <AppText style={styles.periodLabel}>Trả xe</AppText>
+            <AppText style={styles.periodLabel}>{t("booking:detail.return")}</AppText>
             <AppText style={[styles.periodDate, !endDate && styles.periodPlaceholder]} numberOfLines={1}>
-              {endDate ? formatCheckoutDate(endDate) : "Chọn ngày"}
+              {endDate ? formatCheckoutDate(endDate) : t("mobile:checkout.trip.datePlaceholder")}
             </AppText>
             <AppText style={styles.periodMeta} numberOfLines={1}>
-              {endDate ? formatCheckoutMeta(endDate) : "Chọn giờ"}
+              {endDate ? formatCheckoutMeta(endDate) : t("mobile:checkout.trip.timePlaceholder")}
             </AppText>
           </View>
 
@@ -188,18 +190,17 @@ export default function CheckoutTripCard({
         <View style={styles.nextBox}>
           <View style={styles.nextHead}>
             <Sparkles color={p.warning} size={15} strokeWidth={2.1} />
-            <AppText style={styles.nextTitle}>Xe trống từ ngày khác</AppText>
+            <AppText style={styles.nextTitle}>{t("mobile:checkout.trip.nextAvailableTitle")}</AppText>
           </View>
           <AppText style={styles.nextText}>
-            Xe có thể thuê từ {new Date(nextAvailableDate).toLocaleDateString("vi-VN")}. Giữ nguyên số ngày
-            thuê hiện tại.
+            {t("mobile:checkout.trip.nextAvailableBody", { date: new Date(nextAvailableDate).toLocaleDateString("vi-VN") })}
           </AppText>
           <Pressable
             accessibilityRole="button"
             onPress={onApplyNextAvailable}
             style={({ pressed }) => [styles.nextButton, pressed && styles.pressed]}
           >
-            <AppText style={styles.nextButtonText}>Dùng ngày này</AppText>
+            <AppText style={styles.nextButtonText}>{t("mobile:checkout.trip.nextAvailableApply")}</AppText>
           </Pressable>
         </View>
       ) : null}

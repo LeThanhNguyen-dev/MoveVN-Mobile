@@ -1,0 +1,136 @@
+{
+  "vehicleDetail": {
+    "screen": {
+      "titleFallback": "Vehicle details",
+      "loadErrorTitle": "Couldn't load vehicle details",
+      "loadErrorBody": "Please check your connection and try again.",
+      "shareMessage": "{{title}} on MoveVN",
+      "addressFallback": "Address not updated yet",
+      "pageNote": "Information provided by the owner. Prices and surcharges may change depending on the rental period."
+    },
+    "hero": {
+      "viewPhotoAria": "View photo {{index}} of {{total}} for this vehicle",
+      "noPhotos": "This vehicle has no photos yet",
+      "shareAria": "Share vehicle",
+      "viewAllAria": "View all {{total}} photos",
+      "viewAll": "View {{total}} photos"
+    },
+    "about": {
+      "title": "About this vehicle",
+      "empty": "The owner hasn't added a description for this vehicle yet.",
+      "showMore": "Show more"
+    },
+    "features": {
+      "title": "Features",
+      "empty": "No features added yet."
+    },
+    "availability": {
+      "idleTitle": "Choose dates to check availability",
+      "loadingTitle": "Checking vehicle availability…",
+      "busyTitle": "The vehicle is booked for this period",
+      "errorTitle": "Couldn't check availability",
+      "readyTitle": "Available · {{range}}",
+      "idleSubtitle": "The vehicle may still be free for your dates",
+      "loadingSubtitle": "Please wait a moment",
+      "busySubtitle": "Choose a different date range to continue",
+      "errorSubtitle": "Try again to see if the vehicle is free",
+      "readySubtitle": "No overlap with the vehicle's current bookings",
+      "choose": "Choose",
+      "change": "Change",
+      "changeDates": "Change dates"
+    },
+    "dock": {
+      "selectDates": "Select rental dates",
+      "checking": "Checking…",
+      "recheckCalendar": "Check availability again",
+      "changeDates": "Change rental dates",
+      "bookNow": "Book now",
+      "calculating": "Calculating price…",
+      "totalDays": "{{days}} days total",
+      "savings": "Save {{amount}}đ (−{{percent}}%)",
+      "busyHint": "The vehicle is booked for these dates",
+      "availabilityErrorHint": "Couldn't check vehicle availability",
+      "totalHint": "Excludes delivery and surcharges",
+      "selectDatesHint": "Select dates to see the total",
+      "pickDatesHint": "Select pick-up and return dates"
+    },
+    "unit": {
+      "perDay": "/day"
+    },
+    "rental": {
+      "title": "Dates & pricing",
+      "pickupAria": "Select pick-up date",
+      "returnAria": "Select return date",
+      "swapAria": "Change pick-up and return dates",
+      "hint": "Select pick-up and return dates to see the exact price.",
+      "loading": "Calculating daily prices…",
+      "error": "Couldn't get a quote for these dates.",
+      "retryQuoteAria": "Retry quote",
+      "rentalLine": "Rental ({{days}} days)",
+      "discountLine": "Long-rental discount ({{percent}}%)",
+      "subtotal": "Subtotal",
+      "collapseDaily": "Hide daily pricing",
+      "expandDaily": "See daily pricing",
+      "footnote": "Excludes delivery fees and any surcharges"
+    },
+    "policies": {
+      "title": "Policies & fees",
+      "deliveryTitle": "Doorstep delivery",
+      "deliveryFree": "Free for the first {{km}} km",
+      "deliveryByDistance": "By distance",
+      "deliveryPerKm": "{{price}}/extra km · up to {{max}} km",
+      "deliveryWithin": "Available within {{max}} km",
+      "depositTitle": "Deposit",
+      "depositPercent": "{{percent}}% of rental price",
+      "depositSub": "Based on the booking value",
+      "depositNoPrepay": "No upfront deposit needed",
+      "collateralTitle": "Security collateral",
+      "collateralAgreed": "By agreement",
+      "collateralSub": "Collateral collected at pick-up",
+      "collateralNone": "No asset collateral required",
+      "surchargeTitle": "Surcharges",
+      "surchargeCount": "{{count}} items",
+      "surchargeNone": "None",
+      "surchargeSub": "Tap to see each item",
+      "surchargeNoExtra": "No extra charges",
+      "surchargeAria": "View surcharge details",
+      "closeSurchargeAria": "Close surcharge details",
+      "sheetTitle": "Surcharges & policies",
+      "sheetSubtitle": "Charges that may apply during the rental"
+    },
+    "reviews": {
+      "all": "See all",
+      "allAria": "See all {{count}} reviews",
+      "title": "Reviews from renters",
+      "count": "{{count}} reviews",
+      "hint": "Feedback from previous renters",
+      "loading": "Loading reviews…",
+      "error": "Couldn't load reviews.",
+      "retryAria": "Retry reviews",
+      "emptyText": "This vehicle has no reviews from renters yet.",
+      "closeAria": "Close reviews",
+      "anonymous": "Renter",
+      "profileAria": "View {{name}}'s profile",
+      "noComment": "The renter left no comment.",
+      "ratingError": "Couldn't load ratings"
+    },
+    "summary": {
+      "year": "Year",
+      "odometer": "Mileage",
+      "type": "Vehicle type",
+      "collateral": "Collateral",
+      "free": "Waived",
+      "priceNote": "Excludes fees"
+    },
+    "owner": {
+      "fallback": "Not updated",
+      "role": "Owner",
+      "profileSuffix": " · View profile",
+      "profileAria": "View owner {{name}}'s profile"
+    },
+    "pricing": {
+      "selectDate": "Select a date",
+      "tapToSelect": "Tap to choose"
+    }
+  }
+}

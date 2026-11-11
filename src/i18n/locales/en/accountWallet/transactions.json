@@ -1,0 +1,31 @@
+{
+  "tx": {
+    "title": "Wallet transaction history",
+    "count": "{{count}} transactions",
+    "empty": "No transactions yet.",
+    "loadMore": "Load more"
+  },
+  "withdrawals": {
+    "title": "Withdrawal request history",
+    "empty": "No withdrawal requests yet.",
+    "requestedAt": "Requested at: {{date}}",
+    "cancel": "Cancel",
+    "toAccount": "To account:",
+    "note": "Note: {{note}}",
+    "bankRef": "Bank transaction reference:"
+  },
+  "types": {
+    "TopUp": "Top up",
+    "BookingEarning": "Rental earnings",
+    "Refund": "Refund",
+    "PayoutReversal": "Withdrawal cancelled",
+    "DisputeCompensation": "Dispute compensation",
+    "PlatformFeeRevenue": "Platform fee revenue",
+    "AdminAdjust": "System adjustment",
+    "BookingPayment": "Deposit payment",
+    "Withdrawal": "Withdrawal",
+    "Penalty": "Penalty fee",
+    "PlatformFee": "Platform fee",
+    "BookingEarningReversal": "Duplicate payout reversal"
+  }
+}

@@ -14,6 +14,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppText from "@/components/AppText";
 import SurchargePolicySummary from "@/features/vehicles/components/SurchargePolicySummary";
@@ -38,6 +39,7 @@ export default function VehiclePoliciesCard({
   securityDepositAmount,
   surchargePolicies,
 }: Props) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(p), [p]);
   const insets = useSafeAreaInsets();
@@ -47,48 +49,79 @@ export default function VehiclePoliciesCard({
   return (
     <>
       <View style={styles.card}>
-        <DetailSectionHeader icon={ShieldCheck} title="Chính sách & phí" tone="mint" />
+        <DetailSectionHeader
+          icon={ShieldCheck}
+          title={t("mobile:vehicleDetail.policies.title")}
+          tone="mint"
+        />
 
         <View style={styles.list}>
           <PolicyRow
             icon={Truck}
-            title="Giao xe tận nơi"
-            value={delivery.freeKm > 0 ? `Miễn phí ${delivery.freeKm} km đầu` : "Theo khoảng cách"}
+            title={t("mobile:vehicleDetail.policies.deliveryTitle")}
+            value={
+              delivery.freeKm > 0
+                ? t("mobile:vehicleDetail.policies.deliveryFree", { km: delivery.freeKm })
+                : t("mobile:vehicleDetail.policies.deliveryByDistance")
+            }
             sub={
               delivery.perKm > 0
-                ? `${formatVnd(delivery.perKm)}/km vượt · tối đa ${delivery.maxKm} km`
-                : `Áp dụng trong phạm vi ${delivery.maxKm} km`
+                ? t("mobile:vehicleDetail.policies.deliveryPerKm", {
+                    price: formatVnd(delivery.perKm),
+                    max: delivery.maxKm,
+                  })
+                : t("mobile:vehicleDetail.policies.deliveryWithin", { max: delivery.maxKm })
             }
             tone={delivery.freeKm > 0 ? "mint" : "default"}
           />
           <PolicyRow
             icon={ReceiptText}
-            title="Đặt cọc"
-            value={depositPercent > 0 ? `${depositPercent}% tiền thuê` : "Không yêu cầu"}
-            sub={depositPercent > 0 ? "Theo giá trị đơn thuê" : "Không cần đặt cọc trước"}
+            title={t("mobile:vehicleDetail.policies.depositTitle")}
+            value={
+              depositPercent > 0
+                ? t("mobile:vehicleDetail.policies.depositPercent", { percent: depositPercent })
+                : t("vehicleDetail:pricing.notRequired")
+            }
+            sub={
+              depositPercent > 0
+                ? t("mobile:vehicleDetail.policies.depositSub")
+                : t("mobile:vehicleDetail.policies.depositNoPrepay")
+            }
             tone={depositPercent > 0 ? "default" : "mint"}
           />
           <PolicyRow
             icon={ShieldCheck}
-            title="Tiền thế chấp"
+            title={t("mobile:vehicleDetail.policies.collateralTitle")}
             value={
               securityRequiresDeposit
                 ? securityDepositAmount > 0
                   ? formatVnd(securityDepositAmount)
-                  : "Theo thoả thuận"
-                : "Không yêu cầu"
+                  : t("mobile:vehicleDetail.policies.collateralAgreed")
+                : t("vehicleDetail:pricing.notRequired")
             }
-            sub={securityRequiresDeposit ? "Khoản thế chấp khi nhận xe" : "Không cần thế chấp tài sản"}
+            sub={
+              securityRequiresDeposit
+                ? t("mobile:vehicleDetail.policies.collateralSub")
+                : t("mobile:vehicleDetail.policies.collateralNone")
+            }
             tone={securityRequiresDeposit ? "default" : "mint"}
           />
           <PolicyRow
             icon={ReceiptText}
-            title="Phụ phí"
-            value={activePolicies.length > 0 ? `${activePolicies.length} khoản` : "Không có"}
-            sub={activePolicies.length > 0 ? "Chạm để xem chi tiết từng khoản" : "Không phát sinh phụ phí"}
+            title={t("mobile:vehicleDetail.policies.surchargeTitle")}
+            value={
+              activePolicies.length > 0
+                ? t("mobile:vehicleDetail.policies.surchargeCount", { count: activePolicies.length })
+                : t("mobile:vehicleDetail.policies.surchargeNone")
+            }
+            sub={
+              activePolicies.length > 0
+                ? t("mobile:vehicleDetail.policies.surchargeSub")
+                : t("mobile:vehicleDetail.policies.surchargeNoExtra")
+            }
             tone={activePolicies.length > 0 ? "default" : "mint"}
             onPress={activePolicies.length > 0 ? () => setSurchargeOpen(true) : undefined}
-            accessibilityLabel="Xem chi tiết phụ phí"
+            accessibilityLabel={t("mobile:vehicleDetail.policies.surchargeAria")}
           />
         </View>
       </View>
@@ -101,7 +134,7 @@ export default function VehiclePoliciesCard({
       >
         <View style={styles.backdrop}>
           <Pressable
-            accessibilityLabel="Đóng chi tiết phụ phí"
+            accessibilityLabel={t("mobile:vehicleDetail.policies.closeSurchargeAria")}
             accessibilityRole="button"
             onPress={() => setSurchargeOpen(false)}
             style={StyleSheet.absoluteFill}
@@ -110,11 +143,15 @@ export default function VehiclePoliciesCard({
             <View style={styles.sheetHandle} />
             <View style={styles.sheetHead}>
               <View style={styles.sheetTitleWrap}>
-                <AppText style={styles.sheetTitle}>Phụ phí & chính sách</AppText>
-                <AppText style={styles.sheetSub}>Các khoản có thể phát sinh khi thuê xe</AppText>
+                <AppText style={styles.sheetTitle}>
+                  {t("mobile:vehicleDetail.policies.sheetTitle")}
+                </AppText>
+                <AppText style={styles.sheetSub}>
+                  {t("mobile:vehicleDetail.policies.sheetSubtitle")}
+                </AppText>
               </View>
               <Pressable
-                accessibilityLabel="Đóng"
+                accessibilityLabel={t("common:closeAction")}
                 accessibilityRole="button"
                 hitSlop={8}
                 onPress={() => setSurchargeOpen(false)}

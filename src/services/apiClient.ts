@@ -3,6 +3,7 @@ import axios, { AxiosError, AxiosHeaders, type InternalAxiosRequestConfig } from
 import { getConfiguredApiBaseUrl } from "@/config/apiConfig";
 import { clearSession, getRefreshToken, getToken, setSession, getSessionGeneration } from "@/features/auth/hooks/useAuth";
 import type { ApiResponse, AuthResponse } from "@/features/auth/types";
+import i18n from "@/i18n";
 import { endpoints } from "@/services/endpoints";
 
 export function getApiBaseUrl() {
@@ -24,6 +25,17 @@ export const bareApiClient = axios.create({
     Accept: "application/json",
   },
 });
+
+// Backend resolve ngôn ngữ từ ?lang rồi Accept-Language; đọc i18n mỗi request
+// để đổi ngôn ngữ không cần restart app.
+function applyAcceptLanguage(config: InternalAxiosRequestConfig) {
+  const headers = AxiosHeaders.from(config.headers);
+  headers.set("Accept-Language", i18n.resolvedLanguage === "en" ? "en" : "vi");
+  config.headers = headers;
+  return config;
+}
+
+bareApiClient.interceptors.request.use(applyAcceptLanguage);
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
@@ -79,6 +91,7 @@ export async function refreshAuthSession() {
 }
 
 apiClient.interceptors.request.use((config) => {
+  applyAcceptLanguage(config);
   const retryable = config as RetryableRequestConfig;
   if (retryable._generation !== undefined && retryable._generation !== getSessionGeneration()) {
     throw new axios.CanceledError("Session changed.");

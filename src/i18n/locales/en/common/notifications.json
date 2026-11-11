@@ -1,0 +1,43 @@
+{
+  "notifications": {
+    "justNow": "Just now",
+    "minutesAgo": "{{total}} min ago",
+    "hoursAgo": "{{total}} hr ago",
+    "categories": {
+      "support": "Support",
+      "availability": "Availability",
+      "dispute": "Safety & disputes",
+      "payment": "Payment",
+      "booking": "Rental trip",
+      "system": "System"
+    },
+    "overdue": "Overdue alert",
+    "loadError": "Couldn't load notifications.",
+    "markAllError": "Couldn't mark as read. Please try again.",
+    "triggerAria": "Notifications",
+    "unreadCount": "{{total}} unread notifications",
+    "title": "Notifications",
+    "titleAll": "All notifications",
+    "unreadSummary": "You have {{total}} unread notifications",
+    "allRead": "You're all caught up",
+    "closeAria": "Close notifications",
+    "filterGroup": "Filter notifications",
+    "filter": {
+      "all": "All",
+      "unread": "Unread"
+    },
+    "markAll": "Mark all read",
+    "loading": "Loading notifications...",
+    "retry": "Retry",
+    "emptyUnread": "No unread notifications left",
+    "emptyAll": "No notifications yet",
+    "emptyHint": "Rental and support updates will appear here.",
+    "unreadSuffix": ", unread",
+    "viewAll": "View all notifications",
+    "collapse": "Collapse",
+    "paginationGroup": "Notification pagination",
+    "page": "Page {{page}} / {{total}}",
+    "prevPage": "Previous notifications page",
+    "nextPage": "Next notifications page"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "polling": {
+    "checking": "Đang kiểm tra kết quả thanh toán từ PayOS...",
+    "cancelled": "Giao dịch thanh toán đã bị hủy.",
+    "expired": "Giao dịch đã hết hạn hoặc thất bại.",
+    "noConfirmation": "Không nhận được xác nhận. Vui lòng kiểm tra lại sau.",
+    "checkFailed": "Không thể kiểm tra trạng thái thanh toán."
+  },
+  "toast": {
+    "successTitle": "Thành công",
+    "noticeTitle": "Thông báo",
+    "timeoutTitle": "Hết thời gian",
+    "errorTitle": "Lỗi",
+    "confirmTitle": "Xác nhận"
+  }
+}

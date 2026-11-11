@@ -1,6 +1,7 @@
 import { TicketPercent } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
@@ -30,6 +31,7 @@ function VoucherTicketStub({
   hideIcon = false,
 }: VoucherTicketStubProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
@@ -43,7 +45,7 @@ function VoucherTicketStub({
         />
       ) : null}
       <AppText style={styles.stubLabel}>{topLabel}</AppText>
-      <AppText style={styles.stubHint}>GIẢM</AppText>
+      <AppText style={styles.stubHint}>{t("promo:voucherCard.discountLabel")}</AppText>
       <AppText style={styles.stubValue} numberOfLines={1}>
         {formatVoucherStub(discountType, discountValue)}
       </AppText>

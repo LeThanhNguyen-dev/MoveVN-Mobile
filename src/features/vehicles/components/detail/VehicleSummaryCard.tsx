@@ -10,9 +10,10 @@ import {
 } from "lucide-react-native";
 import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import type { VehicleResponse } from "@/features/vehicles/types";
-import { formatVnd, vehicleTypeLabel } from "@/features/vehicles/ownerDisplay";
+import { formatVnd } from "@/features/vehicles/ownerDisplay";
 import { detailFont, useDetailTheme } from "./detailTheme";
 
 type Props = {
@@ -37,10 +38,12 @@ export default function VehicleSummaryCard({
   reviewCount,
   reviewState,
 }: Props) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(p), [p]);
 
-  const kicker = [vehicle.brandName, vehicle.variantName || vehicleTypeLabel(vehicle.vehicleType)]
+  const typeLabel = t(vehicle.vehicleType === "Car" ? "common:car" : "common:motorbike");
+  const kicker = [vehicle.brandName, vehicle.variantName || typeLabel]
     .filter(Boolean)
     .join(" · ");
   const displayTitle =
@@ -49,23 +52,33 @@ export default function VehicleSummaryCard({
   const VehicleIcon = vehicle.vehicleType === "Car" ? Car : Bike;
   const freeSecurity = !vehicle.securityRequiresDeposit;
   const securityValue = freeSecurity
-    ? "Miễn"
+    ? t("mobile:vehicleDetail.summary.free")
     : vehicle.securityDepositAmount != null && vehicle.securityDepositAmount > 0
       ? formatVnd(vehicle.securityDepositAmount)
-      : "Theo thoả thuận";
+      : t("mobile:vehicleDetail.policies.collateralAgreed");
 
   const facts: Fact[] = [
-    { icon: CalendarDays, label: "Năm SX", value: vehicle.year ? String(vehicle.year) : "—", tone: "brand" },
+    {
+      icon: CalendarDays,
+      label: t("mobile:vehicleDetail.summary.year"),
+      value: vehicle.year ? String(vehicle.year) : "—",
+      tone: "brand",
+    },
     {
       icon: Gauge,
-      label: "Đã đi",
+      label: t("mobile:vehicleDetail.summary.odometer"),
       value: vehicle.odometerKm != null ? `${vehicle.odometerKm.toLocaleString("vi-VN")} km` : "—",
       tone: "brand",
     },
-    { icon: VehicleIcon, label: "Loại xe", value: vehicleTypeLabel(vehicle.vehicleType), tone: "brand" },
+    {
+      icon: VehicleIcon,
+      label: t("mobile:vehicleDetail.summary.type"),
+      value: typeLabel,
+      tone: "brand",
+    },
     {
       icon: ShieldCheck,
-      label: "Thế chấp",
+      label: t("mobile:vehicleDetail.summary.collateral"),
       value: securityValue,
       tone: freeSecurity ? "mint" : "brand",
     },
@@ -75,10 +88,10 @@ export default function VehicleSummaryCard({
     averageRating != null
       ? `${averageRating.toFixed(1)} (${reviewCount})`
       : reviewState === "loading"
-        ? "Đang tải đánh giá…"
+        ? t("mobile:vehicleDetail.reviews.loading")
         : reviewState === "error"
-          ? "Chưa tải được đánh giá"
-          : "Chưa có đánh giá";
+          ? t("mobile:vehicleDetail.reviews.ratingError")
+          : t("common:noReviews");
 
   return (
     <View style={styles.card}>
@@ -94,7 +107,7 @@ export default function VehicleSummaryCard({
             <View style={styles.metaItem}>
               <MapPin color={p.muted} size={12} strokeWidth={2.1} />
               <AppText style={styles.metaText} numberOfLines={1}>
-                {vehicle.areaName || "Chưa cập nhật khu vực"}
+                {vehicle.areaName || t("common:areaUpdating")}
               </AppText>
             </View>
             <View style={styles.dot} />
@@ -111,8 +124,8 @@ export default function VehicleSummaryCard({
           <AppText style={styles.price} numberOfLines={1}>
             {formatVnd(dailyPrice)}
           </AppText>
-          <AppText style={styles.unit}>/ngày</AppText>
-          <AppText style={styles.priceNote}>Chưa gồm phí</AppText>
+          <AppText style={styles.unit}>{t("mobile:vehicleDetail.unit.perDay")}</AppText>
+          <AppText style={styles.priceNote}>{t("mobile:vehicleDetail.summary.priceNote")}</AppText>
         </View>
       </View>
 

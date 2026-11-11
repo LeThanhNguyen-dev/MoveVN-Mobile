@@ -1,0 +1,10 @@
+{
+  "reviews": {
+    "title": "Đánh giá khách hàng",
+    "summary": "{{rating}} ({{total}} đánh giá)",
+    "loadMore": "Xem thêm đánh giá",
+    "empty": "Chưa có đánh giá nào.",
+    "replySavedTitle": "Đã lưu phản hồi",
+    "replySavedMessage": "Phản hồi đánh giá đã được cập nhật."
+  }
+}

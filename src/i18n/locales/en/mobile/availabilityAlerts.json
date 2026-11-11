@@ -1,0 +1,41 @@
+{
+  "availabilityAlerts": {
+    "center": {
+      "title": "Availability alerts",
+      "closeAria": "Close availability alerts"
+    },
+    "status": {
+      "active": "Watching",
+      "notified": "Notified",
+      "cancelled": "Cancelled",
+      "expired": "Expired",
+      "booked": "Booked"
+    },
+    "list": {
+      "intro": "MoveVN notifies you in the app once when the whole rental period becomes available. Alerts don't hold the vehicle; availability is checked again when you book.",
+      "loadError": "Could not load your alerts.",
+      "empty": "No alerts yet. Open a vehicle and choose “Get notified when available”.",
+      "viewVehicle": "View vehicle",
+      "cancelError": "Could not cancel the alert.",
+      "unwatch": "Stop watching"
+    },
+    "panel": {
+      "toggle": "Get notified when available",
+      "intro": "Pick the dates and times you want, even if the vehicle is busy. MoveVN notifies you in the app once when the whole rental period is free. Alerts don't hold the vehicle.",
+      "periodHint": "Tap to pick dates · Vietnam time",
+      "saved": "You're now watching this rental period.",
+      "registerError": "Could not register the alert.",
+      "subscribe": "Watch this period",
+      "manage": "View and cancel my alerts →"
+    },
+    "errors": {
+      "period": "Choose a pickup date in the future and a return date after pickup.",
+      "invalidPageOrVehicle": "Invalid page or vehicle ID.",
+      "invalidList": "Could not load a valid alert list. Please try again.",
+      "invalidVehicle": "Invalid vehicle ID.",
+      "registerUnconfirmed": "The server did not confirm the registration. Please refresh the alert list.",
+      "invalidRegistration": "Invalid alert ID.",
+      "cancelUnconfirmed": "The server did not confirm the cancellation. Please try again."
+    }
+  }
+}

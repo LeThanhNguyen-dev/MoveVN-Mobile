@@ -1,3 +1,5 @@
+import i18n from "@/i18n";
+import { translatedLabels } from "@/i18n/liveLabels";
 import type { BookingResponse, InspectionReportResponse } from "./types";
 
 export type BookingRole = "Owner" | "Customer";
@@ -5,11 +7,28 @@ export type InspectionType = "CheckIn" | "CheckOut";
 export const MAX_INSPECTION_PHOTOS = 12;
 export const MAX_INSPECTION_PHOTO_BYTES = 5 * 1024 * 1024;
 
-export const BOOKING_STATUS_LABELS: Record<string, string> = {
-  Pending: "Chờ duyệt", Approved: "Chờ đặt cọc", DepositPaid: "Đã đặt cọc",
-  Confirmed: "Đã xác nhận", InProgress: "Đang thuê", Returning: "Đang trả xe", Returned: "Chờ chủ xe nhận lại", Completed: "Hoàn thành",
-  Rejected: "Đã từ chối", Cancelled: "Đã hủy",
-};
+// Three statuses read differently on this screen than in the shared booking labels,
+// so they live in the mobile namespace. Both maps expose lazy getters; copying the
+// property descriptors (not the values) keeps them resolving on each read.
+const sharedStatusLabels = translatedLabels("booking", {
+  Pending: "status.pending",
+  DepositPaid: "status.depositPaid",
+  Confirmed: "status.confirmed",
+  Returning: "status.returning",
+  Completed: "status.completed",
+  Rejected: "status.rejected",
+  Cancelled: "status.cancelled",
+});
+const mobileStatusLabels = translatedLabels("mobile", {
+  Approved: "trip.status.approved",
+  InProgress: "trip.status.inProgress",
+  Returned: "trip.status.returned",
+});
+
+export const BOOKING_STATUS_LABELS: Record<string, string> = Object.defineProperties(
+  sharedStatusLabels,
+  Object.getOwnPropertyDescriptors(mobileStatusLabels),
+) as Record<string, string>;
 
 export function parseServerDate(value: string): Date {
   // PostgreSQL DateTime values can arrive without a zone; the API stores UTC.
@@ -29,7 +48,7 @@ export function formatMoney(value: number): string {
 }
 
 export function inspectionLabel(type: InspectionType): string {
-  return type === "CheckIn" ? "Check-in · Nhận xe" : "Check-out · Trả xe";
+  return i18n.t(type === "CheckIn" ? "mobile:trip.display.checkIn" : "mobile:trip.display.checkOut");
 }
 
 export function inspectionWatermark(bookingCode: string, type: InspectionType, capturedAt: string): string[] {
@@ -55,11 +74,11 @@ export function inspectionAvailability(
 }
 
 export function validateInspectionFields(odometer: string, damageNoted: boolean, description: string, photoCount: number): string | null {
-  if (photoCount < 1 || photoCount > MAX_INSPECTION_PHOTOS) return "Cần chụp từ 1 đến 12 ảnh xe.";
+  if (photoCount < 1 || photoCount > MAX_INSPECTION_PHOTOS) return i18n.t("mobile:trip.display.photoCount");
   if (odometer.trim() && (!/^\d+$/.test(odometer.trim()) || Number(odometer) > 2147483647)) {
-    return "Số km phải là số nguyên không âm hợp lệ.";
+    return i18n.t("booking:detail.validationOdometerInvalid");
   }
-  if (damageNoted && !description.trim()) return "Vui lòng mô tả hư hại của xe.";
+  if (damageNoted && !description.trim()) return i18n.t("mobile:trip.display.damageDescription");
   return null;
 }
 

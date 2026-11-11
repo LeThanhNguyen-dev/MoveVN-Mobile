@@ -1,0 +1,29 @@
+{
+  "sessions": {
+    "deviceUnknown": "Unknown device",
+    "browserFallback": "Browser",
+    "osUnknown": "unknown device",
+    "deviceLabel": "{{browser}} on {{os}}",
+    "loadError": "Unable to load login sessions.",
+    "confirmRevoke": "Are you sure you want to sign out this device?",
+    "revokedTitle": "Device signed out",
+    "revokedMessage": "The login session on this device has been revoked.",
+    "revokeError": "Unable to revoke the login session.",
+    "confirmRevokeOthers": "Sign out all other devices?",
+    "revokedOthersTitle": "Other devices signed out",
+    "revokedOthersMessage": "Your account is now active on this device only.",
+    "revokeOthersError": "Unable to revoke the other login sessions.",
+    "backOverview": "Back to overview",
+    "title": "Login sessions",
+    "subtitle": "Review and sign out devices that are accessing your account.",
+    "revokeOthers": "Sign out other devices",
+    "empty": "No new login session data yet.",
+    "thisDevice": "This device",
+    "expired": "Signed out",
+    "ip": "IP: {{ip}}",
+    "ipUnknown": "Unknown",
+    "signedInAt": "Signed in at {{date}}",
+    "signOut": "Sign out",
+    "refresh": "Refresh"
+  }
+}

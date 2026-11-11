@@ -1,0 +1,21 @@
+{
+  "notes": {
+    "bookingEarning": "Earnings from booking {{code}}: +{{amount}} (Platform fee: {{fee}})",
+    "platformFee": "Platform fee from booking {{code}}: {{fee}} (Owner receives: {{ownerAmount}})",
+    "cancelCompensation": "Compensation for the customer cancelling booking {{code}}",
+    "depositRefund": "Refund of {{percent}}% of the deposit for booking {{code}}",
+    "cancelRefund": "Customer cancelled the booking: {{percent}}% of the deposit refunded.",
+    "walletDepositBooking": "Deposit paid with the wallet for booking {{code}}",
+    "depositPayment": "Deposit payment for booking {{code}}",
+    "awaitingExtraDeposit": "Awaiting the extra deposit for the contract extension of booking {{code}}",
+    "extraDeposit": "Extra deposit payment for the extension of booking {{code}}",
+    "extraDepositPayOS": "Extra deposit payment of {{amount}} for the contract extension (PayOS).",
+    "unallocatedRefund": "Received {{received}} (expected {{expected}}) but it could not be allocated to escrow; the money was paid into the wallet.",
+    "topUpPayOS": "Top-up via PayOS",
+    "walletDeposit": "Deposit paid with the MoveVN wallet",
+    "autoCancelConflict": "Automatically cancelled by the system due to a schedule conflict",
+    "replaceWithWallet": "Replaced by a MoveVN wallet deposit payment",
+    "expiredRefund": "The booking expired or the vehicle schedule did not meet the 60-minute buffer; the money was refunded to the customer's wallet.",
+    "escrowClosedRefund": "Payment was received via PayOS but the booking escrow is closed; the money was refunded to the customer's wallet."
+  }
+}

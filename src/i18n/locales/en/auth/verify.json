@@ -1,0 +1,34 @@
+{
+  "forgot": {
+    "title": "Forgot password",
+    "description": "Enter your account email to receive a password reset OTP.",
+    "submit": "Send OTP",
+    "backToLogin": "Back to sign in",
+    "successTitle": "OTP sent",
+    "successMessage": "Please check your email to reset your password."
+  },
+  "reset": {
+    "title": "Reset password",
+    "description": "Enter the OTP and a new password for your MoveVN account.",
+    "passwordLabel": "New password",
+    "submit": "Reset password",
+    "resendOtp": "Resend OTP",
+    "backToLogin": "Back to sign in",
+    "successTitle": "Password reset successful",
+    "successMessage": "You can now sign in with your new password.",
+    "resendTitle": "OTP resent",
+    "resendMessage": "Please check your email."
+  },
+  "verify": {
+    "title": "Verify email",
+    "description": "Enter the 6-digit OTP MoveVN sent to your email.",
+    "submit": "Verify",
+    "resendOtp": "Resend OTP",
+    "alreadyVerified": "Already verified?",
+    "login": "Sign in",
+    "successTitle": "Verification successful",
+    "successMessage": "You can now sign in to MoveVN.",
+    "resendTitle": "OTP resent",
+    "resendMessage": "Please check your inbox."
+  }
+}

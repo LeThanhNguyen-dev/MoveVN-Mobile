@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, ShieldCheck } from "lucide-react-native";
 
 import type { Theme } from "@/theme/tokens";
@@ -16,17 +17,18 @@ export function getRiskLevel(score?: number | null): RiskLevel {
 }
 
 export default function RiskScoreBadge({ score }: { score?: number | null }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const level = getRiskLevel(score);
-  const label = level === "Unknown" ? "Chưa đánh giá" : `${Math.round(score!)}/100`;
+  const label = level === "Unknown" ? t("booking:risk.unrated") : `${Math.round(score!)}/100`;
   const Icon = level === "Low" ? ShieldCheck : AlertTriangle;
   const tone =
     level === "Low" ? styles.low : level === "Medium" ? styles.medium : level === "High" ? styles.high : styles.unknown;
   const iconColor =
     level === "Low" ? theme.success : level === "Medium" ? "#D97706" : level === "High" ? theme.danger : theme.muted;
   return (
-    <View accessibilityLabel={level === "Unknown" ? "Chưa đánh giá rủi ro" : `Điểm rủi ro: ${label}`} style={[styles.pill, tone]}>
+    <View accessibilityLabel={level === "Unknown" ? t("booking:risk.unratedTitle") : t("booking:risk.scoreTitle", { label })} style={[styles.pill, tone]}>
       <Icon color={iconColor} size={13} />
       <Text style={[styles.text, { color: iconColor }]}>{label}</Text>
     </View>

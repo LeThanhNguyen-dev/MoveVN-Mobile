@@ -1,0 +1,24 @@
+{
+  "favorites": {
+    "backAria": "Quay lại từ xe yêu thích",
+    "countShowing": "{{count}} xe đang hiển thị",
+    "subtitle": "Những chiếc xe bạn muốn thuê",
+    "refreshAria": "Làm mới xe yêu thích",
+    "retryStateAria": "Thử tải lại trạng thái yêu thích",
+    "retryListAria": "Thử tải lại xe yêu thích",
+    "priceHint": "Giá tham khảo. Mở chi tiết để chọn thời gian và kiểm tra lịch xe.",
+    "loading": "Đang tải xe yêu thích…",
+    "emptyDescription": "Nhấn biểu tượng trái tim trên một chiếc xe để lưu tại đây. Danh sách hiển thị các xe đã được duyệt và còn công khai.",
+    "exploreAria": "Khám phá xe để yêu thích",
+    "loadMoreAria": "Xem thêm xe yêu thích",
+    "saveAria": "Lưu xe yêu thích {{id}}",
+    "loadStateAria": "Tải trạng thái yêu thích xe {{id}}",
+    "alertTitle": "Chưa tải được yêu thích",
+    "alertMessage": "Vui lòng thử lại.",
+    "errorTitle": "Yêu thích",
+    "idsLoadError": "Chưa tải được trạng thái yêu thích. Nhấn để thử lại.",
+    "idsNotReady": "Chưa tải được trạng thái yêu thích.",
+    "removeError": "Chưa bỏ được xe khỏi yêu thích. Vui lòng thử lại.",
+    "saveError": "Chưa lưu được xe. Kiểm tra kết nối và tình trạng xe rồi thử lại."
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "dispute": {
+    "a11y": {
+      "back": "Back to list",
+      "backToAccount": "Back to Account",
+      "backToForm": "Back to the create form",
+      "refresh": "Refresh dispute"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "list": {
+      "clearKeyword": "Clear",
+      "resetCount": "Clear filters ({{count}})",
+      "sectionFine": "Traffic fine case status",
+      "activeKeyword": "Filter: “{{keyword}}”",
+      "adminManaged": "Admin handled",
+      "fineSubmitted": "Awaiting verification",
+      "fineAwaitingCustomer": "Awaiting customer",
+      "fineDisputed": "Customer disputes",
+      "fineAwaitingPayment": "Awaiting documents",
+      "fineAwaitingProof": "Awaiting review",
+      "fineResolved": "Completed",
+      "fineRejected": "Rejected"
+    },
+    "detail": {
+      "infoTitle": "Information",
+      "customerUpper": "CUSTOMER",
+      "ownerUpper": "OWNER",
+      "openedAt": "Opened at {{date}}",
+      "overdue": "Overdue",
+      "refresh": "Refresh",
+      "followUpOverdue": " · Overdue, requires staff/Admin action; do not record as paid.",
+      "responseLabel": "Response content",
+      "pickEvidence": "Choose photos ({{count}}/{{max}})",
+      "removeFile": "Remove",
+      "escalateReasonLabel": "Reason for escalating to Admin (disagree with the resolution)",
+      "escalateReasonPlaceholder": "Reason...",
+      "closeHint": "Tap to close"
+    },
+    "stepper": {
+      "open": "Open",
+      "investigating": "Investigating",
+      "needMoreEvidence": "Evidence",
+      "decision": "Result",
+      "settlement": "Settlement",
+      "done": "✓ Resolved",
+      "escalated": "Escalated to Admin"
+    },
+    "create": {
+      "bookingLabel": "Disputed booking",
+      "bookingEmpty": "No booking selected. Tap the button below to choose one.",
+      "changeBooking": "Choose another booking",
+      "pickBooking": "Choose booking",
+      "depositScope": "Booking deposit",
+      "chooseImages": "Choose photos from library",
+      "validationRequired": "Select a booking and describe the incident.",
+      "confirmTrafficFine": "Check the notice, license plate, violation time and document photos. The case is submitted for verification."
+    },
+    "selectBooking": {
+      "title": "Choose booking",
+      "searchPlaceholder": "Search by booking code...",
+      "hintTrafficFine": "Ongoing and past rentals are both accepted for traffic fines.",
+      "hintCompleted": "Completed / returned bookings only.",
+      "count": "{{count}} bookings",
+      "empty": "No matching bookings.",
+      "picked": "✓ Selected"
+    },
+    "fine": {
+      "legacyDescription": "This case has no notice information or payment documents under the new flow. Create a new traffic fine case with complete information to track it.",
+      "rentalEstimated": "Estimated times/report used.",
+      "paymentModeReimburse": "The customer reimburses exactly what the owner paid for the fine. The owner confirms full receipt.",
+      "paymentModeDirect": "The customer pays the fine directly to the authority and submits the receipt.",
+      "receiptPhotos": " · {{count}} receipt photos",
+      "rejectionReason": "Case rejection reason: {{reason}}.",
+      "dissentReasonLabel": "Reason (required when disputing)",
+      "paidAtLabel": "Payment time (e.g. 2026-10-05 14:30)",
+      "pickProof": "Choose document photos ({{count}}/{{max}})",
+      "proofRequired": "Payment date (YYYY-MM-DD HH:mm), receipt code and 1–6 JPG/PNG/WebP photos (max 5 MB each) are required."
+    },
+    "fineForm": {
+      "violationAtLabel": "Violation time (e.g. 2026-10-01 14:30)",
+      "dueAtLabel": "Notice deadline (e.g. 2026-10-31)",
+      "customerPays": "Customer pays",
+      "reimburseOwner": "Reimburse owner",
+      "ownerPaidAtLabel": "Time the owner paid the fine (e.g. 2026-10-05 09:00)",
+      "pickReceipts": "Choose receipts ({{count}} photos)",
+      "noticeHint": "You must attach photos of the fine notice in the evidence section below.",
+      "errors": {
+        "required": "Enter the notice number, issuing authority and license plate.",
+        "violationAt": "Invalid violation time (YYYY-MM-DD HH:mm).",
+        "dueAt": "Invalid deadline (YYYY-MM-DD).",
+        "amount": "The fine amount must be a positive whole VND amount.",
+        "ownerPaidAt": "Enter when the owner paid the fine.",
+        "receipts": "1–6 receipt photos of the owner's payment are required."
+      }
+    },
+    "legacy": {
+      "problem": {
+        "Damage": "Damage",
+        "LateReturn": "Late return"
+      },
+      "status": {
+        "Investigating": "Processing",
+        "DecisionIssued": "Awaiting confirmation",
+        "Closed": "Closed"
+      }
+    },
+    "summary": {
+      "title": "Surcharges per decision",
+      "surcharge": "Surcharge #{{id}}",
+      "refundNote": "The difference paid directly is refunded from the owner's wallet to the customer's wallet.",
+      "appliedAt": "Applied: {{date}}",
+      "pending": "Awaiting the decision to take effect; no adjustment or refund yet."
+    },
+    "errors": {
+      "escalateFailed": "Unable to escalate to Admin."
+    }
+  }
+}

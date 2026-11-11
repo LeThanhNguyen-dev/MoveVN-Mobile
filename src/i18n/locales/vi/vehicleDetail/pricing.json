@@ -1,0 +1,25 @@
+{
+  "pricing": {
+    "rentPrice": "Giá thuê",
+    "perDay": "{{price}}/ngày",
+    "includedFee": "Giá đã bao gồm phí nền tảng.",
+    "deposit": "Tiền cọc:",
+    "depositPercent": "{{percent}}% tổng tiền thuê",
+    "notRequired": "Không yêu cầu",
+    "collateral": "Thế chấp:",
+    "collateralAmount": "{{amount}} VNĐ",
+    "turnaroundNote": "Xe cần 60 phút kiểm tra, vệ sinh giữa hai chuyến. Khoảng này không tính vào tiền thuê.",
+    "pickup": "Nhận xe",
+    "return": "Trả xe",
+    "notSelected": "Chưa chọn",
+    "days": "Số ngày",
+    "daysCount": "{{days}} ngày",
+    "lineItemDays": "{{name}} ({{days}} ngày)",
+    "quoteLoading": "Đang tính giá theo từng ngày...",
+    "discount": "Giảm giá ({{percent}}%)",
+    "platformFee": "Phí nền tảng (đã gồm trong giá)",
+    "deliveryFee": "Phí giao xe tận nơi ({{distance}} km)",
+    "total": "Tổng cộng",
+    "totalShort": "Tổng"
+  }
+}

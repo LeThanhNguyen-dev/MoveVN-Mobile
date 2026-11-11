@@ -1,5 +1,6 @@
 import { Expand, MapPin } from "lucide-react-native";
 import { memo, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Linking, Modal, Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import { WebView } from "react-native-webview";
@@ -41,6 +42,7 @@ function buildHtmlInteractive(lat: number, lng: number): string {
 }
 
 function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: OwnerVehicleMapProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -69,10 +71,10 @@ function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: 
       <View style={styles.headRow}>
         <View style={styles.headLeft}>
           <MapPin color={theme.muted} size={15} />
-          <AppText display style={styles.headTitle}>Vị trí xe</AppText>
+          <AppText display style={styles.headTitle}>{t("common:locationMap.defaultTitle")}</AppText>
         </View>
         <Pressable onPress={openGoogleMaps} style={styles.mapsButton}>
-          <AppText style={styles.mapsText}>Mở Google Maps</AppText>
+          <AppText style={styles.mapsText}>{t("common:locationMap.openGoogleMaps")}</AppText>
         </Pressable>
       </View>
       <AppText numberOfLines={2} style={styles.address}>
@@ -89,14 +91,14 @@ function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: 
             domStorageEnabled
             originWhitelist={["*"]}
           />
-          <Pressable onPress={() => setExpanded(true)} style={styles.expandBtn} accessibilityLabel="Mở rộng bản đồ">
+          <Pressable onPress={() => setExpanded(true)} style={styles.expandBtn} accessibilityLabel={t("common:locationMap.expand")}>
             <Expand color={theme.brand} size={16} />
           </Pressable>
         </View>
       ) : (
         <View style={styles.noCoords}>
           <MapPin color={theme.faint} size={20} />
-          <AppText style={styles.noCoordsText}>Chưa có tọa độ, xem vị trí theo địa chỉ trên Google Maps.</AppText>
+          <AppText style={styles.noCoordsText}>{t("mobile:ownerVehicle.map.noCoords")}</AppText>
         </View>
       )}
 
@@ -112,7 +114,7 @@ function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: 
               </AppText>
             </View>
             <Pressable onPress={() => setExpanded(false)} style={styles.closeBtn}>
-              <AppText style={styles.closeText}>Đóng</AppText>
+              <AppText style={styles.closeText}>{t("common:closeAction")}</AppText>
             </Pressable>
           </View>
           {hasCoords ? (
@@ -126,7 +128,7 @@ function OwnerVehicleMap({ latitude, longitude, address, title, height = 180 }: 
           ) : null}
           <View style={[styles.fullFoot, { paddingBottom: Math.max(insets.bottom, 14) }]}>
             <Pressable onPress={openGoogleMaps} style={styles.primaryBtn}>
-              <AppText style={styles.primaryText}>Mở Google Maps</AppText>
+              <AppText style={styles.primaryText}>{t("common:locationMap.openGoogleMaps")}</AppText>
             </Pressable>
           </View>
         </View>

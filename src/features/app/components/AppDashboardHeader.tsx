@@ -1,6 +1,7 @@
 import { ArrowLeftRight, Heart, UserRound } from "lucide-react-native";
 import NotificationBell from "@/features/notifications/components/NotificationBell";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Image, Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
@@ -9,14 +10,8 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { openFavoriteVehicles } from "@/features/favorites/favoriteActions";
 
-const roleLabels: Record<UserRole, string> = {
-  Admin: "quản trị",
-  Staff: "nhân viên",
-  Owner: "chủ xe",
-  Customer: "khách thuê",
-};
-
 export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPress?: () => void; user: AuthUser }) {
+  const { t } = useTranslation();
   const activeRole = useAuthStore((state) => state.activeRole);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
   const { theme } = useTheme();
@@ -36,7 +31,7 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
     <View style={styles.header}>
       <View style={styles.identity}>
         <Pressable
-          accessibilityLabel="Xem thông tin tài khoản"
+          accessibilityLabel={t("mobile:navigation.viewAccountAria")}
           accessibilityRole="button"
           onPress={onAvatarPress}
           style={styles.avatar}
@@ -48,7 +43,7 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
           )}
         </Pressable>
         <View style={styles.nameBlock}>
-          <AppText style={styles.greeting}>Xin chào</AppText>
+          <AppText style={styles.greeting}>{t("mobile:navigation.greeting")}</AppText>
           <AppText numberOfLines={1} style={styles.name}>
             {user.fullName}
           </AppText>
@@ -59,7 +54,9 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
         {switchableRole ? (
           <>
             <Pressable
-              accessibilityLabel={`Chuyển sang ${roleLabels[switchableRole]}`}
+              accessibilityLabel={t("mobile:navigation.switchRoleAria", {
+                role: t(`mobile:navigation.roles.${switchableRole as UserRole}`),
+              })}
               accessibilityRole="button"
               onPress={handleSwitchRole}
               style={styles.iconButton}
@@ -71,7 +68,7 @@ export default function AppDashboardHeader({ onAvatarPress, user }: { onAvatarPr
         ) : null}
         {activeRole === "Customer" && user.roles.includes("Customer") ? (
           <>
-            <Pressable accessibilityLabel="Xe yêu thích" accessibilityRole="button" onPress={openFavoriteVehicles} hitSlop={6} style={styles.iconButton}>
+            <Pressable accessibilityLabel={t("users:favorites.title")} accessibilityRole="button" onPress={openFavoriteVehicles} hitSlop={6} style={styles.iconButton}>
               <Heart color={theme.text} size={21} strokeWidth={2.3} />
             </Pressable>
             <View style={styles.divider} />

@@ -1,0 +1,34 @@
+{
+  "pin": {
+    "masked": {
+      "copyAria": "Sao chép số giấy tờ",
+      "revealAria": "Hiển thị số giấy tờ",
+      "notVerified": "Giấy tờ chưa được xác thực để hiển thị.",
+      "setupNoticeTitle": "Cần thiết lập mã PIN",
+      "setupNoticeBody": "Bạn cần thiết lập mã PIN để xem thông tin giấy tờ này.",
+      "later": "Để sau",
+      "setupNow": "Thiết lập ngay"
+    },
+    "change": {
+      "otpIntro": "Mã OTP xác thực sẽ được gửi đến email của bạn.",
+      "otpEnterIntro": "Nhập mã OTP đã gửi về email của bạn.",
+      "newPinIntro": "Nhập mã PIN mới gồm 6 chữ số.",
+      "confirmIntro": "Nhập lại mã PIN mới để xác nhận.",
+      "errorFillNewPin": "Vui lòng nhập đủ mã PIN mới 6 chữ số.",
+      "submitting": "Đang đổi...",
+      "submit": "Xác nhận đổi PIN"
+    },
+    "setup": {
+      "emailIntro": "Để đảm bảo đúng chủ tài khoản, mã OTP xác thực sẽ được gửi đến email của bạn.",
+      "otpIntro": "Nhập mã OTP đã gửi về email của bạn để xác nhận chính chủ.",
+      "submitting": "Đang tạo..."
+    },
+    "verify": {
+      "lockedDetail": "Mã PIN đã bị khóa tạm thời do nhập sai nhiều lần.",
+      "submitting": "Đang kiểm tra..."
+    },
+    "forgot": {
+      "submitting": "Đang đặt lại..."
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { AxiosError } from "axios";
 import { apiClient, bareApiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
@@ -74,7 +75,7 @@ export function toApiError(error: unknown): AppApiError {
 
   if (error instanceof AxiosError) {
     if (error.response?.status === 429) {
-      return new AppApiError({ code: "429", message: "Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau." });
+      return new AppApiError({ code: "429", message: i18n.t("auth:errors.429") });
     }
 
     const data = error.response?.data as any;
@@ -85,13 +86,13 @@ export function toApiError(error: unknown): AppApiError {
     if (code || message || error.response) {
       return new AppApiError({
         code: String(code ?? error.response?.status ?? "UNKNOWN"),
-        message: message ?? "Yêu cầu không thành công.",
+        message: message ?? i18n.t("mobile:auth.errors.requestFailedShort"),
         errors: Array.isArray(errors) ? errors : [],
       });
     }
 
     if (error.code === "ERR_NETWORK") {
-      return new AppApiError({ code: "NETWORK", message: "Không thể kết nối đến máy chủ." });
+      return new AppApiError({ code: "NETWORK", message: i18n.t("mobile:auth.errors.networkShort") });
     }
   }
 
@@ -100,11 +101,11 @@ export function toApiError(error: unknown): AppApiError {
     const code = typeof nativeError.code === "string" ? nativeError.code : "UNKNOWN";
     const message = typeof nativeError.message === "string" && nativeError.message.trim()
       ? nativeError.message
-      : "Đã có lỗi xảy ra. Vui lòng thử lại.";
+      : i18n.t("mobile:auth.errors.generic");
     return new AppApiError({ code, message });
   }
 
-  return new AppApiError({ code: "UNKNOWN", message: "Đã có lỗi xảy ra. Vui lòng thử lại." });
+  return new AppApiError({ code: "UNKNOWN", message: i18n.t("mobile:auth.errors.generic") });
 }
 
 export async function googleLogin(accessToken: string) {

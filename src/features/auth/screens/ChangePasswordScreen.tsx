@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, LockKeyhole, ShieldCheck } from "lucide-react-native";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { AuthButton, AuthField, AuthNotice } from "../components/AuthControls";
 import { changePassword } from "../services/authService";
@@ -10,26 +11,27 @@ import { useTheme } from "@/theme/useTheme";
 
 type Step = 1 | 2 | 3;
 
-const STEP_META: Record<Step, { progress: string; title: string; description: string }> = {
+const STEP_META: Record<Step, { progress: string; titleKey: string; descriptionKey: string }> = {
   1: {
     progress: "1/3",
-    title: "Nhập mật khẩu hiện tại",
-    description: "Nhập mật khẩu hiện tại để tiếp tục",
+    titleKey: "mobile:auth.changePassword.step1Title",
+    descriptionKey: "mobile:auth.changePassword.step1Description",
   },
   2: {
     progress: "2/3",
-    title: "Tạo mật khẩu mới",
-    description: "Nhập mật khẩu mới, ít nhất 8 ký tự",
+    titleKey: "mobile:auth.changePassword.step2Title",
+    descriptionKey: "mobile:auth.changePassword.step2Description",
   },
   3: {
     progress: "3/3",
-    title: "Xác nhận mật khẩu mới",
-    description: "Nhập lại mật khẩu mới để xác nhận",
+    titleKey: "mobile:auth.changePassword.step3Title",
+    descriptionKey: "mobile:auth.changePassword.step3Description",
   },
 };
 
 export default function ChangePasswordScreen({ onBack }: { onBack: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [step, setStep] = useState<Step>(1);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -53,7 +55,7 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
     if (busy) return;
     if (step === 1) {
       if (!currentPassword) {
-        setError("Vui lòng nhập mật khẩu hiện tại.");
+        setError(t("accountSecurity:password.currentRequired"));
         return;
       }
       setError("");
@@ -62,7 +64,7 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
     }
     if (step === 2) {
       if (!newPassword || newPassword.length < 8) {
-        setError("Mật khẩu mới phải có ít nhất 8 ký tự.");
+        setError(t("mobile:auth.changePassword.newPasswordMin"));
         return;
       }
       setError("");
@@ -70,7 +72,7 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
       return;
     }
     if (!confirmPassword || newPassword !== confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp.");
+      setError(t("common:validation.confirmPasswordMismatch"));
       return;
     }
     setBusy(true);
@@ -82,9 +84,9 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
       setNewPassword("");
       setConfirmPassword("");
       setStep(1);
-      setSuccess("Đổi mật khẩu thành công. Mật khẩu tài khoản đã được cập nhật.");
+      setSuccess(t("mobile:auth.changePassword.success"));
     } catch (failure) {
-      setError(getFriendlyAuthError(failure) ?? "Đổi mật khẩu không thành công.");
+      setError(getFriendlyAuthError(failure) ?? t("mobile:auth.errors.changePasswordFailed"));
     } finally {
       setBusy(false);
     }
@@ -93,10 +95,10 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={handleBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("mobile:auth.back")} accessibilityRole="button" onPress={handleBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <AppText display style={styles.topBarTitle}>Đổi mật khẩu</AppText>
+        <AppText display style={styles.topBarTitle}>{t("accountSecurity:password.title")}</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
@@ -107,8 +109,8 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
               <KeyRound color="#D97706" size={22} strokeWidth={2.3} />
             </View>
             <View style={styles.cardTitleWrap}>
-              <AppText display style={styles.cardTitle}>Đổi mật khẩu</AppText>
-              <AppText style={styles.cardDescription}>Cập nhật mật khẩu cho phiên đăng nhập hiện tại.</AppText>
+              <AppText display style={styles.cardTitle}>{t("accountSecurity:password.title")}</AppText>
+              <AppText style={styles.cardDescription}>{t("accountSecurity:password.subtitle")}</AppText>
             </View>
           </View>
 
@@ -121,9 +123,9 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
 
           <View style={styles.heading}>
             <ShieldCheck color={theme.brand} size={20} strokeWidth={2.3} />
-            <AppText display style={styles.title}>{STEP_META[step].title}</AppText>
+            <AppText display style={styles.title}>{t(STEP_META[step].titleKey)}</AppText>
           </View>
-          <AppText style={styles.description}>{STEP_META[step].description}</AppText>
+          <AppText style={styles.description}>{t(STEP_META[step].descriptionKey)}</AppText>
 
           {success ? <AuthNotice message={success} /> : null}
           {error ? <AuthNotice error message={error} /> : null}
@@ -134,14 +136,14 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
               autoFocus
               editable={!busy}
               icon={<LockKeyhole color={theme.muted} size={19} />}
-              label="Mật khẩu hiện tại"
+              label={t("accountSecurity:password.currentLabel")}
               onChangeText={(value) => {
                 setCurrentPassword(value);
                 if (error) setError("");
                 if (success) setSuccess("");
               }}
               password
-              placeholder="Nhập mật khẩu hiện tại"
+              placeholder={t("mobile:auth.changePassword.currentPlaceholder")}
               value={currentPassword}
             />
           ) : null}
@@ -151,14 +153,14 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
               autoFocus
               editable={!busy}
               icon={<ShieldCheck color={theme.muted} size={19} />}
-              label="Mật khẩu mới"
+              label={t("auth:fields.newPassword")}
               onChangeText={(value) => {
                 setNewPassword(value);
                 if (error) setError("");
                 if (success) setSuccess("");
               }}
               password
-              placeholder="Ít nhất 8 ký tự"
+              placeholder={t("mobile:auth.changePassword.newPlaceholder")}
               value={newPassword}
             />
           ) : null}
@@ -168,14 +170,14 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
               autoFocus
               editable={!busy}
               icon={<ShieldCheck color={theme.muted} size={19} />}
-              label="Xác nhận mật khẩu mới"
+              label={t("auth:fields.confirmNewPassword")}
               onChangeText={(value) => {
                 setConfirmPassword(value);
                 if (error) setError("");
                 if (success) setSuccess("");
               }}
               password
-              placeholder="Nhập lại mật khẩu mới"
+              placeholder={t("mobile:auth.changePassword.confirmPlaceholder")}
               value={confirmPassword}
             />
           ) : null}
@@ -183,7 +185,7 @@ export default function ChangePasswordScreen({ onBack }: { onBack: () => void })
           <AuthButton
             busy={busy}
             onPress={() => { void handleContinue(); }}
-            title={step === 3 ? "Xác nhận đổi mật khẩu" : "Tiếp tục"}
+            title={step === 3 ? t("mobile:auth.changePassword.submit") : t("mobile:auth.changePassword.continue")}
           />
         </View>
       </ScrollView>

@@ -1,0 +1,28 @@
+{
+  "loader": "Đang tải hồ sơ...",
+  "backOverview": "Quay lại tổng quan",
+  "title": "Hồ sơ cá nhân",
+  "subtitle": "Cập nhật thông tin cá nhân và ảnh đại diện",
+  "avatarHint": "Kéo thả ảnh hoặc nhấn vào camera. JPG, PNG, WebP. Tối đa 5MB.",
+  "fullName": {
+    "label": "Họ và tên",
+    "placeholder": "Nhập họ và tên"
+  },
+  "phone": {
+    "label": "Số điện thoại",
+    "placeholder": "Nhập số điện thoại"
+  },
+  "email": {
+    "label": "Email",
+    "locked": "Email không thể thay đổi"
+  },
+  "success": {
+    "title": "Thành công",
+    "message": "Hồ sơ đã được cập nhật."
+  },
+  "errorTitle": "Lỗi",
+  "becomeOwner": "Đăng ký làm chủ xe",
+  "cancel": "Hủy",
+  "saving": "Đang lưu...",
+  "save": "Lưu thay đổi"
+}

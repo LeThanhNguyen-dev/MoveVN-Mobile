@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import type { AssistantAnswer, MessageResult, TimelineItem } from "./assistantService";
 
 export type AssistantLifecycle = {
@@ -59,9 +60,9 @@ export function decodeHistory<T extends { items: TimelineItem[] }>(page: T): T {
 }
 export const isPendingMessage = (message: { status: string }) => ["Queued", "Processing"].includes(message.status);
 export function pendingNotice(message: AssistantLifecycle, now = Date.now()): string | null {
-  if (/committed|projecting/i.test(message.phase ?? "") || /committed/i.test(message.businessStatus ?? message.outcome ?? "")) return "Đã ghi nhận kết quả. MoveVN đang đồng bộ thông tin…";
+  if (/committed|projecting/i.test(message.phase ?? "") || /committed/i.test(message.businessStatus ?? message.outcome ?? "")) return i18n.t("mobile:assistant.progress.committed");
   const deadline = message.deadlineAt ? Date.parse(message.deadlineAt) : NaN;
-  return Number.isFinite(deadline) && now > deadline + 10000 ? "Chưa xác nhận được trạng thái. Bạn có thể kiểm tra lại; tin nhắn đang được giữ nguyên." : null;
+  return Number.isFinite(deadline) && now > deadline + 10000 ? i18n.t("mobile:assistant.progress.stale") : null;
 }
 export function actionIsExpired(data: { expiresAt?: unknown }, now = Date.now()) {
   return data.expiresAt !== undefined && (!date(data.expiresAt) || Date.parse(data.expiresAt) <= now);

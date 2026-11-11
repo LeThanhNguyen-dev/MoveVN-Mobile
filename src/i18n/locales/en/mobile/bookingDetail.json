@@ -1,0 +1,114 @@
+{
+  "bookingDetail": {
+    "errors": {
+      "loadBooking": "Could not load the booking and inspection reports. Please try again.",
+      "actionFailed": "Could not perform the action. Please try again.",
+      "revisionFailed": "Could not send the report revision request.",
+      "openPayment": "Could not open the payment page.",
+      "checkPayment": "Could not check the payment status.",
+      "cancelPolicy": "Could not load the cancellation policy.",
+      "cancelUnavailable": "This booking cannot be cancelled."
+    },
+    "alerts": {
+      "confirmPickupTitle": "Confirm vehicle pickup?",
+      "confirmPickupBody": "Only confirm after you have reviewed all photos and agree with the odometer, fuel level and damage recorded in the report.",
+      "reviewAgain": "Review again",
+      "agreeAndConfirm": "Agree and confirm",
+      "pickupConfirmed": "Pickup confirmed.",
+      "revisionRequested": "Revision requested. Waiting for the owner to send a new report.",
+      "paymentReturn": "After paying, return to the app and tap check payment or reload the booking.",
+      "paymentConfirmed": "Payment confirmed.",
+      "paymentIncomplete": "Payment is not complete yet. You can check again later.",
+      "cancelTitle": "Cancel this booking?",
+      "cancelBody": "{{policy}}\nRefund: {{refund}}\nNon-refundable: {{forfeited}}",
+      "keepBooking": "Keep booking",
+      "confirmCancel": "Confirm cancellation",
+      "cancelled": "Booking cancelled.",
+      "reportSent": "Report submitted. Waiting for the customer to confirm.",
+      "checkoutConfirmed": "Return confirmed. Waiting for the owner to confirm receipt of the vehicle."
+    },
+    "header": {
+      "kicker": "Booking",
+      "title": "Booking details",
+      "loading": "Loading booking…",
+      "loadErrorTitle": "Could not load booking",
+      "reload": "Reload booking",
+      "updated": "Updated"
+    },
+    "hero": {
+      "kicker": "Vehicle booking",
+      "vehicleFallback": "Vehicle #{{id}}",
+      "pickup": "Pickup",
+      "return": "Return",
+      "duration": "Duration",
+      "days": "{{days}} days",
+      "deposit": "Deposit",
+      "pickupPlace": "Pickup location",
+      "returnPlace": "Return location",
+      "customerNote": "Customer note",
+      "timezoneHint": "Times are shown in Vietnam time (UTC+07:00)."
+    },
+    "approve": {
+      "title": "Booking request awaiting approval",
+      "subtitle": "Respond early so the customer can pay the deposit",
+      "approve": "Approve booking",
+      "approved": "Booking approved. Waiting for the customer to pay the deposit.",
+      "reject": "Reject request",
+      "rejectReason": "Rejection reason",
+      "rejectConfirm": "Confirm rejection",
+      "rejected": "Booking rejected."
+    },
+    "deposit": {
+      "title": "Deposit payment",
+      "subtitle": "The owner approved the booking request",
+      "noticeTitle": "Deposit required before pickup",
+      "noticeBody": "The owner has approved. Please pay the deposit before picking up the vehicle.",
+      "pay": "Pay deposit",
+      "check": "Check payment"
+    },
+    "cost": {
+      "title": "Booking cost",
+      "subtitle": "Platform fee included",
+      "total": "Total",
+      "rentalDeposit": "Rental deposit",
+      "securityDeposit": "Security deposit",
+      "dueAt": "Deposit due"
+    },
+    "inspection": {
+      "checkInTitle": "Pickup report",
+      "checkOutTitle": "Return report",
+      "emptyCheckIn": "No pickup report yet.",
+      "emptyCheckOut": "No return report yet.",
+      "createCheckIn": "Create check-in report",
+      "createCheckOut": "Create check-out report",
+      "confirmCheckIn": "Confirm pickup",
+      "confirmCheckOut": "Confirm return",
+      "actionsTitle": "Actions",
+      "actionsSubtitle": "Review the report, vehicle photos and payments before confirming",
+      "contractNote": "Both owner and customer must sign the contract before pickup can be confirmed. You can sign on the web if you have not done so.",
+      "acceptCheckIn": "Agree to the report and pick up",
+      "acceptCheckOut": "Agree to the report and return",
+      "checkoutDisagreeHint": "If you disagree, talk to the owner or contact support before confirming.",
+      "revisionAction": "Disagree with report / Request revision",
+      "revisionHint": "Describe exactly what needs fixing. The trip only starts once you agree to the new report.",
+      "revisionReason": "Reason for disagreement",
+      "revisionSend": "Send revision request",
+      "close": "Close",
+      "earlyPickupAvailable": "Vehicle is free: you can check in up to 2 hours early. Return time and rental price stay as booked.",
+      "earlyPickupFallback": "You can check in up to 2 hours early if the vehicle is free. Reload the booking to check.",
+      "waitingPickupReport": "Waiting for the owner to take photos and create the pickup report.",
+      "waitingReturnReport": "On return, the owner will take photos and create a report for you to check."
+    },
+    "cancel": {
+      "title": "Cancel booking",
+      "subtitle": "Review the deposit refund policy before cancelling",
+      "action": "View policy and cancel",
+      "reasonTitle": "Cancellation reason",
+      "reasonSubtitle": "Recorded by the system"
+    },
+    "history": {
+      "title": "Booking history",
+      "count": "{{count}} updates"
+    }
+  }
+}

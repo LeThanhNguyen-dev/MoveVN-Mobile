@@ -1,0 +1,33 @@
+{
+  "surcharge": {
+    "title": "Possible surcharges",
+    "inactive": "Off",
+    "unit": {
+      "km": "/km",
+      "hour": "/hour",
+      "day": "/day"
+    },
+    "excessMileageBooking": "Extra fee if you drive more than {{included}} km over the whole rental.",
+    "excessMileageDay": "Extra fee if you drive more than {{included}} km on a 1-day rental.",
+    "maxSuffix": " Capped at {{amount}}.",
+    "lateBase": "A fee applies if the vehicle is returned late",
+    "lateGrace": ", with the first {{hours}} hours free",
+    "lateThreshold": ". If more than {{hours}} hours late, an extra day is charged",
+    "lateDailyRate": " ({{price}}/day)",
+    "defaultDescription": "Extra charges may apply based on the vehicle's condition on return.",
+    "feeType": {
+      "excessMileage": "Excess mileage fee",
+      "lateReturn": "Late return fee",
+      "cleaning": "Cleaning fee",
+      "deodorization": "Deodorizing fee",
+      "custom": "Other fee"
+    },
+    "feeTypeAlt": {
+      "excessMileage": "Excess km fee"
+    },
+    "feeTypeDescription": {
+      "cleaning": "Applies when the vehicle is returned in an unclean condition.",
+      "deodorization": "Applies when the vehicle retains cigarette or strong food odors."
+    }
+  }
+}

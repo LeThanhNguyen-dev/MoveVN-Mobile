@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,6 +29,7 @@ export default function MobileBottomBar<T extends string>({
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 8);
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
@@ -42,7 +44,7 @@ export default function MobileBottomBar<T extends string>({
             <Pressable
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
-              accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} chưa đọc` : ""}`}
+              accessibilityLabel={item.badge ? t("mobile:navigation.tabUnreadAria", { label: item.label, badge: item.badge }) : item.label}
               key={item.key}
               onPress={() => onChange(item.key)}
               style={[styles.item, item.prominent && styles.prominentItem]}

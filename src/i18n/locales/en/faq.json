@@ -1,0 +1,23 @@
+{
+  "seo": {
+    "title": "Questions & answers",
+    "description": "How MoveVN works and how to use it, for renters and vehicle owners."
+  },
+  "eyebrow": "Help center",
+  "title": "Questions & answers",
+  "description": "Find out how MoveVN works and how to use it, whether you rent a vehicle or list your own.",
+  "tabs": {
+    "customer": "Renters",
+    "owner": "Vehicle owners"
+  },
+  "error": "Unable to load FAQ categories. Please try again.",
+  "empty": {
+    "title": "No FAQ content yet",
+    "description": "This category is being updated. Please check back later."
+  },
+  "viewQuestions": "View the questions →",
+  "detail": {
+    "loadError": "Unable to load the content. Please try again.",
+    "heroTitle": "Questions & answers"
+  }
+}

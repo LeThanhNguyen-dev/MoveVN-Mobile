@@ -6,6 +6,7 @@ import * as Storage from "@/services/deviceStorage";
 import { apiClient, bareApiClient } from "@/services/apiClient";
 import { getSessionGeneration, useAuthStore } from "@/features/auth/hooks/useAuth";
 import { unregisterPushDevice } from "./pushDeviceService";
+import i18n from "@/i18n";
 
 const endpoint = "/api/notifications/push-devices";
 let deviceIdPromise: Promise<string> | null = null;
@@ -26,7 +27,7 @@ export function prepareLocalNotifications() {
       return { shouldShowBanner: local, shouldShowList: true, shouldPlaySound: local, shouldSetBadge: false };
     } });
     if (Platform.OS === "android") await notifications.setNotificationChannelAsync("bookings-demo", {
-      name: "Thông báo đơn thuê", importance: notifications.AndroidImportance.HIGH,
+      name: i18n.t("mobile:notification.channelBookingDemo"), importance: notifications.AndroidImportance.HIGH,
       sound: "default", vibrationPattern: [0, 250, 250, 250],
     });
     let permission = await notifications.getPermissionsAsync();
@@ -60,7 +61,7 @@ export function registerPushDevice() {
     const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
     if (!projectId) return;
     if (Platform.OS === "android") await notifications.setNotificationChannelAsync("bookings", {
-      name: "Đơn thuê và bàn giao xe", importance: notifications.AndroidImportance.HIGH,
+      name: i18n.t("mobile:notification.channelBookings"), importance: notifications.AndroidImportance.HIGH,
       sound: "default", vibrationPattern: [0, 250, 250, 250],
     });
     let permission = await notifications.getPermissionsAsync();

@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
@@ -77,6 +79,7 @@ export default function TrafficFineCreateFields({
   onReceipts: (files: ProofAsset[]) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   function set<K extends keyof TrafficFineForm>(key: K, text: string) {
@@ -106,18 +109,18 @@ export default function TrafficFineCreateFields({
 
   return (
     <View style={styles.box}>
-      <Text style={styles.boxTitle}>Thông tin thông báo phạt nguội</Text>
-      <Text style={styles.label}>Số thông báo / biên bản</Text>
+      <Text style={styles.boxTitle}>{t("disputes:createTrafficFine.legend")}</Text>
+      <Text style={styles.label}>{t("disputes:trafficFine.noticeNumber")}</Text>
       <TextInput value={value.noticeNumber} onChangeText={(t) => set("noticeNumber", t)} maxLength={100} style={styles.input} />
-      <Text style={styles.label}>Đơn vị thông báo</Text>
+      <Text style={styles.label}>{t("disputes:trafficFine.issuingAuthority")}</Text>
       <TextInput value={value.issuingAuthority} onChangeText={(t) => set("issuingAuthority", t)} maxLength={200} style={styles.input} />
-      <Text style={styles.label}>Biển số xe</Text>
+      <Text style={styles.label}>{t("disputes:trafficFine.licensePlate")}</Text>
       <TextInput value={value.licensePlate} onChangeText={(t) => set("licensePlate", t.toUpperCase())} maxLength={32} autoCapitalize="characters" style={styles.input} />
-      <Text style={styles.label}>Số tiền phạt (VND)</Text>
+      <Text style={styles.label}>{t("disputes:createTrafficFine.amountLabel")}</Text>
       <TextInput value={value.amount} onChangeText={(t) => set("amount", t.replace(/[^0-9]/g, ""))} keyboardType="number-pad" style={styles.input} />
-      <Text style={styles.label}>Thời điểm vi phạm (VD: 2026-10-01 14:30)</Text>
+      <Text style={styles.label}>{t("mobile:dispute.fineForm.violationAtLabel")}</Text>
       <TextInput value={value.violationAt} onChangeText={(t) => set("violationAt", t)} placeholder="YYYY-MM-DD HH:mm" placeholderTextColor={theme.placeholder} style={styles.input} />
-      <Text style={styles.label}>Hạn xử lý theo thông báo (VD: 2026-10-31)</Text>
+      <Text style={styles.label}>{t("mobile:dispute.fineForm.dueAtLabel")}</Text>
       <TextInput
         value={value.dueAt}
         onChangeText={(t) => set("dueAt", t)}
@@ -125,7 +128,7 @@ export default function TrafficFineCreateFields({
         placeholderTextColor={theme.placeholder}
         style={styles.input}
       />
-      <Text style={styles.label}>Hình thức xử lý</Text>
+      <Text style={styles.label}>{t("disputes:createTrafficFine.paymentModeLabel")}</Text>
       <View style={styles.modeRow}>
         {(["CustomerPaysAuthority", "ReimburseOwner"] as const).map((mode) => (
           <Pressable
@@ -134,21 +137,23 @@ export default function TrafficFineCreateFields({
             style={[styles.modeChip, value.paymentMode === mode && styles.modeChipActive]}
           >
             <Text style={[styles.modeText, value.paymentMode === mode && styles.modeTextActive]}>
-              {mode === "CustomerPaysAuthority" ? "Khách tự nộp" : "Hoàn trả chủ xe"}
+              {mode === "CustomerPaysAuthority"
+                ? t("mobile:dispute.fineForm.customerPays")
+                : t("mobile:dispute.fineForm.reimburseOwner")}
             </Text>
           </Pressable>
         ))}
       </View>
       {value.paymentMode === "ReimburseOwner" && (
         <>
-          <Text style={styles.label}>Thời điểm chủ xe đã nộp phạt (VD: 2026-10-05 09:00)</Text>
+          <Text style={styles.label}>{t("mobile:dispute.fineForm.ownerPaidAtLabel")}</Text>
           <TextInput value={value.ownerPaidAt} onChangeText={(t) => set("ownerPaidAt", t)} placeholder="YYYY-MM-DD HH:mm" placeholderTextColor={theme.placeholder} style={styles.input} />
           <Pressable onPress={() => void pickReceipts()} style={styles.pickButton}>
-            <Text style={styles.pickText}>Chọn biên lai ({receipts.length} ảnh)</Text>
+            <Text style={styles.pickText}>{t("mobile:dispute.fineForm.pickReceipts", { count: receipts.length })}</Text>
           </Pressable>
         </>
       )}
-      <Text style={styles.muted}>Bắt buộc đính kèm ảnh thông báo phạt ở phần bằng chứng bên dưới.</Text>
+      <Text style={styles.muted}>{t("mobile:dispute.fineForm.noticeHint")}</Text>
     </View>
   );
 }
@@ -180,17 +185,17 @@ const createStyles = (theme: Theme) =>
 
 export function validateTrafficFineForm(value: TrafficFineForm, receiptCount: number): string | null {
   if (!value.noticeNumber.trim() || !value.issuingAuthority.trim() || !value.licensePlate.trim()) {
-    return "Nhập số thông báo, đơn vị thông báo và biển số xe.";
+    return i18n.t("mobile:dispute.fineForm.errors.required");
   }
-  if (!parseVietnamDateTime(value.violationAt)) return "Thời điểm vi phạm sai định dạng (YYYY-MM-DD HH:mm).";
+  if (!parseVietnamDateTime(value.violationAt)) return i18n.t("mobile:dispute.fineForm.errors.violationAt");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value.dueAt.trim()) || Number.isNaN(new Date(`${value.dueAt}T00:00:00+07:00`).getTime())) {
-    return "Hạn xử lý sai định dạng (YYYY-MM-DD).";
+    return i18n.t("mobile:dispute.fineForm.errors.dueAt");
   }
   const amount = Number(value.amount);
-  if (!Number.isSafeInteger(amount) || amount <= 0) return "Số tiền phạt phải là số nguyên VND dương.";
+  if (!Number.isSafeInteger(amount) || amount <= 0) return i18n.t("mobile:dispute.fineForm.errors.amount");
   if (value.paymentMode === "ReimburseOwner") {
-    if (!parseVietnamDateTime(value.ownerPaidAt)) return "Nhập thời điểm chủ xe đã nộp phạt.";
-    if (receiptCount < 1 || receiptCount > 6) return "Cần 1–6 ảnh biên lai chủ xe đã nộp phạt.";
+    if (!parseVietnamDateTime(value.ownerPaidAt)) return i18n.t("mobile:dispute.fineForm.errors.ownerPaidAt");
+    if (receiptCount < 1 || receiptCount > 6) return i18n.t("mobile:dispute.fineForm.errors.receipts");
   }
   return null;
 }

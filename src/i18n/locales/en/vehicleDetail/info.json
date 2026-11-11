@@ -1,0 +1,40 @@
+{
+  "back": "Back",
+  "backToListAria": "Back to vehicle list",
+  "loadError": "Couldn't load vehicle information.",
+  "verified": "Verified",
+  "infoTitle": "Vehicle information",
+  "info": {
+    "licensePlate": "License plate",
+    "model": "Model",
+    "year": "Year",
+    "odometer": "Odometer",
+    "owner": "Owner",
+    "ownerFallback": "Owner #{{id}}",
+    "type": "Vehicle type",
+    "location": "Location",
+    "description": "Description",
+    "features": "Features ({{total}})",
+    "originalInVietnamese": "Original description is in Vietnamese"
+  },
+  "locationTitle": "Location",
+  "openGoogleMaps": "Open Google Maps",
+  "alerts": {
+    "toggle": "Notify me when the vehicle is free",
+    "description": "Pick the full date and time range you want to rent, including days the vehicle is busy. MoveVN will send one in-app notification when the whole range becomes free. This doesn't reserve the vehicle.",
+    "loginToRegister": "Sign in to register →",
+    "startLabel": "Pick-up date & time (Vietnam)",
+    "endLabel": "Return date & time (Vietnam)",
+    "saved": "You're now watching this rental period.",
+    "submit": "Watch this period",
+    "manage": "View and cancel my alerts →",
+    "periodError": "Choose a future pick-up date and a return date after it.",
+    "registerFailed": "Couldn't register. Please try again."
+  },
+  "calendar": {
+    "title": "Availability calendar",
+    "selectedDay": "Selected day",
+    "inRange": "In range",
+    "busy": "Booked/Blocked"
+  }
+}

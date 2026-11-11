@@ -1,0 +1,44 @@
+{
+  "searchBar": {
+    "locationLabel": "Rental location",
+    "searchAria": "Search vehicles"
+  },
+  "dropdown": {
+    "fallback": "Da Nang",
+    "searchPlaceholder": "Search province, district or ward...",
+    "searchHint": "Accent-insensitive search works, e.g. “Da Nang”.",
+    "empty": "No matching locations found."
+  },
+  "options": {
+    "all": "All",
+    "allWards": "All wards/communes",
+    "car": "Car",
+    "motorbike": "Motorbike",
+    "seats": "{{seats}} seats",
+    "bodyTypes": {
+      "sedan": "Sedan",
+      "suv": "SUV",
+      "hatchback": "Hatchback",
+      "coupe": "Coupe",
+      "convertible": "Convertible",
+      "pickup": "Pickup",
+      "mpv": "MPV / Minivan",
+      "wagon": "Wagon"
+    },
+    "transmission": {
+      "automatic": "Automatic",
+      "manual": "Manual",
+      "cvt": "CVT",
+      "dct": "DCT"
+    },
+    "sort": {
+      "priceAsc": "Price: low to high",
+      "priceDesc": "Price: high to low",
+      "ratingDesc": "Top rated",
+      "distanceAsc": "Nearest to you"
+    }
+  },
+  "rentalPeriod": {
+    "days": "{{days}} days"
+  }
+}

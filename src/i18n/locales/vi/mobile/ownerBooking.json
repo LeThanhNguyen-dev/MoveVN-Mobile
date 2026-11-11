@@ -1,0 +1,79 @@
+{
+  "ownerBooking": {
+    "detail": {
+      "loadError": "Không tải được chi tiết đơn thuê.",
+      "kicker": "Đơn cho thuê",
+      "chatA11y": "Nhắn tin với khách thuê",
+      "vehicleFallback": "Xe #{{id}}",
+      "customerNote": "Ghi chú của khách",
+      "viewGps": "Xem vị trí xe (GPS)"
+    },
+    "handover": {
+      "placeholderSubtitle": "Biên bản sẽ xuất hiện khi bạn lập"
+    },
+    "checkIn": {
+      "earlyPickupHint": "Xe trống: có thể nhận sớm tối đa 2 tiếng. Bạn có thể lập biên bản nhận xe ngay. Giờ trả và giá thuê giữ theo booking.",
+      "reloadHint": "Tải lại để kiểm tra khả năng nhận xe.",
+      "opensAt": " Mở nhận sớm từ {{time}}."
+    },
+    "actions": {
+      "createCheckIn": "Lập biên bản nhận xe",
+      "createCheckInRevision": "Lập lại và gửi biên bản nhận xe",
+      "createCheckOut": "Lập biên bản trả xe",
+      "receiptConfirmed": "Đã xác nhận nhận xe.",
+      "rejected": "Đã từ chối đơn thuê.",
+      "cancelled": "Đã hủy. Toàn bộ cọc hoàn vào ví khách.",
+      "approve": "Duyệt đơn thuê",
+      "approving": "Đang duyệt...",
+      "approved": "Đã duyệt. Hợp đồng tự tạo để 2 bên ký.",
+      "reject": "Từ chối",
+      "cancelBookingFullRefund": "Hủy booking (hoàn 100% cọc)"
+    },
+    "progress": {
+      "overdueTitle": "Khách đã quá hạn trả xe"
+    },
+    "pending": {
+      "title": "Yêu cầu thuê đang chờ duyệt",
+      "subtitle": "Phản hồi sớm để khách kịp đặt cọc",
+      "deadlineTitle": "Hạn phản hồi",
+      "deadlineBody": "Vui lòng phản hồi trước {{time}}. Quá {{hours}} giờ hệ thống sẽ tự động từ chối đơn.",
+      "riskTitle": "Yếu tố rủi ro khách thuê"
+    },
+    "cost": {
+      "title": "Chi phí & thanh toán",
+      "scheduleTitle": "Lịch thanh toán",
+      "depositSent": "Đã chuyển tiền cọc",
+      "depositDue": "Cần chuyển tiền cọc",
+      "customerPaysOnPickup": "Khách trả khi nhận xe",
+      "securityDeposit": "Thế chấp (hoàn khi trả xe)",
+      "paymentDueAt": "Hạn thanh toán cọc: {{time}}"
+    },
+    "settle": {
+      "holdHint": "Tiền cọc đang giữ để đối soát. Còn khoảng {{hours}} giờ nữa mới được giải ngân.",
+      "action": "Giải ngân tiền cọc",
+      "done": "Đã giải ngân escrow."
+    },
+    "topUp": {
+      "title": "Chờ cọc bổ sung để gia hạn",
+      "subtitle": "Yêu cầu gia hạn của khách",
+      "body": "Khách cần thanh toán {{amount}}{{due}}. Nếu quá hạn, yêu cầu gia hạn bị hủy và hợp đồng cũ tiếp tục hiệu lực.",
+      "beforeDue": " trước {{time}}"
+    },
+    "review": {
+      "title": "Đánh giá khách thuê",
+      "notReviewed": "Bạn chưa đánh giá khách thuê cho đơn này.",
+      "reviewerFallback": "Chủ xe",
+      "submitted": "Bạn đã gửi đánh giá cho booking này.",
+      "starsHint": "Chọn số sao tổng quan (bắt buộc)",
+      "starA11y": "{{count}} sao",
+      "commentPlaceholder": "Nhận xét về khách...",
+      "ratingRequired": "Vui lòng chọn từ 1 đến 5 sao."
+    },
+    "reason": {
+      "required": "Vui lòng nhập lý do.",
+      "rejectTitle": "Từ chối đơn thuê",
+      "cancelBody": "Toàn bộ tiền cọc sẽ hoàn 100% vào ví khách.",
+      "placeholder": "Nhập lý do..."
+    }
+  }
+}

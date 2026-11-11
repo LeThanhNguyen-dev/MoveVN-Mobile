@@ -9,6 +9,7 @@ import {
 } from "react-native"
 import AppText from "@/components/AppText";
 import { MessageSquare, RefreshCw, Search } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@/theme/useTheme";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { refreshChatRooms } from "../chatActions";
@@ -28,6 +29,7 @@ export default function ChatListScreen({
   const state = useChatStore();
   const userId = useAuthStore((auth) => auth.user?.userId ?? 0);
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   useEffect(() => {
     void refreshChatRooms();
@@ -51,16 +53,16 @@ export default function ChatListScreen({
       >
         <View style={{ flex: 1 }}>
           <AppText style={{ color: theme.text, fontWeight: "800", fontSize: 23 }}>
-            Tin nhắn
+            {t("mobile:chat.list.title")}
           </AppText>
           <AppText style={{ color: theme.muted, marginTop: 4, fontSize: 12 }}>
-            Trao đổi trong từng chuyến đi
+            {t("mobile:chat.list.subtitle")}
           </AppText>
         </View>
         <NotificationBell />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Làm mới danh sách chat"
+          accessibilityLabel={t("mobile:chat.list.refresh")}
           disabled={state.roomsLoading}
           onPress={() => {
             void refreshChatRooms();
@@ -76,10 +78,10 @@ export default function ChatListScreen({
         borderRadius: 14, backgroundColor: theme.surface }}>
         <Search size={18} color={theme.muted} />
         <TextInput
-          accessibilityLabel="Tìm người trò chuyện, mã đặt xe hoặc xe"
+          accessibilityLabel={t("mobile:chat.list.searchLabel")}
           value={query}
           onChangeText={setQuery}
-          placeholder="Tìm tên, mã đặt xe hoặc xe…"
+          placeholder={t("mobile:chat.list.searchPlaceholder")}
           placeholderTextColor={theme.placeholder}
           returnKeyType="search"
           style={{ flex: 1, minWidth: 0, paddingVertical: 10, color: theme.text, fontSize: 14 }}
@@ -118,10 +120,12 @@ export default function ChatListScreen({
             <View style={{ alignItems: "center", padding: 36, gap: 12 }}>
               <MessageSquare size={36} color={theme.muted} />
               <AppText style={{ color: theme.text, fontWeight: "700" }}>
-                {query ? "Không tìm thấy booking" : "Chưa có cuộc trò chuyện"}
+                {query
+                  ? t("mobile:chat.list.emptySearch")
+                  : t("mobile:chat.list.emptyTitle")}
               </AppText>
               <AppText style={{ color: theme.muted, textAlign: "center" }}>
-                Mở chi tiết chuyến đi hoặc đơn thuê và chọn Nhắn tin để bắt đầu.
+                {t("mobile:chat.list.emptyBody")}
               </AppText>
             </View>
           ) : undefined

@@ -1,0 +1,51 @@
+{
+  "bank": {
+    "back": "Quay lại",
+    "eyebrow": "Tài khoản nhận tiền",
+    "title": "Thông tin ngân hàng",
+    "description": "Cập nhật tài khoản thụ hưởng để nhận thanh toán, hoàn tiền hoặc đối soát ví trong hệ thống MoveVN.",
+    "stepBankLabel": "Ngân hàng",
+    "stepBankDescription": "Chọn ngân hàng thụ hưởng",
+    "stepAccountLabel": "Số tài khoản",
+    "stepAccountDescription": "Nhập đúng số tài khoản",
+    "stepHolderLabel": "Chủ tài khoản",
+    "stepHolderDescription": "Trùng tên chủ tài khoản",
+    "success": "Cập nhật thông tin ngân hàng thành công.",
+    "panelTitle": "Tài khoản nhận tiền",
+    "panelOwnerDescription": "Chủ xe cần xác thực OTP trước khi thay đổi tài khoản nhận tiền.",
+    "panelCustomerDescription": "Thông tin này được dùng trong quy trình đăng ký làm chủ xe.",
+    "form": {
+      "title": "Thông tin ngân hàng",
+      "description": "Nhập thông tin tài khoản ngân hàng để nhận thanh toán.",
+      "bankLabel": "Ngân hàng thụ hưởng",
+      "selectBank": "-- Chọn ngân hàng --",
+      "accountNumber": "Số tài khoản",
+      "accountNumberPlaceholder": "Nhập số tài khoản ngân hàng",
+      "holder": "Chủ tài khoản",
+      "holderPlaceholder": "Nhập tên chủ tài khoản",
+      "save": "Lưu thông tin"
+    },
+    "otp": {
+      "title": "Xác thực thay đổi bằng OTP",
+      "description": "Mã OTP sẽ được gửi tới email liên kết với tài khoản để bảo vệ tài khoản nhận tiền.",
+      "placeholder": "Nhập mã OTP từ email",
+      "resend": "Gửi lại OTP",
+      "send": "Gửi mã OTP"
+    },
+    "submit": "Lưu thông tin ngân hàng",
+    "toastMissingInfoTitle": "Thiếu thông tin",
+    "toastMissingInfoMessage": "Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng.",
+    "toastOtpSentTitle": "Đã gửi OTP",
+    "toastOtpSentMessage": "Mã OTP đã được gửi về email của bạn.",
+    "toastOtpErrorTitle": "Lỗi gửi OTP",
+    "toastOtpErrorFallback": "Không thể gửi OTP. Vui lòng thử lại.",
+    "toastOtpMissingTitle": "Thiếu OTP",
+    "toastOtpMissingMessage": "Vui lòng nhập mã OTP.",
+    "toastSavedTitle": "Đã lưu ngân hàng",
+    "toastSavedOwnerMessage": "Thông tin tài khoản nhận tiền đã được cập nhật.",
+    "toastSavedCustomerMessage": "Thông tin ngân hàng đã được cập nhật.",
+    "toastSaveErrorTitle": "Không thể lưu",
+    "otpVerifyFallback": "Xác thực OTP thất bại.",
+    "customerSaveFallback": "Cập nhật thông tin ngân hàng thất bại."
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "driverStatus": {
+    "None": "Not verified",
+    "Pending": "Awaiting staff review",
+    "Processing": "Processing",
+    "Verified": "Verified",
+    "NeedMoreInfo": "More information needed",
+    "Rejected": "Rejected",
+    "Failed": "Processing failed",
+    "Pass": "Passed",
+    "ManualReview": "Needs staff review",
+    "Reject": "Failed"
+  },
+  "driverFlags": {
+    "IMAGE_TOO_BLURRY": "Image is blurry",
+    "IMAGE_TOO_DARK": "Image is too dark",
+    "IMAGE_TOO_BRIGHT": "Image is too bright",
+    "IMAGE_TOO_SMALL": "Image is too small",
+    "DOCUMENT_NOT_READABLE": "Document is not readable",
+    "NO_TEXT_DETECTED": "No text detected in the image",
+    "DRIVER_LICENSE_NUMBER_NOT_FOUND": "License number not found",
+    "LICENSE_CLASS_NOT_FOUND": "License class not found",
+    "LICENSE_CLASS_NOT_RECOGNIZED_IN_VIETNAM": "License class is not valid in Vietnam",
+    "LICENSE_CLASS_NOT_VALID_FOR_REQUESTED_VEHICLE": "License class does not match the selected vehicle type",
+    "FULL_NAME_NOT_FOUND": "Full name not found",
+    "FULL_NAME_MISMATCH": "Full name on the license does not match your profile",
+    "LICENSE_CLASS_UNCERTAIN": "License class is uncertain",
+    "MINISTRY_MARKER_NOT_FOUND": "Issuing authority not found",
+    "NATIONAL_MOTTO_NOT_FOUND": "National motto not found",
+    "DRIVER_LICENSE_TITLE_NOT_FOUND": "License title not recognized",
+    "LOW_OCR_CONFIDENCE": "Low OCR confidence",
+    "OCR_ENGINE_UNAVAILABLE": "OCR service is unavailable",
+    "OCR_PROCESSING_FAILED": "OCR processing failed",
+    "IMAGE_DECODE_FAILED": "Unable to read the image file"
+  },
+  "driverMessages": {
+    "otpLocked": "You have submitted failed license images too many times. Please try again after {{time}}.",
+    "a1Mismatch": "Class A1 is not suitable for verifying a car license.",
+    "classMismatch": "The license class does not match the selected vehicle type.",
+    "noReadableText": "Unable to read the information on the license. Please retake a clearer photo.",
+    "markers": "AI could read the image but the document markers or license class need another check.",
+    "ocrApiKey": "The OCR service is not configured. Please try again later.",
+    "manualFields": "License details can only be entered manually when OCR cannot read the image.",
+    "fieldsRequired": "Please enter the license number and class before approving.",
+    "uploadLocked": "You have failed license uploads too many times. Please wait until the lock expires and try again.",
+    "updateCooldown": "The license for this vehicle type is in the update cooldown period.",
+    "passed": "AI verified the driver's license successfully.",
+    "staffReview": "AI is not confident enough, the application needs staff review.",
+    "default": "Please check the driver's license image again."
+  }
+}

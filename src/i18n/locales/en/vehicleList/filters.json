@@ -1,0 +1,44 @@
+{
+  "filters": {
+    "resetAria": "Reset quick filters",
+    "reset": "Clear filters",
+    "type": "Vehicle type",
+    "brand": "Brand",
+    "fuel": "Fuel",
+    "bikeType": "Motorbike type",
+    "bodyType": "Body type",
+    "transmission": "Transmission",
+    "seats": "Seats",
+    "toggle": "Filters",
+    "searchHeading": "Find a vehicle",
+    "keyword": "Keyword",
+    "keywordPlaceholder": "Search by vehicle or brand name...",
+    "typeHint": "Select car or motorbike to see type-specific filters.",
+    "model": "Model",
+    "chooseBrandFirst": "Choose a brand first",
+    "allModels": "All models",
+    "engineCapacity": "Engine capacity",
+    "engineCapacityPlaceholder": "e.g. 125cc",
+    "budget": "Budget",
+    "location": "Location & distance",
+    "pickupAddress": "Pick-up address",
+    "pickupAddressPlaceholder": "Enter an address to find vehicles near you",
+    "apply": "Apply",
+    "chipEngine": "Engine: {{value}}",
+    "chipPickupAddress": "Pick-up address"
+  },
+  "price": {
+    "rangeLabel": "Price range",
+    "from": "From",
+    "to": "To",
+    "minAria": "Lowest price",
+    "maxAria": "Highest price"
+  },
+  "radius": {
+    "label": "Search radius",
+    "aria": "Search radius"
+  },
+  "location": {
+    "coordinatesError": "Couldn't get coordinates for the pick-up address."
+  }
+}

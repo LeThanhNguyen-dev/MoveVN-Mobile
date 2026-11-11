@@ -12,6 +12,16 @@ export type MapVehiclePoint = {
 
 type PickupCenter = { latitude: number; longitude: number } | null;
 
+export type VehicleSearchMapCopy = {
+  perDaySuffix: string;
+  totalRentalPrefix: string;
+  distancePrefix: string;
+  distanceSuffix: string;
+  clusterSuffix: string;
+  viewVehicle: string;
+  pickupPopup: string;
+};
+
 const CAR_SVG = '<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>';
 const BIKE_SVG = '<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>';
 
@@ -23,6 +33,7 @@ export function buildVehicleSearchMapHtml(
   radiusKm: number,
   brandColor: string,
   backgroundColor: string,
+  copy: VehicleSearchMapCopy,
 ) {
   const tileUrl = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
     + (CARTO_API_KEY ? `?key=${encodeURIComponent(CARTO_API_KEY)}` : "");
@@ -68,6 +79,7 @@ html,body,#map{margin:0;width:100%;height:100%;background:${backgroundColor};ove
   var radiusKm=${JSON.stringify(radiusKm)};
   var carSvg=${JSON.stringify(CAR_SVG)};
   var bikeSvg=${JSON.stringify(BIKE_SVG)};
+  var copy=${JSON.stringify(copy)};
   var selectedId=null;
   var map=L.map('map',{zoomControl:false,attributionControl:false,scrollWheelZoom:false});
   L.tileLayer(${JSON.stringify(tileUrl)},{subdomains:'abcd',maxZoom:20}).addTo(map);
@@ -81,14 +93,14 @@ html,body,#map{margin:0;width:100%;height:100%;background:${backgroundColor};ove
       var image=document.createElement('img');image.src=vehicle.featuredImage;image.alt='';root.appendChild(image);
     }
     var name=document.createElement('strong');name.textContent=vehicle.name;root.appendChild(name);
-    var daily=document.createElement('span');daily.className='daily';daily.textContent=price(vehicle.price)+'/ngày';root.appendChild(daily);
+    var daily=document.createElement('span');daily.className='daily';daily.textContent=price(vehicle.price)+copy.perDaySuffix;root.appendChild(daily);
     if(vehicle.totalPrice!=null){
-      var total=document.createElement('span');total.className='detail';total.textContent='Tổng tiền thuê: '+Math.round(vehicle.totalPrice).toLocaleString('vi-VN')+'đ';root.appendChild(total);
+      var total=document.createElement('span');total.className='detail';total.textContent=copy.totalRentalPrefix+Math.round(vehicle.totalPrice).toLocaleString('vi-VN')+'đ';root.appendChild(total);
     }
     if(vehicle.distanceKm!=null){
-      var distance=document.createElement('span');distance.className='detail';distance.textContent='Cách điểm nhận '+vehicle.distanceKm.toFixed(1)+' km';root.appendChild(distance);
+      var distance=document.createElement('span');distance.className='detail';distance.textContent=copy.distancePrefix+vehicle.distanceKm.toFixed(1)+copy.distanceSuffix;root.appendChild(distance);
     }
-    var button=document.createElement('button');button.type='button';button.textContent='Xem xe';
+    var button=document.createElement('button');button.type='button';button.textContent=copy.viewVehicle;
     button.addEventListener('click',function(event){event.stopPropagation();send({type:'open',id:vehicle.id});});
     root.appendChild(button);return root;
   }
@@ -110,7 +122,7 @@ html,body,#map{margin:0;width:100%;height:100%;background:${backgroundColor};ove
       var vehicle=group[0];
       var symbol=clustered||vehicle.vehicleType==='Car'?carSvg:bikeSvg;
       var html='<div class="vehicle-pin'+(clustered?' cluster':'')+(active?' selected':'')+'"><span class="symbol">'+symbol+'</span>'
-        +(clustered?'<span class="count">'+group.length+' xe</span>':'<span class="price">'+price(vehicle.price)+'/ngày</span>')+'</div>';
+        +(clustered?'<span class="count">'+group.length+copy.clusterSuffix+'</span>':'<span class="price">'+price(vehicle.price)+copy.perDaySuffix+'</span>')+'</div>';
       var icon=L.divIcon({className:'',html:html,iconSize:[94,clustered?44:65],iconAnchor:[47,20],popupAnchor:[0,-16]});
       var marker=L.marker([latitude,longitude],{icon:icon});
       if(!clustered){marker.bindPopup(function(){return popupFor(vehicle);},{minWidth:220,maxWidth:240,autoPanPaddingBottomRight:[10,80]});markerById[vehicle.id]=marker;}
@@ -133,7 +145,7 @@ html,body,#map{margin:0;width:100%;height:100%;background:${backgroundColor};ove
     L.marker([pickup.latitude,pickup.longitude],{
       icon:L.divIcon({className:'',html:'<span class="pickup-dot"></span>',iconSize:[14,14],iconAnchor:[7,7]}),
       zIndexOffset:1000
-    }).bindPopup('Điểm nhận xe bạn chọn').addTo(map);
+    }).bindPopup(copy.pickupPopup).addTo(map);
     map.fitBounds(L.latLng(pickup.latitude,pickup.longitude).toBounds(radiusKm*2000),{padding:[24,24],maxZoom:14});
   }else if(points.length){
     map.fitBounds(L.latLngBounds(points.map(function(p){return [p.latitude,p.longitude];})),{padding:[38,38],maxZoom:13});

@@ -1,5 +1,6 @@
 import { getAuthUser, getSessionGeneration, getToken } from "@/features/auth/hooks/useAuth";
 import { getApiErrorMessage } from "@/services/apiClient";
+import i18n from "@/i18n";
 import { getNotifications, getNotificationUnreadCount, markAllNotificationsAsRead, markNotificationAsRead } from "./services/notificationService";
 import { sortNotifications, useNotificationStore } from "./useNotifications";
 
@@ -61,7 +62,7 @@ export async function loadNotificationPage(options: { filter?: "all" | "unread";
     useNotificationStore.setState({ items, page: result.page, totalPages: result.totalPages, totalCount: Math.max(result.totalCount, items.length) });
     await refreshNotificationCount();
   } catch (error) {
-    if (current() && request === listRequest) useNotificationStore.setState({ error: getApiErrorMessage(error, "Không thể tải thông báo. Vui lòng thử lại.") });
+    if (current() && request === listRequest) useNotificationStore.setState({ error: getApiErrorMessage(error, i18n.t("mobile:notification.loadError")) });
   } finally {
     if (current() && request === listRequest) useNotificationStore.setState({ loading: false, refreshing: false, loadingMore: false });
   }

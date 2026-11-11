@@ -1,0 +1,57 @@
+{
+  "notification": {
+    "categories": {
+      "booking": "Trips",
+      "vehicle": "Vehicles",
+      "message": "Messages"
+    },
+    "labels": {
+      "contract": "Contract",
+      "dispute": "Dispute",
+      "violation": "Violation report"
+    },
+    "reference": {
+      "bookingCode": "Booking code",
+      "bookingNumber": "Booking number",
+      "ticketNumber": "Support code",
+      "booking": "Booking",
+      "ticket": "Support request"
+    },
+    "dayGroup": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "earlier": "Earlier"
+    },
+    "bellAriaUnread": "Notifications, {{total}} unread",
+    "refreshAria": "Refresh notifications",
+    "backToListAria": "Back to the notification list",
+    "detailTitle": "Notification details",
+    "subtitleSyncing": "Updating notifications…",
+    "subtitleCountError": "Couldn't update the unread count",
+    "read": "Read",
+    "unread": "Unread",
+    "markRead": "Mark as read",
+    "markReadAria": "Mark notification as read",
+    "markAllAria": "Mark all notifications as read",
+    "viewVehicle": "View vehicle and rental schedule",
+    "viewReport": "View report result",
+    "viewTicket": "View support request",
+    "connecting": "Connecting to live updates…",
+    "offline": "Live updates interrupted. Pull down to refresh.",
+    "loadFailedTitle": "Couldn't load notifications",
+    "retryLoad": "Try loading again",
+    "loadMore": "Load more notifications",
+    "footerEnd": "You've seen all notifications",
+    "emptyUnreadTitle": "No unread notifications",
+    "emptyUnreadText": "You've seen all the updates.",
+    "emptyAllText": "Updates about trips, payments and support will appear here.",
+    "loading": "Loading notifications…",
+    "loadError": "Couldn't load notifications. Please try again.",
+    "markReadError": "Couldn't mark as read. You can try again.",
+    "markAllError": "Couldn't mark everything as read. Please try again.",
+    "rowAria": "{{status}}, {{category}}{{urgent}}: {{title}}",
+    "urgentSuffix": ", Overdue alert",
+    "channelBookingDemo": "Rental notifications",
+    "channelBookings": "Rentals and vehicle handovers"
+  }
+}

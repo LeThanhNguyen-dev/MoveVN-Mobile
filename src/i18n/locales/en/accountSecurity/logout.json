@@ -1,0 +1,7 @@
+{
+  "logout": {
+    "successTitle": "Signed out",
+    "successMessage": "Your login session has ended.",
+    "loader": "Signing out..."
+  }
+}

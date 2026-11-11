@@ -1,6 +1,7 @@
 import type { ComponentRef } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, AppState, Image, Linking, Modal, PixelRatio, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Camera, X } from "lucide-react-native";
@@ -15,6 +16,7 @@ export type RawPhoto = { uri: string; width: number; height: number; capturedAt:
 export default function InspectionCameraModal({ bookingCode, type, onCaptured, onClose }: {
   bookingCode: string; type: InspectionType; onCaptured: (photo: CapturedInspectionPhoto) => void; onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
   const stampView = useRef<ComponentRef<typeof View>>(null);
@@ -60,7 +62,7 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
       if (!track(resized.uri)) return;
       setRaw({ ...resized, capturedAt });
     } catch {
-      if (alive.current) { setError("Không thể chụp ảnh. Vui lòng thử lại."); setBusy(false); }
+      if (alive.current) { setError(t("mobile:inspection.camera.captureError")); setBusy(false); }
       captureLock.current = false;
     }
   }
@@ -83,7 +85,7 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
           const photo = stampedPhoto;
           if (!cancelled) setStamped(photo);
         } catch {
-          if (!cancelled && alive.current) setError("Không thể gắn watermark vào ảnh. Vui lòng chụp lại.");
+          if (!cancelled && alive.current) setError(t("mobile:inspection.camera.watermarkError"));
         } finally {
           if (!cancelled && alive.current) setBusy(false);
           captureLock.current = false;
@@ -97,7 +99,7 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
     if (!raw || !busy) return;
     const timer = setTimeout(() => {
       setBusy(false); captureLock.current = false;
-      setError("Xử lý ảnh quá lâu. Vui lòng chụp lại.");
+      setError(t("mobile:inspection.camera.timeout"));
     }, 20000);
     return () => clearTimeout(timer);
   }, [raw, busy]);
@@ -116,38 +118,38 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
   return <Modal visible animationType="slide" onRequestClose={() => { if (!busy) onClose(); }}>
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}><Text style={styles.title}>{inspectionLabel(type)}</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Đóng camera" disabled={busy} onPress={onClose} style={styles.close}><X color="#fff" size={24} /></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:inspection.camera.closeAria")} disabled={busy} onPress={onClose} style={styles.close}><X color="#fff" size={24} /></Pressable>
       </View>
-      {Platform.OS === "web" ? <View style={styles.center}><Text style={styles.copy}>Hãy dùng app Android/iOS để chụp ảnh bàn giao xe.</Text></View>
+      {Platform.OS === "web" ? <View style={styles.center}><Text style={styles.copy}>{t("mobile:inspection.camera.webOnly")}</Text></View>
         : !raw && !permission ? <View style={styles.center}><ActivityIndicator color="#fff" /></View>
         : !raw && !permission?.granted ? <View style={styles.center}>
-          <Text style={styles.copy}>Cần quyền camera để chụp ảnh biên bản. Cho phép camera hoặc mở cài đặt để tiếp tục.</Text>
-          <Pressable style={styles.action} onPress={() => { void (permission?.canAskAgain ? requestPermission() : Linking.openSettings()).catch(() => setError("Không thể mở quyền camera.")); }}><Text style={styles.actionText}>{permission?.canAskAgain ? "Cho phép camera" : "Mở cài đặt"}</Text></Pressable>
+          <Text style={styles.copy}>{t("mobile:inspection.camera.permissionBody")}</Text>
+          <Pressable style={styles.action} onPress={() => { void (permission?.canAskAgain ? requestPermission() : Linking.openSettings()).catch(() => setError(t("mobile:inspection.camera.permissionError"))); }}><Text style={styles.actionText}>{permission?.canAskAgain ? t("mobile:inspection.camera.allow") : t("mobile:inspection.camera.openSettings")}</Text></Pressable>
         </View>
         : raw ? <View style={styles.preview}>
-          <Image accessibilityLabel={stamped ? "Ảnh đã gắn watermark" : "Ảnh đang xử lý"} source={{ uri: stamped?.uri ?? raw.uri }} style={styles.previewImage} resizeMode="contain" />
-          {busy ? <View style={styles.processing}><ActivityIndicator color="#fff" /><Text style={styles.copy}>Đang ghi ngày giờ lên ảnh…</Text></View> : null}
+          <Image accessibilityLabel={stamped ? t("mobile:inspection.camera.stampedAlt") : t("mobile:inspection.camera.processingAlt")} source={{ uri: stamped?.uri ?? raw.uri }} style={styles.previewImage} resizeMode="contain" />
+          {busy ? <View style={styles.processing}><ActivityIndicator color="#fff" /><Text style={styles.copy}>{t("mobile:inspection.camera.processing")}</Text></View> : null}
           {/* Keep the composition mounted at export resolution, outside the preview. */}
           <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.exportContainer}>
             <View ref={stampView} collapsable={false} onLayout={() => setLaidOut(true)} style={{ width: exportWidth, height: exportHeight, backgroundColor: "#000" }}>
-              <Image source={{ uri: raw.uri }} fadeDuration={0} onLoad={() => setLoaded(true)} onError={() => { setError("Không đọc được ảnh. Vui lòng chụp lại."); setBusy(false); captureLock.current = false; }} style={StyleSheet.absoluteFill} resizeMode="stretch" />
+              <Image source={{ uri: raw.uri }} fadeDuration={0} onLoad={() => setLoaded(true)} onError={() => { setError(t("mobile:inspection.camera.imageLoadError")); setBusy(false); captureLock.current = false; }} style={StyleSheet.absoluteFill} resizeMode="stretch" />
               <View style={{ position: "absolute", right: 12, bottom: 12, backgroundColor: "rgba(0,0,0,0.62)", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10, maxWidth: "86%" }}>
                 {watermark.map((line) => <Text key={line} allowFontScaling={false} style={{ color: "#fff", fontSize, lineHeight: fontSize * 1.45, fontWeight: "700" }}>{line}</Text>)}
               </View>
             </View>
           </View>
         </View> : active ? <CameraView ref={camera} style={styles.camera} facing="back" mode="picture" onCameraReady={() => setReady(true)}
-          onMountError={() => { setError("Không thể mở camera trên thiết bị này."); setReady(false); }} /> : <View style={styles.center}><Text style={styles.copy}>Camera tạm dừng.</Text></View>}
+          onMountError={() => { setError(t("mobile:inspection.camera.mountError")); setReady(false); }} /> : <View style={styles.center}><Text style={styles.copy}>{t("mobile:inspection.camera.paused")}</Text></View>}
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       <View style={styles.footer}>
-        <Text style={styles.copy}>Ảnh chụp camera · Watermark ngày giờ Việt Nam (UTC+07:00)</Text>
+        <Text style={styles.copy}>{t("mobile:inspection.camera.footer")}</Text>
         {raw ? <View style={styles.buttons}>
-          <Pressable accessibilityRole="button" disabled={busy} style={styles.action} onPress={retake}><Text style={styles.actionText}>Chụp lại</Text></Pressable>
+          <Pressable accessibilityRole="button" disabled={busy} style={styles.action} onPress={retake}><Text style={styles.actionText}>{t("mobile:inspection.camera.retake")}</Text></Pressable>
           <Pressable accessibilityRole="button" disabled={!stamped || busy} style={[styles.action, (!stamped || busy) && styles.disabled]} onPress={() => {
             if (!stamped) return;
             temporaryFiles.current.delete(stamped.uri); onCaptured(stamped); onClose();
-          }}><Text style={styles.actionText}>Dùng ảnh này</Text></Pressable>
-        </View> : Platform.OS !== "web" && permission?.granted ? <Pressable accessibilityRole="button" accessibilityLabel="Chụp ảnh xe" disabled={!ready || busy || !active} onPress={() => void takePhoto()} style={[styles.shutter, (!ready || busy) && styles.disabled]}>
+          }}><Text style={styles.actionText}>{t("mobile:inspection.camera.usePhoto")}</Text></Pressable>
+        </View> : Platform.OS !== "web" && permission?.granted ? <Pressable accessibilityRole="button" accessibilityLabel={t("booking:inspection.camera.button")} disabled={!ready || busy || !active} onPress={() => void takePhoto()} style={[styles.shutter, (!ready || busy) && styles.disabled]}>
           {busy ? <ActivityIndicator color="#000" /> : <Camera color="#000" size={30} />}
         </Pressable> : null}
       </View>

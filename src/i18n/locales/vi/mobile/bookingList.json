@@ -1,0 +1,128 @@
+{
+  "bookingList": {
+    "titles": {
+      "customerTrips": "Chuyến đi của tôi",
+      "ownerBookings": "Đơn thuê xe của tôi",
+      "ownerTab": "Đơn thuê của khách"
+    },
+    "kickers": {
+      "owner": "Cho thuê",
+      "customer": "Chuyến đi"
+    },
+    "meta": {
+      "loading": "Đang tải...",
+      "totalOwner": "{{count}} đơn",
+      "totalCustomer": "{{count}} chuyến",
+      "pending": "{{count}} chờ duyệt",
+      "ongoing": "{{count}} đang diễn ra"
+    },
+    "groups": {
+      "todo": "Cần xử lý",
+      "ongoing": "Đang diễn ra",
+      "upcoming": "Sắp tới",
+      "finished": "Đã kết thúc"
+    },
+    "primaryFilters": {
+      "depositPaid": "Đã cọc",
+      "inProgress": "Đang thuê"
+    },
+    "a11y": {
+      "statusFilter": "Bộ lọc trạng thái",
+      "openStatusFilter": "Mở bộ lọc trạng thái",
+      "clearSearch": "Xóa tìm kiếm",
+      "closeFilter": "Đóng bộ lọc",
+      "closeSearch": "Đóng tìm kiếm"
+    },
+    "filterChip": "Bộ lọc",
+    "filterSheet": {
+      "titleOwner": "Bộ lọc đơn thuê",
+      "titleCustomer": "Bộ lọc chuyến đi",
+      "subtitle": "Chọn một trạng thái · áp dụng ngay",
+      "reset": "Xóa lọc"
+    },
+    "searchSheet": {
+      "titleOwner": "Tìm đơn thuê",
+      "titleCustomer": "Tìm chuyến đi",
+      "subtitle": "Lọc theo mã đơn, tên xe và khoảng ngày."
+    },
+    "empty": {
+      "ownerTitle": "Chưa có đơn thuê nào",
+      "ownerDescription": "Khi khách đặt xe của bạn, đơn sẽ hiện ở đây.",
+      "customerTitle": "Chưa có chuyến đi nào",
+      "customerDescription": "Các chuyến bạn đặt sẽ hiện ở đây để dễ theo dõi."
+    },
+    "footer": {
+      "loadMore": "Xem thêm ({{count}})",
+      "shownOwner": "Đã hiển thị {{shown}}/{{total}} đơn",
+      "shownCustomer": "Đã hiển thị {{shown}}/{{total}} chuyến",
+      "allShown": "Đã hiển thị hết"
+    },
+    "reminder": {
+      "fallbackCustomer": "Khách",
+      "fallbackVehicle": "Xe",
+      "fallbackVehicleLower": "xe",
+      "ownerPendingTitle": "{{code}} · chờ bạn duyệt",
+      "ownerPendingDescription": "{{customer}} đặt {{vehicle}} từ {{time}}.",
+      "ownerHandoverTitle": "{{vehicle}} sắp bàn giao",
+      "ownerHandoverDescription": "Khách nhận xe {{time}}.",
+      "runningTitle": "{{vehicle}} đang được thuê",
+      "runningDescription": "Dự kiến trả xe {{time}}.",
+      "customerDepositTitle": "{{vehicle}} chờ đặt cọc",
+      "depositDue": "Hạn cọc {{time}} · quá hạn đơn sẽ tự hủy.",
+      "depositKeepTrip": "Hoàn tất cọc để giữ chuyến.",
+      "readyTitle": "{{vehicle}} sắp bắt đầu",
+      "readyDescription": "Nhận xe {{time}} · nhớ mang CCCD và bằng lái.",
+      "activeTitle": "{{vehicle}} đang diễn ra",
+      "ctaHandle": "Xử lý",
+      "ctaPay": "Thanh toán",
+      "ctaView": "Xem"
+    },
+    "card": {
+      "actionReview": "Xem lại",
+      "actionHandleOrder": "Xử lý đơn",
+      "actionTrack": "Theo dõi",
+      "actionReceiveVehicle": "Nhận xe",
+      "actionViewReport": "Xem biên bản",
+      "actionViewOrder": "Xem đơn",
+      "actionPayDeposit": "Thanh toán cọc",
+      "actionReturnVehicle": "Trả xe",
+      "actionHandoverReturn": "Bàn giao trả",
+      "priceFinished": "Đã kết thúc",
+      "priceDepositExpected": "Cọc dự kiến {{amount}}",
+      "priceDeposited": "Đã cọc {{amount}}",
+      "priceDeposit": "Cọc {{amount}}",
+      "customerFallback": "Khách #{{id}}",
+      "customerFallbackLower": "khách #{{id}}",
+      "profile": "Hồ sơ",
+      "pendingNote": "Đơn đang chờ bạn duyệt · phản hồi sớm để khách không hủy.",
+      "depositDue": "Hạn cọc {{time}}",
+      "a11y": {
+        "openBooking": "{{vehicle}} · {{code}}",
+        "viewProfile": "Xem hồ sơ {{name}}"
+      }
+    },
+    "search": {
+      "field": "Tìm đơn thuê",
+      "keywordPlaceholder": "Mã đơn, tên xe…",
+      "fromLabel": "Từ ngày (YYYY-MM-DD)",
+      "toLabel": "Đến ngày (YYYY-MM-DD)",
+      "apply": "Áp dụng bộ lọc",
+      "validationDate": "Nhập ngày theo dạng YYYY-MM-DD.",
+      "validationRange": "Ngày bắt đầu không được sau ngày kết thúc."
+    },
+    "legacy": {
+      "errorLoad": "Không tải được danh sách đơn thuê.",
+      "emptyStatus": "Chưa có đơn thuê ở trạng thái này.",
+      "empty": "Bạn chưa có đơn thuê nào.",
+      "ownerHint": "Yêu cầu thuê xe sẽ xuất hiện tại đây.",
+      "customerHint": "Chọn xe trong mục Khám phá để tạo yêu cầu thuê.",
+      "openBookingAria": "Xem đơn {{code}}",
+      "pickupLine": "Nhận: {{time}}",
+      "returnLine": "Trả: {{time}}",
+      "pageSummary": "{{total}} đơn · Trang {{page}}/{{pages}}"
+    },
+    "assistance": {
+      "title": "Hỗ trợ đơn thuê này"
+    }
+  }
+}

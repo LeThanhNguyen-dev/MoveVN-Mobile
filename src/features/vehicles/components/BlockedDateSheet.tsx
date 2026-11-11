@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
 import { memo, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Modal,
@@ -36,6 +37,7 @@ function BlockedDateSheet({
   onClose,
   onConfirm,
 }: BlockedDateSheetProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -118,8 +120,8 @@ function BlockedDateSheet({
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <View style={styles.head}>
             <View>
-              <AppText display style={styles.title}>Chặn ngày</AppText>
-              <AppText style={styles.sub}>Chạm ngày bắt đầu, chạm tiếp ngày kết thúc.</AppText>
+              <AppText display style={styles.title}>{t("mobile:ownerVehicle.blockedDate.title")}</AppText>
+              <AppText style={styles.sub}>{t("mobile:ownerVehicle.blockedDate.subtitle")}</AppText>
             </View>
             <Pressable onPress={onClose} style={styles.closeBtn}>
               <X color={theme.muted} size={18} />
@@ -192,27 +194,29 @@ function BlockedDateSheet({
           <View style={styles.legend}>
             <View style={styles.legendItem}>
               <View style={[styles.dot, styles.dotBlocked]} />
-              <AppText style={styles.legendText}>Đã chặn</AppText>
+              <AppText style={styles.legendText}>{t("mobile:ownerVehicle.blockedDate.blocked")}</AppText>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.dot, styles.dotBooked]} />
-              <AppText style={styles.legendText}>Đã đặt</AppText>
+              <AppText style={styles.legendText}>{t("mobile:ownerVehicle.blockedDate.booked")}</AppText>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.dot, styles.dotFree]} />
-              <AppText style={styles.legendText}>Còn trống</AppText>
+              <AppText style={styles.legendText}>{t("mobile:ownerVehicle.blockedDate.free")}</AppText>
             </View>
           </View>
 
           <AppText style={styles.summary}>
             {from
-              ? `Chặn: ${from}${to && to !== from ? ` → ${to}` : " (1 ngày)"}`
-              : "Chưa chọn ngày nào"}
+              ? to && to !== from
+                ? t("mobile:ownerVehicle.blockedDate.summaryRange", { from, to })
+                : t("mobile:ownerVehicle.blockedDate.summarySingle", { from })
+              : t("mobile:ownerVehicle.blockedDate.summaryEmpty")}
           </AppText>
           <TextInput
             value={reason}
             onChangeText={setReason}
-            placeholder="Lý do (VD: Bảo dưỡng...)"
+            placeholder={t("mobile:ownerVehicle.blockedDate.reasonPlaceholder")}
             placeholderTextColor={theme.placeholder}
             style={styles.input}
           />
@@ -224,7 +228,7 @@ function BlockedDateSheet({
             {saving ? (
               <ActivityIndicator color={theme.onBrand} size="small" />
             ) : (
-              <AppText style={styles.confirmText}>Xác nhận chặn</AppText>
+              <AppText style={styles.confirmText}>{t("mobile:ownerVehicle.blockedDate.confirm")}</AppText>
             )}
           </Pressable>
         </View>

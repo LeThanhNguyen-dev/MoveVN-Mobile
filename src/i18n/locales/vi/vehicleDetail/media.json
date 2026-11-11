@@ -1,0 +1,7 @@
+{
+  "photos": {
+    "allTitle": "Tất cả ảnh ({{total}})",
+    "primary": "Ảnh chính",
+    "numbered": "Ảnh {{index}}"
+  }
+}

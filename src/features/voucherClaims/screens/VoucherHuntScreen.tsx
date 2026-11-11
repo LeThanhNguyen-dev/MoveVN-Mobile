@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Clipboard from "expo-clipboard";
 import { Sparkles, TicketPercent } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Pressable,
@@ -11,6 +12,7 @@ import {
   StyleSheet,
   View,
 } from "react-native"
+import i18n from "@/i18n";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -33,10 +35,10 @@ type HuntRoute = RouteProp<DealsStackParamList, "VoucherHunt">;
 type HuntFilter = "All" | "Car" | "Motorbike" | "expiring" | "deep";
 type HuntSort = "value" | "ending" | "remaining";
 
-const SORT_OPTIONS = [
-  { value: "value", label: "Giảm nhiều nhất" },
-  { value: "ending", label: "Hạn gần nhất" },
-  { value: "remaining", label: "Còn nhiều lượt" },
+const SORT_OPTIONS: { value: HuntSort; labelKey: string }[] = [
+  { value: "value", labelKey: "promo:hunt.sortValue" },
+  { value: "ending", labelKey: "promo:hunt.sortEnding" },
+  { value: "remaining", labelKey: "promo:hunt.sortRemaining" },
 ];
 
 function toDetailSlide(item: VoucherHuntItem): PromotionDetailSlide {
@@ -48,7 +50,7 @@ function toDetailSlide(item: VoucherHuntItem): PromotionDetailSlide {
     code: item.code,
     popupTitle: item.name,
     popupDescription: item.description ?? null,
-    popupCtaLabel: "Nhận voucher ngay",
+    popupCtaLabel: i18n.t("promo:hunt.ctaClaim"),
     promotionName: item.name,
     discountType: item.discountType,
     discountValue: item.discountValue,
@@ -101,6 +103,7 @@ function HuntCard({
   onLayoutY,
 }: HuntCardProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const daysLeft = getDaysLeft(item.endAt);
 
@@ -117,7 +120,9 @@ function HuntCard({
           highlighted ? (
             <View style={styles.highlightBadge}>
               <Sparkles color={theme.brand} size={11} />
-              <AppText style={styles.highlightBadgeText}>Voucher bạn đang tìm</AppText>
+              <AppText style={styles.highlightBadgeText}>
+                {t("promo:hunt.badgeFinding")}
+              </AppText>
             </View>
           ) : daysLeft !== null && daysLeft <= 3 ? (
             <View
@@ -130,13 +135,13 @@ function HuntCard({
               ]}
             >
               <AppText style={[styles.urgentBadgeText, { color: theme.mode === "dark" ? "#FB7185" : "#B91C1C" }]}>
-                Hết hạn sau {daysLeft} ngày
+                {t("mobile:voucher.hunt.expiresIn", { days: daysLeft })}
               </AppText>
             </View>
           ) : null
         }
         action={{
-          label: "Nhận voucher",
+          label: t("promo:hunt.claim"),
           icon: claiming ? null : <Sparkles color="#FFFFFF" size={14} />,
           pending: claiming,
           onClick: onClaim,
@@ -152,6 +157,7 @@ export default function VoucherHuntScreen() {
   const navigation = useNavigation<DealsNav>();
   const route = useRoute<HuntRoute>();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [vouchers, setVouchers] = useState<VoucherHuntItem[]>([]);
@@ -176,7 +182,11 @@ export default function VoucherHuntScreen() {
       const data = await getVoucherHunt();
       setVouchers(Array.isArray(data) ? data : []);
     } catch {
-      showToast({ type: "error", title: "Lỗi", message: "Không thể tải danh sách voucher." });
+      showToast({
+        type: "error",
+        title: i18n.t("promo:errorTitle"),
+        message: i18n.t("promo:hunt.loadError"),
+      });
     } finally {
       setLoading(false);
     }
@@ -218,13 +228,23 @@ export default function VoucherHuntScreen() {
 
   const filters = useMemo(
     () => [
-      { value: "All", label: "Tất cả", count: vouchers.length },
-      { value: "Car", label: "Ô tô", count: carCount },
-      { value: "Motorbike", label: "Xe máy", count: motorbikeCount },
-      { value: "expiring", label: "Sắp hết hạn", count: expiringCount, tone: "amber" as const },
-      { value: "deep", label: "Giảm sâu >30%", count: deepCount },
+      { value: "All", label: t("promo:hunt.filterAll"), count: vouchers.length },
+      { value: "Car", label: t("promo:hunt.filterCar"), count: carCount },
+      { value: "Motorbike", label: t("promo:hunt.filterMotorbike"), count: motorbikeCount },
+      {
+        value: "expiring",
+        label: t("promo:hunt.filterExpiring"),
+        count: expiringCount,
+        tone: "amber" as const,
+      },
+      { value: "deep", label: t("promo:hunt.filterDeep"), count: deepCount },
     ],
-    [vouchers.length, carCount, motorbikeCount, expiringCount, deepCount],
+    [vouchers.length, carCount, motorbikeCount, expiringCount, deepCount, t],
+  );
+
+  const sortOptions = useMemo(
+    () => SORT_OPTIONS.map((option) => ({ value: option.value, label: t(option.labelKey) })),
+    [t],
   );
 
   const displayed = useMemo(() => {
@@ -272,8 +292,8 @@ export default function VoucherHuntScreen() {
       await claimVoucher(item.promotionId);
       showToast({
         type: "success",
-        title: "Nhận thành công!",
-        message: `${item.name} đã thêm vào ví voucher.`,
+        title: t("promo:hunt.claimSuccessTitle"),
+        message: t("promo:hunt.claimSuccessMessage", { name: item.name }),
       });
       handleClaimed(item.promotionId);
     } catch (err: unknown) {
@@ -281,8 +301,8 @@ export default function VoucherHuntScreen() {
         ?.response?.data;
       showToast({
         type: "error",
-        title: "Lỗi",
-        message: response?.message || response?.errors?.[0] || "Không thể nhận voucher.",
+        title: t("promo:errorTitle"),
+        message: response?.message || response?.errors?.[0] || t("promo:hunt.claimError"),
       });
     } finally {
       setClaimingId(null);
@@ -293,10 +313,14 @@ export default function VoucherHuntScreen() {
     try {
       await Clipboard.setStringAsync(item.code);
       setCopiedId(item.promotionId);
-      showToast({ type: "success", title: "Đã sao chép mã", message: item.code });
+      showToast({ type: "success", title: t("promo:hunt.copiedTitle"), message: item.code });
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      showToast({ type: "error", title: "Lỗi", message: "Không sao chép được mã voucher." });
+      showToast({
+        type: "error",
+        title: t("promo:errorTitle"),
+        message: t("promo:hunt.copyError"),
+      });
     }
   }
 
@@ -320,7 +344,7 @@ export default function VoucherHuntScreen() {
         showsVerticalScrollIndicator={false}
       >
         <AppText display style={styles.pageTitle}>
-          Săn voucher
+          {t("promo:hunt.pageTitle")}
         </AppText>
 
         <DealsSegmentedNav />
@@ -328,10 +352,12 @@ export default function VoucherHuntScreen() {
         {deepMissed ? (
           <View style={styles.warnBox}>
             <AppText style={styles.warnText}>
-              Voucher này có thể bạn đã nhận hoặc hiện không còn khả dụng.
+              {t("promo:hunt.deepMissed")}
             </AppText>
             <Pressable onPress={() => navigation.navigate("VoucherWallet")} style={styles.warnButton}>
-              <AppText style={styles.warnButtonText}>Xem voucher đã nhận →</AppText>
+              <AppText style={styles.warnButtonText}>
+                {t("promo:hunt.viewClaimed")} →
+              </AppText>
             </Pressable>
           </View>
         ) : null}
@@ -339,12 +365,12 @@ export default function VoucherHuntScreen() {
         <DealsFilterBar
           search={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Tìm tên ưu đãi, mã voucher..."
+          searchPlaceholder={t("promo:hunt.searchPlaceholder")}
           filters={filters}
           activeFilter={filter}
           onFilterChange={(value) => setFilter(value as HuntFilter)}
           sortValue={sort}
-          sortOptions={SORT_OPTIONS}
+          sortOptions={sortOptions}
           onSortChange={(value) => setSort(value as HuntSort)}
         />
 
@@ -358,45 +384,47 @@ export default function VoucherHuntScreen() {
               <TicketPercent color={theme.brand} size={26} />
             </View>
             <AppText display style={styles.emptyTitle}>
-              Tất cả voucher đã được nhận hết
+              {t("promo:hunt.emptyTitle")}
             </AppText>
             <AppText style={styles.emptyDesc}>
-              Quay lại sau nhé, các đợt săn mã mới sẽ xuất hiện ở đây.
+              {t("promo:hunt.emptyDescription")}
             </AppText>
             <Pressable
               onPress={() => navigation.navigate("Promotions")}
               style={styles.emptyLinkTouch}
             >
-              <AppText style={styles.emptyLink}>Xem trung tâm ưu đãi →</AppText>
+              <AppText style={styles.emptyLink}>
+                {t("promo:hunt.emptyCta")} →
+              </AppText>
             </Pressable>
           </View>
         ) : vouchers.length === 0 ? (
           <View style={styles.emptyBox}>
-            <AppText style={styles.emptyDesc}>Hiện không có voucher nào khác để nhận.</AppText>
+            <AppText style={styles.emptyDesc}>{t("mobile:voucher.hunt.noOthers")}</AppText>
           </View>
         ) : (
           <>
             <View style={styles.sectionHead}>
               <View style={styles.sectionTitleRow}>
                 <AppText display style={styles.sectionTitle}>
-                  Voucher khả dụng
+                  {t("promo:hunt.listTitle")}
                 </AppText>
                 <View style={styles.countBadge}>
                   <AppText style={styles.countBadgeText}>{displayed.length}</AppText>
                 </View>
               </View>
               <AppText style={styles.sectionDesc}>
-                Nhận voucher để lưu vào ví và dùng khi đặt xe.
+                {t("promo:hunt.listDescription")}
               </AppText>
             </View>
 
             {displayed.length === 0 ? (
               <View style={styles.emptyBox}>
                 <AppText display style={styles.emptyTitle}>
-                  Không có voucher phù hợp
+                  {t("promo:hunt.noMatch")}
                 </AppText>
                 <AppText style={styles.emptyDesc}>
-                  Thử đổi bộ lọc hoặc từ khoá tìm kiếm.
+                  {t("promo:hunt.noMatchHint")}
                 </AppText>
               </View>
             ) : (

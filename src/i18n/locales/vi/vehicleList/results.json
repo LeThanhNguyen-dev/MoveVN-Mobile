@@ -1,0 +1,35 @@
+{
+  "results": {
+    "eyebrowMap": "Bản đồ phương tiện",
+    "eyebrowList": "Danh sách phương tiện",
+    "title": "Xe phù hợp tại {{area}}",
+    "allCountry": "toàn quốc",
+    "countFound": "Tìm thấy {{total}} xe sẵn có",
+    "countFoundDays": "Tìm thấy {{total}} xe sẵn có cho {{days}} ngày thuê",
+    "viewModeAria": "Chế độ xem xe",
+    "list": "Danh sách",
+    "map": "Bản đồ",
+    "sort": "Sắp xếp",
+    "newest": "Mới nhất",
+    "missingPeriod": "Vui lòng chọn địa điểm thuê và ngày giờ thuê.",
+    "emptyTitle": "Chưa có xe phù hợp",
+    "emptyDescription": "Hãy điều chỉnh bộ lọc hoặc mở rộng khoảng giá/ngày thuê.",
+    "emptyAction": "Đặt lại bộ lọc",
+    "page": "Trang {{page}} / {{total}}"
+  },
+  "vehicleCard": {
+    "bookNow": "Đặt ngay",
+    "rentNow": "Thuê ngay"
+  },
+  "ai": {
+    "placeholderLong": "Tìm bằng AI: xe 7 chỗ dưới 1tr5, rộng rãi...",
+    "placeholderShort": "Tìm AI: xe 7 chỗ dưới 1tr5...",
+    "clearAria": "Xóa tìm kiếm AI",
+    "submitAria": "Tìm bằng AI",
+    "submit": "AI Search",
+    "searching": "AI đang tìm kiếm... {{seconds}}s",
+    "noMatch": "Không có kết quả AI phù hợp, đang hiển thị danh sách theo bộ lọc hiện tại.",
+    "needsPeriod": "Chọn địa điểm và thời gian thuê trước khi dùng AI.",
+    "error": "Không xử lý được tìm kiếm AI. Hãy thử câu khác hoặc dùng bộ lọc thường."
+  }
+}

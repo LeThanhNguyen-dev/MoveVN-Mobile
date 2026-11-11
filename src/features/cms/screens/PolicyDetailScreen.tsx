@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ImageSource } from "expo-image";
 import { ArrowLeft, ChevronDown } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import CmsHero, { CMS_FALLBACK_BANNER_IMAGE } from "@/features/cms/components/CmsHero";
@@ -9,6 +10,7 @@ import ImageViewer from "@/features/cms/components/ImageViewer";
 import { getCmsPageBySlug } from "@/features/cms/services/cmsService";
 import type { CmsPageResponse, CmsSection } from "@/features/cms/types";
 import { parseCmsSections } from "@/features/cms/utils/content";
+import i18n from "@/i18n";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
@@ -64,7 +66,7 @@ function normalizeSection(raw: unknown, ids: Set<string>, fallback: number): Pol
         let itemId = String(it.id ?? it.Id ?? "");
         if (!itemId || used.has(itemId)) itemId = `${id}-item-${index + 1}`;
         used.add(itemId);
-        return { id: itemId, title: String(it.title ?? it.Title ?? `Mục ${index + 1}`), content: String(it.content ?? it.Content ?? "") };
+        return { id: itemId, title: String(it.title ?? it.Title ?? i18n.t("mobile:cms.policy.itemFallback", { index: index + 1 })), content: String(it.content ?? it.Content ?? "") };
       });
     return { id, title, content: [], items: parsed };
   }
@@ -120,6 +122,7 @@ export default function PolicyDetailScreen({
   groupLabel?: string;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [page, setPage] = useState<CmsPageResponse | null | undefined>(undefined);
   const [error, setError] = useState("");
@@ -131,10 +134,10 @@ export default function PolicyDetailScreen({
     try {
       setPage(await getCmsPageBySlug(slug.trim().toLowerCase()));
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Không tải được nội dung.");
+      setError(failure instanceof Error ? failure.message : t("mobile:cms.faq.loadError"));
       setPage(null);
     }
-  }, [slug]);
+  }, [slug, t]);
 
   useEffect(() => {
     void load();
@@ -154,11 +157,11 @@ export default function PolicyDetailScreen({
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("mobile:cms.a11y.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
         <AppText display numberOfLines={1} style={styles.topBarTitle}>
-          {groupLabel || "Điều khoản & Chính sách"}
+          {groupLabel || t("mobile:cms.policy.title")}
         </AppText>
         <View style={styles.topBarSpacer} />
       </View>
@@ -166,23 +169,23 @@ export default function PolicyDetailScreen({
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {page === undefined ? (
           <View style={styles.stateCard}>
-            <AppText style={styles.muted}>Đang tải nội dung...</AppText>
+            <AppText style={styles.muted}>{t("mobile:cms.loadingContent")}</AppText>
           </View>
         ) : error ? (
           <View style={styles.stateCard}>
             <AppText style={styles.error}>{error}</AppText>
             <Pressable accessibilityRole="button" onPress={() => { void load(); }} style={styles.retryButton}>
-              <AppText style={styles.retryText}>Thử lại</AppText>
+              <AppText style={styles.retryText}>{t("common:retry")}</AppText>
             </Pressable>
           </View>
         ) : page === null ? (
           <View style={styles.stateCard}>
-            <AppText style={styles.muted}>Không tìm thấy nội dung.</AppText>
+            <AppText style={styles.muted}>{t("common:contentNotFound")}</AppText>
           </View>
         ) : (
           <>
             <CmsHero
-              meta={updatedLabel ? `Cập nhật ${updatedLabel}` : undefined}
+              meta={updatedLabel ? t("support:list.updatedAt", { date: updatedLabel }) : undefined}
               onPress={() => setViewerSource(bannerSource)}
               source={bannerSource}
               title={page.title}
@@ -190,7 +193,7 @@ export default function PolicyDetailScreen({
 
             {sections.length === 0 ? (
               <View style={styles.stateCard}>
-                <AppText style={styles.muted}>Nội dung đang được cập nhật.</AppText>
+                <AppText style={styles.muted}>{t("common:contentUpdating")}</AppText>
               </View>
             ) : (
               <View style={styles.body}>

@@ -1,5 +1,6 @@
 import BookingDisclosure from "./BookingDisclosure";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, View } from "react-native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -9,10 +10,11 @@ import { bookingStatusLabel, formatDateTime } from "@/features/booking/utils/for
 /** Keep the API's chronological order, matching the web booking detail. */
 export default function BookingTimeline({ history }: { history: BookingStatusHistoryDto[] }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   if (!history || history.length === 0) return null;
   return (
-    <BookingDisclosure title="Lịch sử giao dịch & Trạng thái">
+    <BookingDisclosure title={t("booking:detail.historyTitle")}>
       {history.map((h, i) => (
         <View key={`${h.createdAt}-${i}`} style={styles.row}>
           <View style={styles.markerColumn}>
@@ -30,7 +32,7 @@ export default function BookingTimeline({ history }: { history: BookingStatusHis
               </View>
               <Text style={styles.time}>{formatDateTime(h.createdAt)}</Text>
             </View>
-            {h.note ? <Text style={styles.note}>Nội dung: “{h.note}”</Text> : null}
+            {h.note ? <Text style={styles.note}>{t("mobile:trip.timeline.note", { note: h.note })}</Text> : null}
           </View>
         </View>
       ))}

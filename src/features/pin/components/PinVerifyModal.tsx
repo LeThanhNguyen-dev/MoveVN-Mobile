@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Lock, ShieldCheck } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Modal, Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import PinDigitInputs from "@/features/pin/components/PinDigitInputs";
@@ -36,6 +37,7 @@ export default function PinVerifyModal({
   remainingAttempts,
   purposeDescription,
 }: PinVerifyModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [pin, setPin] = useState("");
@@ -44,7 +46,9 @@ export default function PinVerifyModal({
   const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
 
   const isLocked = lockoutSeconds !== null;
-  const documentLabel = documentType === "CCCD" ? "Căn cước công dân" : "Giấy phép lái xe";
+  const documentLabel = t(
+    documentType === "CCCD" ? "accountSecurity:pin.documentCccd" : "accountSecurity:pin.documentGplx",
+  );
   const wasOpenRef = useRef(visible);
   const wasLockedRef = useRef(isLocked);
 
@@ -94,8 +98,11 @@ export default function PinVerifyModal({
       setAttemptsLeft(remaining);
       setErrorMessage(
         remaining !== null && remaining > 0
-          ? `${result.message ?? "Mã PIN không chính xác."} Còn ${remaining} lần thử.`
-          : (result.message ?? "Mã PIN không chính xác."),
+          ? t("accountSecurity:pin.verify.withAttempts", {
+            message: result.message ?? t("accountSecurity:pin.incorrect"),
+            remaining,
+          })
+          : (result.message ?? t("accountSecurity:pin.incorrect")),
       );
     } catch (error) {
       setErrorMessage(getFriendlyPinMessage(error));
@@ -113,34 +120,34 @@ export default function PinVerifyModal({
               <View style={styles.lockIcon}>
                 <Lock color={theme.danger} size={22} strokeWidth={2.3} />
               </View>
-              <AppText display style={styles.title}>Mã PIN đã bị khóa</AppText>
-              <AppText style={styles.description}>Mã PIN đã bị khóa tạm thời do nhập sai nhiều lần.</AppText>
-              <AppText style={styles.countdownLabel}>Thử lại sau</AppText>
+              <AppText display style={styles.title}>{t("accountSecurity:pin.verify.lockedTitle")}</AppText>
+              <AppText style={styles.description}>{t("mobile:pin.verify.lockedDetail")}</AppText>
+              <AppText style={styles.countdownLabel}>{t("accountSecurity:pin.verify.retryAfter")}</AppText>
               <AppText style={styles.countdown}>{formatCountdown(lockoutSeconds ?? 0)}</AppText>
               <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                <AppText style={styles.secondaryText}>Đóng</AppText>
+                <AppText style={styles.secondaryText}>{t("accountSecurity:pin.close")}</AppText>
               </Pressable>
             </View>
           ) : (
             <View style={styles.stack}>
               <View style={styles.heading}>
                 <ShieldCheck color={theme.brand} size={22} strokeWidth={2.3} />
-                <AppText display style={styles.title}>Nhập mã PIN</AppText>
+                <AppText display style={styles.title}>{t("accountSecurity:pin.verify.title")}</AppText>
               </View>
               <AppText style={styles.description}>
-                {purposeDescription ?? `Mã PIN dùng để hiển thị chi tiết giấy tờ ${documentLabel} của bạn.`}
+                {purposeDescription ?? t("accountSecurity:pin.verify.description", { document: documentLabel })}
               </AppText>
 
               <PinDigitInputs
                 autoFocus={visible}
                 disabled={isSubmitting}
                 hasError={errorMessage !== null}
-                label="Mã PIN"
+                label={t("accountSecurity:pin.verify.pinLabel")}
                 onChange={handlePinChange}
                 value={pin}
               />
               <AppText style={styles.counter}>
-                {pin.length} / {PIN_DIGIT_COUNT}
+                {t("accountSecurity:pin.verify.counter", { current: pin.length, total: PIN_DIGIT_COUNT })}
               </AppText>
 
               {errorMessage !== null ? (
@@ -150,18 +157,18 @@ export default function PinVerifyModal({
               ) : null}
 
               {attemptsLeft !== null && attemptsLeft > 0 && errorMessage === null ? (
-                <AppText style={styles.muted}>Còn {attemptsLeft} lần thử.</AppText>
+                <AppText style={styles.muted}>{t("accountSecurity:pin.verify.attemptsLeft", { count: attemptsLeft })}</AppText>
               ) : null}
 
               {onForgotPin !== undefined ? (
                 <Pressable accessibilityRole="button" onPress={onForgotPin} style={styles.linkWrap}>
-                  <AppText style={styles.link}>Quên mã PIN?</AppText>
+                  <AppText style={styles.link}>{t("accountSecurity:pin.verify.forgot")}</AppText>
                 </Pressable>
               ) : null}
 
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <AppText style={styles.secondaryText}>Hủy</AppText>
+                  <AppText style={styles.secondaryText}>{t("accountSecurity:pin.cancel")}</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -169,7 +176,7 @@ export default function PinVerifyModal({
                   onPress={() => { void handleSubmit(); }}
                   style={[styles.primaryButton, (pin.length !== PIN_DIGIT_COUNT || isSubmitting) && styles.disabled]}
                 >
-                  <AppText style={styles.primaryText}>{isSubmitting ? "Đang kiểm tra..." : "Xác nhận"}</AppText>
+                  <AppText style={styles.primaryText}>{isSubmitting ? t("mobile:pin.verify.submitting") : t("accountSecurity:pin.verify.confirm")}</AppText>
                 </Pressable>
               </View>
             </View>

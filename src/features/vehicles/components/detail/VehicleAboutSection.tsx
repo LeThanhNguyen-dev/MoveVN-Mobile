@@ -1,11 +1,13 @@
 import { Info } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import DetailSectionHeader from "./DetailSectionHeader";
 import { detailFont, useDetailTheme } from "./detailTheme";
 
 export default function VehicleAboutSection({ description }: { description: string | null }) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(p), [p]);
   const [expanded, setExpanded] = useState(false);
@@ -14,12 +16,12 @@ export default function VehicleAboutSection({ description }: { description: stri
 
   return (
     <View style={styles.section}>
-      <DetailSectionHeader icon={Info} title="Về chiếc xe" />
+      <DetailSectionHeader icon={Info} title={t("mobile:vehicleDetail.about.title")} />
       <AppText
         numberOfLines={canExpand && !expanded ? 4 : undefined}
         style={[styles.description, !text && { color: p.muted }]}
       >
-        {text || "Chủ xe chưa bổ sung mô tả cho xe này."}
+        {text || t("mobile:vehicleDetail.about.empty")}
       </AppText>
       {canExpand ? (
         <Pressable
@@ -29,7 +31,9 @@ export default function VehicleAboutSection({ description }: { description: stri
           onPress={() => setExpanded((value) => !value)}
           style={({ pressed }) => [styles.more, pressed && styles.pressed]}
         >
-          <AppText style={styles.moreText}>{expanded ? "Thu gọn" : "Xem thêm"}</AppText>
+          <AppText style={styles.moreText}>
+            {expanded ? t("common:tableCollapse") : t("mobile:vehicleDetail.about.showMore")}
+          </AppText>
         </Pressable>
       ) : null}
     </View>

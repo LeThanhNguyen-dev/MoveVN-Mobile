@@ -1,6 +1,7 @@
 import type { ComponentRef } from "react";
 import { AlertCircle, Sparkles } from "lucide-react-native";
 import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native"
 import AppText from "@/components/AppText";
 
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export default function VehicleDescriptionField({ value, onChange, request, onFocus, onBlur }: Props) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -37,28 +39,30 @@ export default function VehicleDescriptionField({ value, onChange, request, onFo
       });
       const generatedDescription = result?.description?.trim();
       if (!generatedDescription) {
-        setError("AI chưa tạo được mô tả. Vui lòng thử lại.");
+        setError(t("mobile:ownerVehicle.description.aiEmpty"));
         return;
       }
       onChange(generatedDescription);
     } catch (requestError) {
       const apiError = toApiError(requestError);
-      setError(apiError.message || "Không thể tạo gợi ý lúc này. Vui lòng thử lại.");
+      setError(apiError.message || t("mobile:ownerVehicle.description.aiFailed"));
     } finally {
       setGenerating(false);
     }
   }
 
-  const buttonLabel = value.trim() ? "Viết lại bằng AI" : "Gợi ý bằng AI";
+  const buttonLabel = value.trim()
+    ? t("mobile:ownerVehicle.description.regenerate")
+    : t("mobile:ownerVehicle.description.suggest");
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <AppText style={styles.label}>Mô tả thêm</AppText>
+        <AppText style={styles.label}>{t("mobile:ownerVehicle.description.label")}</AppText>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={buttonLabel}
-          accessibilityHint={!request ? "Chọn hãng, dòng xe, loại xe và năm sản xuất trước" : undefined}
+          accessibilityHint={!request ? t("mobile:ownerVehicle.description.aiHint") : undefined}
           disabled={!request || generating}
           onPress={handleGenerate}
           style={({ pressed }) => [
@@ -73,7 +77,7 @@ export default function VehicleDescriptionField({ value, onChange, request, onFo
             <Sparkles color={request ? theme.brand : theme.faint} size={15} />
           )}
           <AppText style={[styles.generateText, !request && styles.generateTextDisabled]}>
-            {generating ? "Đang tạo..." : buttonLabel}
+            {generating ? t("mobile:ownerVehicle.description.generating") : buttonLabel}
           </AppText>
         </Pressable>
       </View>
@@ -95,7 +99,7 @@ export default function VehicleDescriptionField({ value, onChange, request, onFo
         maxLength={1500}
         numberOfLines={5}
         scrollEnabled
-        placeholder="Mô tả về xe..."
+        placeholder={t("mobile:ownerVehicle.description.placeholder")}
         placeholderTextColor={theme.placeholder}
         style={styles.input}
         textAlignVertical="top"

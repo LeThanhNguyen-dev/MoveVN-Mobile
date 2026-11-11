@@ -1,5 +1,6 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OwnerBookingsStackParamList } from "@/navigation/OwnerBookingsNavigator";
 import { getOwnerBookings } from "@/features/booking/bookingOwnerService";
@@ -12,6 +13,7 @@ import { getApiErrorMessage } from "@/services/apiClient";
 type ListNav = NativeStackNavigationProp<OwnerBookingsStackParamList, "OwnerBookingList">;
 
 export default function OwnerBookingListScreen({ navigation, onOpenUserProfile }: { navigation: ListNav; onOpenUserProfile?: (userId: number) => void }) {
+  const { t } = useTranslation();
   const [items, setItems] = useState<BookingResponse[]>([]);
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState<SearchFilters>(EMPTY_SEARCH);
@@ -52,7 +54,7 @@ export default function OwnerBookingListScreen({ navigation, onOpenUserProfile }
         setPage(res.page);
       } catch (err) {
         if (request !== requestId.current) return;
-        if (replace) setError(getApiErrorMessage(err, "Không tải được danh sách đơn thuê."));
+        if (replace) setError(getApiErrorMessage(err, t("mobile:bookingList.legacy.errorLoad")));
       } finally {
         if (request === requestId.current) {
           fetching.current = false;
@@ -62,7 +64,7 @@ export default function OwnerBookingListScreen({ navigation, onOpenUserProfile }
         }
       }
     },
-    [search],
+    [search, t],
   );
 
   useFocusEffect(useCallback(() => {

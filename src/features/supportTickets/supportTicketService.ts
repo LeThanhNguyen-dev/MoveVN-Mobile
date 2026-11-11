@@ -1,5 +1,6 @@
 import { apiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
+import i18n from "@/i18n";
 import type { ApiResponse } from "@/features/auth/types";
 import { appendUploadFile, type UploadFileInput } from "@/types/upload";
 import type {
@@ -15,7 +16,7 @@ import type {
 } from "./types";
 
 function required<T>(response: ApiResponse<T>): T {
-  if (!response.status || response.data == null) throw new Error(response.message || "Chưa tải được yêu cầu hỗ trợ.");
+  if (!response.status || response.data == null) throw new Error(response.message || i18n.t("mobile:supportTicket.errors.loadResponse"));
   return response.data;
 }
 
@@ -56,7 +57,7 @@ export async function uploadSupportTicketAttachment(file: UploadFileInput): Prom
     headers: { "Content-Type": "multipart/form-data" },
   });
   const url = required(res.data).url;
-  if (typeof url !== "string" || !/^https?:\/\//i.test(url)) throw new Error("Máy chủ chưa trả về ảnh hợp lệ. Vui lòng thử lại.");
+  if (typeof url !== "string" || !/^https?:\/\//i.test(url)) throw new Error(i18n.t("mobile:supportTicket.errors.invalidUpload"));
   return url;
 }
 

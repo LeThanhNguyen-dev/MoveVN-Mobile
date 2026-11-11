@@ -7,6 +7,7 @@ import {
   RotateCw,
 } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -52,6 +53,7 @@ export default function OwnerReviewsPanel({
   onOpenVehicle,
 }: Props) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [role, setRole] = useState<PublicProfileReviewRole>(initialRole);
@@ -91,7 +93,7 @@ export default function OwnerReviewsPanel({
       })
       .catch(() => {
         if (!active) return;
-        if (firstPage) setError("Không tải được đánh giá. Vui lòng thử lại.");
+        if (firstPage) setError(t("mobile:user.reviews.loadError"));
         else setLoadMoreError(true);
       })
       .finally(() => {
@@ -125,7 +127,8 @@ export default function OwnerReviewsPanel({
   }, [profile.vehicles]);
 
   const remaining = Math.max(total - reviews.length, 0);
-  const roleLabel = role === "owner" ? "chủ xe" : "khách thuê";
+  const roleLabel =
+    role === "owner" ? t("users:reviews.roleOwner") : t("users:reviews.roleRenter");
 
   function selectRole(next: PublicProfileReviewRole) {
     if (next === role) return;
@@ -142,18 +145,21 @@ export default function OwnerReviewsPanel({
     };
     const buttons: AlertButton[] = [];
     if (onOpenProfile) {
-      buttons.push({ text: "Xem hồ sơ", onPress: () => onOpenProfile(review.reviewerId) });
+      buttons.push({
+        text: t("account:viewProfile"),
+        onPress: () => onOpenProfile(review.reviewerId),
+      });
     }
     if (canReport(target)) {
       buttons.push({
-        text: "Báo cáo vi phạm",
+        text: t("mobile:user.reviews.reportViolation"),
         style: "destructive",
         onPress: () => openViolations({ target }),
       });
     }
     if (buttons.length === 0) return;
-    buttons.push({ text: "Đóng", style: "cancel" });
-    Alert.alert("Tuỳ chọn đánh giá", review.reviewerName, buttons);
+    buttons.push({ text: t("common:closeAction"), style: "cancel" });
+    Alert.alert(t("mobile:user.reviews.actionsTitle"), review.reviewerName, buttons);
   }
 
   return (
@@ -168,22 +174,22 @@ export default function OwnerReviewsPanel({
             <RoleChip
               active={role === "owner"}
               count={profile.ownerReviewCount}
-              label="Khi là chủ xe"
+              label={t("users:reviews.asOwner")}
               onPress={() => selectRole("owner")}
               styles={styles}
             />
             <RoleChip
               active={role === "customer"}
               count={profile.customerReviewCount}
-              label="Khi là khách thuê"
+              label={t("users:reviews.asRenter")}
               onPress={() => selectRole("customer")}
               styles={styles}
             />
           </View>
           <AppText style={styles.roleHint}>
             {role === "owner"
-              ? "Đánh giá từ khách thuê sau chuyến thuê xe."
-              : "Đánh giá từ chủ xe sau chuyến thuê."}
+              ? t("users:reviews.ownerDescription")
+              : t("users:reviews.renterDescription")}
           </AppText>
         </View>
       ) : null}
@@ -194,12 +200,14 @@ export default function OwnerReviewsPanel({
             {roleStats.average == null ? "—" : roleStats.average.toFixed(1)}
           </AppText>
           <ProfileStars rating={roleStats.average} size={11} />
-          <AppText style={styles.summaryCount}>{roleStats.count} đánh giá</AppText>
+          <AppText style={styles.summaryCount}>
+            {t("users:summary.reviews", { count: roleStats.count })}
+          </AppText>
         </View>
         <View style={styles.summaryChips}>
           <FilterChip
             active={filter == null}
-            label={`Tất cả (${roleStats.count})`}
+            label={t("users:reviews.filterAll", { count: roleStats.count })}
             onPress={() => setFilter(null)}
             styles={styles}
           />
@@ -209,7 +217,7 @@ export default function OwnerReviewsPanel({
               <FilterChip
                 key={star}
                 active={filter === star}
-                label={`${star} sao (${count})`}
+                label={t("users:reviews.filterStar", { star, count })}
                 disabled={count === 0}
                 onPress={() => setFilter(star)}
                 styles={styles}
@@ -222,7 +230,7 @@ export default function OwnerReviewsPanel({
       {loading ? (
         <View style={styles.stateBox}>
           <ActivityIndicator color={theme.brand} size="small" />
-          <AppText style={styles.stateText}>Đang tải đánh giá…</AppText>
+          <AppText style={styles.stateText}>{t("mobile:user.reviews.loading")}</AppText>
         </View>
       ) : error ? (
         <View style={styles.stateBox}>
@@ -233,7 +241,7 @@ export default function OwnerReviewsPanel({
             accessibilityRole="button"
           >
             <RotateCw color={theme.brand} size={13} />
-            <AppText style={styles.retryText}>Thử lại</AppText>
+            <AppText style={styles.retryText}>{t("users:reviews.retry")}</AppText>
           </Pressable>
         </View>
       ) : reviews.length === 0 ? (
@@ -243,17 +251,17 @@ export default function OwnerReviewsPanel({
           </View>
           <AppText style={styles.stateTitle}>
             {filter == null
-              ? `Chưa có đánh giá với vai trò ${roleLabel}`
-              : "Không có đánh giá phù hợp"}
+              ? t("users:reviews.emptyRole", { role: roleLabel })
+              : t("users:reviews.noMatch")}
           </AppText>
           <AppText style={styles.stateText}>
             {filter == null
-              ? "Đánh giá công khai sẽ xuất hiện sau khi chuyến thuê hoàn tất."
-              : `${filter} sao hiện chưa có đánh giá nào.`}
+              ? t("mobile:user.reviews.emptyDescription")
+              : t("mobile:user.reviews.emptyStar", { star: filter })}
           </AppText>
           {filter != null ? (
             <Pressable onPress={() => setFilter(null)} accessibilityRole="button">
-              <AppText style={styles.clearFilterText}>Xoá bộ lọc</AppText>
+              <AppText style={styles.clearFilterText}>{t("users:reviews.clearFilter")}</AppText>
             </Pressable>
           ) : null}
         </View>
@@ -271,7 +279,9 @@ export default function OwnerReviewsPanel({
                     disabled={!onOpenProfile}
                     onPress={() => onOpenProfile?.(review.reviewerId)}
                     accessibilityRole={onOpenProfile ? "link" : undefined}
-                    accessibilityLabel={`Xem hồ sơ ${review.reviewerName}`}
+                    accessibilityLabel={t("mobile:user.reviews.profileAria", {
+                      name: review.reviewerName,
+                    })}
                   >
                     <ProfileAvatar
                       avatarUrl={review.reviewerAvatar}
@@ -297,7 +307,7 @@ export default function OwnerReviewsPanel({
                     onPress={() => openReviewActions(review)}
                     style={styles.moreButton}
                     accessibilityRole="button"
-                    accessibilityLabel="Tuỳ chọn đánh giá"
+                    accessibilityLabel={t("mobile:user.reviews.actionsTitle")}
                     hitSlop={6}
                   >
                     <EllipsisVertical color={theme.muted} size={15} />
@@ -309,7 +319,9 @@ export default function OwnerReviewsPanel({
                     <AppText style={styles.commentText}>{review.comment}</AppText>
                   </View>
                 ) : (
-                  <AppText style={styles.emptyComment}>Không có nhận xét.</AppText>
+                  <AppText style={styles.emptyComment}>
+                    {t("mobile:user.reviews.noComment")}
+                  </AppText>
                 )}
 
                 {review.vehicleId ? (
@@ -318,7 +330,9 @@ export default function OwnerReviewsPanel({
                     onPress={() => onOpenVehicle?.(review.vehicleId!)}
                     style={({ pressed }) => [styles.vehicleRef, pressed && styles.pressed]}
                     accessibilityRole={onOpenVehicle ? "link" : undefined}
-                    accessibilityLabel={`Xem xe ${review.vehicleName ?? ""}`}
+                    accessibilityLabel={t("mobile:user.reviews.vehicleAria", {
+                      name: review.vehicleName ?? "",
+                    })}
                   >
                     <View style={styles.vehicleThumb}>
                       {vehicle?.primaryImage ? (
@@ -334,11 +348,14 @@ export default function OwnerReviewsPanel({
                     </View>
                     <View style={styles.vehicleRefBody}>
                       <AppText style={styles.vehicleRefName} numberOfLines={1}>
-                        {vehicle ? profileVehicleName(vehicle) : review.vehicleName ?? "Xe đã thuê"}
+                        {vehicle
+                          ? profileVehicleName(vehicle)
+                          : review.vehicleName ?? t("mobile:user.reviews.rentedVehicle")}
                       </AppText>
                       {vehicle ? (
                         <AppText style={styles.vehicleRefPrice}>
-                          {formatMoney(vehicle.pricePerDay)}/ngày
+                          {formatMoney(vehicle.pricePerDay)}
+                          {t("users:vehicleCard.perDay")}
                         </AppText>
                       ) : null}
                     </View>
@@ -362,19 +379,23 @@ export default function OwnerReviewsPanel({
               accessibilityRole="button"
             >
               <AppText style={styles.loadMoreText}>
-                {loadingMore ? "Đang tải…" : `Xem thêm đánh giá (+${remaining})`}
+                {loadingMore
+                  ? t("users:reviews.loadingMore")
+                  : t("mobile:user.reviews.loadMoreWithCount", { count: remaining })}
               </AppText>
             </Pressable>
           ) : null}
 
           {loadMoreError ? (
             <View style={styles.loadMoreError}>
-              <AppText style={styles.stateText}>Chưa tải thêm được.</AppText>
+              <AppText style={styles.stateText}>
+                {t("mobile:user.reviews.loadMoreError")}
+              </AppText>
               <Pressable
                 onPress={() => setReloadKey((value) => value + 1)}
                 accessibilityRole="button"
               >
-                <AppText style={styles.clearFilterText}>Thử lại</AppText>
+                <AppText style={styles.clearFilterText}>{t("users:reviews.retry")}</AppText>
               </Pressable>
             </View>
           ) : null}

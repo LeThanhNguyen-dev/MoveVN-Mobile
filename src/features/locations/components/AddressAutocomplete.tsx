@@ -2,6 +2,7 @@ import { MapPin, X } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native"
 import AppText from "@/components/AppText";
+import { useTranslation } from "react-i18next";
 import type { GoongPlacePrediction } from "@/features/locations/types";
 import {
   autocompleteGoongPlaces,
@@ -34,11 +35,14 @@ export default function AddressAutocomplete({
   onSelect,
   onManualChange,
   onFocusInput,
-  label = "Địa chỉ chi tiết",
-  placeholder = "Số nhà, đường...",
+  label,
+  placeholder,
   showLabel = true,
 }: Props) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
+  const labelText = label ?? t("common:addressLabel");
+  const placeholderText = placeholder ?? t("mobile:vehicleList.address.placeholder");
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [predictions, setPredictions] = useState<GoongPlacePrediction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -96,7 +100,7 @@ export default function AddressAutocomplete({
       // Không lấy được tọa độ thì vẫn giữ địa chỉ text đã chọn.
       onChange(item.description);
       onSelect({ address: item.description, latitude: null, longitude: null, placeId: item.placeId });
-      setError("Không lấy được tọa độ địa chỉ.");
+      setError(t("common:addressCoordsError"));
     } finally {
       if (sequence === selectionSequence.current) setSelecting(false);
     }
@@ -115,21 +119,21 @@ export default function AddressAutocomplete({
 
   return (
     <View style={styles.wrap}>
-      {showLabel ? <AppText style={styles.label}>{label}</AppText> : null}
+      {showLabel ? <AppText style={styles.label}>{labelText}</AppText> : null}
       <View style={styles.searchBox}>
         <MapPin color={theme.placeholder} size={15} />
         <TextInput
           value={value}
           onChangeText={handleChange}
           onFocus={onFocusInput}
-          placeholder={placeholder}
+          placeholder={placeholderText}
           placeholderTextColor={theme.placeholder}
           style={styles.searchInput}
         />
         {busy ? (
           <ActivityIndicator color={theme.brand} size="small" />
         ) : value ? (
-          <Pressable onPress={handleClear} accessibilityLabel="Xóa địa chỉ">
+          <Pressable onPress={handleClear} accessibilityLabel={t("mobile:vehicleList.address.clearAria")}>
             <X color={theme.muted} size={15} />
           </Pressable>
         ) : null}

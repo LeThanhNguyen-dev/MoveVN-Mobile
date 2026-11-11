@@ -1,0 +1,69 @@
+{
+  "badge": {
+    "live": "Live updates",
+    "stale": "Signal lost",
+    "ended": "Ended",
+    "none": "No data yet"
+  },
+  "live": {
+    "title": "Vehicle location · {{name}}",
+    "backTitle": "Back to booking details",
+    "connectionLabel": "Realtime connection: {{status}}",
+    "connection": {
+      "connected": "connected",
+      "connecting": "connecting...",
+      "disconnected": "disconnected — showing the latest data"
+    },
+    "loading": "Loading vehicle location...",
+    "updatedAt": "Updated {{time}}",
+    "speed": "Speed: {{speed}} km/h",
+    "coordinates": "Coordinates: {{lat}}, {{lng}}",
+    "staleMessage": "No new location received for a while. The renter may have turned off GPS or lost connection — the map is showing the last known point.",
+    "noData": "No location points received from the renter for this trip.",
+    "requestGps": "Ask renter to enable GPS",
+    "invalidBooking": "Invalid booking.",
+    "vehicleFallback": "Vehicle #{{id}}",
+    "toastRequestedTitle": "Request sent",
+    "toastRequestedMessage": "The renter will be notified to turn on GPS.",
+    "toastRequestErrorTitle": "Couldn't send the request",
+    "toastRequestErrorMessage": "Please try again later."
+  },
+  "playback": {
+    "title": "Trip route · {{name}}",
+    "backTitle": "Back to booking details",
+    "loading": "Loading route...",
+    "routeMatched": "Route matched to real streets (map matching)",
+    "routeUnmatched": "Route connects the GPS points (street matching unavailable)",
+    "play": "Play",
+    "pause": "Pause",
+    "replay": "Replay",
+    "sliderLabel": "Replay position in the route",
+    "point": "Point {{current}}/{{total}}",
+    "startedAt": "Started {{time}}",
+    "summaryTitle": "Trip summary",
+    "distance": "Distance",
+    "maxSpeed": "Max speed",
+    "avgSpeed": "Average speed",
+    "pointCount": "Recorded points",
+    "signalLost": "Signal losses",
+    "notFinal": "The trip hasn't ended — figures are provisional from the current log.",
+    "noSummary": "No summary data for this trip yet.",
+    "invalidBooking": "Invalid booking.",
+    "vehicleFallback": "Vehicle #{{id}}",
+    "toastEmptyTitle": "No route yet",
+    "toastEmptyMessage": "This trip doesn't have enough GPS points to replay.",
+    "toastErrorTitle": "Error",
+    "toastErrorMessage": "Couldn't load the trip route."
+  },
+  "banner": {
+    "permissionDenied": "You haven't allowed location sharing in your browser. The owner can't track this trip.",
+    "ownerFollowing": "The owner can track this trip",
+    "updated": "updated {{time}}"
+  },
+  "publisher": {
+    "sendFailed": "Couldn't send your location. Will retry.",
+    "geolocationUnsupported": "Your browser doesn't support GPS location.",
+    "permissionDenied": "You haven't granted location permission to the browser. The owner can't track this trip.",
+    "positionFailed": "Couldn't get your current location. Will retry."
+  }
+}

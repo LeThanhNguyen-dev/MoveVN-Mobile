@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { DAYS_VI, parseDateValue } from "@/features/vehicles/utils/rentalPeriod";
 import { pad2 } from "@/features/booking/utils/format";
 
@@ -21,7 +22,7 @@ function hasTime(value: string): boolean {
 /** 12/11, hoặc 12/11/2027 nếu khác năm hiện tại. */
 export function formatCheckoutDate(value: string): string {
   const date = toDate(value);
-  if (!date) return "Chưa chọn";
+  if (!date) return i18n.t("mobile:checkout.format.datePlaceholder");
   const dayMonth = `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}`;
   return date.getFullYear() === new Date().getFullYear()
     ? dayMonth
@@ -31,7 +32,7 @@ export function formatCheckoutDate(value: string): string {
 /** T5 · 09:00 (chỉ hiện thứ nếu chuỗi không có giờ). */
 export function formatCheckoutMeta(value: string): string {
   const date = toDate(value);
-  if (!date) return "Chưa chọn giờ";
+  if (!date) return i18n.t("mobile:checkout.format.timePlaceholder");
   const weekday = DAYS_VI[date.getDay()] ?? "";
   if (!hasTime(value)) return weekday;
   return `${weekday} · ${pad2(date.getHours())}:${pad2(date.getMinutes())}`;

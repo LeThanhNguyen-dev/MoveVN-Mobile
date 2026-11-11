@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import type { TFunction } from "i18next";
 import {
   ArrowRight,
   CalendarDays,
@@ -14,6 +15,7 @@ import {
   X,
 } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Modal,
   Pressable,
@@ -80,41 +82,42 @@ const HERO = {
 // StartAt/EndAt và sort DisplayOrder, frontend giữ nguyên thứ tự trả về.
 
 // Mirror web HomePage.tsx: destinations (Địa Điểm Nổi Bật) —
-// name/description/image y hệt web, bấm vào tìm xe theo tỉnh tương ứng.
+// name giữ nguyên tiếng Việt vì cũng là giá trị tỉnh gửi lên API tìm xe;
+// phần mô tả lấy từ locale mobile:explore.destinations.<key>.description.
 const FEATURED_DESTINATIONS = [
   {
+    key: "hanoi",
     name: "Hà Nội",
-    description: "Những chuyến đi qua phố cổ và ngoại ô xanh mát.",
     image:
       "https://images.unsplash.com/photo-1529369623266-f5264b696110?auto=format&fit=crop&w=800&q=80",
   },
   {
+    key: "hoChiMinh",
     name: "TP. Hồ Chí Minh",
-    description: "Khám phá nhịp sống sôi động theo cách riêng của bạn.",
     image:
       "https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&w=800&q=80",
   },
   {
+    key: "daNang",
     name: "Đà Nẵng",
-    description: "Từ biển xanh đến những cung đường quanh bán đảo.",
     image:
       "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80",
   },
   {
+    key: "nhaTrang",
     name: "Nha Trang",
-    description: "Chủ động hành trình biển nắng cùng chiếc xe phù hợp.",
     image:
       "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80",
   },
   {
+    key: "daLat",
     name: "Đà Lạt",
-    description: "Đón sương sớm và những cung đèo đầy cảm hứng.",
     image:
       "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=800&q=80",
   },
   {
+    key: "phuQuoc",
     name: "Phú Quốc",
-    description: "Tự do đi dọc bờ biển và khám phá đảo ngọc.",
     image:
       "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=80",
   },
@@ -122,22 +125,17 @@ const FEATURED_DESTINATIONS = [
 
 // 2 dịch vụ thuê xe tự lái thật của MoveVN (không có thuê tài xế):
 // bấm CTA đi thẳng màn danh sách đã lọc sẵn Ô tô / Xe máy.
+// Chữ lấy từ mobile:explore.services.<key>.* để đổi được theo ngôn ngữ.
 const HIGHLIGHT_SERVICES = [
   {
     key: "car",
     vehicleType: "Car" as const,
-    title: "Thuê Xe Ô Tô",
-    desc: "Tự do điều khiển hành trình riêng tư bên gia đình, phong cách, tiện dụng với kho xe đa dạng.",
-    cta: "Tìm xe ô tô",
     image:
       "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80",
   },
   {
     key: "motorbike",
     vehicleType: "Motorbike" as const,
-    title: "Thuê Xe Máy",
-    desc: "Gọn nhẹ, tiết kiệm chi phí — linh hoạt cho di chuyển nội thành và những chuyến phượt ngắn ngày.",
-    cta: "Tìm xe máy",
     image:
       "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80",
   },
@@ -145,37 +143,14 @@ const HIGHLIGHT_SERVICES = [
 
 // Mirror web HomePage.tsx: features (Sự Khác Biệt Cho Trải Nghiệm Thuê Xe) —
 // web dùng ảnh minh họa riêng, mobile dùng icon Lucide tương ứng đặt bên trái.
+// Chữ lấy từ mobile:explore.advantages.<key>.* để đổi được theo ngôn ngữ.
 const ADVANTAGES = [
-  {
-    key: "shield",
-    title: "An Toàn Tuyệt Đối",
-    desc: "Xe được kiểm tra kỹ thuật và hỗ trợ bảo hiểm trước mỗi hành trình.",
-  },
-  {
-    key: "card",
-    title: "Thanh Toán Đa Dạng",
-    desc: "Thanh toán rõ ràng, linh hoạt qua các phương thức bảo mật trên MoveVN.",
-  },
-  {
-    key: "pin",
-    title: "Giao Xe Tận Nơi",
-    desc: "Chọn điểm nhận xe thuận tiện tại sân bay, nhà ga hoặc ngay tại nhà.",
-  },
-  {
-    key: "car",
-    title: "Đa Dạng Dòng Xe",
-    desc: "Từ xe máy gọn nhẹ đến sedan và SUV cho mọi nhu cầu di chuyển.",
-  },
-  {
-    key: "file",
-    title: "Thủ Tục Đơn Giản",
-    desc: "Xác thực nhanh, hợp đồng rõ ràng và mọi thông tin đều được lưu trên ứng dụng.",
-  },
-  {
-    key: "support",
-    title: "Hỗ Trợ Trọn Hành Trình",
-    desc: "Theo dõi lịch nhận trả xe và nhận hỗ trợ xuyên suốt chuyến đi của bạn.",
-  },
+  { key: "shield" },
+  { key: "card" },
+  { key: "pin" },
+  { key: "car" },
+  { key: "file" },
+  { key: "support" },
 ] as const;
 
 const HOST_BANNER_IMAGE = require("../../../../public/images/Gemini_Generated_Image_g3r482g3r482g3r4.png");
@@ -187,10 +162,10 @@ function formatBannerDiscount(banner: HomepageBanner): string | null {
   return `${banner.discountValue}%`;
 }
 
-function formatBannerVehicleType(vehicleType?: string | null): string | null {
-  if (vehicleType === "Motorbike") return "Xe máy";
-  if (vehicleType === "Car") return "Ô tô";
-  if (vehicleType === "All") return "Tất cả xe";
+function formatBannerVehicleType(t: TFunction, vehicleType?: string | null): string | null {
+  if (vehicleType === "Motorbike") return t("common:motorbike");
+  if (vehicleType === "Car") return t("common:car");
+  if (vehicleType === "All") return t("mobile:explore.banner.vehicleAll");
   return null;
 }
 
@@ -216,6 +191,7 @@ function BannerDetailSheet({
   onCtaPress: () => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [codeCopied, setCodeCopied] = useState(false);
 
@@ -225,12 +201,12 @@ function BannerDetailSheet({
 
   if (!banner) return null;
   const discount = formatBannerDiscount(banner);
-  const vehicleLabel = formatBannerVehicleType(banner.vehicleType);
+  const vehicleLabel = formatBannerVehicleType(t, banner.vehicleType);
   const endLabel = formatBannerEndDate(banner.endAt);
   const code = banner.promotionCode ?? null;
   // Banner gắn Promotion: Promotion là source of truth cho tiêu đề (giống backend/web).
   const effectiveTitle =
-    banner.promotionName || banner.popupTitle || banner.title || "Chi tiết khuyến mãi";
+    banner.promotionName || banner.popupTitle || banner.title || t("mobile:explore.banner.detailFallback");
   // CTA chỉ hiện khi có promotion hợp lệ (tránh orphan PromotionId).
   const hasPromotion =
     banner.promotionId != null && (banner.promotionCode != null || banner.promotionName != null);
@@ -254,14 +230,14 @@ function BannerDetailSheet({
           style={styles.sheetBackdrop}
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Đóng chi tiết khuyến mãi"
+          accessibilityLabel={t("mobile:explore.banner.closeDetail")}
         />
         <View style={styles.sheetCard}>
           <Pressable
             onPress={onClose}
             style={styles.sheetClose}
             accessibilityRole="button"
-            accessibilityLabel="Đóng"
+            accessibilityLabel={t("common:closeAction")}
             hitSlop={8}
           >
             <X color={theme.muted} size={18} />
@@ -292,20 +268,20 @@ function BannerDetailSheet({
                     onPress={handleCopyCode}
                     style={styles.chip}
                     accessibilityRole="button"
-                    accessibilityLabel={`Sao chép mã ${code}`}
+                    accessibilityLabel={t("mobile:explore.banner.copyCode", { code })}
                   >
                     {codeCopied ? (
                       <Check color={theme.brand} size={13} />
                     ) : (
                       <Copy color={theme.brand} size={13} />
                     )}
-                    <AppText style={styles.chipText}>{codeCopied ? "Đã sao chép!" : code}</AppText>
+                    <AppText style={styles.chipText}>{codeCopied ? t("mobile:explore.banner.copied") : code}</AppText>
                   </Pressable>
                 )}
                 {!!discount && (
                   <View style={styles.chip}>
                     <TicketPercent color={theme.brand} size={13} />
-                    <AppText style={styles.chipText}>Giảm {discount}</AppText>
+                    <AppText style={styles.chipText}>{t("mobile:explore.banner.discount", { discount })}</AppText>
                   </View>
                 )}
                 {!!vehicleLabel && (
@@ -317,7 +293,7 @@ function BannerDetailSheet({
                 {!!endLabel && (
                   <View style={styles.chip}>
                     <CalendarDays color={theme.brand} size={13} />
-                    <AppText style={styles.chipText}>HSD: {endLabel}</AppText>
+                    <AppText style={styles.chipText}>{t("mobile:explore.banner.validUntil", { date: endLabel })}</AppText>
                   </View>
                 )}
               </View>
@@ -327,9 +303,9 @@ function BannerDetailSheet({
                   style={styles.sheetCta}
                   onPress={onCtaPress}
                   accessibilityRole="button"
-                  accessibilityLabel={banner.popupCtaLabel || "Nhận voucher"}
+                  accessibilityLabel={banner.popupCtaLabel || t("promo:hunt.claim")}
                 >
-                  <AppText style={styles.sheetCtaText}>{banner.popupCtaLabel || "Nhận voucher"}</AppText>
+                  <AppText style={styles.sheetCtaText}>{banner.popupCtaLabel || t("promo:hunt.claim")}</AppText>
                   <ArrowRight color={theme.onBrand} size={16} />
                 </Pressable>
               ) : null}
@@ -397,19 +373,21 @@ function AdvLogo({ source, label }: { source: number; label: string }) {
 }
 
 function AdvantageIcon({ iconKey }: { iconKey: string }) {
+  const { t } = useTranslation();
+  const aria = t(`mobile:explore.advantages.${iconKey}.aria`);
   switch (iconKey) {
     case "shield":
-      return <AdvLogo source={ADV_SHIELD_LOGO} label="An toàn tuyệt đối" />;
+      return <AdvLogo source={ADV_SHIELD_LOGO} label={aria} />;
     case "card":
-      return <AdvLogo source={ADV_PAYMENT_LOGO} label="Thanh toán đa dạng" />;
+      return <AdvLogo source={ADV_PAYMENT_LOGO} label={aria} />;
     case "pin":
-      return <AdvLogo source={ADV_DELIVERY_LOGO} label="Giao xe tận nơi" />;
+      return <AdvLogo source={ADV_DELIVERY_LOGO} label={aria} />;
     case "car":
-      return <AdvLogo source={ADV_VARIETY_LOGO} label="Đa dạng dòng xe" />;
+      return <AdvLogo source={ADV_VARIETY_LOGO} label={aria} />;
     case "file":
-      return <AdvLogo source={ADV_PAPERWORK_LOGO} label="Thủ tục đơn giản" />;
+      return <AdvLogo source={ADV_PAPERWORK_LOGO} label={aria} />;
     default:
-      return <AdvLogo source={ADV_SUPPORT_LOGO} label="Hỗ trợ trọn hành trình" />;
+      return <AdvLogo source={ADV_SUPPORT_LOGO} label={aria} />;
   }
 }
 
@@ -430,6 +408,7 @@ export default function CustomerExploreScreen({
   user: AuthUser;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   // Kéo nội dung lên dưới status bar để ảnh nền phủ từ top:0 kịch đỉnh máy.
@@ -485,7 +464,7 @@ export default function CustomerExploreScreen({
         const result = await getPublicVehicles({ page: 1, pageSize: 6, sortBy: "rating_desc" });
         if (!cancelled) setFeatured(result.items);
       } catch {
-        if (!cancelled) setFeaturedError("Không tải được xe nổi bật. Kiểm tra mạng rồi thử lại.");
+        if (!cancelled) setFeaturedError(t("mobile:explore.featured.error"));
       } finally {
         if (!cancelled) setFeaturedLoading(false);
       }
@@ -539,15 +518,15 @@ export default function CustomerExploreScreen({
 
   function handleSearch() {
     if (!province) {
-      setError("Vui lòng chọn địa điểm thuê xe.");
+      setError(t("mobile:explore.errors.pickLocation"));
       return;
     }
     if (!startDate || !endDate) {
-      setError("Vui lòng chọn thời gian thuê xe.");
+      setError(t("mobile:explore.errors.pickPeriod"));
       return;
     }
     if (rentalDays <= 0) {
-      setError("Thời gian trả xe phải sau thời gian nhận xe.");
+      setError(t("common:rentalPicker.endBeforeStart"));
       return;
     }
     setError("");
@@ -611,8 +590,8 @@ export default function CustomerExploreScreen({
     if (activeRole === "Owner") return;
     showToast({
       type: "info",
-      title: "Bạn chưa là chủ xe",
-      message: "Hãy xác thực CCCD để đăng ký trở thành chủ xe, sau đó bổ sung GPLX và giấy tờ xe.",
+      title: t("mobile:explore.host.toastTitle"),
+      message: t("mobile:explore.host.toastMessage"),
     });
     setShowOwnerVerify(true);
   }
@@ -650,7 +629,7 @@ export default function CustomerExploreScreen({
               >
                 <Car color={searchTab === "Car" ? HERO.tabActiveText : tabIdleColor} size={16} />
                 <AppText style={[styles.tabText, searchTab === "Car" && styles.tabTextActive]}>
-                  Ô tô
+                  {t("common:car")}
                 </AppText>
               </Pressable>
               <Pressable
@@ -662,7 +641,7 @@ export default function CustomerExploreScreen({
                 size={16}
               />
                 <AppText style={[styles.tabText, searchTab === "Motorbike" && styles.tabTextActive]}>
-                  Xe máy
+                  {t("common:motorbike")}
                 </AppText>
               </Pressable>
             </View>
@@ -671,12 +650,12 @@ export default function CustomerExploreScreen({
               <Pressable style={styles.fieldRow} onPress={() => setAreaVisible(true)}>
                 <MapPin color={HERO.fieldIcon} size={18} />
                 <View style={styles.fieldTextWrap}>
-                  <AppText style={styles.fieldLabel}>Địa điểm</AppText>
+                  <AppText style={styles.fieldLabel}>{t("vehicleDetail:info.location")}</AppText>
                   <AppText
                     style={[styles.fieldValue, !areaText && styles.fieldPlaceholder]}
                     numberOfLines={1}
                   >
-                    {areaText || "Chọn tỉnh / thành phố, phường / xã"}
+                    {areaText || t("mobile:explore.locationPlaceholder")}
                   </AppText>
                 </View>
               </Pressable>
@@ -686,7 +665,7 @@ export default function CustomerExploreScreen({
               <Pressable style={styles.fieldRow} onPress={() => setSheetVisible(true)}>
                 <CalendarDays color={HERO.fieldIcon} size={18} />
                 <View style={styles.fieldTextWrap}>
-                  <AppText style={styles.fieldLabel}>Thời gian thuê</AppText>
+                  <AppText style={styles.fieldLabel}>{t("common:rentalPicker.label")}</AppText>
                   <AppText
                     style={[
                       styles.fieldValue,
@@ -706,7 +685,7 @@ export default function CustomerExploreScreen({
               onPress={handleSearch}
               style={styles.searchButton}
               accessibilityRole="button"
-              accessibilityLabel="Tìm xe"
+              accessibilityLabel={t("vehicleList:searchBar.searchAria")}
             >
               <LinearGradient
                 colors={[HERO.ctaFrom, HERO.ctaVia, HERO.ctaTo]}
@@ -715,7 +694,7 @@ export default function CustomerExploreScreen({
                 style={styles.searchButtonBg}
               >
                 <Search color={HERO.ctaText} size={18} />
-                <AppText style={styles.searchButtonText}>TÌM XE</AppText>
+                <AppText style={styles.searchButtonText}>{t("mobile:explore.searchCta")}</AppText>
               </LinearGradient>
             </Pressable>
         </View>
@@ -725,8 +704,8 @@ export default function CustomerExploreScreen({
           <View style={styles.section}>
             <View style={styles.sectionPad}>
               <SectionHeader
-                title="Chương trình khuyến mãi"
-                actionLabel="Săn tất cả"
+                title={t("mobile:explore.promotions.title")}
+                actionLabel={t("mobile:explore.promotions.seeAll")}
                 onAction={handlePromoSeeAll}
               />
             </View>
@@ -781,8 +760,8 @@ export default function CustomerExploreScreen({
         <View style={styles.section}>
           <View style={styles.sectionPad}>
             <SectionHeader
-              title="Địa Điểm Nổi Bật"
-              actionLabel="Xem tất cả xe"
+              title={t("mobile:explore.destinations.title")}
+              actionLabel={t("mobile:explore.destinations.viewAll")}
               onAction={handleSeeAllVehicles}
             />
           </View>
@@ -795,7 +774,7 @@ export default function CustomerExploreScreen({
               <Pressable
                 key={dest.name}
                 accessibilityRole="button"
-                accessibilityLabel={`Tìm xe tại ${dest.name}`}
+                accessibilityLabel={t("mobile:explore.destinations.searchAria", { name: dest.name })}
                 onPress={() => handleQuickSearch(dest.name)}
                 style={styles.cityCard}
               >
@@ -813,11 +792,11 @@ export default function CustomerExploreScreen({
                 <View style={styles.cityTextWrap}>
                   <View style={styles.cityBadge}>
                     <MapPin color="#E9D5FF" size={12} />
-                    <AppText style={styles.cityBadgeText}>Điểm đến được yêu thích</AppText>
+                    <AppText style={styles.cityBadgeText}>{t("mobile:explore.destinations.lovedBadge")}</AppText>
                   </View>
                   <AppText style={styles.cityName}>{dest.name}</AppText>
                   <AppText style={styles.cityDesc} numberOfLines={2}>
-                    {dest.description}
+                    {t(`mobile:explore.destinations.${dest.key}.description`)}
                   </AppText>
                 </View>
                 <View style={styles.cityArrow}>
@@ -831,7 +810,7 @@ export default function CustomerExploreScreen({
         {/* SECTION 4: DỊCH VỤ NỔI BẬT — mirror web SERVICES, kéo ngang */}
         <View style={styles.section}>
           <View style={styles.sectionPad}>
-            <SectionHeader title="Dịch Vụ Nổi Bật Của MoveVN" />
+            <SectionHeader title={t("mobile:explore.services.title")} />
           </View>
           <ScrollView
             horizontal
@@ -852,15 +831,15 @@ export default function CustomerExploreScreen({
                     style={StyleSheet.absoluteFill}
                   />
                   <View style={styles.serviceBody}>
-                    <AppText display style={styles.serviceTitle}>{service.title}</AppText>
+                    <AppText display style={styles.serviceTitle}>{t(`mobile:explore.services.${service.key}.title`)}</AppText>
                     <AppText style={styles.serviceDesc} numberOfLines={3}>
-                      {service.desc}
+                      {t(`mobile:explore.services.${service.key}.desc`)}
                     </AppText>
                     <Pressable
                       onPress={() => handleServiceSearch(service.vehicleType)}
                       style={styles.serviceCtaTouch}
                       accessibilityRole="button"
-                      accessibilityLabel={service.cta}
+                      accessibilityLabel={t(`mobile:explore.services.${service.key}.cta`)}
                     >
                       <LinearGradient
                         colors={[HERO.ctaFrom, HERO.ctaVia, HERO.ctaTo]}
@@ -868,7 +847,7 @@ export default function CustomerExploreScreen({
                         end={{ x: 1, y: 0 }}
                         style={styles.serviceCtaGradient}
                       >
-                        <AppText style={styles.serviceCtaTextLight}>{service.cta}</AppText>
+                        <AppText style={styles.serviceCtaTextLight}>{t(`mobile:explore.services.${service.key}.cta`)}</AppText>
                         <ArrowRight color="#FFFFFF" size={15} />
                       </LinearGradient>
                     </Pressable>
@@ -881,7 +860,7 @@ export default function CustomerExploreScreen({
         {/* SECTION 5: ƯU ĐIỂM MOVEVN — mirror web FEATURES, icon trái cùng hàng chữ */}
         <View style={styles.section}>
           <View style={styles.sectionPad}>
-            <SectionHeader title="Ưu Điểm Của MoveVN" />
+            <SectionHeader title={t("mobile:explore.advantages.title")} />
           </View>
           <ScrollView
             horizontal
@@ -894,8 +873,8 @@ export default function CustomerExploreScreen({
                     <AdvantageIcon iconKey={item.key} />
                   </View>
                   <View style={styles.advTextWrap}>
-                    <AppText display style={styles.advTitle}>{item.title}</AppText>
-                    <AppText style={styles.advDesc}>{item.desc}</AppText>
+                    <AppText display style={styles.advTitle}>{t(`mobile:explore.advantages.${item.key}.title`)}</AppText>
+                    <AppText style={styles.advDesc}>{t(`mobile:explore.advantages.${item.key}.desc`)}</AppText>
                   </View>
                 </View>
               ))}
@@ -906,8 +885,8 @@ export default function CustomerExploreScreen({
         <View style={styles.section}>
           <View style={styles.sectionPad}>
             <SectionHeader
-              title="Xe nổi bật dành cho bạn"
-              actionLabel="Xem tất cả"
+              title={t("mobile:explore.featured.title")}
+              actionLabel={t("mobile:explore.featured.viewAll")}
               onAction={handleSeeAllVehicles}
             />
           </View>
@@ -929,13 +908,13 @@ export default function CustomerExploreScreen({
               <View style={styles.inlineErrorBox}>
                 <AppText style={styles.inlineErrorText}>{featuredError}</AppText>
                 <Pressable style={styles.retryButton} onPress={() => setReloadKey((k) => k + 1)}>
-                  <AppText style={styles.retryButtonText}>Thử lại</AppText>
+                  <AppText style={styles.retryButtonText}>{t("common:retry")}</AppText>
                 </Pressable>
               </View>
             </View>
           ) : featured.length === 0 ? (
             <View style={styles.sectionPad}>
-              <AppText style={styles.emptyText}>Chưa có xe nổi bật. Hãy thử tìm xe theo địa điểm.</AppText>
+              <AppText style={styles.emptyText}>{t("mobile:explore.featured.empty")}</AppText>
             </View>
           ) : (
             <ScrollView
@@ -963,7 +942,7 @@ export default function CustomerExploreScreen({
               onPress={handleHostPress}
               style={styles.hostCard}
               accessibilityRole="button"
-              accessibilityLabel="Đăng ký cho thuê xe"
+              accessibilityLabel={t("mobile:explore.host.aria")}
             >
               <Image
                 source={HOST_BANNER_IMAGE}
@@ -971,7 +950,7 @@ export default function CustomerExploreScreen({
                 contentFit="cover"
                 contentPosition="center"
                 transition={250}
-                accessibilityLabel="Cho thuê xe cùng MoveVN"
+                accessibilityLabel={t("mobile:explore.host.imageAria")}
               />
               <LinearGradient
                 colors={["rgba(0,0,0,0.15)", "rgba(0,0,0,0.45)", "rgba(0,0,0,0.72)"]}
@@ -979,13 +958,13 @@ export default function CustomerExploreScreen({
                 style={StyleSheet.absoluteFill}
               />
               <View style={styles.hostContent}>
-                <AppText style={styles.hostEyebrow}>DÀNH CHO CHỦ XE</AppText>
-                <AppText display style={styles.hostTitle}>Bạn muốn cho thuê xe?</AppText>
+                <AppText style={styles.hostEyebrow}>{t("mobile:explore.host.eyebrow")}</AppText>
+                <AppText display style={styles.hostTitle}>{t("mobile:explore.host.title")}</AppText>
                 <AppText style={styles.hostDesc}>
-                  Hơn 15.000 chủ xe đang cho thuê hiệu quả trên MoveVN.
+                  {t("mobile:explore.host.description")}
                 </AppText>
                 <View style={styles.hostButton}>
-                  <AppText style={styles.hostButtonText}>Đăng ký ngay</AppText>
+                  <AppText style={styles.hostButtonText}>{t("auth:login.registerNow")}</AppText>
                   <ArrowRight color="#FFFFFF" size={15} />
                 </View>
               </View>

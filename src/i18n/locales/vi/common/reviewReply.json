@@ -1,0 +1,17 @@
+{
+  "reviewReply": {
+    "saveFailed": "Không thể lưu phản hồi. Vui lòng thử lại.",
+    "button": "Phản hồi đánh giá",
+    "sectionAria": "Phản hồi đánh giá",
+    "heading": "Phản hồi từ người nhận đánh giá",
+    "contentLabel": "Nội dung phản hồi",
+    "placeholder": "Chia sẻ phản hồi lịch sự, rõ ràng…",
+    "hint": "Phản hồi hiển thị công khai. Không chia sẻ số điện thoại hoặc thông tin thanh toán.",
+    "charCount": "{{current}}/1000 ký tự",
+    "cancel": "Hủy",
+    "saveEdit": "Lưu chỉnh sửa",
+    "send": "Gửi phản hồi",
+    "edited": " · Đã chỉnh sửa",
+    "editReply": "Chỉnh sửa phản hồi"
+  }
+}

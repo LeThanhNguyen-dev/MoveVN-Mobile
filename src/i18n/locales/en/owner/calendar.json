@@ -1,0 +1,94 @@
+{
+  "calendar": {
+    "header": {
+      "eyebrow": "Rental coordination",
+      "title": "Fleet calendar",
+      "description": "See rental schedules and blocked dates across all vehicles; track upcoming pick-ups and returns."
+    },
+    "actions": {
+      "manageBookings": "Manage rentals",
+      "refresh": "Refresh",
+      "retry": "Try again"
+    },
+    "errors": {
+      "load": "Unable to load the fleet calendar. Please try again.",
+      "fetch": "Couldn't load the fleet calendar.",
+      "invalidDates": "Choose a valid date range, up to 62 days, between 2000 and 2100.",
+      "loading": "Loading fleet calendar"
+    },
+    "filter": {
+      "aria": "Fleet calendar filters",
+      "fromDate": "From date",
+      "toDate": "To date",
+      "search": "Find vehicle",
+      "searchPlaceholder": "License plate, brand or vehicle name",
+      "vehicleType": "Vehicle type",
+      "all": "All",
+      "car": "Car",
+      "motorbike": "Motorbike",
+      "apply": "Apply"
+    },
+    "period": {
+      "week": "Week",
+      "month": "Month",
+      "previous": "Previous period",
+      "next": "Next period",
+      "today": "Today"
+    },
+    "summary": {
+      "available": "Available vehicles",
+      "rented": "Rented on time",
+      "pickups": "Pick-ups in 24 hours",
+      "returns": "Returns in 24 hours",
+      "overdue": "Overdue vehicles",
+      "blocked": "Blocked vehicles",
+      "filterGroup": "Filter vehicle group",
+      "statusFilter": "Vehicle status",
+      "vehicles": "{{count}} vehicles by name/type filter · Status as of {{time}} · Vietnam time UTC+7"
+    },
+    "grid": {
+      "heading": "Calendar {{from}} – {{to}}",
+      "description": "Tap a day cell to see pick-up/return times and open the booking. Rentals use the expected return time while a trip is ongoing; a vehicle is only considered handed over when it has a pick-up status.",
+      "emptyTitle": "No matching vehicles",
+      "emptyDescription": "Try changing the filters or adding a vehicle to your fleet.",
+      "addVehicle": "Add vehicle →",
+      "regionAria": "Fleet calendar table, scroll horizontally to see more dates",
+      "vehicleColumn": "Vehicle",
+      "cellAria": "{{plate}}, {{day}}, {{count}} calendar items",
+      "blockedByOwner": "Blocked by owner",
+      "moreItems": "+{{count}} more items",
+      "noEvents": "No schedule"
+    },
+    "states": {
+      "Available": "Available",
+      "Rented": "Handed over",
+      "Reserved": "Pick-up due",
+      "Pending": "Pending",
+      "Preparing": "Preparing",
+      "Blocked": "Blocked",
+      "Unavailable": "Not open for rent",
+      "Overdue": "Overdue return"
+    },
+    "events": {
+      "Pending": "Pending",
+      "Booking": "Rental",
+      "Finished": "Trip finished",
+      "Preparation": "Vehicle preparation",
+      "Blocked": "Blocked date",
+      "Overdue": "Overdue return"
+    },
+    "detail": {
+      "aria": "Calendar cell details",
+      "close": "Close calendar details",
+      "empty": "No booking or blocked date overlaps this day. Availability is still re-checked when a vehicle is booked.",
+      "endTimeNote": "An end time at exactly 00:00 does not occupy an extra day.",
+      "status": "Status: {{status}}",
+      "estimatedReturn": " · Expected return time",
+      "noActualReturn": " · No actual return time yet; scheduled time used",
+      "openBooking": "Open booking {{code}}",
+      "manageBlockedDates": "View vehicle and manage blocked dates"
+    },
+    "footer": "{{minutes}} minutes of preparation before and after each rental. “Overdue return” is a coordination warning, not a finding of violation or an automatic surcharge. Overview cards reflect the status at load time, independent of the calendar date range. Press Refresh to fetch the latest data.",
+    "backToOverview": "Back to vehicle owner overview"
+  }
+}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, TextInput, View } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -30,6 +31,7 @@ export default function ContractPinFlow({
   onVerified: (content: ContractContent) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [step, setStep] = useState<Step>("loading");
   const [pin, setPin] = useState("");
@@ -55,7 +57,7 @@ export default function ContractPinFlow({
         }
       } catch {
         if (!cancelled) {
-          Alert.alert("Thất bại", "Không kiểm tra được mã PIN. Vui lòng thử lại.");
+          Alert.alert(t("mobile:contract.alerts.failureTitle"), t("mobile:contract.pin.checkFailed"));
           onClose();
         }
       }
@@ -68,7 +70,7 @@ export default function ContractPinFlow({
 
   async function handleVerify() {
     if (!isValidPinCode(pin)) {
-      Alert.alert("Thiếu mã", "Vui lòng nhập đủ 6 chữ số PIN.");
+      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.incomplete"));
       return;
     }
     setBusy(true);
@@ -84,7 +86,7 @@ export default function ContractPinFlow({
       } catch {
         // Bỏ qua lỗi phụ.
       }
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Mã PIN không đúng."));
+      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.wrong")));
     } finally {
       setBusy(false);
     }
@@ -92,11 +94,11 @@ export default function ContractPinFlow({
 
   async function handleSetup() {
     if (otp.trim().length < 6) {
-      Alert.alert("Thiếu mã", "Vui lòng nhập mã OTP gửi đến email.");
+      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.otpMissing"));
       return;
     }
     if (!isValidPinCode(newPin)) {
-      Alert.alert("Thiếu mã", "Mã PIN mới phải đúng 6 chữ số.");
+      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.invalidNew"));
       return;
     }
     setBusy(true);
@@ -105,7 +107,7 @@ export default function ContractPinFlow({
       const content = await verifyViewPin(contract.id, newPin.trim());
       onVerified(content);
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không tạo được mã PIN."));
+      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.setupFailed")));
     } finally {
       setBusy(false);
     }
@@ -113,11 +115,11 @@ export default function ContractPinFlow({
 
   async function handleForgot() {
     if (otp.trim().length < 6) {
-      Alert.alert("Thiếu mã", "Vui lòng nhập mã OTP gửi đến email.");
+      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.otpMissing"));
       return;
     }
     if (!isValidPinCode(newPin)) {
-      Alert.alert("Thiếu mã", "Mã PIN mới phải đúng 6 chữ số.");
+      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.invalidNew"));
       return;
     }
     setBusy(true);
@@ -126,7 +128,7 @@ export default function ContractPinFlow({
       const content = await verifyViewPin(contract.id, newPin.trim());
       onVerified(content);
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không đặt lại được mã PIN."));
+      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.resetFailed")));
     } finally {
       setBusy(false);
     }
@@ -136,9 +138,9 @@ export default function ContractPinFlow({
     setBusy(true);
     try {
       await requestForgotPinOtp(userEmail);
-      Alert.alert("Đã gửi", "Mã OTP đặt lại PIN đã gửi đến email của bạn.");
+      Alert.alert(t("mobile:contract.alerts.sentTitle"), t("mobile:contract.pin.resetOtpSent"));
     } catch (err) {
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không gửi được mã OTP."));
+      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.otpSendFailed")));
     } finally {
       setBusy(false);
     }
@@ -148,24 +150,24 @@ export default function ContractPinFlow({
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.modal}>
-          <AppText display style={styles.title}>Xem hợp đồng</AppText>
+          <AppText display style={styles.title}>{t("mobile:contract.pin.title")}</AppText>
           {step === "loading" && <ActivityIndicator color={theme.brand} />}
 
           {step === "verify" && (
             <>
-              <AppText style={styles.muted}>Nhập mã PIN của app để mở hợp đồng (không gửi OTP).</AppText>
+              <AppText style={styles.muted}>{t("mobile:contract.pin.verifyHint")}</AppText>
               {lockSeconds != null && lockSeconds > 0 && (
-                <AppText style={styles.warn}>Nhập sai nhiều lần, thử lại sau {lockSeconds}s.</AppText>
+                <AppText style={styles.warn}>{t("mobile:contract.pin.locked", { seconds: lockSeconds })}</AppText>
               )}
               <PinInput value={pin} onChange={setPin} />
               <RowButtons
                 busy={busy}
                 onClose={onClose}
                 onSubmit={handleVerify}
-                submitLabel="Mở hợp đồng"
+                submitLabel={t("mobile:contract.pin.open")}
                 extra={
                   <Pressable onPress={() => { setStep("forgot"); setOtp(""); setNewPin(""); }}>
-                    <AppText style={styles.link}>Quên mã PIN?</AppText>
+                    <AppText style={styles.link}>{t("mobile:contract.pin.forgot")}</AppText>
                   </Pressable>
                 }
               />
@@ -175,27 +177,27 @@ export default function ContractPinFlow({
           {step === "setup" && (
             <>
               <AppText style={styles.muted}>
-                Bạn chưa có mã PIN. Mã OTP vừa gửi đến email — nhập OTP rồi đặt PIN 6 số để mở hợp đồng.
+                {t("mobile:contract.pin.setupHint")}
               </AppText>
-              <AppText style={styles.fieldLabel}>Mã OTP email</AppText>
+              <AppText style={styles.fieldLabel}>{t("mobile:contract.pin.emailOtpLabel")}</AppText>
               <OtpInput value={otp} onChange={setOtp} />
-              <AppText style={styles.fieldLabel}>Mã PIN mới (6 số)</AppText>
+              <AppText style={styles.fieldLabel}>{t("mobile:contract.pin.newPinLabel")}</AppText>
               <PinInput value={newPin} onChange={setNewPin} />
-              <RowButtons busy={busy} onClose={onClose} onSubmit={handleSetup} submitLabel="Tạo PIN & mở" />
+              <RowButtons busy={busy} onClose={onClose} onSubmit={handleSetup} submitLabel={t("mobile:contract.pin.createAndOpen")} />
             </>
           )}
 
           {step === "forgot" && (
             <>
-              <AppText style={styles.muted}>Nhập mã OTP gửi đến {userEmail} rồi đặt PIN mới.</AppText>
+              <AppText style={styles.muted}>{t("mobile:contract.pin.forgotHint", { email: userEmail })}</AppText>
               <Pressable onPress={sendForgotOtp} disabled={busy} style={styles.otpButton}>
-                <AppText style={styles.otpButtonText}>Gửi mã OTP</AppText>
+                <AppText style={styles.otpButtonText}>{t("mobile:contract.pin.sendOtp")}</AppText>
               </Pressable>
-              <AppText style={styles.fieldLabel}>Mã OTP email</AppText>
+              <AppText style={styles.fieldLabel}>{t("mobile:contract.pin.emailOtpLabel")}</AppText>
               <OtpInput value={otp} onChange={setOtp} />
-              <AppText style={styles.fieldLabel}>Mã PIN mới (6 số)</AppText>
+              <AppText style={styles.fieldLabel}>{t("mobile:contract.pin.newPinLabel")}</AppText>
               <PinInput value={newPin} onChange={setNewPin} />
-              <RowButtons busy={busy} onClose={onClose} onSubmit={handleForgot} submitLabel="Đặt lại & mở" />
+              <RowButtons busy={busy} onClose={onClose} onSubmit={handleForgot} submitLabel={t("mobile:contract.pin.resetAndOpen")} />
             </>
           )}
         </View>
@@ -206,12 +208,13 @@ export default function ContractPinFlow({
 
 function OtpInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <TextInput
       value={value}
       onChangeText={onChange}
-      placeholder="6 chữ số OTP"
+      placeholder={t("mobile:contract.pin.otpPlaceholder")}
       placeholderTextColor={theme.placeholder}
       keyboardType="number-pad"
       maxLength={6}
@@ -222,12 +225,13 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
 
 function PinInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <TextInput
       value={value}
       onChangeText={onChange}
-      placeholder="6 chữ số PIN"
+      placeholder={t("mobile:contract.pin.pinPlaceholder")}
       placeholderTextColor={theme.placeholder}
       keyboardType="number-pad"
       maxLength={6}
@@ -251,13 +255,14 @@ function RowButtons({
   extra?: React.ReactNode;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.row}>
       {extra}
       <View style={styles.actions}>
         <Pressable onPress={onClose} style={styles.ghostButton}>
-          <AppText style={styles.ghostText}>Đóng</AppText>
+          <AppText style={styles.ghostText}>{t("contract:drawer.close")}</AppText>
         </Pressable>
         <Pressable onPress={onSubmit} disabled={busy} style={[styles.primaryButton, busy && styles.disabled]}>
           {busy ? (

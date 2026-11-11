@@ -1,4 +1,5 @@
 import { useMemo, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, type LucideIcon } from "lucide-react-native";
 import {
   ActivityIndicator,
@@ -30,12 +31,13 @@ export function DetailHeader({
   style?: StyleProp<ViewStyle>;
 }) {
   const { p } = useDetailTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(p), [p]);
   return (
     <View style={[styles.header, style]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Quay lại"
+        accessibilityLabel={t("booking:detail.back")}
         hitSlop={6}
         onPress={onBack}
         style={({ pressed }) => [styles.headerBack, pressed && styles.pressed]}

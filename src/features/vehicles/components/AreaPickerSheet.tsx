@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -34,6 +35,7 @@ export default function AreaPickerSheet({
   onApply,
   onClose,
 }: AreaPickerSheetProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -61,7 +63,7 @@ export default function AreaPickerSheet({
         const data = await getCatalogAreas();
         if (!cancelled) setAreas(data);
       } catch {
-        if (!cancelled) setLoadError("Không tải được danh sách khu vực. Thử lại sau.");
+        if (!cancelled) setLoadError(t("mobile:vehicleList.area.loadError"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -71,7 +73,7 @@ export default function AreaPickerSheet({
     return () => {
       cancelled = true;
     };
-  }, [visible, province, district, slideAnim]);
+  }, [visible, province, district, slideAnim, t]);
 
   const provinces = useMemo(() => {
     const set = new Map<string, number>();
@@ -138,7 +140,7 @@ export default function AreaPickerSheet({
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-      <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Đóng chọn địa điểm" />
+      <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel={t("mobile:vehicleList.area.closeAria")} />
       <Animated.View
         style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16), transform: [{ translateY }] }]}
       >
@@ -152,12 +154,14 @@ export default function AreaPickerSheet({
               ) : null}
               <View>
                 <AppText display style={styles.headerTitle}>
-                  {step === "province" ? "Chọn tỉnh / thành phố" : `Xã tại ${draftProvince}`}
+                  {step === "province"
+                    ? t("mobile:vehicleList.area.provinceTitle")
+                    : t("mobile:vehicleList.area.districtTitle", { province: draftProvince })}
                 </AppText>
                 <AppText display style={styles.headerSub}>
                   {draftProvince
                     ? `${draftProvince}${draftDistrict ? ` · ${draftDistrict}` : ""}`
-                    : "Chọn nơi bạn muốn thuê xe"}
+                    : t("mobile:vehicleList.area.subtitleEmpty")}
                 </AppText>
               </View>
             </View>
@@ -170,7 +174,7 @@ export default function AreaPickerSheet({
             <View style={[styles.stepDot, styles.stepDone]} />
             <View style={[styles.stepLine, draftProvince && styles.stepDone]} />
             <View style={[styles.stepDot, draftProvince && styles.stepDone]} />
-            <AppText style={styles.stepText}>Tỉnh → Phường/Xã (xã tùy chọn)</AppText>
+            <AppText style={styles.stepText}>{t("mobile:vehicleList.area.stepHint")}</AppText>
           </View>
 
           <View style={styles.searchBox}>
@@ -178,7 +182,9 @@ export default function AreaPickerSheet({
             <TextInput
               value={keyword}
               onChangeText={setKeyword}
-              placeholder={step === "province" ? "Tìm tỉnh / thành phố..." : "Tìm phường / xã..."}
+              placeholder={step === "province"
+                ? t("mobile:vehicleList.area.provincePlaceholder")
+                : t("mobile:vehicleList.area.districtPlaceholder")}
               placeholderTextColor={theme.placeholder}
               style={styles.searchInput}
             />
@@ -193,7 +199,7 @@ export default function AreaPickerSheet({
             {loading ? (
               <View style={styles.center}>
                 <ActivityIndicator color={theme.brand} />
-                <AppText style={styles.muted}>Đang tải khu vực...</AppText>
+                <AppText style={styles.muted}>{t("mobile:vehicleList.area.loading")}</AppText>
               </View>
             ) : loadError ? (
               <View style={styles.center}>
@@ -224,7 +230,7 @@ export default function AreaPickerSheet({
               })
             ) : filteredDistricts.length === 0 ? (
               <View style={styles.center}>
-                <AppText style={styles.muted}>Chưa có phường / xã cho khu vực này.</AppText>
+                <AppText style={styles.muted}>{t("mobile:vehicleList.area.emptyDistrict")}</AppText>
               </View>
             ) : (
               filteredDistricts.map((d) => {
@@ -248,12 +254,12 @@ export default function AreaPickerSheet({
 
           <View style={styles.footer}>
             <Pressable onPress={handleClear}>
-              <AppText style={styles.clearText}>Xóa</AppText>
+              <AppText style={styles.clearText}>{t("mobile:vehicleList.area.clear")}</AppText>
             </Pressable>
             <View style={styles.footerButtons}>
               {step === "district" ? (
                 <Pressable onPress={() => setStep("province")} style={styles.ghostButton}>
-                  <AppText style={styles.ghostText}>Đổi tỉnh</AppText>
+                  <AppText style={styles.ghostText}>{t("mobile:vehicleList.area.changeProvince")}</AppText>
                 </Pressable>
               ) : null}
               <Pressable
@@ -261,7 +267,7 @@ export default function AreaPickerSheet({
                 onPress={handleApply}
                 style={[styles.doneButton, !canApply && styles.doneDisabled]}
               >
-                <AppText style={styles.doneText}>Áp dụng</AppText>
+                <AppText style={styles.doneText}>{t("vehicleList:filters.apply")}</AppText>
               </Pressable>
             </View>
           </View>

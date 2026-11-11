@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Clipboard from "expo-clipboard";
 import { Check, Copy, Eye, EyeOff, KeyRound } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import PinForgotModal from "@/features/pin/components/PinForgotModal";
@@ -29,6 +30,7 @@ export default function MaskedDocumentValue({
   revealDisabledHint,
   align = "right",
 }: MaskedDocumentValueProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme, align), [theme, align]);
   const [showForgot, setShowForgot] = useState(false);
@@ -70,8 +72,8 @@ export default function MaskedDocumentValue({
   }, [canReveal, hide]);
 
   const eyeTitle = canReveal
-    ? (isPinSet ? "Hiển thị bằng mã PIN" : "Thiết lập mã PIN để hiển thị")
-    : (revealDisabledHint ?? "Giấy tờ chưa được xác thực để hiển thị.");
+    ? (isPinSet ? t("accountSecurity:pin.masked.reveal") : t("accountSecurity:pin.masked.setupToReveal"))
+    : (revealDisabledHint ?? t("mobile:pin.masked.notVerified"));
 
   async function handleEyePress() {
     if (!canReveal) {
@@ -104,10 +106,10 @@ export default function MaskedDocumentValue({
           <AppText style={styles.plaintext}>{plaintext}</AppText>
           <View style={styles.revealedRow}>
             <AppText numberOfLines={1} style={styles.countdown}>
-              Đang hiển thị · {secondsLeft}s
+              {t("accountSecurity:pin.masked.showing", { seconds: secondsLeft })}
             </AppText>
             <Pressable
-              accessibilityLabel="Sao chép số giấy tờ"
+              accessibilityLabel={t("mobile:pin.masked.copyAria")}
               accessibilityRole="button"
               onPress={() => {
                 if (!plaintext) return;
@@ -125,7 +127,7 @@ export default function MaskedDocumentValue({
                 <Copy color={theme.brand} size={17} strokeWidth={2.3} />
               )}
             </Pressable>
-            <Pressable accessibilityLabel="Ẩn" accessibilityRole="button" onPress={hide} style={styles.eyeButton}>
+            <Pressable accessibilityLabel={t("accountSecurity:pin.masked.hide")} accessibilityRole="button" onPress={hide} style={styles.eyeButton}>
               <EyeOff color={theme.brand} size={17} strokeWidth={2.3} />
             </Pressable>
           </View>
@@ -134,7 +136,7 @@ export default function MaskedDocumentValue({
         <View style={styles.row}>
           <AppText style={styles.masked}>{maskedValue ?? "••••••"}</AppText>
           <Pressable
-            accessibilityLabel="Hiển thị số giấy tờ"
+            accessibilityLabel={t("mobile:pin.masked.revealAria")}
             accessibilityRole="button"
             onPress={() => { void handleEyePress(); }}
             style={[styles.eyeButton, !canReveal && styles.eyeDisabled]}
@@ -188,9 +190,9 @@ export default function MaskedDocumentValue({
             <View style={styles.noticeIcon}>
               <KeyRound color={theme.brand} size={22} strokeWidth={2.3} />
             </View>
-            <AppText display style={styles.noticeTitle}>Cần thiết lập mã PIN</AppText>
+            <AppText display style={styles.noticeTitle}>{t("mobile:pin.masked.setupNoticeTitle")}</AppText>
             <AppText style={styles.noticeDescription}>
-              Bạn cần thiết lập mã PIN để xem thông tin giấy tờ này.
+              {t("mobile:pin.masked.setupNoticeBody")}
             </AppText>
             <View style={styles.noticeActions}>
               <Pressable
@@ -198,7 +200,7 @@ export default function MaskedDocumentValue({
                 onPress={() => setShowSetupNotice(false)}
                 style={styles.secondaryButton}
               >
-                <AppText style={styles.secondaryText}>Để sau</AppText>
+                <AppText style={styles.secondaryText}>{t("mobile:pin.masked.later")}</AppText>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
@@ -208,7 +210,7 @@ export default function MaskedDocumentValue({
                 }}
                 style={styles.primaryButton}
               >
-                <AppText style={styles.primaryText}>Thiết lập ngay</AppText>
+                <AppText style={styles.primaryText}>{t("mobile:pin.masked.setupNow")}</AppText>
               </Pressable>
             </View>
           </View>

@@ -1,0 +1,31 @@
+{
+  "tx": {
+    "title": "Lịch sử giao dịch ví",
+    "count": "{{count}} giao dịch",
+    "empty": "Chưa có giao dịch nào.",
+    "loadMore": "Xem thêm"
+  },
+  "withdrawals": {
+    "title": "Lịch sử yêu cầu rút tiền",
+    "empty": "Chưa có yêu cầu rút tiền nào.",
+    "requestedAt": "Yêu cầu lúc: {{date}}",
+    "cancel": "Hủy",
+    "toAccount": "Đến tài khoản:",
+    "note": "Ghi chú: {{note}}",
+    "bankRef": "Mã giao dịch ngân hàng:"
+  },
+  "types": {
+    "TopUp": "Nạp tiền",
+    "BookingEarning": "Thu nhập cho thuê",
+    "Refund": "Hoàn tiền",
+    "PayoutReversal": "Hủy rút tiền",
+    "DisputeCompensation": "Bồi thường tranh chấp",
+    "PlatformFeeRevenue": "Doanh thu phí nền tảng",
+    "AdminAdjust": "Điều chỉnh hệ thống",
+    "BookingPayment": "Thanh toán cọc",
+    "Withdrawal": "Rút tiền",
+    "Penalty": "Phí phạt",
+    "PlatformFee": "Phí nền tảng",
+    "BookingEarningReversal": "Thu hồi khoản giải ngân trùng"
+  }
+}

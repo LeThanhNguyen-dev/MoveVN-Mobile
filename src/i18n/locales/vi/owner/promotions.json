@@ -1,0 +1,138 @@
+{
+  "promotions": {
+    "title": "Khuyến mãi",
+    "subtitle": "Tạo và quản lý mã khuyến mãi cho xe của bạn.",
+    "createNew": "Tạo mã mới",
+    "tabs": {
+      "invitations": "Chiến dịch mời ({{count}})",
+      "pending": "Chờ tôi duyệt ({{count}})",
+      "mine": "Mã của tôi ({{count}})"
+    },
+    "common": {
+      "errorTitle": "Lỗi",
+      "successTitle": "Thành công",
+      "loadListFailed": "Không thể tải danh sách.",
+      "approve": "Duyệt",
+      "reject": "Từ chối",
+      "approveSuccessTitle": "Đã duyệt",
+      "approveSuccessMessage": "Mã khuyến mãi đã được chấp nhận.",
+      "approveErrorFallback": "Lỗi duyệt.",
+      "rejectSuccessTitle": "Đã từ chối",
+      "rejectSuccessMessage": "Mã khuyến mãi đã bị từ chối.",
+      "rejectErrorFallback": "Lỗi từ chối."
+    },
+    "badge": {
+      "approved": "Đã duyệt",
+      "pending": "Chờ duyệt",
+      "rejected": "Từ chối",
+      "participating": "Đang tham gia",
+      "participationRejected": "Đã từ chối",
+      "withdrawn": "Đã rút tham gia",
+      "awaitingSignup": "Chờ đăng ký"
+    },
+    "option": {
+      "discountFixed": "Cố định",
+      "discountPercentage": "Phần trăm",
+      "vehicleAll": "Tất cả",
+      "vehicleMotorbike": "Xe máy",
+      "vehicleCar": "Ô tô",
+      "whoBearsOwner": "Chủ xe",
+      "whoBearsShared": "Chia sẻ"
+    },
+    "meta": {
+      "discount": "Giảm {{value}}",
+      "maxDiscount": "(tối đa {{amount}})",
+      "maxDiscountInline": " (tối đa {{amount}})",
+      "fee": "Phí: {{value}}",
+      "vehicle": "Xe: {{value}}",
+      "minOrder": "Đơn tối thiểu: {{amount}}",
+      "usage": "Sử dụng: {{used}}/{{max}}",
+      "validity": "Hiệu lực: {{range}}",
+      "unlimited": " (không giới hạn)",
+      "whoBearsSharedDetail": "Chia sẻ · Chủ xe {{owner}}% · MoveVN {{system}}%",
+      "scopeOwnVehicles": "Phạm vi: chỉ xe của bạn"
+    },
+    "pending": {
+      "emptyTitle": "Không có mã chờ duyệt",
+      "emptyText": "Không có mã khuyến mãi nào cần bạn duyệt."
+    },
+    "invitations": {
+      "emptyTitle": "Không có chiến dịch mời",
+      "emptyText": "Hiện chưa có chiến dịch khuyến mãi chung nào mời bạn tham gia.",
+      "howItWorksTitle": "Cách hoạt động",
+      "howItWorksText": "Chiến dịch chung chỉ áp dụng cho xe của chủ xe đã đăng ký tham gia. Bạn có thể rút tham gia khi chưa có booking nào dùng mã; các booking đã phát sinh vẫn giữ nguyên nghĩa vụ tài chính.",
+      "paused": "Đã tạm dừng",
+      "expired": "Đã hết hạn",
+      "closedTitle": "Chiến dịch không còn nhận đăng ký tham gia.",
+      "withdraw": "Rút tham gia",
+      "joinAgain": "Tham gia lại",
+      "join": "Tham gia"
+    },
+    "mine": {
+      "emptyTitle": "Chưa có mã",
+      "emptyText": "Bạn chưa tạo mã khuyến mãi nào."
+    },
+    "toast": {
+      "loadInvitationsFailed": "Không thể tải chiến dịch mời.",
+      "joinSuccessTitle": "Đã tham gia",
+      "joinSuccessMessage": "Xe của bạn đã có thể sử dụng mã này.",
+      "withdrawSuccessTitle": "Đã rút tham gia",
+      "withdrawSuccessMessage": "Xe của bạn sẽ không dùng được mã này cho các booking mới.",
+      "joinErrorFallback": "Không thể tham gia chiến dịch.",
+      "withdrawErrorFallback": "Không thể rút khỏi chiến dịch.",
+      "createSuccessMessage": "Đã tạo mã khuyến mãi. Chờ admin duyệt.",
+      "createErrorFallback": "Tạo thất bại."
+    },
+    "form": {
+      "title": "Tạo mã khuyến mãi",
+      "code": "Mã",
+      "codePlaceholder": "VD: SUMMER2024",
+      "name": "Tên",
+      "namePlaceholder": "VD: Giảm giá mùa hè",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Mô tả...",
+      "discountType": "Loại giảm giá",
+      "value": "Giá trị",
+      "valuePercentSuffix": "(%)",
+      "valueAmountSuffix": "(VNĐ)",
+      "vehicleType": "Loại xe",
+      "whoBears": "Ai chịu phí",
+      "ownerBearsPercent": "Chủ xe chịu (%)",
+      "ownerBearsHint": "Hệ thống chịu phần còn lại ({{percent}}%). Chủ xe phải chịu tối thiểu 10%.",
+      "ownerBearsBudgetWarning": "Cảnh báo: MoveVN đang chịu hơn 50% giá trị giảm giá. Cần admin xem xét ngân sách.",
+      "startAt": "Ngày bắt đầu",
+      "endAt": "Ngày kết thúc",
+      "maxDiscountAmount": "Giảm tối đa (VNĐ)",
+      "minOrderAmount": "Đơn tối thiểu (VNĐ)",
+      "optionalPlaceholder": "Không bắt buộc",
+      "maxUsageCount": "Số lần sử dụng tối đa",
+      "cancel": "Hủy",
+      "submit": "Tạo mã"
+    },
+    "validation": {
+      "codeAndNameRequired": "Vui lòng nhập mã và tên.",
+      "codeTooLong": "Mã khuyến mãi không được vượt quá {{max}} ký tự.",
+      "nameTooLong": "Tên khuyến mãi không được vượt quá {{max}} ký tự.",
+      "descriptionTooLong": "Mô tả không được vượt quá {{max}} ký tự.",
+      "discountValuePositive": "Giá trị giảm giá phải > 0.",
+      "percentTooHigh": "Phần trăm không được > 100%.",
+      "discountAmountTooHigh": "Giá trị giảm không được vượt quá {{amount}}d.",
+      "maxUsageTooLow": "Số lần sử dụng phải lớn hơn hoặc bằng 1.",
+      "maxDiscountPositive": "Giảm tối đa phải lớn hơn 0.",
+      "maxDiscountTooHigh": "Giảm tối đa không được vượt quá {{amount}}d.",
+      "minOrderNegative": "Đơn hàng tối thiểu không được là số âm.",
+      "minOrderTooHigh": "Đơn hàng tối thiểu không được vượt quá {{amount}}d.",
+      "ownerPercentRange": "Phần trăm chủ xe chịu phải từ 10% đến dưới 100%.",
+      "startAtRequired": "Vui lòng chọn ngày bắt đầu."
+    },
+    "approval": {
+      "back": "Quay lại",
+      "title": "Duyệt mã khuyến mãi",
+      "description": "Các mã khuyến mãi yêu cầu bạn duyệt trước khi áp dụng cho xe của bạn.",
+      "emptyTitle": "Không có mã chờ duyệt",
+      "emptyText": "Hiện tại không có mã khuyến mãi nào cần bạn duyệt.",
+      "ownerBearsPercent": "Bạn chịu {{percent}}%",
+      "ownerBearsAll": "Bạn chịu toàn bộ"
+    }
+  }
+}

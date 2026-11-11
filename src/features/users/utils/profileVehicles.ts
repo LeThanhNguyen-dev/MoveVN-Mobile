@@ -1,3 +1,4 @@
+import { translatedLabels } from "@/i18n/liveLabels";
 import type { PublicProfileVehicle } from "@/features/users/services/publicUserProfileService";
 
 /** Nhóm xe công khai: ô tô / xe máy (mirror web OwnerProfileMain). */
@@ -5,10 +6,13 @@ export type ProfileVehicleGroup = "car" | "motorbike";
 
 export type ProfileVehicleSort = "popular" | "recent" | "priceDesc" | "priceAsc";
 
-export const PROFILE_VEHICLE_GROUP_LABEL: Record<ProfileVehicleGroup, string> = {
-  car: "Xe ô tô",
-  motorbike: "Xe máy",
-};
+// Nhãn resolve mỗi lần đọc (getter) để không đóng băng tiếng Việt lúc import module.
+export const PROFILE_VEHICLE_GROUP_LABEL: Record<ProfileVehicleGroup, string> = translatedLabels<
+  ProfileVehicleGroup
+>("mobile", {
+  car: "user.vehicleGroup.car",
+  motorbike: "user.vehicleGroup.motorbike",
+});
 
 /** Lọc xe theo tên hãng, mẫu, phiên bản hoặc khu vực (mirror web OwnerProfileMain). */
 export function filterProfileVehicles(

@@ -1,51 +1,62 @@
 import type { CompensationDirection, DisputeSettlementMethod, EvidenceRequestedFrom } from "@/features/disputes/types";
+import { translatedLabels } from "@/i18n/liveLabels";
 
 // Port từ web DisputePage: nhãn trạng thái, loại vấn đề, thanh toán.
-export const disputeStatusLabels: Record<string, string> = {
-  Open: "Mới mở",
-  Investigating: "Đang điều tra",
-  NeedMoreEvidence: "Chờ bổ sung",
-  Escalated: "Chuyển Admin",
-  DecisionIssued: "Chờ xác nhận kết quả",
-  AwaitingExternalSettlement: "Chờ xác nhận quyết toán",
-  Resolved: "Đã xử lý",
-};
+// Bản dịch resolve mỗi lần đọc (getter) để không đóng băng tiếng Việt lúc import.
+export const disputeStatusLabels: Record<string, string> = translatedLabels<string>("disputes", {
+  Open: "status.Open",
+  Investigating: "status.Investigating",
+  NeedMoreEvidence: "status.NeedMoreEvidence",
+  Escalated: "status.Escalated",
+  DecisionIssued: "status.DecisionIssued",
+  AwaitingExternalSettlement: "status.AwaitingExternalSettlement",
+  Resolved: "status.Resolved",
+});
 
-export const problemLabels: Record<string, string> = {
-  Damage: "Hư hại xe",
-  Payment: "Thanh toán",
-  LateReturn: "Trả xe muộn",
-  Accident: "Tai nạn",
-  TrafficFine: "Phạt nguội",
-  Other: "Khác",
-};
+export const problemLabels: Record<string, string> = translatedLabels<string>("disputes", {
+  Damage: "problem.Damage",
+  Payment: "problem.Payment",
+  LateReturn: "problem.LateReturn",
+  Accident: "problem.Accident",
+  TrafficFine: "problem.TrafficFine",
+  Other: "problem.Other",
+});
 
-export const compensationDirectionLabels: Record<CompensationDirection, string> = {
-  CustomerPaysOwner: "Khách bồi thường cho chủ xe",
-  OwnerRefundsCustomer: "Chủ xe hoàn/giảm tiền cho khách",
-  NoCompensation: "Không phát sinh bồi thường",
-};
+export const compensationDirectionLabels: Record<CompensationDirection, string> = translatedLabels<CompensationDirection>(
+  "disputes",
+  {
+    CustomerPaysOwner: "compensationDirection.CustomerPaysOwner",
+    OwnerRefundsCustomer: "compensationDirection.OwnerRefundsCustomer",
+    NoCompensation: "compensationDirection.NoCompensation",
+  },
+);
 
-export const settlementMethodLabels: Record<DisputeSettlementMethod, string> = {
-  ExternalOnly: "Thanh toán trực tiếp giữa hai bên",
-  DepositThenExternal: "Thanh toán từ ví, phần thiếu thanh toán trực tiếp",
-};
+export const settlementMethodLabels: Record<DisputeSettlementMethod, string> = translatedLabels<DisputeSettlementMethod>(
+  "disputes",
+  {
+    ExternalOnly: "settlementMethod.ExternalOnly",
+    DepositThenExternal: "settlementMethod.DepositThenExternal",
+  },
+);
 
-export const evidenceTargetLabels: Record<EvidenceRequestedFrom, string> = {
-  Customer: "Khách thuê",
-  Owner: "Chủ xe",
-  Both: "Cả hai bên",
-};
+export const evidenceTargetLabels: Record<EvidenceRequestedFrom, string> = translatedLabels<EvidenceRequestedFrom>(
+  "disputes",
+  {
+    Customer: "party.Customer",
+    Owner: "party.Owner",
+    Both: "party.Both",
+  },
+);
 
-export const trafficFineStatusLabels: Record<string, string> = {
-  Submitted: "Chờ xác minh hồ sơ",
-  AwaitingCustomerResponse: "Chờ khách xác nhận trách nhiệm",
-  ResponsibilityDisputed: "Khách phản đối trách nhiệm",
-  AwaitingPayment: "Chờ chứng từ thanh toán",
-  PaymentProofSubmitted: "Chờ xác minh chứng từ",
-  Resolved: "Đã xác minh hoàn tất",
-  Rejected: "Hồ sơ bị từ chối",
-};
+export const trafficFineStatusLabels: Record<string, string> = translatedLabels<string>("disputes", {
+  Submitted: "trafficFine.status.Submitted",
+  AwaitingCustomerResponse: "trafficFine.status.AwaitingCustomerResponse",
+  ResponsibilityDisputed: "trafficFine.status.ResponsibilityDisputed",
+  AwaitingPayment: "trafficFine.status.AwaitingPayment",
+  PaymentProofSubmitted: "trafficFine.status.PaymentProofSubmitted",
+  Resolved: "trafficFine.status.Resolved",
+  Rejected: "trafficFine.status.Rejected",
+});
 
 /** Tách chuỗi URL phân cách bởi xuống dòng/phẩy như backend lưu evidenceUrls. */
 export function evidenceList(value?: string | null): string[] {

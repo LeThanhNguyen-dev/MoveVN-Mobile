@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ShieldCheck } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Modal, Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import PinDigitInputs from "@/features/pin/components/PinDigitInputs";
@@ -26,6 +27,7 @@ const RESEND_COUNTDOWN_SECONDS = 60;
  * cuối; sai thì tự quay về màn OTP kèm lỗi.
  */
 export default function PinChangeModal({ visible, onClose, onSuccess }: PinChangeModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [step, setStep] = useState<Step>("request-otp");
@@ -64,7 +66,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
 
   function handleNewPinContinue() {
     if (newPin.length !== PIN_DIGIT_COUNT) {
-      setErrorMessage("Vui lòng nhập đủ mã PIN mới 6 chữ số.");
+      setErrorMessage(t("mobile:pin.change.errorFillNewPin"));
       return;
     }
     setErrorMessage(null);
@@ -104,7 +106,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
     try {
       await requestPinForgotOtp({ email });
       setResendSeconds(RESEND_COUNTDOWN_SECONDS);
-      setInfoMessage("Đã gửi lại mã OTP. Mã có hiệu lực trong 10 phút.");
+      setInfoMessage(t("accountSecurity:pin.forgot.resendInfo"));
     } catch (error) {
       setErrorMessage(getFriendlyPinMessage(error));
     } finally {
@@ -114,7 +116,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
 
   function handleOtpContinue() {
     if (!isOtpFilled) {
-      setErrorMessage("Vui lòng nhập mã OTP 6 chữ số.");
+      setErrorMessage(t("accountSecurity:pin.forgot.errorOtp"));
       return;
     }
     setErrorMessage(null);
@@ -124,9 +126,9 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
   async function handleSubmit() {
     if (!canSubmit || isSubmitting) {
       if (!isPinFilled) {
-        setErrorMessage("Vui lòng nhập và xác nhận mã PIN mới 6 chữ số.");
+        setErrorMessage(t("accountSecurity:pin.forgot.errorFill"));
       } else if (newPin !== confirmPin) {
-        setErrorMessage("Mã PIN xác nhận không trùng khớp.");
+        setErrorMessage(t("accountSecurity:pin.change.errorMismatch"));
       }
       return;
     }
@@ -135,7 +137,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
     setOtpHasError(false);
     try {
       await resetPinForgot({ email, otpCode: otp, newPinCode: newPin });
-      setSuccessMessage("Đổi mã PIN thành công!");
+      setSuccessMessage(t("accountSecurity:pin.change.successTitle"));
       doneTimer.current = setTimeout(() => {
         onSuccess?.();
         onClose();
@@ -161,13 +163,13 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
         <View style={styles.card}>
           <View style={styles.heading}>
             <ShieldCheck color={theme.brand} size={22} strokeWidth={2.3} />
-            <AppText display style={styles.title}>Đổi mã PIN</AppText>
+            <AppText display style={styles.title}>{t("accountSecurity:pin.change.title")}</AppText>
           </View>
 
           {step === "request-otp" ? (
             <View style={styles.stack}>
               <AppText style={styles.description}>
-                Mã OTP xác thực sẽ được gửi đến email của bạn.
+                {t("mobile:pin.change.otpIntro")}
               </AppText>
               <View style={styles.emailBox}>
                 <AppText style={styles.emailText}>{email}</AppText>
@@ -179,7 +181,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
               ) : null}
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <AppText style={styles.secondaryText}>Hủy</AppText>
+                  <AppText style={styles.secondaryText}>{t("accountSecurity:pin.cancel")}</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -187,7 +189,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
                   onPress={() => { void handleRequestOtp(); }}
                   style={[styles.primaryButton, isSubmitting && styles.disabled]}
                 >
-                  <AppText style={styles.primaryText}>{isSubmitting ? "Đang gửi..." : "Gửi mã OTP"}</AppText>
+                  <AppText style={styles.primaryText}>{isSubmitting ? t("accountSecurity:pin.setup.resendSending") : t("accountSecurity:pin.forgot.sendOtp")}</AppText>
                 </Pressable>
               </View>
             </View>
@@ -196,13 +198,13 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
           {step === "enter-otp" ? (
             <View style={styles.stack}>
               <AppText style={styles.description}>
-                Nhập mã OTP đã gửi về email của bạn.
+                {t("mobile:pin.change.otpEnterIntro")}
               </AppText>
               <PinDigitInputs
                 autoFocus={visible}
                 disabled={isSubmitting}
                 hasError={otpHasError}
-                label="Mã OTP"
+                label={t("accountSecurity:pin.forgot.otpLabel")}
                 onChange={(next) => {
                   setOtp(next);
                   if (otpHasError) {
@@ -213,12 +215,12 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
                 value={otp}
               />
               <AppText style={styles.muted}>
-                Mã OTP có hiệu lực trong 10 phút.{" "}
+                {t("accountSecurity:pin.forgot.otpValidity")}{" "}
                 <AppText
                   onPress={() => { void handleResend(); }}
                   style={[styles.link, (isResending || isSubmitting || resendSeconds > 0) && styles.disabledText]}
                 >
-                  {isResending ? "Đang gửi..." : resendSeconds > 0 ? `Gửi lại mã (${resendSeconds}s)` : "Gửi lại mã"}
+                  {isResending ? t("accountSecurity:pin.setup.resendSending") : resendSeconds > 0 ? t("accountSecurity:pin.setup.resendCountdown", { seconds: resendSeconds }) : t("accountSecurity:pin.setup.resend")}
                 </AppText>
               </AppText>
               {infoMessage !== null ? <AppText style={styles.muted}>{infoMessage}</AppText> : null}
@@ -228,11 +230,11 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
                 </AppText>
               ) : null}
               <AppText style={styles.counter}>
-                {otp.length} / {PIN_DIGIT_COUNT}
+                {t("accountSecurity:pin.setup.otpCounter", { current: otp.length, total: PIN_DIGIT_COUNT })}
               </AppText>
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <AppText style={styles.secondaryText}>Hủy</AppText>
+                  <AppText style={styles.secondaryText}>{t("accountSecurity:pin.cancel")}</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -240,7 +242,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
                   onPress={handleOtpContinue}
                   style={[styles.primaryButton, (!isOtpFilled || isSubmitting) && styles.disabled]}
                 >
-                  <AppText style={styles.primaryText}>Tiếp tục</AppText>
+                  <AppText style={styles.primaryText}>{t("accountSecurity:pin.setup.continue")}</AppText>
                 </Pressable>
               </View>
             </View>
@@ -249,12 +251,12 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
           {step === "new-pin" ? (
             <View style={styles.stack}>
               <AppText style={styles.description}>
-                Nhập mã PIN mới gồm 6 chữ số.
+                {t("mobile:pin.change.newPinIntro")}
               </AppText>
               <PinDigitInputs
                 autoFocus={visible}
                 disabled={isSubmitting}
-                label="Mã PIN mới"
+                label={t("accountSecurity:pin.setup.newPin")}
                 onChange={(next) => {
                   setNewPin(next);
                   if (errorMessage) setErrorMessage(null);
@@ -267,11 +269,11 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
                 </AppText>
               ) : null}
               <AppText style={styles.counter}>
-                {newPin.length} / {PIN_DIGIT_COUNT}
+                {t("accountSecurity:pin.setup.otpCounter", { current: newPin.length, total: PIN_DIGIT_COUNT })}
               </AppText>
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <AppText style={styles.secondaryText}>Hủy</AppText>
+                  <AppText style={styles.secondaryText}>{t("accountSecurity:pin.cancel")}</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -279,7 +281,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
                   onPress={handleNewPinContinue}
                   style={[styles.primaryButton, (newPin.length !== PIN_DIGIT_COUNT || isSubmitting) && styles.disabled]}
                 >
-                  <AppText style={styles.primaryText}>Tiếp tục</AppText>
+                  <AppText style={styles.primaryText}>{t("accountSecurity:pin.setup.continue")}</AppText>
                 </Pressable>
               </View>
             </View>
@@ -288,13 +290,13 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
           {step === "confirm-pin" ? (
             <View style={styles.stack}>
               <AppText style={styles.description}>
-                Nhập lại mã PIN mới để xác nhận.
+                {t("mobile:pin.change.confirmIntro")}
               </AppText>
               <PinDigitInputs
                 autoFocus={visible}
                 disabled={isSubmitting}
                 hasError={hasMismatch}
-                label="Xác nhận mã PIN mới"
+                label={t("accountSecurity:pin.change.confirmLabel")}
                 onChange={(next) => {
                   setConfirmPin(next);
                   if (errorMessage) setErrorMessage(null);
@@ -303,7 +305,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
               />
               {hasMismatch ? (
                 <AppText accessibilityRole="alert" style={styles.error}>
-                  Mã PIN xác nhận không trùng khớp.
+                  {t("accountSecurity:pin.change.errorMismatch")}
                 </AppText>
               ) : null}
               {errorMessage !== null ? (
@@ -317,11 +319,11 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
                 </AppText>
               ) : null}
               <AppText style={styles.counter}>
-                {confirmPin.length} / {PIN_DIGIT_COUNT}
+                {t("accountSecurity:pin.setup.otpCounter", { current: confirmPin.length, total: PIN_DIGIT_COUNT })}
               </AppText>
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={onClose} style={styles.secondaryButton}>
-                  <AppText style={styles.secondaryText}>Hủy</AppText>
+                  <AppText style={styles.secondaryText}>{t("accountSecurity:pin.cancel")}</AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -329,7 +331,7 @@ export default function PinChangeModal({ visible, onClose, onSuccess }: PinChang
                   onPress={() => { void handleSubmit(); }}
                   style={[styles.primaryButton, (!canSubmit || isSubmitting) && styles.disabled]}
                 >
-                  <AppText style={styles.primaryText}>{isSubmitting ? "Đang đổi..." : "Xác nhận đổi PIN"}</AppText>
+                  <AppText style={styles.primaryText}>{isSubmitting ? t("mobile:pin.change.submitting") : t("mobile:pin.change.submit")}</AppText>
                 </Pressable>
               </View>
             </View>

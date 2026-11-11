@@ -1,0 +1,108 @@
+{
+  "explore": {
+    "searchCta": "TÌM XE",
+    "locationPlaceholder": "Chọn tỉnh / thành phố, phường / xã",
+    "errors": {
+      "pickLocation": "Vui lòng chọn địa điểm thuê xe.",
+      "pickPeriod": "Vui lòng chọn thời gian thuê xe."
+    },
+    "banner": {
+      "detailFallback": "Chi tiết khuyến mãi",
+      "closeDetail": "Đóng chi tiết khuyến mãi",
+      "copyCode": "Sao chép mã {{code}}",
+      "copied": "Đã sao chép!",
+      "discount": "Giảm {{discount}}",
+      "validUntil": "HSD: {{date}}",
+      "vehicleAll": "Tất cả xe"
+    },
+    "promotions": {
+      "title": "Chương trình khuyến mãi",
+      "seeAll": "Săn tất cả"
+    },
+    "destinations": {
+      "title": "Địa Điểm Nổi Bật",
+      "viewAll": "Xem tất cả xe",
+      "lovedBadge": "Điểm đến được yêu thích",
+      "searchAria": "Tìm xe tại {{name}}",
+      "hanoi": {
+        "description": "Những chuyến đi qua phố cổ và ngoại ô xanh mát."
+      },
+      "hoChiMinh": {
+        "description": "Khám phá nhịp sống sôi động theo cách riêng của bạn."
+      },
+      "daNang": {
+        "description": "Từ biển xanh đến những cung đường quanh bán đảo."
+      },
+      "nhaTrang": {
+        "description": "Chủ động hành trình biển nắng cùng chiếc xe phù hợp."
+      },
+      "daLat": {
+        "description": "Đón sương sớm và những cung đèo đầy cảm hứng."
+      },
+      "phuQuoc": {
+        "description": "Tự do đi dọc bờ biển và khám phá đảo ngọc."
+      }
+    },
+    "services": {
+      "title": "Dịch Vụ Nổi Bật Của MoveVN",
+      "car": {
+        "title": "Thuê Xe Ô Tô",
+        "desc": "Tự do điều khiển hành trình riêng tư bên gia đình, phong cách, tiện dụng với kho xe đa dạng.",
+        "cta": "Tìm xe ô tô"
+      },
+      "motorbike": {
+        "title": "Thuê Xe Máy",
+        "desc": "Gọn nhẹ, tiết kiệm chi phí — linh hoạt cho di chuyển nội thành và những chuyến phượt ngắn ngày.",
+        "cta": "Tìm xe máy"
+      }
+    },
+    "advantages": {
+      "title": "Ưu Điểm Của MoveVN",
+      "shield": {
+        "title": "An Toàn Tuyệt Đối",
+        "desc": "Xe được kiểm tra kỹ thuật và hỗ trợ bảo hiểm trước mỗi hành trình.",
+        "aria": "An toàn tuyệt đối"
+      },
+      "card": {
+        "title": "Thanh Toán Đa Dạng",
+        "desc": "Thanh toán rõ ràng, linh hoạt qua các phương thức bảo mật trên MoveVN.",
+        "aria": "Thanh toán đa dạng"
+      },
+      "pin": {
+        "title": "Giao Xe Tận Nơi",
+        "desc": "Chọn điểm nhận xe thuận tiện tại sân bay, nhà ga hoặc ngay tại nhà.",
+        "aria": "Giao xe tận nơi"
+      },
+      "car": {
+        "title": "Đa Dạng Dòng Xe",
+        "desc": "Từ xe máy gọn nhẹ đến sedan và SUV cho mọi nhu cầu di chuyển.",
+        "aria": "Đa dạng dòng xe"
+      },
+      "file": {
+        "title": "Thủ Tục Đơn Giản",
+        "desc": "Xác thực nhanh, hợp đồng rõ ràng và mọi thông tin đều được lưu trên ứng dụng.",
+        "aria": "Thủ tục đơn giản"
+      },
+      "support": {
+        "title": "Hỗ Trợ Trọn Hành Trình",
+        "desc": "Theo dõi lịch nhận trả xe và nhận hỗ trợ xuyên suốt chuyến đi của bạn.",
+        "aria": "Hỗ trợ trọn hành trình"
+      }
+    },
+    "featured": {
+      "title": "Xe nổi bật dành cho bạn",
+      "viewAll": "Xem tất cả",
+      "error": "Không tải được xe nổi bật. Kiểm tra mạng rồi thử lại.",
+      "empty": "Chưa có xe nổi bật. Hãy thử tìm xe theo địa điểm."
+    },
+    "host": {
+      "aria": "Đăng ký cho thuê xe",
+      "imageAria": "Cho thuê xe cùng MoveVN",
+      "eyebrow": "DÀNH CHO CHỦ XE",
+      "title": "Bạn muốn cho thuê xe?",
+      "description": "Hơn 15.000 chủ xe đang cho thuê hiệu quả trên MoveVN.",
+      "toastTitle": "Bạn chưa là chủ xe",
+      "toastMessage": "Hãy xác thực CCCD để đăng ký trở thành chủ xe, sau đó bổ sung GPLX và giấy tờ xe."
+    }
+  }
+}

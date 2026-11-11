@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -32,6 +33,7 @@ export default function TxDetailSheet({
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
   const incoming = tx ? isIncoming(tx.type, tx.amount) : true;
 
   return (
@@ -45,13 +47,19 @@ export default function TxDetailSheet({
                 {incoming ? "+" : "−"}{formatMoney(Math.abs(tx.amount))}
               </AppText>
               <View style={styles.divider} />
-              <Row label="Thời gian" value={formatDateTime(tx.createdAt)} />
-              <Row label="Số dư sau GD" value={formatMoney(tx.balanceAfter)} accent={theme.brand} />
-              {tx.referenceId != null && <Row label="Mã tham chiếu" value={`#${tx.referenceId}`} />}
-              {tx.status ? <Row label="Trạng thái" value={tx.status} /> : null}
-              {tx.note ? <Row label="Ghi chú" value={tx.note} /> : null}
+              <Row label={t("mobile:wallet.detail.time")} value={formatDateTime(tx.createdAt)} />
+              <Row
+                label={t("mobile:wallet.detail.balanceAfter")}
+                value={formatMoney(tx.balanceAfter)}
+                accent={theme.brand}
+              />
+              {tx.referenceId != null && (
+                <Row label={t("mobile:wallet.detail.reference")} value={`#${tx.referenceId}`} />
+              )}
+              {tx.status ? <Row label={t("mobile:wallet.detail.status")} value={tx.status} /> : null}
+              {tx.note ? <Row label={t("mobile:wallet.detail.note")} value={tx.note} /> : null}
               <Pressable onPress={onClose} style={styles.closeButton}>
-                <AppText style={styles.closeText}>Đóng</AppText>
+                <AppText style={styles.closeText}>{t("common:closeAction")}</AppText>
               </Pressable>
             </>
           )}

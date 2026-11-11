@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { ArrowUpRight, ChevronRight, Clock3, Landmark, Plus, TriangleAlert } from "lucide-react-native";
 import type { Theme } from "@/theme/tokens";
@@ -34,6 +35,7 @@ export default function WalletHomeScreen({
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
   const [pinModalVisible, setPinModalVisible] = useState(false);
   const { wallet, transactions, bank, loading, pendingOrderCode } = state;
 
@@ -42,7 +44,7 @@ export default function WalletHomeScreen({
       <View style={styles.center}>
         {loading
           ? <ActivityIndicator color={theme.brand} />
-          : <AppText style={styles.muted}>Không tải được ví.</AppText>}
+          : <AppText style={styles.muted}>{t("mobile:wallet.errors.loadWallet")}</AppText>}
       </View>
     );
   }
@@ -73,16 +75,36 @@ export default function WalletHomeScreen({
         actions={
           isOwner
             ? [
-              { key: "withdraw", label: "Rút tiền", icon: ArrowUpRight, onPress: onWithdraw },
-              { key: "topup", label: "Nạp tiền", icon: Plus, onPress: onTopUp },
-              { key: "history", label: "Lịch sử", icon: Clock3, onPress: onGoHistory },
-              { key: "bank", label: "Ngân hàng", icon: Landmark, onPress: onGoBank },
+              {
+                key: "withdraw",
+                label: t("accountWallet:withdraw"),
+                icon: ArrowUpRight,
+                onPress: onWithdraw,
+              },
+              { key: "topup", label: t("accountWallet:topUp"), icon: Plus, onPress: onTopUp },
+              {
+                key: "history",
+                label: t("mobile:wallet.tabs.history"),
+                icon: Clock3,
+                onPress: onGoHistory,
+              },
+              { key: "bank", label: t("mobile:wallet.tabs.bank"), icon: Landmark, onPress: onGoBank },
             ]
             : [
-              { key: "topup", label: "Nạp tiền", icon: Plus, onPress: onTopUp },
-              { key: "withdraw", label: "Rút tiền", icon: ArrowUpRight, onPress: onWithdraw },
-              { key: "history", label: "Lịch sử", icon: Clock3, onPress: onGoHistory },
-              { key: "bank", label: "Ngân hàng", icon: Landmark, onPress: onGoBank },
+              { key: "topup", label: t("accountWallet:topUp"), icon: Plus, onPress: onTopUp },
+              {
+                key: "withdraw",
+                label: t("accountWallet:withdraw"),
+                icon: ArrowUpRight,
+                onPress: onWithdraw,
+              },
+              {
+                key: "history",
+                label: t("mobile:wallet.tabs.history"),
+                icon: Clock3,
+                onPress: onGoHistory,
+              },
+              { key: "bank", label: t("mobile:wallet.tabs.bank"), icon: Landmark, onPress: onGoBank },
             ]
         }
       />
@@ -91,8 +113,12 @@ export default function WalletHomeScreen({
         <Pressable onPress={onGoBank} style={styles.warnBanner}>
           <TriangleAlert color={theme.brand} size={20} />
           <View style={styles.flexOne}>
-            <AppText display style={styles.warnTitle}>Chưa liên kết ngân hàng</AppText>
-            <AppText style={styles.warnSub}>Thiết lập để rút tiền về tài khoản.</AppText>
+            <AppText display style={styles.warnTitle}>
+              {t("mobile:wallet.home.bankMissingTitle")}
+            </AppText>
+            <AppText style={styles.warnSub}>
+              {t("mobile:wallet.home.bankMissingSubtitle")}
+            </AppText>
           </View>
           <ChevronRight color={theme.brand} size={18} />
         </Pressable>
@@ -115,14 +141,14 @@ export default function WalletHomeScreen({
 
       <View style={styles.card}>
         <View style={styles.cardHead}>
-          <AppText display style={styles.cardTitle}>Giao dịch gần đây</AppText>
+          <AppText display style={styles.cardTitle}>{t("mobile:wallet.home.recentTitle")}</AppText>
           <Pressable onPress={onGoHistory} style={styles.linkHit}>
-            <AppText style={styles.linkText}>Xem tất cả</AppText>
+            <AppText style={styles.linkText}>{t("mobile:wallet.home.viewAll")}</AppText>
             <ChevronRight color={theme.brand} size={15} />
           </Pressable>
         </View>
         {recent.length === 0 && (
-          <AppText style={styles.muted}>Chưa có giao dịch nào. Nạp tiền để bắt đầu.</AppText>
+          <AppText style={styles.muted}>{t("mobile:wallet.home.emptyRecent")}</AppText>
         )}
         {recent.map((t) => (
           <TxRow key={t.id} tx={t} />

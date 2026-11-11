@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -13,6 +14,7 @@ const ACCEPT_WINDOW_HOURS = 24;
 export default function LatePickupWaitCard({ booking, hasCheckIn, onUpdated }: {
   booking: BookingResponse; hasCheckIn: boolean; onUpdated: (booking: BookingResponse) => void;
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [open, setOpen] = useState(false);
@@ -28,9 +30,9 @@ export default function LatePickupWaitCard({ booking, hasCheckIn, onUpdated }: {
     try {
       onUpdated(await acceptLatePickup(booking.id));
       setOpen(false);
-      Alert.alert("Đã đăng ký chờ", "Hệ thống sẽ tự kéo dài giờ thuê bằng đúng số giờ trễ khi xe được bàn giao.");
+      Alert.alert(t("booking:latePickup.registeredToastTitle"), t("booking:latePickup.registeredToastMessage"));
     } catch (err) {
-      Alert.alert("Chưa thể đăng ký chờ", getApiErrorMessage(err, "Vui lòng thử lại hoặc liên hệ hỗ trợ."));
+      Alert.alert(t("booking:latePickup.registerFailedToastTitle"), getApiErrorMessage(err, t("booking:latePickup.registerFailedFallback")));
     } finally {
       setBusy(false);
     }
@@ -39,9 +41,9 @@ export default function LatePickupWaitCard({ booking, hasCheckIn, onUpdated }: {
   if (booking.latePickupCompensatedAt) {
     return (
       <View style={[styles.banner, styles.successBanner]}>
-        <Text style={[styles.bannerTitle, { color: theme.success }]}>Đã tự động bù giờ thuê</Text>
+        <Text style={[styles.bannerTitle, { color: theme.success }]}>{t("booking:latePickup.compensatedTitle")}</Text>
         <Text style={styles.bannerBody}>
-          Chuyến trước trả muộn nên hệ thống đã kéo dài giờ thuê của bạn thêm {booking.latePickupCompensationHours} giờ (giá trị {formatMoney(booking.latePickupCompensationAmount)}). Giờ trả mới: {formatDateTime(booking.endDate)}.
+          {t("mobile:inspection.latePickup.compensatedBody", { hours: booking.latePickupCompensationHours, amount: formatMoney(booking.latePickupCompensationAmount), date: formatDateTime(booking.endDate) })}
         </Text>
       </View>
     );
@@ -50,9 +52,9 @@ export default function LatePickupWaitCard({ booking, hasCheckIn, onUpdated }: {
   if (booking.latePickupAcceptedAt) {
     return (
       <View style={[styles.banner, styles.infoBanner]}>
-        <Text style={[styles.bannerTitle, { color: theme.info }]}>Đã đăng ký chờ xe</Text>
+        <Text style={[styles.bannerTitle, { color: theme.info }]}>{t("booking:latePickup.acceptedTitle")}</Text>
         <Text style={styles.bannerBody}>
-          Bạn đã chấp nhận chờ nếu chuyến trước trả muộn. Khi xe được bàn giao, hệ thống sẽ tự kéo dài giờ thuê bằng đúng số giờ trễ (chi phí lấy từ phí trả muộn của chuyến trước). Nếu tới giờ nhận xe mà xe vẫn chưa sẵn sàng, bạn có thể hủy miễn phí với hoàn 100% tiền cọc.
+          {t("booking:latePickup.acceptedBody")}
         </Text>
       </View>
     );
@@ -62,26 +64,26 @@ export default function LatePickupWaitCard({ booking, hasCheckIn, onUpdated }: {
     <>
       <View style={[styles.banner, styles.warnBanner]}>
         <Text style={styles.bannerBody}>
-          Chuyến trước của xe có thể trả muộn, ảnh hưởng tới giờ nhận xe của bạn. Bạn có thể chấp nhận chờ — hệ thống sẽ tự kéo dài giờ thuê đúng bằng số giờ trễ, lấy từ phí trả muộn của chuyến trước. Nếu tới giờ nhận xe mà xe vẫn chưa sẵn sàng, bạn có thể hủy miễn phí với hoàn 100% tiền cọc.
+          {t("mobile:inspection.latePickup.offerBody")}
         </Text>
-        <BookingButton title="Chấp nhận chờ — tự bù giờ thuê" onPress={() => setOpen(true)} />
+        <BookingButton title={t("booking:latePickup.acceptWait")} onPress={() => setOpen(true)} />
       </View>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => { if (!busy) setOpen(false); }}>
         <View style={styles.backdrop}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Chấp nhận chờ xe</Text>
+            <Text style={styles.modalTitle}>{t("booking:latePickup.acceptModalTitle")}</Text>
             <Text style={styles.bannerBody}>
-              Khi bạn chấp nhận chờ: booking của bạn sẽ không bị hệ thống tự hủy trong lúc chờ xe, và ngay khi chuyến trước bàn giao xe, giờ trả xe của bạn sẽ được tự động kéo dài đúng bằng số giờ trễ. Chi phí giờ bù lấy từ phí trả muộn của chuyến trước — bạn không phải trả thêm.
+              {t("booking:latePickup.acceptModalBody")}
             </Text>
             <Text style={styles.muted}>
-              Nếu tới giờ nhận xe mà xe vẫn chưa sẵn sàng, bạn có thể hủy miễn phí với hoàn 100% tiền cọc.
+              {t("booking:latePickup.acceptModalHint")}
             </Text>
             <View style={styles.modalActions}>
               <Pressable onPress={() => setOpen(false)} disabled={busy} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Đóng</Text>
+                <Text style={styles.ghostText}>{t("common:closeAction")}</Text>
               </Pressable>
               <Pressable onPress={() => void accept()} disabled={busy} style={[styles.primaryButton, busy && styles.disabled]}>
-                <Text style={styles.primaryText}>Xác nhận chấp nhận chờ</Text>
+                <Text style={styles.primaryText}>{t("booking:latePickup.acceptConfirm")}</Text>
               </Pressable>
             </View>
           </View>

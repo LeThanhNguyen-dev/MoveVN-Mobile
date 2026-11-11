@@ -1,29 +1,48 @@
-export const TX_TYPE_LABELS: Record<string, string> = {
-  TopUp: "Nạp tiền",
-  BookingEarning: "Thu nhập booking",
-  DisputeCompensation: "Bồi thường tranh chấp",
-  PlatformFeeRevenue: "Phí nền tảng",
-  Refund: "Hoàn tiền",
-  PayoutReversal: "Hoàn tiền rút",
-  AdminAdjust: "Điều chỉnh",
-  BookingPayment: "Trả cọc",
-  Withdrawal: "Rút tiền",
-  Penalty: "Phạt",
-  BookingEarningReversal: "Thu hồi thu nhập",
-  AutoPayout: "Chuyển về ngân hàng",
-};
+import { translatedLabels } from "@/i18n/liveLabels";
+
+// Nhãn loại giao dịch: dùng chung key với web khi text trùng, phần khác biệt
+// (chữ ngắn hơn cho list mobile) nằm trong namespace mobile.
+const sharedTxTypeLabels = translatedLabels("accountWallet", {
+  TopUp: "types.TopUp",
+  Refund: "types.Refund",
+  DisputeCompensation: "types.DisputeCompensation",
+  Withdrawal: "types.Withdrawal",
+});
+const mobileTxTypeLabels = translatedLabels("mobile", {
+  BookingEarning: "wallet.txTypes.bookingEarning",
+  PlatformFeeRevenue: "wallet.txTypes.platformFeeRevenue",
+  PayoutReversal: "wallet.txTypes.payoutReversal",
+  AdminAdjust: "wallet.txTypes.adminAdjust",
+  BookingPayment: "wallet.txTypes.bookingPayment",
+  Penalty: "wallet.txTypes.penalty",
+  BookingEarningReversal: "wallet.txTypes.bookingEarningReversal",
+  AutoPayout: "wallet.txTypes.autoPayout",
+});
+
+// Getter resolve bản dịch mỗi lần đọc để nhãn đổi theo ngôn ngữ đang chọn.
+export const TX_TYPE_LABELS: Record<string, string> = Object.defineProperties(
+  sharedTxTypeLabels,
+  Object.getOwnPropertyDescriptors(mobileTxTypeLabels),
+) as Record<string, string>;
 
 export function txTypeLabel(type: string): string {
   return TX_TYPE_LABELS[type] ?? type;
 }
 
-export const WITHDRAWAL_STATUS_LABELS: Record<string, string> = {
-  Pending: "Chờ duyệt",
-  Approved: "Đã duyệt",
-  NeedsManualReview: "Chờ xử lý tay",
-  Completed: "Hoàn tất",
-  Rejected: "Từ chối",
-};
+const sharedWithdrawalStatusLabels = translatedLabels("accountWallet", {
+  Approved: "status.Approved",
+});
+const mobileWithdrawalStatusLabels = translatedLabels("mobile", {
+  Pending: "wallet.statuses.pending",
+  NeedsManualReview: "wallet.statuses.needsManualReview",
+  Completed: "wallet.statuses.completed",
+  Rejected: "wallet.statuses.rejected",
+});
+
+export const WITHDRAWAL_STATUS_LABELS: Record<string, string> = Object.defineProperties(
+  sharedWithdrawalStatusLabels,
+  Object.getOwnPropertyDescriptors(mobileWithdrawalStatusLabels),
+) as Record<string, string>;
 
 export function withdrawalStatusLabel(status: string): string {
   return WITHDRAWAL_STATUS_LABELS[status] ?? status;

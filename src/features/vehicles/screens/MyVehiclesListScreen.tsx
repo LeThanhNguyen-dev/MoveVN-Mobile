@@ -1,5 +1,6 @@
 import { Bike, Car, Check, ChevronDown, Plus, Search, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Animated,
@@ -29,20 +30,6 @@ const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 type TypeFilter = "" | "Car" | "Motorbike";
 type StatusFilter = "" | "Pending" | "Approved" | "Hidden" | "Rejected";
 
-const TYPE_TABS: { value: TypeFilter; label: string; icon?: typeof Car }[] = [
-  { value: "", label: "Tất cả" },
-  { value: "Car", label: "Ô tô", icon: Car },
-  { value: "Motorbike", label: "Xe máy", icon: Bike },
-];
-
-const STATUS_TABS: { value: StatusFilter; label: string }[] = [
-  { value: "", label: "Mọi trạng thái" },
-  { value: "Pending", label: "Chờ duyệt" },
-  { value: "Approved", label: "Đã duyệt" },
-  { value: "Hidden", label: "Đã ẩn" },
-  { value: "Rejected", label: "Từ chối" },
-];
-
 type Props = {
   onOpenDetail: (vehicleId: number) => void;
   onAdd: () => void;
@@ -50,9 +37,30 @@ type Props = {
 };
 
 export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken = 0 }: Props) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Nhãn bộ lọc dựng trong component để đổi theo ngôn ngữ đang chọn.
+  const typeTabs = useMemo<{ value: TypeFilter; label: string; icon?: typeof Car }[]>(
+    () => [
+      { value: "", label: t("mobile:ownerVehicle.list.typeAll") },
+      { value: "Car", label: t("common:car"), icon: Car },
+      { value: "Motorbike", label: t("common:motorbike"), icon: Bike },
+    ],
+    [t],
+  );
+  const statusTabs = useMemo<{ value: StatusFilter; label: string }[]>(
+    () => [
+      { value: "", label: t("mobile:ownerVehicle.list.statusAll") },
+      { value: "Pending", label: t("mobile:ownerVehicle.status.pending") },
+      { value: "Approved", label: t("mobile:ownerVehicle.status.approved") },
+      { value: "Hidden", label: t("mobile:ownerVehicle.status.hidden") },
+      { value: "Rejected", label: t("mobile:ownerVehicle.status.rejected") },
+    ],
+    [t],
+  );
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
@@ -112,7 +120,7 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
         setTotalCount(result.totalCount);
       } catch {
         if (request !== requestId.current) return;
-        if (replace) setError("Không tải được danh sách xe. Kéo xuống để thử lại.");
+        if (replace) setError(t("mobile:ownerVehicle.list.loadError"));
       } finally {
         if (request === requestId.current) {
           fetching.current = false;
@@ -122,7 +130,7 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
         }
       }
     },
-    [],
+    [t],
   );
 
   useEffect(() => {
@@ -179,14 +187,14 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.titleRow}>
-            <AppText display style={styles.title}>Xe của tôi</AppText>
-            <AppText accessibilityLabel={loading ? "Đang tải xe" : error ? "Chưa tải được số lượng xe" : `${totalCount} xe phù hợp`} style={styles.count}>
+            <AppText display style={styles.title}>{t("mobile:ownerVehicle.list.title")}</AppText>
+            <AppText accessibilityLabel={loading ? t("mobile:ownerVehicle.list.loadingA11y") : error ? t("mobile:ownerVehicle.list.countErrorA11y") : t("mobile:ownerVehicle.list.countA11y", { count: totalCount })} style={styles.count}>
               {loading || error ? "—" : totalCount}
             </AppText>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Thêm xe" onPress={onAdd} hitSlop={4} style={styles.addButton}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:ownerVehicle.list.add")} onPress={onAdd} hitSlop={4} style={styles.addButton}>
             <Plus color={theme.onBrand} size={16} />
-            <AppText style={styles.addText}>Thêm xe</AppText>
+            <AppText style={styles.addText}>{t("mobile:ownerVehicle.list.add")}</AppText>
           </Pressable>
         </View>
       </View>
@@ -198,21 +206,21 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
         borderRadius: compactSize(16, 10),
       }]}>
         <View accessibilityRole="tablist" style={styles.tabRow}>
-          {TYPE_TABS.map((t) => {
-            const active = typeFilter === t.value;
-            const Icon = t.icon;
+          {typeTabs.map((tab) => {
+            const active = typeFilter === tab.value;
+            const Icon = tab.icon;
             return (
               <AnimatedPressable
-                key={t.label}
-                accessibilityLabel={t.label}
+                key={tab.value}
+                accessibilityLabel={tab.label}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: active }}
-                onPress={() => setTypeFilter(t.value)}
+                onPress={() => setTypeFilter(tab.value)}
                 hitSlop={{ top: 7, bottom: 7 }}
                 style={[styles.tab, { minHeight: controlHeight, paddingVertical: compactSize(12, 5) }]}
               >
                 {Icon ? <Icon color={active ? theme.brand : theme.muted} size={17} /> : null}
-                <Animated.Text style={[styles.tabText, active && styles.tabTextActive, { fontSize: compactSize(13, 12) }]}>{t.label}</Animated.Text>
+                <Animated.Text style={[styles.tabText, active && styles.tabTextActive, { fontSize: compactSize(13, 12) }]}>{tab.label}</Animated.Text>
                 {active ? <View style={styles.tabIndicator} /> : null}
               </AnimatedPressable>
             );
@@ -222,8 +230,8 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
           <Animated.View style={[styles.searchField, { minHeight: controlHeight }]}>
             <Search color={theme.muted} size={16} />
             <AnimatedTextInput
-              accessibilityLabel="Tìm xe theo tên hoặc biển số"
-              placeholder="Tên xe, biển số…"
+              accessibilityLabel={t("mobile:ownerVehicle.list.searchA11y")}
+              placeholder={t("mobile:ownerVehicle.list.searchPlaceholder")}
               placeholderTextColor={theme.placeholder}
               value={searchText}
               onChangeText={setSearchText}
@@ -233,10 +241,10 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
               autoCorrect={false}
               style={[styles.searchInput, { minHeight: compactSize(42, 28), paddingVertical: compactSize(10, 3) }]}
             />
-            {searchText ? <Pressable accessibilityRole="button" accessibilityLabel="Xóa từ khóa" hitSlop={6} onPress={() => { setSearchText(""); setKeyword(""); }} style={styles.clearSearch}><X size={14} color={theme.muted} /></Pressable> : null}
+            {searchText ? <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:ownerVehicle.list.clearSearchA11y")} hitSlop={6} onPress={() => { setSearchText(""); setKeyword(""); }} style={styles.clearSearch}><X size={14} color={theme.muted} /></Pressable> : null}
           </Animated.View>
-          <AnimatedPressable accessibilityRole="button" accessibilityLabel={`Lọc trạng thái: ${STATUS_TABS.find(t => t.value === statusFilter)?.label}`} accessibilityState={{ expanded: statusPickerOpen }} hitSlop={{ top: 7, bottom: 7 }} onPress={() => { Keyboard.dismiss(); setStatusPickerOpen(true); }} style={[styles.statusSelect, !!statusFilter && styles.statusSelectActive, { minHeight: controlHeight }]}>
-            <AppText numberOfLines={1} style={[styles.statusText, !!statusFilter && styles.tabTextActive]}>{STATUS_TABS.find(t => t.value === statusFilter)?.label}</AppText>
+          <AnimatedPressable accessibilityRole="button" accessibilityLabel={t("mobile:ownerVehicle.list.filterStatusA11y", { label: statusTabs.find(tab => tab.value === statusFilter)?.label })} accessibilityState={{ expanded: statusPickerOpen }} hitSlop={{ top: 7, bottom: 7 }} onPress={() => { Keyboard.dismiss(); setStatusPickerOpen(true); }} style={[styles.statusSelect, !!statusFilter && styles.statusSelectActive, { minHeight: controlHeight }]}>
+            <AppText numberOfLines={1} style={[styles.statusText, !!statusFilter && styles.tabTextActive]}>{statusTabs.find(tab => tab.value === statusFilter)?.label}</AppText>
             <ChevronDown size={15} color={statusFilter ? theme.brand : theme.muted} />
           </AnimatedPressable>
         </View>
@@ -266,15 +274,21 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
             <View style={styles.center}>
               <AppText style={styles.errorText}>{error}</AppText>
               <Pressable onPress={handleRefresh} style={styles.retryBtn}>
-                <AppText style={styles.retryText}>Thử lại</AppText>
+                <AppText style={styles.retryText}>{t("common:retry")}</AppText>
               </Pressable>
             </View>
           ) : (
             <View style={styles.center}>
-              <AppText display style={styles.emptyTitle}>{filtered ? "Không tìm thấy xe phù hợp" : "Chưa có xe nào"}</AppText>
-              <AppText style={styles.emptyDesc}>{filtered ? "Thử từ khóa khác hoặc bỏ điều kiện lọc." : "Thêm xe đầu tiên để bắt đầu cho thuê."}</AppText>
+              <AppText display style={styles.emptyTitle}>
+                {filtered ? t("mobile:ownerVehicle.list.emptyFilteredTitle") : t("mobile:ownerVehicle.list.emptyTitle")}
+              </AppText>
+              <AppText style={styles.emptyDesc}>
+                {filtered ? t("mobile:ownerVehicle.list.emptyFilteredDesc") : t("mobile:ownerVehicle.list.emptyDesc")}
+              </AppText>
               <Pressable accessibilityRole="button" onPress={filtered ? clearFilters : onAdd} style={styles.retryBtn}>
-                <AppText style={styles.retryText}>{filtered ? "Xóa bộ lọc" : "Thêm xe ngay"}</AppText>
+                <AppText style={styles.retryText}>
+                  {filtered ? t("mobile:ownerVehicle.list.clearFilters") : t("mobile:ownerVehicle.list.addFirst")}
+                </AppText>
               </Pressable>
             </View>
           )
@@ -286,12 +300,12 @@ export default function MyVehiclesListScreen({ onOpenDetail, onAdd, refreshToken
       <Modal visible={statusPickerOpen} transparent animationType="fade" presentationStyle="overFullScreen" onRequestClose={() => setStatusPickerOpen(false)}>
         <SafeAreaProvider>
           <View style={styles.modalBackdrop}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Đóng bộ lọc trạng thái" style={StyleSheet.absoluteFill} onPress={() => setStatusPickerOpen(false)} />
+            <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:ownerVehicle.list.closeFilterA11y")} style={StyleSheet.absoluteFill} onPress={() => setStatusPickerOpen(false)} />
             <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.sheetArea} pointerEvents="box-none">
               <View style={styles.sheet} accessibilityViewIsModal>
-                <View style={styles.sheetHeader}><AppText style={styles.sheetTitle}>Trạng thái xe</AppText><Pressable accessibilityRole="button" accessibilityLabel="Đóng" onPress={() => setStatusPickerOpen(false)} style={styles.closeButton}><X size={19} color={theme.muted} /></Pressable></View>
+                <View style={styles.sheetHeader}><AppText style={styles.sheetTitle}>{t("mobile:ownerVehicle.list.statusSheetTitle")}</AppText><Pressable accessibilityRole="button" accessibilityLabel={t("common:closeAction")} onPress={() => setStatusPickerOpen(false)} style={styles.closeButton}><X size={19} color={theme.muted} /></Pressable></View>
                 <ScrollView bounces={false}>
-                  {STATUS_TABS.map(option => <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ checked: statusFilter === option.value }} onPress={() => { setStatusFilter(option.value); setStatusPickerOpen(false); }} style={[styles.statusOption, statusFilter === option.value && styles.selectedOption]}>
+                  {statusTabs.map(option => <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ checked: statusFilter === option.value }} onPress={() => { setStatusFilter(option.value); setStatusPickerOpen(false); }} style={[styles.statusOption, statusFilter === option.value && styles.selectedOption]}>
                     <AppText style={[styles.optionText, statusFilter === option.value && styles.tabTextActive]}>{option.label}</AppText>
                     {statusFilter === option.value ? <Check size={18} color={theme.brand} /> : null}
                   </Pressable>)}

@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { getDiscountPercent } from "@/features/booking/utils/bookingPricing";
 import type { PricingQuoteResponse } from "@/features/vehicles/types";
 import { DAYS_VI, getHour, parseDateValue } from "@/features/vehicles/utils/rentalPeriod";
@@ -38,7 +39,9 @@ function pad(value: number): string {
 /** 12/11 hoặc 12/11/2026 khi khác năm hiện tại. */
 export function formatDateShort(value: string, withYear = false): string {
   const date = parseDateValue(value);
-  if (!date) return "Chọn ngày";
+  if (!date) {
+    return i18n.t("mobile:vehicleDetail.pricing.selectDate", { defaultValue: "Chọn ngày" });
+  }
   const dayMonth = `${pad(date.getDate())}/${pad(date.getMonth() + 1)}`;
   return withYear ? `${dayMonth}/${date.getFullYear()}` : dayMonth;
 }
@@ -47,7 +50,9 @@ export function formatDateShort(value: string, withYear = false): string {
 export function formatShortRange(startDate: string, endDate: string): string {
   const start = parseDateValue(startDate);
   const end = parseDateValue(endDate);
-  if (!start || !end) return "Chọn ngày";
+  if (!start || !end) {
+    return i18n.t("mobile:vehicleDetail.pricing.selectDate", { defaultValue: "Chọn ngày" });
+  }
   if (start.getTime() === end.getTime()) return formatDateShort(startDate);
   const sameYear = start.getFullYear() === end.getFullYear();
   const sameMonth = sameYear && start.getMonth() === end.getMonth();
@@ -58,7 +63,9 @@ export function formatShortRange(startDate: string, endDate: string): string {
 /** T4 · 09:00 */
 export function formatDateMeta(value: string): string {
   const date = parseDateValue(value);
-  if (!date) return "Chạm để chọn";
+  if (!date) {
+    return i18n.t("mobile:vehicleDetail.pricing.tapToSelect", { defaultValue: "Chạm để chọn" });
+  }
   const weekday = DAYS_VI[date.getDay()] ?? "";
   return `${weekday} · ${getHour(value)}`;
 }

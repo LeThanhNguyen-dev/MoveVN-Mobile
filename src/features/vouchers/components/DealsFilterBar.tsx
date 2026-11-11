@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Search, X } from "lucide-react-native";
 import { memo, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Modal,
   Pressable,
@@ -51,13 +52,15 @@ function DealsFilterBar({
   onSortChange,
   search,
   searchPlaceholder,
-  sortLabel = "Sắp xếp",
+  sortLabel,
   sortOptions,
   sortValue,
 }: DealsFilterBarProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [sortOpen, setSortOpen] = useState(false);
+  const resolvedSortLabel = sortLabel ?? t("promo:promotions.sortLabel");
 
   const selectedSort = sortOptions.find((option) => option.value === sortValue);
 
@@ -78,7 +81,7 @@ function DealsFilterBar({
             onPress={() => onSearchChange("")}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Xoá tìm kiếm"
+            accessibilityLabel={t("profile:clearSearch")}
           >
             <X color={theme.faint} size={15} />
           </Pressable>
@@ -128,9 +131,9 @@ function DealsFilterBar({
         onPress={() => setSortOpen(true)}
         style={styles.sortButton}
         accessibilityRole="button"
-        accessibilityLabel={sortLabel}
+        accessibilityLabel={resolvedSortLabel}
       >
-        <AppText style={styles.sortLabel}>{sortLabel}</AppText>
+        <AppText style={styles.sortLabel}>{resolvedSortLabel}</AppText>
         <AppText style={styles.sortValue} numberOfLines={1}>
           {selectedSort?.label ?? ""}
         </AppText>
@@ -161,18 +164,27 @@ type SortSheetProps = {
 
 function SortSheet({ options, value, onSelect, onClose }: SortSheetProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View style={styles.sheetOverlay}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Đóng" />
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        onPress={onClose}
+        accessibilityLabel={t("common:closeAction")}
+      />
       <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <View style={styles.sheetHead}>
           <AppText display style={styles.sheetTitle}>
-            Sắp xếp
+            {t("promo:promotions.sortLabel")}
           </AppText>
-          <Pressable onPress={onClose} hitSlop={8} accessibilityLabel="Đóng">
+          <Pressable
+            onPress={onClose}
+            hitSlop={8}
+            accessibilityLabel={t("common:closeAction")}
+          >
             <X color={theme.muted} size={18} />
           </Pressable>
         </View>

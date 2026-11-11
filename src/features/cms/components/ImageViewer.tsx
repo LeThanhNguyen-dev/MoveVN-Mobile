@@ -1,5 +1,6 @@
 import { Image, type ImageSource } from "expo-image";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react-native";
 import {
   ActivityIndicator,
@@ -29,6 +30,7 @@ export default function ImageViewer({
   onClose: () => void;
 }) {
   const { width, height } = useWindowDimensions();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
@@ -53,7 +55,7 @@ export default function ImageViewer({
             {title}
           </AppText>
           <Pressable
-            accessibilityLabel="Đóng xem ảnh"
+            accessibilityLabel={t("mobile:cms.viewer.closeAria")}
             accessibilityRole="button"
             onPress={onClose}
             style={styles.closeButton}
@@ -96,7 +98,7 @@ export default function ImageViewer({
 
           {failed ? (
             <View pointerEvents="none" style={styles.centerOverlay}>
-              <AppText style={styles.errorText}>Không tải được ảnh.</AppText>
+              <AppText style={styles.errorText}>{t("mobile:cms.viewer.loadError")}</AppText>
             </View>
           ) : null}
         </View>

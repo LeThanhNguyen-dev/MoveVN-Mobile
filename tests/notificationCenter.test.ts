@@ -25,9 +25,17 @@ vi.mock("react-native", () => ({
     data: NotificationItem[]; renderItem: (props: { item: NotificationItem }) => React.ReactNode;
     ListEmptyComponent: React.ReactNode; ListFooterComponent: React.ReactNode; refreshControl: React.ReactNode;
   }) => React.createElement("FlatList", null, refreshControl, data.length ? data.map((item) => React.createElement(React.Fragment, { key: item.id }, renderItem({ item }))) : ListEmptyComponent, ListFooterComponent),
+  SectionList: ({ sections, renderItem, renderSectionHeader, ListEmptyComponent, ListFooterComponent, refreshControl }: {
+    sections: { title: string; data: NotificationItem[] }[];
+    renderItem: (props: { item: NotificationItem }) => React.ReactNode;
+    renderSectionHeader: (props: { section: { title: string; data: NotificationItem[] } }) => React.ReactNode;
+    ListEmptyComponent: React.ReactNode; ListFooterComponent: React.ReactNode; refreshControl: React.ReactNode;
+  }) => React.createElement("SectionList", null, refreshControl, sections.length
+    ? sections.map((section) => React.createElement(React.Fragment, { key: section.title }, renderSectionHeader({ section }), ...section.data.map((item) => React.createElement(React.Fragment, { key: item.id }, renderItem({ item })))))
+    : ListEmptyComponent, ListFooterComponent),
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView", SafeAreaProvider: "SafeAreaProvider" }));
-vi.mock("lucide-react-native", () => Object.fromEntries(["ArrowLeft", "Bell", "BellOff", "CalendarCheck", "CarFront", "CheckCheck", "ChevronRight", "CircleAlert", "Headphones", "MessageSquare", "RefreshCw", "ShieldAlert", "Wallet"].map((name) => [name, name])));
+vi.mock("lucide-react-native", () => Object.fromEntries(["ArrowLeft", "Bell", "BellOff", "CalendarCheck", "CarFront", "CheckCheck", "ChevronRight", "CircleAlert", "FileCheck2", "Flag", "Headphones", "MessageSquare", "RefreshCw", "Scale", "ShieldAlert", "Wallet"].map((name) => [name, name])));
 
 import NotificationBell from "@/features/notifications/components/NotificationBell";
 import RoleNotSupportedScreen from "@/features/app/screens/RoleNotSupportedScreen";
@@ -82,7 +90,7 @@ it.each(["Admin", "Staff"] as const)("keeps the existing %s role restriction whi
 it("opens full details, marks read on the server and lets Android back return to the list", async () => {
   await mount(); await press("Thông báo, 1 chưa đọc");
   mocks.count.mockResolvedValue({ unreadCount: 0 });
-  await press("Chưa đọc: Đơn thuê đã được duyệt");
+  await press("Chưa đọc, Chuyến đi: Đơn thuê đã được duyệt");
   expect(text()).toContain("Chi tiết thông báo");
   expect(text()).toContain(unread.body);
   expect(mocks.read).toHaveBeenCalledWith(1);
@@ -98,7 +106,7 @@ it("opens full details, marks read on the server and lets Android back return to
 it("displays details and a retry action while keeping the item unread on a failed mark-read", async () => {
   mocks.read.mockRejectedValueOnce(new Error("offline"));
   await mount(); await press("Thông báo, 1 chưa đọc");
-  await press("Chưa đọc: Đơn thuê đã được duyệt");
+  await press("Chưa đọc, Chuyến đi: Đơn thuê đã được duyệt");
   expect(text()).toContain("Chưa thể đánh dấu đã đọc");
   expect(store.getState().items.find((entry) => entry.id === 1)?.isRead).toBe(false);
   await press("Đánh dấu thông báo đã đọc");
@@ -107,7 +115,7 @@ it("displays details and a retry action while keeping the item unread on a faile
 
 it("does not send another mark-read request when opening an already-read item", async () => {
   await mount(); await press("Thông báo, 1 chưa đọc");
-  await press("Đã đọc: Thông báo đã xem");
+  await press("Đã đọc, Chuyến đi: Thông báo đã xem");
   expect(text()).toContain("Chi tiết thông báo");
   expect(mocks.read).not.toHaveBeenCalled();
 });
@@ -117,7 +125,7 @@ it("shows the server-read status after another device read an item originally re
   mocks.list.mockResolvedValue(result([{ ...unread, isRead: true }]));
   mocks.count.mockResolvedValue({ unreadCount: 0 });
   await mount(); await press("Thông báo, 1 chưa đọc");
-  await press("Đã đọc: Đơn thuê đã được duyệt");
+  await press("Đã đọc, Chuyến đi: Đơn thuê đã được duyệt");
   expect(text()).not.toContain("Đánh dấu đã đọc");
   expect(mocks.read).not.toHaveBeenCalled();
 });

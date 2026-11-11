@@ -1,0 +1,100 @@
+{
+  "user": {
+    "header": {
+      "moreOptions": "Tuỳ chọn khác"
+    },
+    "presence": {
+      "offline": "Không hoạt động"
+    },
+    "detail": {
+      "reviewsLabel": "Đánh giá",
+      "reviewsAria": "Xem {{count}} đánh giá của chủ xe",
+      "productsLabel": "Số sản phẩm (Xe)",
+      "vehiclesCount": "{{count}} xe",
+      "joinedLabel": "Đã tham gia",
+      "verifiedTitle": "Tài khoản đã được xác minh",
+      "unverifiedTitle": "Tài khoản chưa xác minh",
+      "verifiedDesc": "Hồ sơ chủ xe đã được MoveVN xác minh.",
+      "unverifiedDesc": "Chủ xe chưa hoàn tất xác minh hồ sơ.",
+      "viewAllAria": "Xem tất cả {{count}} xe",
+      "viewAll": "Xem tất cả xe ({{count}})"
+    },
+    "reviews": {
+      "loadError": "Không tải được đánh giá. Vui lòng thử lại.",
+      "loading": "Đang tải đánh giá…",
+      "actionsTitle": "Tuỳ chọn đánh giá",
+      "reportViolation": "Báo cáo vi phạm",
+      "profileAria": "Xem hồ sơ {{name}}",
+      "emptyDescription": "Đánh giá công khai sẽ xuất hiện sau khi chuyến thuê hoàn tất.",
+      "emptyStar": "{{star}} sao hiện chưa có đánh giá nào.",
+      "noComment": "Không có nhận xét.",
+      "vehicleAria": "Xem xe {{name}}",
+      "rentedVehicle": "Xe đã thuê",
+      "loadMoreWithCount": "Xem thêm đánh giá (+{{count}})",
+      "loadMoreError": "Chưa tải thêm được."
+    },
+    "sort": {
+      "popular": "Phổ biến",
+      "newest": "Mới nhất",
+      "price": "Giá",
+      "priceDesc": "Giá: Cao → Thấp",
+      "priceAsc": "Giá: Thấp → Cao",
+      "cellAria": "Sắp xếp {{label}}",
+      "sortedBy": "Sắp xếp: {{label}}"
+    },
+    "vehicleCard": {
+      "viewAria": "Xem xe {{name}}"
+    },
+    "screen": {
+      "refreshErrorTitle": "Không thể làm mới hồ sơ",
+      "connectionRetry": "Vui lòng kiểm tra kết nối và thử lại.",
+      "noChatRoomTitle": "Chưa có phòng chat",
+      "noChatRoomBody": "Hiện chỉ hỗ trợ mở phòng chat có sẵn từ đơn thuê. Hãy đặt xe hoặc mở chi tiết chuyến đi để nhắn tin.",
+      "openChatErrorTitle": "Không mở được trò chuyện",
+      "detailTitle": "Chi tiết Chủ xe",
+      "detailAria": "Xem chi tiết chủ xe",
+      "ownerReviewsTitle": "Đánh giá chủ xe",
+      "renterReviewsTitle": "Đánh giá khách thuê",
+      "chatOwner": "Chat với chủ xe này",
+      "chatRenter": "Chat với khách thuê này",
+      "tabProducts": "Sản phẩm",
+      "tabCategories": "Danh mục",
+      "totalVehicles": "Tổng số xe ({{count}})",
+      "results": "{{count}} kết quả",
+      "noResultQuery": "Không có kết quả cho \"{{query}}\".",
+      "tripsUnit": "Chuyến",
+      "vehiclesUnit": "Xe",
+      "searchPlaceholder": "Tìm xe trong Shop…",
+      "reviewsAria": "Xem {{count}} đánh giá",
+      "ownerReviewsEntry": "Đánh giá từ chủ xe",
+      "ownerReviewsHint": "{{count}} đánh giá sau các chuyến thuê",
+      "noReviewsYet": "Chưa có đánh giá nào"
+    },
+    "category": {
+      "title": "Danh mục: {{name}}",
+      "cardAria": "{{name}} {{count}} xe",
+      "total": "Tổng số xe trong danh mục ({{count}})",
+      "emptyTitle": "Danh mục chưa có xe",
+      "emptyBody": "Xe đã được duyệt thuộc danh mục này sẽ xuất hiện tại đây.",
+      "emptyCount": "0 xe",
+      "rentingCount": "{{count}} xe đang cho thuê"
+    },
+    "menu": {
+      "refresh": "Làm mới hồ sơ",
+      "report": "Báo cáo vi phạm"
+    },
+    "share": {
+      "message": "{{name}} · {{role}} trên MoveVN",
+      "ownerVehicles": "{{count}} xe đang cho thuê"
+    },
+    "vehicleGroup": {
+      "car": "Xe ô tô",
+      "motorbike": "Xe máy"
+    },
+    "time": {
+      "unknown": "Chưa rõ",
+      "years": "{{count}} năm",
+      "underOneYear": "Dưới 1 năm"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "sessions": {
+    "deviceUnknown": "Thiết bị không xác định",
+    "browserFallback": "Trình duyệt",
+    "osUnknown": "thiết bị không xác định",
+    "deviceLabel": "{{browser}} trên {{os}}",
+    "loadError": "Không thể tải danh sách phiên đăng nhập.",
+    "confirmRevoke": "Bạn có chắc muốn đăng xuất thiết bị này?",
+    "revokedTitle": "Đã đăng xuất thiết bị",
+    "revokedMessage": "Phiên đăng nhập trên thiết bị đã được thu hồi.",
+    "revokeError": "Không thể thu hồi phiên đăng nhập.",
+    "confirmRevokeOthers": "Đăng xuất tất cả thiết bị khác?",
+    "revokedOthersTitle": "Đã đăng xuất các thiết bị khác",
+    "revokedOthersMessage": "Tài khoản chỉ còn hoạt động trên thiết bị này.",
+    "revokeOthersError": "Không thể thu hồi các phiên đăng nhập khác.",
+    "backOverview": "Quay lại tổng quan",
+    "title": "Phiên đăng nhập",
+    "subtitle": "Kiểm tra và đăng xuất các thiết bị đang truy cập tài khoản.",
+    "revokeOthers": "Đăng xuất thiết bị khác",
+    "empty": "Chưa có dữ liệu phiên đăng nhập mới.",
+    "thisDevice": "Thiết bị này",
+    "expired": "Đã hết phiên",
+    "ip": "IP: {{ip}}",
+    "ipUnknown": "Không xác định",
+    "signedInAt": "Đăng nhập lúc {{date}}",
+    "signOut": "Đăng xuất",
+    "refresh": "Làm mới"
+  }
+}

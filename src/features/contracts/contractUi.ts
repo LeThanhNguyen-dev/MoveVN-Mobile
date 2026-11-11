@@ -1,3 +1,5 @@
+import i18n from "@/i18n";
+import { translatedLabels } from "@/i18n/liveLabels";
 import { formatDate } from "@/features/booking/utils/format";
 import type { ContractAuditLogItem } from "@/features/contracts/contractService";
 import type { ContractSummary } from "@/features/contracts/types";
@@ -10,8 +12,10 @@ export function contractTone(status: string): "brand" | "mint" | "warn" | "dange
 }
 
 export function signLabel(signed: boolean, at?: string | null): string {
-  if (!signed) return "Chưa ký";
-  return at ? `Đã ký · ${formatDate(at)}` : "Đã ký";
+  if (!signed) return i18n.t("contract:section.unsigned");
+  return at
+    ? i18n.t("mobile:contract.audit.signedWithDate", { date: formatDate(at) })
+    : i18n.t("contract:section.signed");
 }
 
 export function canSignContract(contract: ContractSummary, userId: number): boolean {
@@ -25,26 +29,27 @@ export function isParty(contract: ContractSummary, userId: number): boolean {
   return userId === contract.ownerId || userId === contract.customerId;
 }
 
-const AUDIT_ACTION_LABELS: Record<string, string> = {
-  "Contract.Create": "Tạo hợp đồng",
-  "Contract.SendForSigning": "Gửi để ký",
-  "Contract.Sign": "Ký điện tử",
-  "Contract.Extend": "Gia hạn hợp đồng",
-  "Contract.Complete": "Hoàn tất hợp đồng",
-  "Contract.Cancel": "Hủy hợp đồng",
-  "Contract.Terminate": "Chấm dứt hợp đồng",
-};
+// Nhãn audit hiển thị trên timeline; getters resolve bản dịch ở mỗi lần đọc.
+const AUDIT_ACTION_LABELS: Record<string, string> = translatedLabels("mobile", {
+  "Contract.Create": "contract.audit.actionCreate",
+  "Contract.SendForSigning": "contract.audit.actionSendForSigning",
+  "Contract.Sign": "contract.audit.actionSign",
+  "Contract.Extend": "contract.audit.actionExtend",
+  "Contract.Complete": "contract.audit.actionComplete",
+  "Contract.Cancel": "contract.audit.actionCancel",
+  "Contract.Terminate": "contract.audit.actionTerminate",
+});
 
-const AUDIT_ROLE_LABELS: Record<string, string> = {
-  Owner: "Chủ xe",
-  Customer: "Khách thuê",
-  System: "Hệ thống",
-};
+const AUDIT_ROLE_LABELS: Record<string, string> = translatedLabels("mobile", {
+  Owner: "contract.audit.roleOwner",
+  Customer: "contract.audit.roleCustomer",
+  System: "contract.audit.roleSystem",
+});
 
-const SIGN_STATUS_LABELS: Record<string, string> = {
-  Signed: "đã ký",
-  Unsigned: "chưa ký",
-};
+const SIGN_STATUS_LABELS: Record<string, string> = translatedLabels("mobile", {
+  Signed: "contract.audit.signStatusSigned",
+  Unsigned: "contract.audit.signStatusUnsigned",
+});
 
 function readNote(note?: string | null): Record<string, unknown> | null {
   if (!note) return null;
@@ -74,27 +79,36 @@ function describeNote(action: string, note: Record<string, unknown>): string | n
     const to = text(pick(note, "toVersion"));
     const days = text(pick(note, "additionalDays"));
     if (!from && !to) return null;
-    return `Phiên bản ${from || "?"} → ${to || "?"}${days ? ` · cộng ${days} ngày` : ""}`;
+    return (
+      i18n.t("mobile:contract.audit.versionFromTo", { from: from || "?", to: to || "?" }) +
+      (days ? i18n.t("mobile:contract.audit.versionDaysSuffix", { days }) : "")
+    );
   }
   if (action === "Contract.Sign") {
     const owner = text(pick(note, "ownerSignStatus"));
     const customer = text(pick(note, "customerSignStatus"));
     if (owner || customer) {
-      return `Chủ xe: ${SIGN_STATUS_LABELS[owner] ?? (owner || "?")} · Khách thuê: ${SIGN_STATUS_LABELS[customer] ?? (customer || "?")}`;
+      return i18n.t("mobile:contract.audit.signSummary", {
+        owner: SIGN_STATUS_LABELS[owner] ?? (owner || "?"),
+        customer: SIGN_STATUS_LABELS[customer] ?? (customer || "?"),
+      });
     }
-    return pick(note, "signedByOwner") === true ? "Chủ xe ký điện tử" : null;
+    return pick(note, "signedByOwner") === true ? i18n.t("mobile:contract.audit.ownerSigned") : null;
   }
   if (action === "Contract.Cancel" || action === "Contract.Terminate") {
     const reason = text(pick(note, "cancelReason"));
-    return reason ? `Lý do: ${reason}` : null;
+    return reason ? `${i18n.t("contract:extensionRequest.reason")} ${reason}` : null;
   }
   const number = text(pick(note, "contractNumber"));
   const version = text(pick(note, "version"));
   if (!number) return null;
-  return `Hợp đồng ${number}${version ? ` · v${version}` : ""}`;
+  return (
+    i18n.t("mobile:contract.audit.contractRef", { number }) +
+    (version ? i18n.t("mobile:contract.audit.contractRefVersionSuffix", { version }) : "")
+  );
 }
 
-/** Chuyển audit thô (action PascalCase + note JSON) thành nội dung tiếng Việt để hiển thị. */
+/** Chuyển audit thô (action PascalCase + note JSON) thành nội dung hiển thị theo ngôn ngữ hiện tại. */
 export function auditEntryView(entry: ContractAuditLogItem): {
   action: string;
   actor: string;
@@ -103,7 +117,7 @@ export function auditEntryView(entry: ContractAuditLogItem): {
   const parsed = readNote(entry.note);
   return {
     action: AUDIT_ACTION_LABELS[entry.action] ?? entry.action,
-    actor: entry.actorName?.trim() || AUDIT_ROLE_LABELS[entry.actorRole ?? ""] || "Hệ thống",
+    actor: entry.actorName?.trim() || AUDIT_ROLE_LABELS[entry.actorRole ?? ""] || i18n.t("mobile:contract.audit.roleSystem"),
     note: parsed ? describeNote(entry.action, parsed) : entry.note?.trim() || null,
   };
 }

@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import type { VehicleListItemResponse, VehicleResponse } from "@/features/vehicles/types";
 
 const currencyFormatter = new Intl.NumberFormat("vi-VN");
@@ -5,7 +6,7 @@ const currencyFormatter = new Intl.NumberFormat("vi-VN");
 export function formatVnd(value: number | null | undefined): string {
   return value != null && Number.isFinite(value) && value > 0
     ? `${currencyFormatter.format(value)}đ`
-    : "Liên hệ";
+    : i18n.t("mobile:ownerVehicle.price.contact");
 }
 
 type PricedVehicle = Pick<
@@ -34,24 +35,27 @@ export function getMinPrice(vehicle: PricedVehicle): number | null {
 /** Chuỗi hiển thị duy nhất cho giá: "từ Xđ/ngày". */
 export function formatMinPrice(vehicle: PricedVehicle): string {
   const min = getMinPrice(vehicle);
-  return min != null ? `từ ${formatVnd(min)}/ngày` : "Liên hệ";
+  return min != null
+    ? i18n.t("mobile:ownerVehicle.price.fromPerDay", { price: formatVnd(min) })
+    : i18n.t("mobile:ownerVehicle.price.contact");
 }
 
 export type OwnerVehicleStatus = "Pending" | "Approved" | "Hidden" | "Rejected";
 
 export function formatOwnerVehiclePrice(vehicle: PricedVehicle): string {
   const price = getMinPrice(vehicle);
-  if (price == null) return "Liên hệ";
+  if (price == null) return i18n.t("mobile:ownerVehicle.price.contact");
   return vehicle.pricingMode === "Auto"
-    ? `từ ${formatVnd(price)}/ngày`
-    : `${formatVnd(price)}/ngày`;
+    ? i18n.t("mobile:ownerVehicle.price.fromPerDay", { price: formatVnd(price) })
+    : i18n.t("mobile:ownerVehicle.price.perDay", { price: formatVnd(price) });
 }
 
+// Nhãn trạng thái đọc bản dịch mỗi lần truy cập để đổi theo ngôn ngữ đang chọn.
 export const OWNER_STATUS_META: Record<string, { label: string }> = {
-  Pending: { label: "Chờ duyệt" },
-  Approved: { label: "Đã duyệt" },
-  Hidden: { label: "Đã ẩn" },
-  Rejected: { label: "Từ chối" },
+  Pending: { get label() { return i18n.t("mobile:ownerVehicle.status.pending"); } },
+  Approved: { get label() { return i18n.t("mobile:ownerVehicle.status.approved"); } },
+  Hidden: { get label() { return i18n.t("mobile:ownerVehicle.status.hidden"); } },
+  Rejected: { get label() { return i18n.t("mobile:ownerVehicle.status.rejected"); } },
 };
 
 export function getOwnerStatusLabel(status: string): string {
@@ -71,5 +75,5 @@ export function canUploadReplacementDocument(verificationStatus: string | undefi
 }
 
 export function vehicleTypeLabel(value: string): string {
-  return value === "Car" ? "Ô tô" : "Xe máy";
+  return value === "Car" ? i18n.t("common:car") : i18n.t("common:motorbike");
 }

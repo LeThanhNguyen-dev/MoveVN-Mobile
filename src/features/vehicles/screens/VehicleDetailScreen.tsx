@@ -13,6 +13,7 @@ import {
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
 import { ImageOff, X } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppText from "@/components/AppText";
 import type { RouteProp } from "@react-navigation/native";
@@ -74,6 +75,7 @@ export default function VehicleDetailScreen({
   onBookPress?: (params: { vehicleId: number; startDate: string; endDate: string }) => void;
   onOpenUserProfile?: (userId: number) => void;
 }) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(p), [p]);
   const insets = useSafeAreaInsets();
@@ -143,7 +145,9 @@ export default function VehicleDetailScreen({
   }, [vehicleId, retry]);
 
   const photos = useMemo(() => vehicle ? [...new Set([vehicle.featuredImage, ...[...(vehicle.images ?? [])].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.sortOrder - b.sortOrder).map(item => item.imageUrl)].filter((url): url is string => Boolean(url)))] : [], [vehicle]);
-  const title = vehicle ? [vehicle.brandName, vehicle.modelName, vehicle.year].filter(Boolean).join(" ") : "Chi tiết xe";
+  const title = vehicle
+    ? [vehicle.brandName, vehicle.modelName, vehicle.year].filter(Boolean).join(" ")
+    : t("mobile:vehicleDetail.screen.titleFallback");
   const days = calculateRentalDays(start, end);
   const pricing = useMemo(() => buildRentalPricing(quote, days), [quote, days]);
   const basePrice = vehicle ? getMinPrice(vehicle) : null;
@@ -191,7 +195,7 @@ export default function VehicleDetailScreen({
 
   async function shareVehicle() {
     try {
-      await Share.share({ message: `${title} trên MoveVN` });
+      await Share.share({ message: t("mobile:vehicleDetail.screen.shareMessage", { title }) });
     } catch {
       // Người dùng huỷ chia sẻ hoặc thiết bị không hỗ trợ — không cần báo lỗi.
     }
@@ -202,7 +206,9 @@ export default function VehicleDetailScreen({
     onBookPress({ vehicleId, startDate: start, endDate: end });
   }
 
-  const area = vehicle ? vehicle.address || vehicle.areaName || "Chưa cập nhật địa chỉ" : "Chưa cập nhật địa chỉ";
+  const area = vehicle
+    ? vehicle.address || vehicle.areaName || t("mobile:vehicleDetail.screen.addressFallback")
+    : t("mobile:vehicleDetail.screen.addressFallback");
 
   return (
     <View style={styles.screen}>
@@ -211,7 +217,7 @@ export default function VehicleDetailScreen({
       ) : vehicle === null ? (
         <View style={[styles.errorWrap, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 24 }]}>
           <Pressable
-            accessibilityLabel="Quay lại"
+            accessibilityLabel={t("vehicleDetail:back")}
             accessibilityRole="button"
             hitSlop={6}
             onPress={goBack}
@@ -223,10 +229,13 @@ export default function VehicleDetailScreen({
             <View style={styles.errorIcon}>
               <ImageOff color={p.brand} size={30} strokeWidth={1.9} />
             </View>
-            <AppText style={styles.errorTitle}>Không tải được thông tin xe</AppText>
-            <AppText style={styles.errorText}>Vui lòng kiểm tra kết nối và thử lại.</AppText>
+            <AppText style={styles.errorTitle}>{t("mobile:vehicleDetail.screen.loadErrorTitle")}</AppText>
+            <AppText style={styles.errorText}>{t("mobile:vehicleDetail.screen.loadErrorBody")}</AppText>
             <View style={styles.errorButtonWrap}>
-              <BookingButton title="Thử lại" onPress={() => setRetry(value => value + 1)} />
+              <BookingButton
+                title={t("common:retry")}
+                onPress={() => setRetry(value => value + 1)}
+              />
             </View>
           </View>
         </View>
@@ -335,7 +344,7 @@ export default function VehicleDetailScreen({
             </View>
 
             <AppText style={styles.pageNote}>
-              Thông tin do chủ xe cung cấp. Giá và phụ phí có thể thay đổi theo thời gian thuê.
+              {t("mobile:vehicleDetail.screen.pageNote")}
             </AppText>
           </ScrollView>
 
@@ -382,7 +391,7 @@ export default function VehicleDetailScreen({
               {photos.length > 0 ? `${Math.min(imageIndex + 1, photos.length)} / ${photos.length}` : ""}
             </AppText>
             <Pressable
-              accessibilityLabel="Đóng ảnh"
+              accessibilityLabel={t("common:imagePreview.close")}
               accessibilityRole="button"
               hitSlop={6}
               onPress={() => setViewer(false)}
