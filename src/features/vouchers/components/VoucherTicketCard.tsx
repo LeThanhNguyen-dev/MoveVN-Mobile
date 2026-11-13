@@ -1,6 +1,7 @@
 import { Check, Copy, TicketPercent } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo, useMemo, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
@@ -55,7 +56,8 @@ type VoucherTicketCardProps = {
 };
 
 type StatusMeta = {
-  label: string;
+  /** Khoá i18n cho nhãn trạng thái (namespace promo). */
+  labelKey: string;
   chipBg: string;
   chipText: string;
   chipBorder: string;
@@ -64,28 +66,28 @@ type StatusMeta = {
 
 const STATUS_META: Record<VoucherCardStatus, StatusMeta> = {
   active: {
-    label: "Đang diễn ra",
+    labelKey: "promo:voucherCard.status.active",
     chipBg: "#ECFDF5",
     chipText: "#047857",
     chipBorder: "#A7F3D0",
     dot: "#10B981",
   },
   upcoming: {
-    label: "Sắp diễn ra",
+    labelKey: "promo:voucherCard.status.upcoming",
     chipBg: "#EFF6FF",
     chipText: "#1D4ED8",
     chipBorder: "#BFDBFE",
     dot: "#3B82F6",
   },
   ended: {
-    label: "Đã kết thúc",
+    labelKey: "promo:voucherCard.status.ended",
     chipBg: "#F1F5F9",
     chipText: "#475569",
     chipBorder: "#E2E8F0",
     dot: "#94A3B8",
   },
   used: {
-    label: "Đã dùng",
+    labelKey: "promo:voucherCard.status.used",
     chipBg: "#F1F5F9",
     chipText: "#475569",
     chipBorder: "#E2E8F0",
@@ -108,6 +110,7 @@ function VoucherTicketCard({
   showCode = false,
 }: VoucherTicketCardProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const endLabel = formatEndDate(data.endAt);
@@ -117,10 +120,10 @@ function VoucherTicketCard({
   const muted = data.status === "used" || data.status === "ended";
 
   const capLabel = data.maxDiscountAmount
-    ? `Tối đa ${formatVnd(data.maxDiscountAmount)}`
+    ? t("mobile:voucher.card.maxDiscount", { amount: formatVnd(data.maxDiscountAmount) })
     : data.minOrderAmount
-      ? `Đơn từ ${formatVnd(data.minOrderAmount)}`
-      : "Ưu đãi MoveVN";
+      ? t("promo:voucherCard.minOrder", { amount: formatVnd(data.minOrderAmount) })
+      : t("mobile:voucher.card.offerFallback");
 
   const dark = theme.mode === "dark";
 
@@ -152,7 +155,7 @@ function VoucherTicketCard({
           >
             <View style={[styles.statusDot, { backgroundColor: status.dot }]} />
             <AppText style={[styles.statusText, { color: dark ? status.dot : status.chipText }]}>
-              {status.label}
+              {t(status.labelKey)}
             </AppText>
           </View>
 
@@ -167,7 +170,7 @@ function VoucherTicketCard({
               ]}
             >
               <AppText style={[styles.expiringText, { color: dark ? "#FBBF24" : "#B45309" }]}>
-                ⏰ Sắp hết hạn
+                ⏰ {t("promo:voucherCard.expiringSoon")}
               </AppText>
             </View>
           ) : null}
@@ -186,7 +189,11 @@ function VoucherTicketCard({
 
         <View style={styles.metaRow}>
           <AppText style={styles.metaText}>{formatVehicleLabel(data.vehicleType)}</AppText>
-          {endLabel ? <AppText style={styles.metaText}>HSD: {endLabel}</AppText> : null}
+          {endLabel ? (
+            <AppText style={styles.metaText}>
+              {t("promo:voucherCard.expiry", { date: endLabel })}
+            </AppText>
+          ) : null}
         </View>
 
         {showCode ? (
@@ -201,14 +208,16 @@ function VoucherTicketCard({
                 onPress={onCopyCode}
                 style={styles.copyButton}
                 accessibilityRole="button"
-                accessibilityLabel="Sao chép mã"
+                accessibilityLabel={t("promo:voucherCard.copyAria")}
               >
                 {copied ? (
                   <Check color="#FFFFFF" size={13} />
                 ) : (
                   <Copy color="#FFFFFF" size={13} />
                 )}
-                <AppText style={styles.copyButtonText}>{copied ? "Đã copy" : "Copy"}</AppText>
+                <AppText style={styles.copyButtonText}>
+                  {copied ? t("mobile:voucher.card.copied") : t("mobile:voucher.card.copy")}
+                </AppText>
               </Pressable>
             ) : null}
           </View>
@@ -217,7 +226,7 @@ function VoucherTicketCard({
         {usagePercent !== null ? (
           <View style={styles.usageWrap}>
             <View style={styles.usageHead}>
-              <AppText style={styles.usageLabel}>Đã dùng</AppText>
+              <AppText style={styles.usageLabel}>{t("promo:voucherCard.usageLabel")}</AppText>
               <AppText style={styles.usagePercent}>{Math.round(usagePercent)}%</AppText>
             </View>
             <View style={styles.usageTrack}>
@@ -247,9 +256,9 @@ function VoucherTicketCard({
                 onPress={onOpenDetail}
                 style={styles.detailButton}
                 accessibilityRole="button"
-                accessibilityLabel="Xem chi tiết"
+                accessibilityLabel={t("mobile:voucher.card.detailAria")}
               >
-                <AppText style={styles.detailButtonText}>Chi tiết</AppText>
+                <AppText style={styles.detailButtonText}>{t("promo:voucherCard.detail")}</AppText>
               </Pressable>
             ) : null}
             {action ? (

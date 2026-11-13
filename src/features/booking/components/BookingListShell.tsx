@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -38,7 +40,6 @@ type Stage = "todo" | "ongoing" | "upcoming" | "finished";
 
 type Section = {
   key: Stage;
-  title: string;
   data: BookingResponse[];
 };
 
@@ -51,24 +52,21 @@ type Reminder = {
   booking: BookingResponse;
 };
 
-const CUSTOMER_GROUPS: { key: Stage; title: string }[] = [
-  { key: "ongoing", title: "Đang diễn ra" },
-  { key: "upcoming", title: "Sắp tới" },
-  { key: "finished", title: "Đã kết thúc" },
-];
+const CUSTOMER_STAGES: Stage[] = ["ongoing", "upcoming", "finished"];
+const OWNER_STAGES: Stage[] = ["todo", "upcoming", "ongoing", "finished"];
 
-const OWNER_GROUPS: { key: Stage; title: string }[] = [
-  { key: "todo", title: "Cần xử lý" },
-  { key: "upcoming", title: "Sắp tới" },
-  { key: "ongoing", title: "Đang diễn ra" },
-  { key: "finished", title: "Đã kết thúc" },
-];
+const GROUP_KEYS: Record<Stage, string> = {
+  todo: "mobile:bookingList.groups.todo",
+  ongoing: "mobile:bookingList.groups.ongoing",
+  upcoming: "mobile:bookingList.groups.upcoming",
+  finished: "mobile:bookingList.groups.finished",
+};
 
-const PRIMARY_FILTERS = [
-  { key: "", label: "Tất cả" },
-  { key: "Pending", label: "Chờ duyệt" },
-  { key: "DepositPaid", label: "Đã cọc" },
-  { key: "InProgress", label: "Đang thuê" },
+const PRIMARY_FILTERS: { key: string; labelKey: string }[] = [
+  { key: "", labelKey: "booking:status.all" },
+  { key: "Pending", labelKey: "booking:status.pending" },
+  { key: "DepositPaid", labelKey: "mobile:bookingList.primaryFilters.depositPaid" },
+  { key: "InProgress", labelKey: "mobile:bookingList.primaryFilters.inProgress" },
 ];
 
 function stageOf(status: string, variant: Variant): Stage {
@@ -86,7 +84,7 @@ function stageOf(status: string, variant: Variant): Stage {
 }
 
 function groupBookings(items: BookingResponse[], variant: Variant): Section[] {
-  const defs = variant === "owner" ? OWNER_GROUPS : CUSTOMER_GROUPS;
+  const defs = variant === "owner" ? OWNER_STAGES : CUSTOMER_STAGES;
   const buckets = new Map<Stage, BookingResponse[]>();
   for (const item of items) {
     const stage = stageOf(item.status, variant);
@@ -95,21 +93,26 @@ function groupBookings(items: BookingResponse[], variant: Variant): Section[] {
     else buckets.set(stage, [item]);
   }
   return defs
-    .map((def) => ({ ...def, data: buckets.get(def.key) ?? [] }))
+    .map((key) => ({ key, data: buckets.get(key) ?? [] }))
     .filter((section) => section.data.length > 0);
 }
 
 /** Chỉ một dải nhắc việc, chọn việc gấp nhất trong các item đã tải. */
-function buildReminder(items: BookingResponse[], variant: Variant): Reminder | null {
+function buildReminder(items: BookingResponse[], variant: Variant, t: TFunction): Reminder | null {
+  const fallbackVehicle = () => t("mobile:bookingList.reminder.fallbackVehicle");
   if (variant === "owner") {
     const pending = items.find((b) => b.status === "Pending");
     if (pending) {
       return {
         tone: "warn",
         icon: "clock",
-        title: `${pending.bookingCode} · chờ bạn duyệt`,
-        description: `${pending.customerName || "Khách"} đặt ${pending.vehicleName || "xe"} từ ${formatDateTime(pending.startDate)}.`,
-        cta: "Xử lý",
+        title: t("mobile:bookingList.reminder.ownerPendingTitle", { code: pending.bookingCode }),
+        description: t("mobile:bookingList.reminder.ownerPendingDescription", {
+          customer: pending.customerName || t("mobile:bookingList.reminder.fallbackCustomer"),
+          vehicle: pending.vehicleName || t("mobile:bookingList.reminder.fallbackVehicleLower"),
+          time: formatDateTime(pending.startDate),
+        }),
+        cta: t("mobile:bookingList.reminder.ctaHandle"),
         booking: pending,
       };
     }
@@ -118,9 +121,9 @@ function buildReminder(items: BookingResponse[], variant: Variant): Reminder | n
       return {
         tone: "brand",
         icon: "bell",
-        title: `${handover.vehicleName || "Xe"} sắp bàn giao`,
-        description: `Khách nhận xe ${formatDateTime(handover.startDate)}.`,
-        cta: "Xem",
+        title: t("mobile:bookingList.reminder.ownerHandoverTitle", { vehicle: handover.vehicleName || fallbackVehicle() }),
+        description: t("mobile:bookingList.reminder.ownerHandoverDescription", { time: formatDateTime(handover.startDate) }),
+        cta: t("mobile:bookingList.reminder.ctaView"),
         booking: handover,
       };
     }
@@ -129,9 +132,9 @@ function buildReminder(items: BookingResponse[], variant: Variant): Reminder | n
       return {
         tone: "brand",
         icon: "bell",
-        title: `${running.vehicleName || "Xe"} đang được thuê`,
-        description: `Dự kiến trả xe ${formatDateTime(running.endDate)}.`,
-        cta: "Xem",
+        title: t("mobile:bookingList.reminder.runningTitle", { vehicle: running.vehicleName || fallbackVehicle() }),
+        description: t("mobile:bookingList.reminder.runningDescription", { time: formatDateTime(running.endDate) }),
+        cta: t("mobile:bookingList.reminder.ctaView"),
         booking: running,
       };
     }
@@ -143,11 +146,11 @@ function buildReminder(items: BookingResponse[], variant: Variant): Reminder | n
     return {
       tone: "warn",
       icon: "clock",
-      title: `${approved.vehicleName || "Xe"} chờ đặt cọc`,
+      title: t("mobile:bookingList.reminder.customerDepositTitle", { vehicle: approved.vehicleName || fallbackVehicle() }),
       description: approved.paymentDueAt
-        ? `Hạn cọc ${formatDateTime(approved.paymentDueAt)} · quá hạn đơn sẽ tự hủy.`
-        : "Hoàn tất cọc để giữ chuyến.",
-      cta: "Thanh toán",
+        ? t("mobile:bookingList.reminder.depositDue", { time: formatDateTime(approved.paymentDueAt) })
+        : t("mobile:bookingList.reminder.depositKeepTrip"),
+      cta: t("mobile:bookingList.reminder.ctaPay"),
       booking: approved,
     };
   }
@@ -156,9 +159,9 @@ function buildReminder(items: BookingResponse[], variant: Variant): Reminder | n
     return {
       tone: "brand",
       icon: "bell",
-      title: `${ready.vehicleName || "Xe"} sắp bắt đầu`,
-      description: `Nhận xe ${formatDateTime(ready.startDate)} · nhớ mang CCCD và bằng lái.`,
-      cta: "Xem",
+      title: t("mobile:bookingList.reminder.readyTitle", { vehicle: ready.vehicleName || fallbackVehicle() }),
+      description: t("mobile:bookingList.reminder.readyDescription", { time: formatDateTime(ready.startDate) }),
+      cta: t("mobile:bookingList.reminder.ctaView"),
       booking: ready,
     };
   }
@@ -167,9 +170,9 @@ function buildReminder(items: BookingResponse[], variant: Variant): Reminder | n
     return {
       tone: "brand",
       icon: "bell",
-      title: `${running.vehicleName || "Xe"} đang diễn ra`,
-      description: `Dự kiến trả xe ${formatDateTime(running.endDate)}.`,
-      cta: "Xem",
+      title: t("mobile:bookingList.reminder.activeTitle", { vehicle: running.vehicleName || fallbackVehicle() }),
+      description: t("mobile:bookingList.reminder.runningDescription", { time: formatDateTime(running.endDate) }),
+      cta: t("mobile:bookingList.reminder.ctaView"),
       booking: running,
     };
   }
@@ -214,28 +217,29 @@ export default function BookingListShell({
   onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const sections = useMemo(() => groupBookings(items, variant), [items, variant]);
-  const reminder = useMemo(() => buildReminder(items, variant), [items, variant]);
+  const reminder = useMemo(() => buildReminder(items, variant, t), [items, variant, t]);
   const searchActive = Boolean(search.keyword || search.fromDate || search.toDate);
 
   const stat =
     variant === "owner"
       ? items.filter((b) => b.status === "Pending").length
       : items.filter((b) => b.status === "InProgress" || b.status === "Returning").length;
-  const statLabel = variant === "owner" ? "chờ duyệt" : "đang diễn ra";
+  const statLabel = t(variant === "owner" ? "mobile:bookingList.meta.pending" : "mobile:bookingList.meta.ongoing", { count: stat });
 
   const customFilter = PRIMARY_FILTERS.some((f) => f.key === status)
     ? null
     : BOOKING_STATUS_FILTERS.find((f) => f.key === status)?.label ?? null;
 
-  const title = variant === "owner" ? "Đơn thuê xe của tôi" : "Chuyến đi của tôi";
-  const kicker = variant === "owner" ? "Cho thuê" : "Chuyến đi";
-  const countLabel = variant === "owner" ? "đơn" : "chuyến";
+  const isOwner = variant === "owner";
+  const title = t(isOwner ? "mobile:bookingList.titles.ownerBookings" : "mobile:bookingList.titles.customerTrips");
+  const kicker = t(isOwner ? "mobile:bookingList.kickers.owner" : "mobile:bookingList.kickers.customer");
 
   const header = (
     <View>
@@ -247,14 +251,14 @@ export default function BookingListShell({
           </AppText>
           <View style={styles.metaRow}>
             <AppText style={styles.metaText}>
-              {loading && items.length === 0 ? "Đang tải..." : `${totalCount} ${countLabel}`}
+              {loading && items.length === 0
+                ? t("mobile:bookingList.meta.loading")
+                : t(isOwner ? "mobile:bookingList.meta.totalOwner" : "mobile:bookingList.meta.totalCustomer", { count: totalCount })}
             </AppText>
             {stat > 0 ? (
               <>
                 <View style={styles.metaDot} />
-                <AppText style={styles.metaText}>
-                  {stat} {statLabel}
-                </AppText>
+                <AppText style={styles.metaText}>{statLabel}</AppText>
               </>
             ) : null}
           </View>
@@ -262,7 +266,7 @@ export default function BookingListShell({
         <View style={styles.headerActions}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Tìm kiếm"
+            accessibilityLabel={t("booking:list.searchLabel")}
             onPress={() => setSearchOpen(true)}
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
           >
@@ -271,7 +275,7 @@ export default function BookingListShell({
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Bộ lọc trạng thái"
+            accessibilityLabel={t("mobile:bookingList.a11y.statusFilter")}
             onPress={() => setFilterOpen(true)}
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
           >
@@ -331,14 +335,14 @@ export default function BookingListShell({
               accessibilityState={{ selected: active }}
               style={[styles.chip, active && styles.chipActive]}
             >
-              <AppText style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</AppText>
+              <AppText style={[styles.chipText, active && styles.chipTextActive]}>{t(f.labelKey)}</AppText>
             </Pressable>
           );
         })}
         <Pressable
           onPress={() => setFilterOpen(true)}
           accessibilityRole="button"
-          accessibilityLabel="Mở bộ lọc trạng thái"
+          accessibilityLabel={t("mobile:bookingList.a11y.openStatusFilter")}
           style={[styles.chip, styles.filterChip, customFilter !== null && styles.chipActive]}
         >
           {customFilter !== null ? (
@@ -347,7 +351,7 @@ export default function BookingListShell({
             <SlidersHorizontal color={theme.brand} size={12} strokeWidth={2.2} />
           )}
           <AppText style={[styles.chipText, styles.filterChipText, customFilter !== null && styles.chipTextActive]}>
-            {customFilter ?? "Bộ lọc"}
+            {customFilter ?? t("mobile:bookingList.filterChip")}
           </AppText>
         </Pressable>
       </ScrollView>
@@ -363,7 +367,7 @@ export default function BookingListShell({
           <Pressable
             onPress={() => onSearchChange(EMPTY_SEARCH)}
             accessibilityRole="button"
-            accessibilityLabel="Xóa tìm kiếm"
+            accessibilityLabel={t("mobile:bookingList.a11y.clearSearch")}
             hitSlop={8}
           >
             <X color={theme.brand} size={13} strokeWidth={2.4} />
@@ -390,7 +394,7 @@ export default function BookingListShell({
         )}
         renderSectionHeader={({ section }) => (
           <View style={styles.groupHead}>
-            <AppText style={styles.groupTitle}>{section.title}</AppText>
+            <AppText style={styles.groupTitle}>{t(GROUP_KEYS[section.key])}</AppText>
             <View style={styles.groupCount}>
               <AppText style={styles.groupCountText}>{section.data.length}</AppText>
             </View>
@@ -415,7 +419,7 @@ export default function BookingListShell({
             <View style={styles.center}>
               <AppText style={styles.errorText}>{error}</AppText>
               <Pressable onPress={onRefresh} style={styles.retryBtn}>
-                <AppText style={styles.retryText}>Thử lại</AppText>
+                <AppText style={styles.retryText}>{t("common:retry")}</AppText>
               </Pressable>
             </View>
           ) : (
@@ -428,12 +432,10 @@ export default function BookingListShell({
                 )}
               </View>
               <AppText display style={styles.emptyTitle}>
-                {variant === "owner" ? "Chưa có đơn thuê nào" : "Chưa có chuyến đi nào"}
+                {t(isOwner ? "mobile:bookingList.empty.ownerTitle" : "mobile:bookingList.empty.customerTitle")}
               </AppText>
               <AppText style={styles.emptyDesc}>
-                {variant === "owner"
-                  ? "Khi khách đặt xe của bạn, đơn sẽ hiện ở đây."
-                  : "Các chuyến bạn đặt sẽ hiện ở đây để dễ theo dõi."}
+                {t(isOwner ? "mobile:bookingList.empty.ownerDescription" : "mobile:bookingList.empty.customerDescription")}
               </AppText>
             </View>
           )
@@ -444,14 +446,14 @@ export default function BookingListShell({
           ) : hasMore ? (
             <View style={styles.moreWrap}>
               <Pressable onPress={onLoadMore} style={styles.moreButton}>
-                <AppText style={styles.moreText}>Xem thêm ({remaining})</AppText>
+                <AppText style={styles.moreText}>{t("mobile:bookingList.footer.loadMore", { count: remaining })}</AppText>
               </Pressable>
               <AppText style={styles.endText}>
-                Đã hiển thị {items.length}/{totalCount} {countLabel}
+                {t(isOwner ? "mobile:bookingList.footer.shownOwner" : "mobile:bookingList.footer.shownCustomer", { shown: items.length, total: totalCount })}
               </AppText>
             </View>
           ) : (
-            <AppText style={styles.endText}>Đã hiển thị hết</AppText>
+            <AppText style={styles.endText}>{t("mobile:bookingList.footer.allShown")}</AppText>
           )
         }
       />
@@ -461,7 +463,7 @@ export default function BookingListShell({
           <Pressable
             style={StyleSheet.absoluteFill}
             accessibilityRole="button"
-            accessibilityLabel="Đóng bộ lọc"
+            accessibilityLabel={t("mobile:bookingList.a11y.closeFilter")}
             onPress={() => setFilterOpen(false)}
           />
           <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) + 10 }]}>
@@ -469,14 +471,14 @@ export default function BookingListShell({
             <View style={styles.sheetHead}>
               <View style={styles.sheetHeadCopy}>
                 <AppText display style={styles.sheetTitle}>
-                  {variant === "owner" ? "Bộ lọc đơn thuê" : "Bộ lọc chuyến đi"}
+                  {t(isOwner ? "mobile:bookingList.filterSheet.titleOwner" : "mobile:bookingList.filterSheet.titleCustomer")}
                 </AppText>
-                <AppText style={styles.sheetSub}>Chọn một trạng thái · áp dụng ngay</AppText>
+                <AppText style={styles.sheetSub}>{t("mobile:bookingList.filterSheet.subtitle")}</AppText>
               </View>
               <Pressable
                 onPress={() => setFilterOpen(false)}
                 accessibilityRole="button"
-                accessibilityLabel="Đóng"
+                accessibilityLabel={t("common:closeAction")}
                 style={styles.sheetClose}
               >
                 <X color={theme.muted} size={18} strokeWidth={2.2} />
@@ -508,7 +510,7 @@ export default function BookingListShell({
               }}
               style={styles.sheetReset}
             >
-              <AppText style={styles.sheetResetText}>Xóa lọc</AppText>
+              <AppText style={styles.sheetResetText}>{t("mobile:bookingList.filterSheet.reset")}</AppText>
             </Pressable>
           </View>
         </View>
@@ -522,7 +524,7 @@ export default function BookingListShell({
           <Pressable
             style={StyleSheet.absoluteFill}
             accessibilityRole="button"
-            accessibilityLabel="Đóng tìm kiếm"
+            accessibilityLabel={t("mobile:bookingList.a11y.closeSearch")}
             onPress={() => setSearchOpen(false)}
           />
           <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) + 10 }]}>
@@ -530,14 +532,14 @@ export default function BookingListShell({
             <View style={styles.sheetHead}>
               <View style={styles.sheetHeadCopy}>
                 <AppText display style={styles.sheetTitle}>
-                  {variant === "owner" ? "Tìm đơn thuê" : "Tìm chuyến đi"}
+                  {t(isOwner ? "mobile:bookingList.searchSheet.titleOwner" : "mobile:bookingList.searchSheet.titleCustomer")}
                 </AppText>
-                <AppText style={styles.sheetSub}>Lọc theo mã đơn, tên xe và khoảng ngày.</AppText>
+                <AppText style={styles.sheetSub}>{t("mobile:bookingList.searchSheet.subtitle")}</AppText>
               </View>
               <Pressable
                 onPress={() => setSearchOpen(false)}
                 accessibilityRole="button"
-                accessibilityLabel="Đóng"
+                accessibilityLabel={t("common:closeAction")}
                 style={styles.sheetClose}
               >
                 <X color={theme.muted} size={18} strokeWidth={2.2} />

@@ -14,6 +14,7 @@ import {
 } from "lucide-react-native";
 import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import type { VehicleFeatureResponse } from "@/features/vehicles/types";
 import DetailSectionHeader from "./DetailSectionHeader";
@@ -34,12 +35,13 @@ function featureIcon(name: string): LucideIcon {
 }
 
 export default function VehicleFeaturesSection({ features }: { features: VehicleFeatureResponse[] }) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(p), [p]);
 
   return (
     <View style={styles.section}>
-      <DetailSectionHeader icon={Sparkles} title="Tiện ích" />
+      <DetailSectionHeader icon={Sparkles} title={t("mobile:vehicleDetail.features.title")} />
       {features.length > 0 ? (
         <View style={styles.grid}>
           {features.map((feature) => {
@@ -55,7 +57,7 @@ export default function VehicleFeaturesSection({ features }: { features: Vehicle
           })}
         </View>
       ) : (
-        <AppText style={styles.empty}>Chưa cập nhật tiện ích.</AppText>
+        <AppText style={styles.empty}>{t("mobile:vehicleDetail.features.empty")}</AppText>
       )}
     </View>
   );

@@ -1,4 +1,5 @@
 import { useMemo, type ComponentType } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   ArrowRight,
@@ -50,39 +51,42 @@ export default function VerificationHubScreen({
   bankVerified,
 }: VerificationHubScreenProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const items: HubItem[] = [
     {
       key: "email",
       icon: Mail,
-      label: "Email",
+      label: t("accountVerification:overview.items.email"),
       description: email || "-",
       verified: emailVerified,
     },
     {
       key: "cccd",
       icon: IdCard,
-      label: "CCCD",
-      description: "Căn cước công dân",
+      label: t("account:items.cccd"),
+      description: t("accountVerification:overview.items.cccdDescription"),
       verified: cccdVerified,
-      verifyLabel: "Xác minh CCCD",
+      verifyLabel: t("mobile:account.verify.cccd"),
       onVerify: onVerifyCccd,
     },
     {
       key: "gplx",
       icon: FileBadge,
-      label: "Giấy phép lái xe",
-      description: gplxLicenseClass ? `Hạng ${gplxLicenseClass}` : "Bằng lái xe các hạng",
+      label: t("accountVerification:overview.items.license"),
+      description: gplxLicenseClass
+        ? t("accountVerification:overview.items.licenseClass", { class: gplxLicenseClass })
+        : t("accountVerification:overview.items.licenseAll"),
       verified: gplxVerified,
-      verifyLabel: "Xác minh GPLX",
+      verifyLabel: t("mobile:account.verify.gplx"),
       onVerify: onVerifyGplx,
     },
     {
       key: "bank",
       icon: Landmark,
-      label: "Ngân hàng",
-      description: "Tài khoản thụ hưởng",
+      label: t("accountVerification:overview.items.bank"),
+      description: t("accountVerification:overview.items.bankDescription"),
       verified: bankVerified,
     },
   ];
@@ -93,19 +97,19 @@ export default function VerificationHubScreen({
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("accountVerification:bank.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <AppText display style={styles.topBarTitle}>Xác minh tài khoản</AppText>
+        <AppText display style={styles.topBarTitle}>{t("mobile:account.verificationHub.title")}</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <AppText style={styles.subtitle}>Kiểm tra trạng thái xác minh giấy tờ của bạn</AppText>
+          <AppText style={styles.subtitle}>{t("mobile:account.verificationHub.subtitle")}</AppText>
           <View style={[styles.countPill, allVerified ? styles.countPillDone : styles.countPillPending]}>
             <AppText style={[styles.countText, allVerified ? styles.countTextDone : styles.countTextPending]}>
-              {`${verifiedCount}/${items.length} đã xác minh`}
+              {t("accountVerification:overview.statusBadge", { verified: verifiedCount, total: items.length })}
             </AppText>
           </View>
         </View>
@@ -124,11 +128,10 @@ export default function VerificationHubScreen({
           </View>
           <View style={styles.infoBody}>
             <AppText display style={styles.infoTitle}>
-              {allVerified ? "Tài khoản đã sẵn sàng" : "Còn bước xác minh cần hoàn tất"}
+              {allVerified ? t("accountVerification:overview.readyTitle") : t("accountVerification:overview.pendingTitle")}
             </AppText>
             <AppText style={styles.infoDescription}>
-              Các bước xác minh giúp giảm rủi ro khi đặt xe, hỗ trợ duyệt hồ sơ nhanh hơn và bảo vệ
-              giao dịch giữa khách hàng với chủ xe.
+              {t("accountVerification:overview.footerDescription")}
             </AppText>
           </View>
         </View>
@@ -139,6 +142,7 @@ export default function VerificationHubScreen({
 
 function VerifiedBadge({ verified }: { verified: boolean }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={[styles.badge, verified ? styles.badgeVerified : styles.badgeUnverified]}>
@@ -148,7 +152,7 @@ function VerifiedBadge({ verified }: { verified: boolean }) {
         <CircleAlert color={theme.muted} size={12} strokeWidth={2.5} />
       )}
       <AppText style={[styles.badgeText, verified ? styles.badgeTextVerified : styles.badgeTextUnverified]}>
-        {verified ? "Đã xác minh" : "Chưa xác minh"}
+        {verified ? t("accountVerification:overview.verified") : t("accountVerification:overview.unverified")}
       </AppText>
     </View>
   );

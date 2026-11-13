@@ -1,0 +1,10 @@
+{
+  "reviews": {
+    "title": "Customer reviews",
+    "summary": "{{rating}} ({{total}} reviews)",
+    "loadMore": "Show more reviews",
+    "empty": "No reviews yet.",
+    "replySavedTitle": "Reply saved",
+    "replySavedMessage": "Your review reply has been updated."
+  }
+}

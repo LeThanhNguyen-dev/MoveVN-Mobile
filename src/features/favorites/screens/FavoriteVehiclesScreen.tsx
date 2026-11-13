@@ -10,6 +10,7 @@ import {
 } from "react-native"
 import AppText from "@/components/AppText";
 import { useFocusEffect } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Heart, RefreshCw } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import type { Theme } from "@/theme/tokens";
@@ -27,6 +28,7 @@ export default function FavoriteVehiclesScreen({
   onExplore: () => void;
 }) {
   const state = useFavoriteStore();
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   useFocusEffect(
@@ -68,23 +70,23 @@ export default function FavoriteVehiclesScreen({
       <View style={styles.header}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Quay lại từ xe yêu thích"
+          accessibilityLabel={t("mobile:favorites.backAria")}
           onPress={onBack}
           style={styles.icon}
         >
           <ArrowLeft color={theme.text} size={23} />
         </Pressable>
         <View style={styles.heading}>
-          <AppText display style={styles.title}>Xe yêu thích</AppText>
+          <AppText display style={styles.title}>{t("users:favorites.title")}</AppText>
           <AppText style={styles.subtitle}>
             {state.listLoaded
-              ? `${state.totalCount} xe đang hiển thị`
-              : "Những chiếc xe bạn muốn thuê"}
+              ? t("mobile:favorites.countShowing", { count: state.totalCount })
+              : t("mobile:favorites.subtitle")}
           </AppText>
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Làm mới xe yêu thích"
+          accessibilityLabel={t("mobile:favorites.refreshAria")}
           disabled={state.loading || state.refreshing || state.loadingMore}
           onPress={refresh}
           style={styles.icon}
@@ -95,7 +97,7 @@ export default function FavoriteVehiclesScreen({
       {state.idsError ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Thử tải lại trạng thái yêu thích"
+          accessibilityLabel={t("mobile:favorites.retryStateAria")}
           onPress={() => {
             void refreshFavoriteIds();
           }}
@@ -110,7 +112,7 @@ export default function FavoriteVehiclesScreen({
           </AppText>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Thử tải lại xe yêu thích"
+            accessibilityLabel={t("mobile:favorites.retryListAria")}
             onPress={() => {
               void loadFavoriteVehicles(
                 state.page > 0 && state.page < state.totalPages,
@@ -118,13 +120,13 @@ export default function FavoriteVehiclesScreen({
             }}
             style={styles.retry}
           >
-            <AppText style={styles.link}>Thử lại</AppText>
+            <AppText style={styles.link}>{t("common:retry")}</AppText>
           </Pressable>
         </View>
       ) : null}
       {state.items.length ? (
         <AppText style={styles.hint}>
-          Giá tham khảo. Mở chi tiết để chọn thời gian và kiểm tra lịch xe.
+          {t("mobile:favorites.priceHint")}
         </AppText>
       ) : null}
       <FlatList
@@ -147,25 +149,24 @@ export default function FavoriteVehiclesScreen({
           state.loading || (!state.listLoaded && !state.listError) ? (
             <View style={styles.empty}>
               <ActivityIndicator size="large" color={theme.brand} />
-              <AppText style={styles.subtitle}>Đang tải xe yêu thích…</AppText>
+              <AppText style={styles.subtitle}>{t("mobile:favorites.loading")}</AppText>
             </View>
-          ) : state.listError ? null : (
+          ) : state.listError ? undefined : (
             <View style={styles.empty}>
               <View style={styles.emptyIcon}>
                 <Heart size={34} color={theme.brand} />
               </View>
-              <AppText display style={styles.emptyTitle}>Chưa có xe yêu thích</AppText>
+              <AppText display style={styles.emptyTitle}>{t("users:favorites.emptyTitle")}</AppText>
               <AppText style={styles.emptyText}>
-                Nhấn biểu tượng trái tim trên một chiếc xe để lưu tại đây. Danh
-                sách hiển thị các xe đã được duyệt và còn công khai.
+                {t("mobile:favorites.emptyDescription")}
               </AppText>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Khám phá xe để yêu thích"
+                accessibilityLabel={t("mobile:favorites.exploreAria")}
                 onPress={onExplore}
                 style={styles.primary}
               >
-                <AppText style={styles.primaryText}>Khám phá xe</AppText>
+                <AppText style={styles.primaryText}>{t("users:favorites.explore")}</AppText>
               </Pressable>
             </View>
           )
@@ -174,7 +175,7 @@ export default function FavoriteVehiclesScreen({
           state.page > 0 && state.page < state.totalPages ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Xem thêm xe yêu thích"
+              accessibilityLabel={t("mobile:favorites.loadMoreAria")}
               disabled={state.loadingMore || state.refreshing}
               onPress={() => {
                 void loadFavoriteVehicles(true);
@@ -184,10 +185,10 @@ export default function FavoriteVehiclesScreen({
               {state.loadingMore ? (
                 <ActivityIndicator color={theme.brand} />
               ) : (
-                <AppText style={styles.link}>Xem thêm xe</AppText>
+                <AppText style={styles.link}>{t("users:vehicles.loadMore")}</AppText>
               )}
             </Pressable>
-          ) : null
+          ) : undefined
         }
       />
     </View>

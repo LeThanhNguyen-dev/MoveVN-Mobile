@@ -2,6 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ChevronRight } from "lucide-react-native";
 import { useMemo } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { formatVnd } from "@/features/vehicles/ownerDisplay";
 import { detailFont, useDetailTheme } from "./detailTheme";
@@ -47,6 +48,7 @@ export default function VehicleBookingDock({
   onOpenPeriod,
   onRetryAvailability,
 }: Props) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(p), [p]);
 
@@ -56,44 +58,76 @@ export default function VehicleBookingDock({
 
   let cta: Cta;
   if (!hasDates) {
-    cta = { label: "Chọn ngày thuê", onPress: onOpenPeriod, disabled: false, loading: false };
+    cta = {
+      label: t("mobile:vehicleDetail.dock.selectDates"),
+      onPress: onOpenPeriod,
+      disabled: false,
+      loading: false,
+    };
   } else if (availabilityLoading || quoteState === "loading") {
-    cta = { label: "Đang kiểm tra…", onPress: onOpenPeriod, disabled: true, loading: true };
+    cta = {
+      label: t("mobile:vehicleDetail.dock.checking"),
+      onPress: onOpenPeriod,
+      disabled: true,
+      loading: true,
+    };
   } else if (blockedByCalendar) {
     cta = {
-      label: availabilityError ? "Kiểm tra lại lịch" : "Đổi ngày thuê",
+      label: availabilityError
+        ? t("mobile:vehicleDetail.dock.recheckCalendar")
+        : t("mobile:vehicleDetail.dock.changeDates"),
       onPress: availabilityError ? onRetryAvailability : onOpenPeriod,
       disabled: false,
       loading: false,
     };
   } else if (quoteState === "error") {
-    cta = { label: "Đổi ngày thuê", onPress: onOpenPeriod, disabled: false, loading: false };
+    cta = {
+      label: t("mobile:vehicleDetail.dock.changeDates"),
+      onPress: onOpenPeriod,
+      disabled: false,
+      loading: false,
+    };
   } else if (!hasBookingHandler) {
-    cta = { label: "Chọn ngày thuê", onPress: onOpenPeriod, disabled: false, loading: false };
+    cta = {
+      label: t("mobile:vehicleDetail.dock.selectDates"),
+      onPress: onOpenPeriod,
+      disabled: false,
+      loading: false,
+    };
   } else {
-    cta = { label: "Đặt xe ngay", onPress: onBook, disabled: !canBook, loading: false };
+    cta = {
+      label: t("mobile:vehicleDetail.dock.bookNow"),
+      onPress: onBook,
+      disabled: !canBook,
+      loading: false,
+    };
   }
 
   const headline = showTotal && pricing
     ? `${pricing.payable.toLocaleString("vi-VN")}đ`
     : quoteState === "loading" && hasDates
-      ? "Đang tính giá…"
+      ? t("mobile:vehicleDetail.dock.calculating")
       : formatVnd(dailyPrice);
 
-  const unit = showTotal ? `tổng ${days} ngày` : "/ngày";
+  const unit = showTotal
+    ? t("mobile:vehicleDetail.dock.totalDays", { days })
+    : t("mobile:vehicleDetail.unit.perDay");
   const savings =
     showTotal && pricing && pricing.discountAmount > 0
-      ? `Tiết kiệm ${pricing.discountAmount.toLocaleString("vi-VN")}đ (−${pricing.discountPercent}%)`
+      ? t("mobile:vehicleDetail.dock.savings", {
+          amount: pricing.discountAmount.toLocaleString("vi-VN"),
+          percent: pricing.discountPercent,
+        })
       : null;
   const hint = overlapping
-    ? "Xe đã bận trong khoảng ngày này"
+    ? t("mobile:vehicleDetail.dock.busyHint")
     : availabilityError
-      ? "Chưa kiểm tra được lịch xe"
+      ? t("mobile:vehicleDetail.dock.availabilityErrorHint")
       : showTotal
-        ? "Chưa gồm phí giao xe & phụ phí"
+        ? t("mobile:vehicleDetail.dock.totalHint")
         : hasDates
-          ? "Chọn ngày để xem tổng tiền"
-          : "Chọn ngày nhận và trả xe";
+          ? t("mobile:vehicleDetail.dock.selectDatesHint")
+          : t("mobile:vehicleDetail.dock.pickDatesHint");
 
   return (
     <View style={[styles.dock, { paddingBottom: Math.max(bottomInset, 12) }]}>

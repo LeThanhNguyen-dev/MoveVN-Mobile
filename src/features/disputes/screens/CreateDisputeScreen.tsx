@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
@@ -45,6 +46,7 @@ export default function CreateDisputeScreen({
   onCreated: (id: number) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [bookingId, setBookingId] = useState(initial?.bookingId ? String(initial.bookingId) : "");
@@ -146,7 +148,7 @@ export default function CreateDisputeScreen({
       (f) => !["image/jpeg", "image/png", "image/webp"].includes(f.mime) || (f.size != null && f.size > MAX_EVIDENCE_IMAGE_SIZE),
     );
     if (invalid) {
-      setError("Chỉ nhận JPG, PNG, WebP và mỗi ảnh phải dưới 5MB.");
+      setError(t("disputes:toast.invalidImageMessage"));
       return;
     }
     if (kind === "receipts") {
@@ -163,7 +165,7 @@ export default function CreateDisputeScreen({
 
   async function submit() {
     if (!bookingId || !description.trim()) {
-      setError("Chọn booking và nhập mô tả sự việc.");
+      setError(t("mobile:dispute.create.validationRequired"));
       return;
     }
     if (reportType === "TrafficFine") {
@@ -174,14 +176,14 @@ export default function CreateDisputeScreen({
       }
     }
     Alert.alert(
-      "Trước khi tạo tranh chấp",
+      t("disputes:confirmCreate.title"),
       reportType === "TrafficFine"
-        ? "Kiểm tra thông báo, biển số, thời điểm vi phạm và ảnh chứng từ. Hồ sơ được gửi để xác minh."
-        : "Vui lòng liên hệ trực tiếp với bên kia để giải quyết vấn đề. Nếu không thể thống nhất, hãy tiếp tục tạo tranh chấp trên hệ thống.",
+        ? t("mobile:dispute.create.confirmTrafficFine")
+        : t("disputes:confirmCreate.generalDescription"),
       [
-        { text: "Hủy", style: "cancel" },
+        { text: t("common:cancel"), style: "cancel" },
         {
-          text: "Tiếp tục tạo",
+          text: t("disputes:confirmCreate.continue"),
           onPress: () => void doCreate(),
         },
       ],
@@ -211,7 +213,7 @@ export default function CreateDisputeScreen({
       });
       onCreated(dispute.id);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể tạo tranh chấp."));
+      setError(getApiErrorMessage(err, t("disputes:errors.createFailed")));
     } finally {
       submitLock.current = false;
       setSubmitting(false);
@@ -241,17 +243,17 @@ export default function CreateDisputeScreen({
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Quay lại danh sách"
+          accessibilityLabel={t("mobile:dispute.a11y.back")}
           disabled={submitting} onPress={onBack}
           style={styles.backButton}
         >
           <Text style={styles.backText}>‹</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Tạo tranh chấp mới</Text>
+        <Text style={styles.headerTitle}>{t("disputes:create.title")}</Text>
         <View style={styles.backButtonPlaceholder} />
       </View>
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-      <Text style={styles.label}>Booking khiếu nại</Text>
+      <Text style={styles.label}>{t("mobile:dispute.create.bookingLabel")}</Text>
       {selectedBooking ? (
         <View style={[styles.bookingRow, styles.bookingRowActive]}>
           <View style={styles.bookingInfo}>
@@ -270,15 +272,15 @@ export default function CreateDisputeScreen({
           </View>
         </View>
       ) : (
-        <Text style={styles.muted}>Chưa chọn booking. Bấm nút bên dưới để chọn.</Text>
+        <Text style={styles.muted}>{t("mobile:dispute.create.bookingEmpty")}</Text>
       )}
       <Pressable disabled={submitting} onPress={() => setPicking(true)} style={styles.pickButton}>
         <Text style={styles.pickText}>
-          {selectedBooking ? "Đổi booking khác" : "Chọn booking"}
+          {selectedBooking ? t("mobile:dispute.create.changeBooking") : t("mobile:dispute.create.pickBooking")}
         </Text>
       </Pressable>
 
-      <Text style={styles.label}>Loại vấn đề</Text>
+      <Text style={styles.label}>{t("disputes:create.typeLabel")}</Text>
       <View style={styles.chips}>
         {REPORT_TYPES.map((type) => (
           <Pressable
@@ -290,8 +292,8 @@ export default function CreateDisputeScreen({
           </Pressable>
         ))}
       </View>
-      {reportType === "Damage" ? <Text style={styles.warn}>Cần biên bản trả xe và gửi trong 48 giờ kể từ lúc trả xe.</Text> : null}
-      {reportType === "Accident" ? <Text style={styles.muted}>Không giới hạn 48 giờ. Không phát sinh bồi thường qua nền tảng.</Text> : null}
+      {reportType === "Damage" ? <Text style={styles.warn}>{t("disputes:create.damageHint")}</Text> : null}
+      {reportType === "Accident" ? <Text style={styles.muted}>{t("disputes:create.accidentHint")}</Text> : null}
       {reportType === "TrafficFine" ? (
         <TrafficFineCreateFields
           value={fineForm}
@@ -306,26 +308,30 @@ export default function CreateDisputeScreen({
           {(["BookingDeposit", "PlatformCommission"] as const).map((scope) => (
             <Pressable key={scope} onPress={() => setPaymentScope(scope)} style={[styles.chip, paymentScope === scope && styles.chipActive]}>
               <Text style={[styles.chipText, paymentScope === scope && styles.chipTextActive]}>
-                {scope === "BookingDeposit" ? "Tiền cọc booking" : "Phí nền tảng"}
+                {scope === "BookingDeposit"
+                  ? t("mobile:dispute.create.depositScope")
+                  : t("disputes:create.paymentScopeCommission")}
               </Text>
             </Pressable>
           ))}
         </View>
       ) : null}
 
-      <Text style={styles.label}>Mô tả sự việc</Text>
+      <Text style={styles.label}>{t("disputes:create.descriptionLabel")}</Text>
       <TextInput
         value={description}
         onChangeText={setDescription}
-        placeholder="Mô tả chi tiết sự việc..."
+        placeholder={t("disputes:create.descriptionPlaceholder")}
         placeholderTextColor={theme.placeholder}
         multiline
         style={[styles.input, styles.multiline]}
       />
 
-      <Text style={styles.label}>Ảnh bằng chứng ({evidence.length}/{MAX_EVIDENCE_IMAGES})</Text>
+      <Text style={styles.label}>
+        {t("disputes:create.evidenceLabel", { count: evidence.length, max: MAX_EVIDENCE_IMAGES })}
+      </Text>
       <Pressable disabled={submitting} onPress={() => void pickImages("evidence")} style={styles.pickButton}>
-        <Text style={styles.pickText}>Chọn ảnh từ thư viện</Text>
+        <Text style={styles.pickText}>{t("mobile:dispute.create.chooseImages")}</Text>
       </Pressable>
       {evidence.map((item) => (
         <View key={item.id} style={styles.fileRow}>
@@ -333,7 +339,7 @@ export default function CreateDisputeScreen({
             {item.name}
           </Text>
           <Pressable onPress={() => setEvidence((prev) => prev.filter((f) => f.id !== item.id))}>
-            <Text style={styles.removeText}>Xóa</Text>
+            <Text style={styles.removeText}>{t("mobile:dispute.detail.removeFile")}</Text>
           </Pressable>
         </View>
       ))}
@@ -341,14 +347,14 @@ export default function CreateDisputeScreen({
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.actions}>
         <Pressable disabled={submitting} onPress={onBack} style={styles.ghostButton}>
-          <Text style={styles.ghostText}>Hủy</Text>
+          <Text style={styles.ghostText}>{t("common:cancel")}</Text>
         </Pressable>
         <Pressable
           disabled={submitting || !bookingId || !description.trim()}
           onPress={() => void submit()}
           style={[styles.primaryButton, (submitting || !bookingId || !description.trim()) && styles.disabled]}
         >
-          {submitting ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>Gửi tranh chấp</Text>}
+          {submitting ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>{t("disputes:create.submit")}</Text>}
         </Pressable>
       </View>
       </ScrollView>

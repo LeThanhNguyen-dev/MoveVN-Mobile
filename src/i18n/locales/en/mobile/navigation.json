@@ -1,0 +1,27 @@
+{
+  "navigation": {
+    "trips": "Trips",
+    "deals": "Deals",
+    "explore": "Explore",
+    "messages": "Messages",
+    "account": "Account",
+    "ownerVehicles": "My vehicles",
+    "ownerBookings": "Bookings",
+    "ownerOverview": "Overview",
+    "tabUnreadAria": "{{label}}, {{badge}} unread",
+    "greeting": "Hello",
+    "viewAccountAria": "View account details",
+    "switchRoleAria": "Switch to {{role}}",
+    "roles": {
+      "Admin": "admin",
+      "Staff": "staff",
+      "Owner": "vehicle owner",
+      "Customer": "renter"
+    },
+    "roleNotSupported": {
+      "title": "Role not supported in the app",
+      "description": "Account {{email}} has the {{role}} role. The mobile app currently serves renters and vehicle owners only — please use the web version to continue."
+    },
+    "yourNotifications": "Your notifications"
+  }
+}

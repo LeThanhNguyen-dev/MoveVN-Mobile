@@ -1,6 +1,7 @@
 import { Image, type ImageSource } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 
@@ -28,10 +29,11 @@ export default function CmsHero({
   onPress: () => void;
 }) {
   const styles = useMemo(() => createStyles(), []);
+  const { t } = useTranslation();
   return (
     <Pressable
-      accessibilityHint="Mở xem ảnh toàn màn hình"
-      accessibilityLabel={`Xem ảnh: ${title}`}
+      accessibilityHint={t("mobile:cms.hero.openHint")}
+      accessibilityLabel={t("mobile:cms.hero.viewImageAria", { title })}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}

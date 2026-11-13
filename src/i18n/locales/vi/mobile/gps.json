@@ -1,0 +1,51 @@
+{
+  "gps": {
+    "backAria": "Quay lại",
+    "errorTitle": "Lỗi",
+    "bookingFallback": "Booking #{{id}}",
+    "playback": {
+      "title": "Hành trình · {{name}}",
+      "loading": "Đang tải hành trình...",
+      "loadError": "Không tải được hành trình chuyến đi.",
+      "emptyTitle": "Chưa có hành trình",
+      "emptyBody": "Chuyến này chưa có đủ điểm GPS để phát lại.",
+      "play": "Phát",
+      "pause": "Tạm dừng",
+      "replay": "Phát lại",
+      "speedAria": "Tốc độ phát ×{{speed}}",
+      "sliderAria": "Vị trí phát lại trong hành trình",
+      "pointCounter": "Điểm {{current}}/{{total}}",
+      "matched": "Đã khớp theo đường phố",
+      "unmatched": "Nối giữa các điểm GPS",
+      "distance": "Quãng đường",
+      "speedRange": "Tốc độ tối đa / trung bình",
+      "signalLost": "Số lần mất tín hiệu",
+      "provisionalNote": "Chuyến chưa kết thúc — số liệu tính tạm từ log hiện có."
+    },
+    "tracking": {
+      "title": "Vị trí xe · {{name}}",
+      "loading": "Đang tải vị trí xe...",
+      "recenterAria": "Về vị trí xe",
+      "loadError": "Không tải được vị trí xe.",
+      "requestSentTitle": "Đã gửi yêu cầu",
+      "requestSentBody": "Khách thuê sẽ nhận thông báo yêu cầu bật GPS.",
+      "requestError": "Không gửi được yêu cầu bật GPS.",
+      "status": {
+        "live": "Đang cập nhật",
+        "stale": "Mất tín hiệu",
+        "ended": "Đã kết thúc",
+        "none": "Chưa có dữ liệu"
+      },
+      "updatedAt": "· cập nhật {{time}}",
+      "speed": "Tốc độ: {{speed}} km/h",
+      "coordinates": "Tọa độ: {{lat}}, {{lng}}",
+      "staleHint": "Không nhận được vị trí mới trong một thời gian. Khách thuê có thể đã tắt GPS hoặc mất kết nối — vị trí hiển thị là điểm cuối cùng.",
+      "requestGps": "Yêu cầu khách bật GPS",
+      "requesting": "Đang gửi..."
+    },
+    "publisher": {
+      "sendFailed": "Không gửi được vị trí. Sẽ thử lại.",
+      "permissionDenied": "Bạn chưa bật chia sẻ vị trí. Chủ xe không thể theo dõi chuyến đi."
+    }
+  }
+}

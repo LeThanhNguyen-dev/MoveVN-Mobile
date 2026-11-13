@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, BackHandler, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, View, type TextInputProps } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { ArrowLeft, Check, LockKeyhole, LogOut, Mail, Phone, RotateCcw, ShieldCheck, UserRound } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,7 +14,7 @@ import { validateAuth, validateEmail, type AuthFields, type AuthScreen, type Fie
 import type { OtpPurpose } from "../types";
 import { AuthButton, AuthField, AuthNotice, OtpField } from "@/features/auth/components/AuthControls";
 import { AuthLayout } from "@/features/auth/components/AuthLayout";
-import { authCopy } from "@/features/auth/components/authCopy";
+import { getAuthCopy } from "@/features/auth/components/authCopy";
 import { useTheme } from "@/theme/useTheme";
 import type { Theme } from "@/theme/tokens";
 
@@ -21,6 +22,7 @@ const emptyFields: AuthFields = { email: "", password: "", confirmPassword: "", 
 
 export default function AuthFlow() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
@@ -47,7 +49,7 @@ export default function AuthFlow() {
 
   async function start() {
     setStarting(true); setStartupError("");
-    try { await restoreSession(); } catch { setStartupError("Chưa thể kiểm tra phiên đăng nhập. Vui lòng thử lại."); } finally { setStarting(false); }
+    try { await restoreSession(); } catch { setStartupError(t("mobile:auth.sessionCheckError")); } finally { setStarting(false); }
   }
   useEffect(() => { void start(); }, []);
   useEffect(() => { setScreen("login"); setFields(emptyFields); setTerms(false); setErrors({}); }, [authenticated]);
@@ -75,7 +77,7 @@ export default function AuthFlow() {
   async function run(action: () => Promise<void>) {
     if (locked.current) return;
     locked.current = true; setBusy(true); setError(""); setMessage("");
-    try { await action(); } catch (failure) { setError(getFriendlyAuthError(failure) || "Yêu cầu không thành công. Vui lòng thử lại."); } finally { locked.current = false; setBusy(false); }
+    try { await action(); } catch (failure) { setError(getFriendlyAuthError(failure) || t("auth:errors.UNKNOWN")); } finally { locked.current = false; setBusy(false); }
   }
   function submit() {
     const nextErrors = validateAuth(screen, fields, terms);
@@ -87,13 +89,13 @@ export default function AuthFlow() {
       else if (registration) {
         const payload = { email, fullName: fields.fullName.trim(), phone: fields.phone.trim(), password: fields.password, confirmPassword: fields.confirmPassword };
         if (screen === "owner") await registerOwnerOnboarding(payload); else await auth.register({ ...payload, role: "Customer" });
-        setPurpose("Register"); setResendAt(Date.now() + 60000); navigate("verify", "Mã xác thực đã được gửi tới email của bạn.");
+        setPurpose("Register"); setResendAt(Date.now() + 60000); navigate("verify", t("mobile:auth.flow.otpSentToEmail"));
       } else if (screen === "forgot") {
-        await auth.forgotPassword({ email }); setResendAt(Date.now() + 60000); navigate("reset", "Mã OTP đã được gửi tới email của bạn.");
+        await auth.forgotPassword({ email }); setResendAt(Date.now() + 60000); navigate("reset", t("mobile:auth.flow.otpSent"));
       } else if (screen === "reset") {
-        await auth.resetPassword({ email, otp: fields.otp, newPassword: fields.password, confirmPassword: fields.confirmPassword }); navigate("login", "Đã đặt lại mật khẩu. Bạn có thể đăng nhập.");
+        await auth.resetPassword({ email, otp: fields.otp, newPassword: fields.password, confirmPassword: fields.confirmPassword }); navigate("login", t("mobile:auth.flow.passwordResetNotice"));
       } else {
-        await auth.verifyOtp({ email, otp: fields.otp, purpose }); navigate("login", "Email đã được xác thực. Bạn có thể đăng nhập.");
+        await auth.verifyOtp({ email, otp: fields.otp, purpose }); navigate("login", t("mobile:auth.flow.emailVerifiedNotice"));
       }
     });
   }
@@ -103,44 +105,44 @@ export default function AuthFlow() {
     if (emailError) return;
     void run(async () => {
       await auth.resendOtp({ email: fields.email.trim(), purpose: screen === "reset" ? "ForgotPassword" : purpose });
-      setResendAt(Date.now() + 60000); setMessage("Đã gửi lại mã OTP. Vui lòng kiểm tra hộp thư của bạn.");
+      setResendAt(Date.now() + 60000); setMessage(t("mobile:auth.flow.resendMessage"));
     });
   }
   function field(key: keyof AuthFields, label: string, icon: ReactNode, props: TextInputProps & { password?: boolean } = {}) {
     return <AuthField key={`${screen}-${key}`} editable={!busy} error={errors[key]} icon={icon} label={label} onChangeText={(value) => update(key, value)} value={fields[key]} {...props} />;
   }
 
-  const heading = authCopy[screen];
+  const heading = getAuthCopy(screen);
   return <SafeAreaView style={styles.safe}>
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.fill}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <AuthLayout>
-          {starting ? <View style={styles.center}><ActivityIndicator color={theme.brand} size="large" /><AppText style={styles.muted}>Đang kiểm tra phiên đăng nhập...</AppText></View>
+          {starting ? <View style={styles.center}><ActivityIndicator color={theme.brand} size="large" /><AppText style={styles.muted}>{t("common:checkingSession")}</AppText></View>
             : startupError || storageError ? <View style={styles.stack}>
               <AuthNotice error message={storageError || startupError} />
-              <AuthButton busy={busy} icon={<RotateCcw size={18} color={theme.surface} />} onPress={() => { void run(async () => { if (storageError) await clearSession(); await start(); }); }} title="Thử lại" />
-              <AuthButton busy={busy} onPress={() => { void run(async () => { await clearSession(); useAuthStore.setState({ isHydrated: true }); setStartupError(""); }); }} title="Về đăng nhập" variant="outline" />
+              <AuthButton busy={busy} icon={<RotateCcw size={18} color={theme.surface} />} onPress={() => { void run(async () => { if (storageError) await clearSession(); await start(); }); }} title={t("common:retry")} />
+              <AuthButton busy={busy} onPress={() => { void run(async () => { await clearSession(); useAuthStore.setState({ isHydrated: true }); setStartupError(""); }); }} title={t("mobile:auth.backToLoginButton")} variant="outline" />
             </View>
             : authenticated ? <View style={[styles.stack, styles.success]}>
-              <View style={styles.successIcon}><Check size={30} color={theme.surface} /></View><AppText display style={styles.title}>Đăng nhập thành công</AppText><AppText style={[styles.muted, styles.centeredText]}>Chào mừng bạn trở lại với MoveVN.</AppText>
-              {error ? <AuthNotice error message={error} /> : null}<AuthButton busy={busy} icon={<LogOut size={18} color={theme.surface} />} onPress={() => { void run(signOut); }} title="Đăng xuất" />
+              <View style={styles.successIcon}><Check size={30} color={theme.surface} /></View><AppText display style={styles.title}>{t("auth:login.successTitle")}</AppText><AppText style={[styles.muted, styles.centeredText]}>{t("mobile:auth.flow.welcomeBack")}</AppText>
+              {error ? <AuthNotice error message={error} /> : null}<AuthButton busy={busy} icon={<LogOut size={18} color={theme.surface} />} onPress={() => { void run(signOut); }} title={t("accountSecurity:sessions.signOut")} />
             </View>
             : <View style={styles.stack}>
-              {screen !== "login" ? <Pressable accessibilityLabel="Quay lại đăng nhập" accessibilityRole="button" disabled={busy} onPress={() => navigate("login")} style={styles.back}><ArrowLeft color={theme.brand} size={21} /></Pressable> : null}
+              {screen !== "login" ? <Pressable accessibilityLabel={t("auth:forgot.backToLogin")} accessibilityRole="button" disabled={busy} onPress={() => navigate("login")} style={styles.back}><ArrowLeft color={theme.brand} size={21} /></Pressable> : null}
               <View style={styles.heading}><AppText display style={styles.title}>{heading.title}</AppText><AppText style={styles.muted}>{heading.description}</AppText></View>
               {error ? <AuthNotice error message={error} /> : null}{message ? <AuthNotice message={message} /> : null}
-              {registration ? field("fullName", "Họ và tên", <UserRound size={19} color={theme.muted} />, { autoComplete: "name", maxLength: 200, placeholder: "Nguyễn Văn A" }) : null}
-              {field("email", "Email", <Mail size={19} color={theme.muted} />, { autoComplete: "email", keyboardType: "email-address", maxLength: 256, placeholder: "ban@email.com" })}
-              {registration ? field("phone", "Số điện thoại", <Phone size={19} color={theme.muted} />, { autoComplete: "tel", keyboardType: "phone-pad", maxLength: 10, placeholder: "0912345678" }) : null}
+              {registration ? field("fullName", t("auth:fields.fullName"), <UserRound size={19} color={theme.muted} />, { autoComplete: "name", maxLength: 200, placeholder: t("auth:placeholders.fullName") }) : null}
+              {field("email", t("auth:fields.email"), <Mail size={19} color={theme.muted} />, { autoComplete: "email", keyboardType: "email-address", maxLength: 256, placeholder: t("auth:placeholders.email") })}
+              {registration ? field("phone", t("auth:fields.phone"), <Phone size={19} color={theme.muted} />, { autoComplete: "tel", keyboardType: "phone-pad", maxLength: 10, placeholder: t("auth:placeholders.phone") }) : null}
               {screen === "verify" || screen === "reset" ? <OtpField disabled={busy} error={errors.otp} onChange={(value) => update("otp", value)} value={fields.otp} /> : null}
-              {showPassword ? field("password", screen === "reset" ? "Mật khẩu mới" : "Mật khẩu", <LockKeyhole size={19} color={theme.muted} />, { autoComplete: screen === "login" ? "current-password" : "new-password", password: true, placeholder: "Nhập mật khẩu" }) : null}
-              {registration || screen === "reset" ? field("confirmPassword", screen === "reset" ? "Xác nhận mật khẩu mới" : "Xác nhận mật khẩu", <ShieldCheck size={19} color={theme.muted} />, { autoComplete: "new-password", password: true, placeholder: "Nhập lại mật khẩu" }) : null}
+              {showPassword ? field("password", screen === "reset" ? t("auth:fields.newPassword") : t("auth:fields.password"), <LockKeyhole size={19} color={theme.muted} />, { autoComplete: screen === "login" ? "current-password" : "new-password", password: true, placeholder: t("auth:placeholders.password") }) : null}
+              {registration || screen === "reset" ? field("confirmPassword", screen === "reset" ? t("auth:fields.confirmNewPassword") : t("auth:fields.confirmPassword"), <ShieldCheck size={19} color={theme.muted} />, { autoComplete: "new-password", password: true, placeholder: t("auth:placeholders.confirmPassword") }) : null}
               {screen === "login" ? <LoginOptions busy={busy} rememberMe={rememberMe} onForgot={() => navigate("forgot")} onRemember={() => setRememberMe((current) => !current)} /> : null}
               {screen === "register" ? <Terms accepted={terms} error={errors.terms} onToggle={() => setTerms((current) => !current)} webBase={webBase} /> : null}
               <AuthButton busy={busy} onPress={submit} title={heading.action} />
-              {screen === "verify" || screen === "reset" ? <AuthButton busy={busy} disabled={seconds > 0} onPress={resend} title={seconds > 0 ? `Gửi lại OTP (${seconds}s)` : "Gửi lại OTP"} variant="outline" /> : null}
+              {screen === "verify" || screen === "reset" ? <AuthButton busy={busy} disabled={seconds > 0} onPress={resend} title={seconds > 0 ? t("mobile:auth.flow.resendCountdown", { seconds }) : t("auth:verify.resendOtp")} variant="outline" /> : null}
               {screen === "login" ? <LoginFooter busy={busy} onGoogle={() => { void run(async () => { const result = await signInWithGoogle(); if (result) await completeSignIn(result); }); }} onRegister={() => navigate("register")} onVerify={() => { setPurpose("VerifyEmail"); navigate("verify"); }} />
-                : <AppText style={styles.bottomText}>Đã có tài khoản? <AppText onPress={() => navigate("login")} style={styles.link}>Đăng nhập</AppText></AppText>}
+                : <AppText style={styles.bottomText}>{t("auth:register.hasAccount")} <AppText onPress={() => navigate("login")} style={styles.link}>{t("auth:verify.login")}</AppText></AppText>}
             </View>}
         </AuthLayout>
       </ScrollView>
@@ -150,31 +152,34 @@ export default function AuthFlow() {
 
 function LoginOptions({ busy, rememberMe, onForgot, onRemember }: { busy: boolean; rememberMe: boolean; onForgot: () => void; onRemember: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return <View style={styles.loginOptions}>
-    <Pressable accessibilityLabel="Ghi nhớ đăng nhập" accessibilityRole="checkbox" accessibilityState={{ checked: rememberMe }} disabled={busy} onPress={onRemember} style={styles.remember}><View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>{rememberMe ? <Check size={13} color={theme.surface} /> : null}</View><AppText style={styles.rememberText}>Ghi nhớ đăng nhập</AppText></Pressable>
-    <Pressable accessibilityLabel="open-forgot-password" accessibilityRole="button" disabled={busy} onPress={onForgot}><AppText style={styles.link}>Quên mật khẩu?</AppText></Pressable>
+    <Pressable accessibilityLabel={t("auth:login.rememberMe")} accessibilityRole="checkbox" accessibilityState={{ checked: rememberMe }} disabled={busy} onPress={onRemember} style={styles.remember}><View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>{rememberMe ? <Check size={13} color={theme.surface} /> : null}</View><AppText style={styles.rememberText}>{t("auth:login.rememberMe")}</AppText></Pressable>
+    <Pressable accessibilityLabel="open-forgot-password" accessibilityRole="button" disabled={busy} onPress={onForgot}><AppText style={styles.link}>{t("auth:login.forgotPassword")}</AppText></Pressable>
   </View>;
 }
 
 function Terms({ accepted, error, onToggle, webBase }: { accepted: boolean; error?: string; onToggle: () => void; webBase?: string }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return <View style={styles.termsBlock}>
-    <Pressable accessibilityLabel="Đồng ý chính sách bảo mật và điều khoản sử dụng" accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} onPress={onToggle} style={styles.terms}><View style={[styles.checkbox, styles.termsCheckbox, accepted && styles.checkboxChecked]}>{accepted ? <Check size={13} color={theme.surface} /> : null}</View><AppText style={styles.termsText}>Tôi đồng ý với chính sách bảo mật và điều khoản sử dụng.</AppText></Pressable>
-    {webBase ? <View style={styles.policyLinks}><Pressable onPress={() => { void Linking.openURL(`${webBase}/policies/privacy-policy`); }}><AppText style={styles.link}>Chính sách bảo mật</AppText></Pressable><AppText style={styles.policyDot}>•</AppText><Pressable onPress={() => { void Linking.openURL(`${webBase}/policies/terms-of-service`); }}><AppText style={styles.link}>Điều khoản sử dụng</AppText></Pressable></View> : null}
+    <Pressable accessibilityLabel={t("mobile:auth.terms.agreeA11y")} accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} onPress={onToggle} style={styles.terms}><View style={[styles.checkbox, styles.termsCheckbox, accepted && styles.checkboxChecked]}>{accepted ? <Check size={13} color={theme.surface} /> : null}</View><AppText style={styles.termsText}>{t("mobile:auth.terms.agree")}</AppText></Pressable>
+    {webBase ? <View style={styles.policyLinks}><Pressable onPress={() => { void Linking.openURL(`${webBase}/policies/privacy-policy`); }}><AppText style={styles.link}>{t("auth:register.privacyPolicy")}</AppText></Pressable><AppText style={styles.policyDot}>•</AppText><Pressable onPress={() => { void Linking.openURL(`${webBase}/policies/terms-of-service`); }}><AppText style={styles.link}>{t("auth:register.termsOfService")}</AppText></Pressable></View> : null}
     {error ? <AppText accessibilityRole="alert" style={styles.error}>{error}</AppText> : null}
   </View>;
 }
 
 function LoginFooter({ busy, onGoogle, onRegister, onVerify }: { busy: boolean; onGoogle: () => void; onRegister: () => void; onVerify: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return <>
-    <Pressable accessibilityRole="button" disabled={busy} onPress={onGoogle} style={({ pressed }) => [styles.googleButton, (busy || pressed) && styles.dim]}><AppText style={styles.googleMark}>G</AppText><AppText style={styles.googleText}>Tiếp tục với Google</AppText></Pressable>
-    <View style={styles.divider}><View style={styles.dividerLine} /><AppText style={styles.dividerText}>hoặc</AppText><View style={styles.dividerLine} /></View>
-    <Pressable accessibilityLabel="open-register" accessibilityRole="button" disabled={busy} onPress={onRegister}><AppText style={styles.bottomText}>Chưa có tài khoản? <AppText style={styles.link}>Đăng ký ngay</AppText></AppText></Pressable>
-    <Pressable accessibilityRole="button" disabled={busy} onPress={onVerify} style={styles.textAction}><AppText style={styles.mutedLink}>Xác thực email</AppText></Pressable>
+    <Pressable accessibilityRole="button" disabled={busy} onPress={onGoogle} style={({ pressed }) => [styles.googleButton, (busy || pressed) && styles.dim]}><AppText style={styles.googleMark}>G</AppText><AppText style={styles.googleText}>{t("mobile:auth.flow.continueWithGoogle")}</AppText></Pressable>
+    <View style={styles.divider}><View style={styles.dividerLine} /><AppText style={styles.dividerText}>{t("mobile:auth.flow.or")}</AppText><View style={styles.dividerLine} /></View>
+    <Pressable accessibilityLabel="open-register" accessibilityRole="button" disabled={busy} onPress={onRegister}><AppText style={styles.bottomText}>{t("auth:login.noAccount")} <AppText style={styles.link}>{t("auth:login.registerNow")}</AppText></AppText></Pressable>
+    <Pressable accessibilityRole="button" disabled={busy} onPress={onVerify} style={styles.textAction}><AppText style={styles.mutedLink}>{t("auth:verify.title")}</AppText></Pressable>
   </>;
 }
 

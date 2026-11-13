@@ -114,8 +114,8 @@ const vehicleFixtures: PublicProfileVehicle[] = [
 
 describe("profile vehicles", () => {
   it("builds a display name without empty parts", () => {
-    expect(profileVehicleName(vehicleFixtures[0])).toBe("Honda City RS");
-    expect(profileVehicleName(vehicleFixtures[1])).toBe("Yamaha Exciter");
+    expect(profileVehicleName(vehicleFixtures[0]!)).toBe("Honda City RS");
+    expect(profileVehicleName(vehicleFixtures[1]!)).toBe("Yamaha Exciter");
   });
 
   it("filters by brand, model, variant, or address", () => {
@@ -127,8 +127,8 @@ describe("profile vehicles", () => {
   });
 
   it("groups vehicles by type and counts each group", () => {
-    expect(profileVehicleGroup(vehicleFixtures[0])).toBe("car");
-    expect(profileVehicleGroup(vehicleFixtures[1])).toBe("motorbike");
+    expect(profileVehicleGroup(vehicleFixtures[0]!)).toBe("car");
+    expect(profileVehicleGroup(vehicleFixtures[1]!)).toBe("motorbike");
     expect(countProfileVehiclesByGroup(vehicleFixtures)).toEqual({ car: 1, motorbike: 1 });
   });
 

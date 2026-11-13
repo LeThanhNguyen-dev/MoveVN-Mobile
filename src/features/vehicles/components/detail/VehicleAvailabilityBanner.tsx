@@ -1,5 +1,6 @@
 import { CalendarClock, CalendarDays, CircleAlert, CircleCheck } from "lucide-react-native";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { detailFont, useDetailTheme } from "./detailTheme";
 import { formatShortRange } from "./rentalPricing";
@@ -27,6 +28,7 @@ export default function VehicleAvailabilityBanner({
   onChangeDates,
   onRetry,
 }: Props) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
 
   const hasDates = days > 0;
@@ -51,28 +53,38 @@ export default function VehicleAvailabilityBanner({
 
   const title =
     state === "idle"
-      ? "Chọn ngày để kiểm tra lịch"
+      ? t("mobile:vehicleDetail.availability.idleTitle")
       : state === "loading"
-        ? "Đang kiểm tra lịch xe…"
+        ? t("mobile:vehicleDetail.availability.loadingTitle")
         : state === "busy"
-          ? "Xe đã bận trong khoảng này"
+          ? t("mobile:vehicleDetail.availability.busyTitle")
           : state === "error"
-            ? "Chưa kiểm tra được lịch"
-            : `Còn trống · ${formatShortRange(startDate, endDate)}`;
+            ? t("mobile:vehicleDetail.availability.errorTitle")
+            : t("mobile:vehicleDetail.availability.readyTitle", {
+                range: formatShortRange(startDate, endDate),
+              });
 
   const subtitle =
     state === "idle"
-      ? "Xe có thể còn trống cho khoảng ngày của bạn"
+      ? t("mobile:vehicleDetail.availability.idleSubtitle")
       : state === "loading"
-        ? "Vui lòng chờ trong giây lát"
+        ? t("mobile:vehicleDetail.availability.loadingSubtitle")
         : state === "busy"
-          ? "Chọn khoảng ngày khác để tiếp tục"
+          ? t("mobile:vehicleDetail.availability.busySubtitle")
           : state === "error"
-            ? "Thử lại để xem xe có trống không"
-            : "Không trùng lịch bận hiện tại của xe";
+            ? t("mobile:vehicleDetail.availability.errorSubtitle")
+            : t("mobile:vehicleDetail.availability.readySubtitle");
 
   const actionLabel =
-    state === "idle" ? "Chọn" : state === "ready" ? "Đổi" : state === "busy" ? "Đổi ngày" : state === "error" ? "Thử lại" : "";
+    state === "idle"
+      ? t("mobile:vehicleDetail.availability.choose")
+      : state === "ready"
+        ? t("mobile:vehicleDetail.availability.change")
+        : state === "busy"
+          ? t("mobile:vehicleDetail.availability.changeDates")
+          : state === "error"
+            ? t("common:retry")
+            : "";
   const onAction = state === "error" ? onRetry : onChangeDates;
 
   return (

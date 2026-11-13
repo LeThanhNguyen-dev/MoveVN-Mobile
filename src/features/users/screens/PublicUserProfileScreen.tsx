@@ -18,6 +18,7 @@ import {
   UserX,
 } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -59,6 +60,7 @@ import { getChatRooms } from "@/features/chat/chatService";
 import ChatRoomScreen from "@/features/chat/screens/ChatRoomScreen";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { canReport, openViolations } from "@/features/violations/violationNavigation";
+import { translatedLabels } from "@/i18n/liveLabels";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
@@ -79,12 +81,16 @@ type ContentTab = "products" | "categories";
 
 const CATEGORY_ORDER: ProfileVehicleGroup[] = ["motorbike", "car"];
 
-const SORT_LABEL: Record<ProfileVehicleSort, string> = {
-  popular: "Phổ biến",
-  recent: "Mới nhất",
-  priceDesc: "Giá: Cao → Thấp",
-  priceAsc: "Giá: Thấp → Cao",
-};
+// Nhãn resolve mỗi lần đọc (getter) để không đóng băng tiếng Việt lúc import module.
+const SORT_LABEL: Record<ProfileVehicleSort, string> = translatedLabels<ProfileVehicleSort>(
+  "mobile",
+  {
+    popular: "user.sort.popular",
+    recent: "user.sort.newest",
+    priceDesc: "user.sort.priceDesc",
+    priceAsc: "user.sort.priceAsc",
+  },
+);
 
 /** Thẻ xe 1 cột: ảnh 84px + tên + khu vực + giá thuê/ngày. */
 function ProfileVehicleCard({
@@ -95,13 +101,16 @@ function ProfileVehicleCard({
   onViewVehicle?: (vehicleId: number) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <Pressable
       style={({ pressed }) => [styles.vehicleCard, pressed && styles.pressed]}
       accessibilityRole="link"
-      accessibilityLabel={`Xem xe ${profileVehicleName(vehicle)}`}
+      accessibilityLabel={t("mobile:user.vehicleCard.viewAria", {
+        name: profileVehicleName(vehicle),
+      })}
       disabled={!onViewVehicle}
       onPress={() => onViewVehicle?.(vehicle.id)}
     >
@@ -124,17 +133,19 @@ function ProfileVehicleCard({
         <View style={styles.vehicleMeta}>
           <MapPin color={theme.faint} size={11} />
           <AppText style={styles.vehicleMetaText} numberOfLines={1}>
-            {vehicle.address || "Chưa cập nhật khu vực"}
+            {vehicle.address || t("common:areaUpdating")}
           </AppText>
         </View>
         <View style={styles.vehicleFooter}>
           <View style={styles.vehiclePriceRow}>
             <AppText style={styles.vehiclePrice}>{formatMoney(vehicle.pricePerDay)}</AppText>
-            <AppText style={styles.vehicleUnit}>/ngày</AppText>
+            <AppText style={styles.vehicleUnit}>{t("users:vehicleCard.perDay")}</AppText>
           </View>
           <View style={styles.vehicleTypeBadge}>
             <AppText style={styles.vehicleTypeText}>
-              {vehicle.vehicleType === "Car" ? "Ô tô" : "Xe máy"}
+              {vehicle.vehicleType === "Car"
+                ? t("users:vehicleCard.typeCar")
+                : t("users:vehicleCard.typeMotorbike")}
             </AppText>
           </View>
         </View>
@@ -161,24 +172,25 @@ function VehicleSortBar({
       ? ArrowUpNarrowWide
       : ArrowDownWideNarrow
     : ArrowDownUp;
+  const { t } = useTranslation();
 
   return (
     <View style={styles.filterRow}>
       <SortCell
-        label="Phổ biến"
+        label={t("mobile:user.sort.popular")}
         active={sort === "popular"}
         onPress={() => onChange("popular")}
         styles={styles}
       />
       <SortCell
-        label="Mới nhất"
+        label={t("mobile:user.sort.newest")}
         active={sort === "recent"}
         onPress={() => onChange("recent")}
         styles={styles}
         divider
       />
       <SortCell
-        label="Giá"
+        label={t("mobile:user.sort.price")}
         active={priceActive}
         icon={priceIcon}
         onPress={() =>
@@ -207,13 +219,14 @@ function SortCell({
   styles: ReturnType<typeof createStyles>;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   return (
     <Pressable
       onPress={onPress}
       style={[styles.filterCell, divider && styles.filterCellDivider]}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
-      accessibilityLabel={`Sắp xếp ${label}`}
+      accessibilityLabel={t("mobile:user.sort.cellAria", { label })}
     >
       <AppText
         style={[styles.filterText, active && styles.filterTextActive]}
@@ -237,6 +250,7 @@ export default function PublicUserProfileScreen({
   userId,
 }: PublicUserProfileScreenProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const currentUserId = useAuthStore((state) => state.user?.userId ?? null);
@@ -278,10 +292,13 @@ export default function PublicUserProfileScreen({
           return;
         }
         if (silent) {
-          Alert.alert("Không thể làm mới hồ sơ", "Vui lòng kiểm tra kết nối và thử lại.");
+          Alert.alert(
+            t("mobile:user.screen.refreshErrorTitle"),
+            t("mobile:user.screen.connectionRetry"),
+          );
           return;
         }
-        setErrorMessage("Không thể tải hồ sơ. Vui lòng thử lại.");
+        setErrorMessage(t("users:page.loadErrorMessage"));
         setStatus("error");
       } finally {
         if (silent) setRefreshing(false);
@@ -407,11 +424,14 @@ export default function PublicUserProfileScreen({
         return;
       }
       Alert.alert(
-        "Chưa có phòng chat",
-        "Hiện chỉ hỗ trợ mở phòng chat có sẵn từ đơn thuê. Hãy đặt xe hoặc mở chi tiết chuyến đi để nhắn tin.",
+        t("mobile:user.screen.noChatRoomTitle"),
+        t("mobile:user.screen.noChatRoomBody"),
       );
     } catch {
-      Alert.alert("Không mở được trò chuyện", "Vui lòng kiểm tra kết nối và thử lại.");
+      Alert.alert(
+        t("mobile:user.screen.openChatErrorTitle"),
+        t("mobile:user.screen.connectionRetry"),
+      );
     } finally {
       setChatLoading(false);
     }
@@ -421,11 +441,15 @@ export default function PublicUserProfileScreen({
     if (!profile) return;
     setMenuOpen(false);
     try {
-      const role = profile.isOwner ? "Chủ xe" : "Khách thuê";
+      const role = profile.isOwner
+        ? t("users:page.roleOwner")
+        : t("users:page.roleRenter");
+      const ownerVehicles = profile.isOwner
+        ? ` · ${t("mobile:user.share.ownerVehicles", { count: profile.totalVehicles })}`
+        : "";
       await Share.share({
-        message: `${profile.fullName} · ${role} trên MoveVN${
-          profile.isOwner ? ` · ${profile.totalVehicles} xe đang cho thuê` : ""
-        }`,
+        message:
+          t("mobile:user.share.message", { name: profile.fullName, role }) + ownerVehicles,
       });
     } catch {
       // Người dùng đóng hộp thoại chia sẻ — không cần báo lỗi.
@@ -441,7 +465,7 @@ export default function PublicUserProfileScreen({
   if (status === "loading") {
     return (
       <View style={styles.root}>
-        <ProfileHeader onBack={onBack} title="Hồ sơ người dùng" />
+        <ProfileHeader onBack={onBack} title={t("users:page.current")} />
         <View style={styles.centerBox}>
           <ActivityIndicator color={theme.brand} size="large" />
         </View>
@@ -452,16 +476,16 @@ export default function PublicUserProfileScreen({
   if (status === "notfound") {
     return (
       <View style={styles.root}>
-        <ProfileHeader onBack={onBack} title="Hồ sơ người dùng" />
+        <ProfileHeader onBack={onBack} title={t("users:page.current")} />
         <View style={styles.centerBox}>
           <View style={styles.stateIcon}>
             <UserX color={theme.faint} size={28} />
           </View>
           <AppText display style={styles.stateTitle}>
-            Không tìm thấy người dùng
+            {t("users:page.notFoundTitle")}
           </AppText>
           <AppText style={styles.stateDesc}>
-            Người dùng không tồn tại hoặc đã bị vô hiệu hoá.
+            {t("users:page.notFoundDescription")}
           </AppText>
         </View>
       </View>
@@ -471,13 +495,13 @@ export default function PublicUserProfileScreen({
   if (status === "error" || !profile) {
     return (
       <View style={styles.root}>
-        <ProfileHeader onBack={onBack} title="Hồ sơ người dùng" />
+        <ProfileHeader onBack={onBack} title={t("users:page.current")} />
         <View style={styles.centerBox}>
           <View style={styles.stateIcon}>
             <RotateCw color={theme.faint} size={26} />
           </View>
           <AppText display style={styles.stateTitle}>
-            Chưa tải được hồ sơ
+            {t("users:page.loadErrorTitle")}
           </AppText>
           <AppText style={styles.stateDesc}>{errorMessage}</AppText>
           <Pressable
@@ -486,7 +510,7 @@ export default function PublicUserProfileScreen({
             accessibilityRole="button"
           >
             <RotateCw color={theme.onBrand} size={13} />
-            <AppText style={styles.retryText}>Thử lại</AppText>
+            <AppText style={styles.retryText}>{t("users:page.retry")}</AppText>
           </Pressable>
         </View>
       </View>
@@ -510,7 +534,7 @@ export default function PublicUserProfileScreen({
   if (view === "detail" && profile.isOwner) {
     return (
       <View style={styles.root}>
-        <ProfileHeader onBack={() => setView("main")} title="Chi tiết Chủ xe" />
+        <ProfileHeader onBack={() => setView("main")} title={t("mobile:user.screen.detailTitle")} />
         <OwnerProfileDetail
           profile={profile}
           onOpenReviews={() => openReviews("owner")}
@@ -528,7 +552,11 @@ export default function PublicUserProfileScreen({
       <View style={styles.root}>
         <ProfileHeader
           onBack={() => setView(profile.isOwner ? "detail" : "main")}
-          title={reviewRole === "owner" ? "Đánh giá chủ xe" : "Đánh giá khách thuê"}
+          title={
+            reviewRole === "owner"
+              ? t("mobile:user.screen.ownerReviewsTitle")
+              : t("mobile:user.screen.renterReviewsTitle")
+          }
         />
         <OwnerReviewsPanel
           profile={profile}
@@ -547,7 +575,9 @@ export default function PublicUserProfileScreen({
       <View style={styles.root}>
         <ProfileHeader
           onBack={() => setView("main")}
-          title={`Danh mục: ${PROFILE_VEHICLE_GROUP_LABEL[categoryGroup]}`}
+          title={t("mobile:user.category.title", {
+            name: PROFILE_VEHICLE_GROUP_LABEL[categoryGroup],
+          })}
         />
         <ScrollView
           style={styles.scroll}
@@ -559,10 +589,10 @@ export default function PublicUserProfileScreen({
           <View style={styles.contentPad}>
             <View style={styles.sectionHead}>
               <AppText style={styles.sectionTitle} numberOfLines={1}>
-                Tổng số xe trong danh mục ({categoryVehicles.length})
+                {t("mobile:user.category.total", { count: categoryVehicles.length })}
               </AppText>
               <AppText style={styles.sectionHint} numberOfLines={1}>
-                {`Sắp xếp: ${SORT_LABEL[vehicleSort]}`}
+                {t("mobile:user.sort.sortedBy", { label: SORT_LABEL[vehicleSort] })}
               </AppText>
             </View>
 
@@ -571,9 +601,11 @@ export default function PublicUserProfileScreen({
                 <View style={styles.stateIcon}>
                   <CarFront color={theme.faint} size={20} />
                 </View>
-                <AppText style={styles.emptyTitle}>Danh mục chưa có xe</AppText>
+                <AppText style={styles.emptyTitle}>
+                  {t("mobile:user.category.emptyTitle")}
+                </AppText>
                 <AppText style={styles.emptyText}>
-                  Xe đã được duyệt thuộc danh mục này sẽ xuất hiện tại đây.
+                  {t("mobile:user.category.emptyBody")}
                 </AppText>
               </View>
             ) : (
@@ -598,7 +630,9 @@ export default function PublicUserProfileScreen({
   const tripCount = profile.isOwner
     ? profile.completedTripsAsOwner
     : profile.completedTripsAsCustomer;
-  const chatLabel = profile.isOwner ? "Chat với chủ xe này" : "Chat với khách thuê này";
+  const chatLabel = profile.isOwner
+    ? t("mobile:user.screen.chatOwner")
+    : t("mobile:user.screen.chatRenter");
   const showChat = currentUserId != null && currentUserId !== profile.userId;
   const verifiedColor = theme.mode === "dark" ? "#34D399" : "#059669";
 
@@ -606,13 +640,13 @@ export default function PublicUserProfileScreen({
     <View style={styles.root}>
       <ProfileHeader
         onBack={onBack}
-        title={profile.isOwner ? undefined : "Hồ sơ người dùng"}
+        title={profile.isOwner ? undefined : t("users:page.current")}
         search={
           profile.isOwner
             ? {
                 value: searchQuery,
                 onChangeText: handleSearch,
-                placeholder: "Tìm xe trong Shop…",
+                placeholder: t("mobile:user.screen.searchPlaceholder"),
               }
             : undefined
         }
@@ -638,7 +672,9 @@ export default function PublicUserProfileScreen({
             disabled={!profile.isOwner}
             onPress={() => setView("detail")}
             accessibilityRole={profile.isOwner ? "button" : undefined}
-            accessibilityLabel={profile.isOwner ? "Xem chi tiết chủ xe" : undefined}
+            accessibilityLabel={
+              profile.isOwner ? t("mobile:user.screen.detailAria") : undefined
+            }
             style={({ pressed }) => [styles.ownerRow, pressed && styles.pressed]}
           >
             <View style={styles.avatarWrap}>
@@ -658,7 +694,7 @@ export default function PublicUserProfileScreen({
                   <View style={styles.verifiedPill}>
                     <BadgeCheck color={verifiedColor} size={10} />
                     <AppText style={[styles.verifiedPillText, { color: verifiedColor }]}>
-                      Đã xác minh
+                      {t("users:sidebar.verifiedBadge")}
                     </AppText>
                   </View>
                 ) : null}
@@ -672,7 +708,7 @@ export default function PublicUserProfileScreen({
               </View>
               <View style={styles.statsRow}>
                 {rating == null ? (
-                  <AppText style={styles.statMuted}>Chưa có đánh giá</AppText>
+                  <AppText style={styles.statMuted}>{t("common:noReviews")}</AppText>
                 ) : (
                   <View style={styles.statGroup}>
                     <Star color="#FBBF24" fill="#FBBF24" size={12} />
@@ -682,13 +718,15 @@ export default function PublicUserProfileScreen({
                 )}
                 <View style={styles.statDivider} />
                 <AppText style={styles.statMuted}>
-                  <AppText style={styles.statStrong}>{tripCount}</AppText> Chuyến
+                  <AppText style={styles.statStrong}>{tripCount}</AppText>{" "}
+                  {t("mobile:user.screen.tripsUnit")}
                 </AppText>
                 {profile.isOwner ? (
                   <>
                     <View style={styles.statDivider} />
                     <AppText style={styles.statMuted}>
-                      <AppText style={styles.statStrong}>{profile.totalVehicles}</AppText> Xe
+                      <AppText style={styles.statStrong}>{profile.totalVehicles}</AppText>{" "}
+                      {t("mobile:user.screen.vehiclesUnit")}
                     </AppText>
                   </>
                 ) : null}
@@ -731,7 +769,7 @@ export default function PublicUserProfileScreen({
                       contentTab === "products" && styles.tabTextActive,
                     ]}
                   >
-                    Sản phẩm
+                    {t("mobile:user.screen.tabProducts")}
                   </AppText>
                   {contentTab === "products" ? <View style={styles.tabIndicator} /> : null}
                 </Pressable>
@@ -747,7 +785,7 @@ export default function PublicUserProfileScreen({
                       contentTab === "categories" && styles.tabTextActive,
                     ]}
                   >
-                    Danh mục
+                    {t("mobile:user.screen.tabCategories")}
                   </AppText>
                   {contentTab === "categories" ? <View style={styles.tabIndicator} /> : null}
                 </Pressable>
@@ -762,12 +800,12 @@ export default function PublicUserProfileScreen({
               <View style={styles.contentPad}>
                 <View style={styles.sectionHead}>
                   <AppText style={styles.sectionTitle}>
-                    Tổng số xe ({profile.totalVehicles})
+                    {t("mobile:user.screen.totalVehicles", { count: profile.totalVehicles })}
                   </AppText>
                   <AppText style={styles.sectionHint}>
                     {searchQuery.trim()
-                      ? `${sortedVehicles.length} kết quả`
-                      : `Sắp xếp: ${SORT_LABEL[vehicleSort]}`}
+                      ? t("mobile:user.screen.results", { count: sortedVehicles.length })
+                      : t("mobile:user.sort.sortedBy", { label: SORT_LABEL[vehicleSort] })}
                   </AppText>
                 </View>
 
@@ -778,17 +816,19 @@ export default function PublicUserProfileScreen({
                     </View>
                     <AppText style={styles.emptyTitle}>
                       {searchQuery.trim()
-                        ? "Không tìm thấy xe phù hợp"
-                        : "Chưa có xe được công khai"}
+                        ? t("users:vehicles.noResultTitle")
+                        : t("users:vehicles.emptyTitle")}
                     </AppText>
                     <AppText style={styles.emptyText}>
                       {searchQuery.trim()
-                        ? `Không có kết quả cho "${searchQuery.trim()}".`
-                        : "Các xe đã được duyệt sẽ xuất hiện tại đây."}
+                        ? t("mobile:user.screen.noResultQuery", { query: searchQuery.trim() })
+                        : t("users:vehicles.emptyDescription")}
                     </AppText>
                     {searchQuery.trim() ? (
                       <Pressable onPress={() => setSearchQuery("")} accessibilityRole="button">
-                        <AppText style={styles.clearSearchText}>Xoá tìm kiếm</AppText>
+                        <AppText style={styles.clearSearchText}>
+                          {t("users:vehicles.clearSearch")}
+                        </AppText>
                       </Pressable>
                     ) : null}
                   </View>
@@ -821,7 +861,10 @@ export default function PublicUserProfileScreen({
                           pressed && styles.pressed,
                         ]}
                         accessibilityRole="button"
-                        accessibilityLabel={`${PROFILE_VEHICLE_GROUP_LABEL[group]} ${count} xe`}
+                        accessibilityLabel={t("mobile:user.category.cardAria", {
+                          name: PROFILE_VEHICLE_GROUP_LABEL[group],
+                          count,
+                        })}
                       >
                         <View style={[styles.categoryIcon, empty && styles.categoryIconEmpty]}>
                           {group === "car" ? (
@@ -835,7 +878,9 @@ export default function PublicUserProfileScreen({
                             {PROFILE_VEHICLE_GROUP_LABEL[group]}
                           </AppText>
                           <AppText style={styles.categoryCount}>
-                            {empty ? "0 xe" : `${count} xe đang cho thuê`}
+                            {empty
+                              ? t("mobile:user.category.emptyCount")
+                              : t("mobile:user.category.rentingCount", { count })}
                           </AppText>
                         </View>
                         <ChevronRight color={theme.faint} size={16} />
@@ -849,23 +894,29 @@ export default function PublicUserProfileScreen({
         ) : (
           <View style={styles.contentPad}>
             <View style={styles.sectionHead}>
-              <AppText style={styles.sectionTitle}>Đánh giá nhận được</AppText>
+              <AppText style={styles.sectionTitle}>{t("users:reviews.title")}</AppText>
             </View>
             <Pressable
               onPress={() => openReviews("customer")}
               style={({ pressed }) => [styles.reviewEntry, pressed && styles.pressed]}
               accessibilityRole="button"
-              accessibilityLabel={`Xem ${profile.customerReviewCount} đánh giá`}
+              accessibilityLabel={t("mobile:user.screen.reviewsAria", {
+                count: profile.customerReviewCount,
+              })}
             >
               <View style={styles.reviewEntryIcon}>
                 <Star color="#F59E0B" fill="#F59E0B" size={15} />
               </View>
               <View style={styles.reviewEntryBody}>
-                <AppText style={styles.reviewEntryTitle}>Đánh giá từ chủ xe</AppText>
+                <AppText style={styles.reviewEntryTitle}>
+                  {t("mobile:user.screen.ownerReviewsEntry")}
+                </AppText>
                 <AppText style={styles.reviewEntryHint}>
                   {profile.customerReviewCount > 0
-                    ? `${profile.customerReviewCount} đánh giá sau các chuyến thuê`
-                    : "Chưa có đánh giá nào"}
+                    ? t("mobile:user.screen.ownerReviewsHint", {
+                        count: profile.customerReviewCount,
+                      })
+                    : t("mobile:user.screen.noReviewsYet")}
                 </AppText>
               </View>
               {profile.customerAverageRating != null ? (
@@ -892,18 +943,23 @@ export default function PublicUserProfileScreen({
           <View style={[styles.menuCard, { top: insets.top + 52 }]}>
             <MenuItem
               icon={RefreshCw}
-              label="Làm mới hồ sơ"
+              label={t("mobile:user.menu.refresh")}
               onPress={() => {
                 setMenuOpen(false);
                 handleRefresh();
               }}
               theme={theme}
             />
-            <MenuItem icon={Share2} label="Chia sẻ hồ sơ" onPress={handleShare} theme={theme} />
+            <MenuItem
+              icon={Share2}
+              label={t("users:sidebar.share")}
+              onPress={handleShare}
+              theme={theme}
+            />
             {target && canReport(target) ? (
               <MenuItem
                 icon={Flag}
-                label="Báo cáo vi phạm"
+                label={t("mobile:user.menu.report")}
                 onPress={handleReport}
                 danger
                 theme={theme}

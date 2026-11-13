@@ -1,5 +1,6 @@
 import { Star } from "lucide-react-native";
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 
 type ProfileStarsProps = {
@@ -9,9 +10,13 @@ type ProfileStarsProps = {
 
 /** Hàng sao đánh giá (mirror web Stars): sao đầy màu hổ phách, sao rỗng xám. */
 function ProfileStars({ rating, size = 14 }: ProfileStarsProps) {
+  const { t } = useTranslation();
   const filled = Math.max(0, Math.min(5, Math.round(rating ?? 0)));
   return (
-    <View style={styles.row} accessibilityLabel={`${filled} trên 5 sao`}>
+    <View
+      style={styles.row}
+      accessibilityLabel={t("users:starsAria", { rating: filled })}
+    >
       {[0, 1, 2, 3, 4].map((index) => (
         <Star
           key={index}

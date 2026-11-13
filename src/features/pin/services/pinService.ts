@@ -1,4 +1,5 @@
 import type { AxiosError } from "axios";
+import i18n from "@/i18n";
 import { apiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
 import { AppApiError, toApiError } from "@/features/auth/services/authService";
@@ -15,7 +16,7 @@ import type {
 
 function unwrap<T>(response: ApiResponse<T>): T {
   if (!response.status) {
-    throw new Error(response.message || "Yêu cầu không thành công.");
+    throw new Error(response.message || i18n.t("accountSecurity:pin.errors.requestFailed"));
   }
   return response.data as T;
 }
@@ -40,7 +41,7 @@ function toPinError(error: unknown): AppApiError {
     if (code || message) {
       return new AppApiError({
         code: code ?? "UNKNOWN",
-        message: message ?? "Yêu cầu không thành công.",
+        message: message ?? i18n.t("accountSecurity:pin.errors.requestFailed"),
         errors: Array.isArray(data?.errors) ? (data.errors as string[]) : [],
       });
     }

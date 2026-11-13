@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { apiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
 import type { ApiResponse } from "@/features/auth/types";
@@ -45,7 +46,9 @@ export async function createContract(bookingId: number): Promise<ContractSummary
 }
 
 export async function extendContract(contractId: number, additionalDays: number): Promise<ContractSummary> {
-  if (!Number.isInteger(additionalDays) || additionalDays < 1 || additionalDays > 90) throw new Error("Số ngày gia hạn phải từ 1 đến 90.");
+  if (!Number.isInteger(additionalDays) || additionalDays < 1 || additionalDays > 90) {
+    throw new Error(i18n.t("mobile:contract.errors.extendDays"));
+  }
   const res = await apiClient.post<ApiResponse<ContractSummary>>(endpoints.contracts.extend(contractId), { additionalDays });
   return res.data.data!;
 }
@@ -61,4 +64,38 @@ export async function getContractAudit(contractId: number): Promise<ContractAudi
 export async function downloadContractPdf(contract: ContractSummary): Promise<void> {
   const { downloadPdf } = await import("@/utils/pdfDownload");
   await downloadPdf(endpoints.contracts.pdfByGrant(contract.id), `hop-dong-${contract.id}-v${contract.version}.pdf`, "post");
+}
+
+export interface ExtensionRequestItem {
+  id: number;
+  bookingId: number;
+  contractId: number;
+  customerId: number;
+  additionalDays: number;
+  note?: string | null;
+  status: "Pending" | "Approved" | "Rejected";
+  rejectReason?: string | null;
+  createdAt: string;
+  respondedAt?: string | null;
+  newContractId?: number | null;
+}
+
+export async function createExtensionRequest(bookingId: number, additionalDays: number, note?: string): Promise<ExtensionRequestItem> {
+  const res = await apiClient.post<ApiResponse<ExtensionRequestItem>>(endpoints.extensionRequests.base, { bookingId, additionalDays, note });
+  return res.data.data!;
+}
+
+export async function getExtensionRequests(bookingId: number): Promise<ExtensionRequestItem[]> {
+  const res = await apiClient.get<ApiResponse<ExtensionRequestItem[]>>(endpoints.extensionRequests.byBooking(bookingId));
+  return res.data.data ?? [];
+}
+
+export async function approveExtensionRequest(id: number): Promise<ExtensionRequestItem> {
+  const res = await apiClient.post<ApiResponse<ExtensionRequestItem>>(endpoints.extensionRequests.approve(id));
+  return res.data.data!;
+}
+
+export async function rejectExtensionRequest(id: number, reason: string): Promise<ExtensionRequestItem> {
+  const res = await apiClient.post<ApiResponse<ExtensionRequestItem>>(endpoints.extensionRequests.reject(id), { reason });
+  return res.data.data!;
 }

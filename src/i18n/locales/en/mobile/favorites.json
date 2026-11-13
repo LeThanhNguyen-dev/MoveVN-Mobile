@@ -1,0 +1,24 @@
+{
+  "favorites": {
+    "backAria": "Back from favorite vehicles",
+    "countShowing": "{{count}} vehicles shown",
+    "subtitle": "Vehicles you want to rent",
+    "refreshAria": "Refresh favorite vehicles",
+    "retryStateAria": "Retry loading favorite status",
+    "retryListAria": "Retry loading favorite vehicles",
+    "priceHint": "Prices are indicative. Open a vehicle to choose dates and check availability.",
+    "loading": "Loading favorite vehicles…",
+    "emptyDescription": "Tap the heart on a vehicle to save it here. Only approved, publicly listed vehicles appear in this list.",
+    "exploreAria": "Explore vehicles to save",
+    "loadMoreAria": "Load more favorite vehicles",
+    "saveAria": "Add vehicle {{id}} to favorites",
+    "loadStateAria": "Load favorite status for vehicle {{id}}",
+    "alertTitle": "Couldn't load favorites",
+    "alertMessage": "Please try again.",
+    "errorTitle": "Favorites",
+    "idsLoadError": "Couldn't load favorite status. Tap to try again.",
+    "idsNotReady": "Couldn't load favorite status.",
+    "removeError": "Couldn't remove this vehicle from favorites. Please try again.",
+    "saveError": "Couldn't save this vehicle. Check your connection and the vehicle status, then try again."
+  }
+}

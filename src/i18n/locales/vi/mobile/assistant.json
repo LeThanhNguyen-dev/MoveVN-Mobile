@@ -1,0 +1,219 @@
+{
+  "assistant": {
+    "status": {
+      "botActive": "Tư vấn cùng AI",
+      "waitingForStaff": "Đang chờ nhân viên",
+      "staffActive": "Nhân viên đang hỗ trợ",
+      "closed": "Cuộc trò chuyện đã kết thúc"
+    },
+    "header": {
+      "title": "Trợ lý MoveVN",
+      "history": "Lịch sử trò chuyện",
+      "newChat": "Cuộc trò chuyện mới",
+      "close": "Đóng trợ lý"
+    },
+    "quickBook": {
+      "label": "Đặt xe nhanh"
+    },
+    "guest": {
+      "title": "Chào bạn, mình là trợ lý MoveVN",
+      "body": "Đăng nhập để trò chuyện nhé."
+    },
+    "history": {
+      "back": "‹ Quay lại",
+      "title": "Lịch sử trò chuyện",
+      "ticket": "Yêu cầu #{{id}}",
+      "generic": "Trò chuyện với MoveVN",
+      "empty": "Chưa có cuộc trò chuyện."
+    },
+    "welcome": {
+      "title": "Mình có thể giúp gì cho bạn?",
+      "body": "Cùng tìm chiếc xe phù hợp hoặc giải đáp về chuyến đi của bạn."
+    },
+    "earlier": "Xem tin trước",
+    "botLabel": {
+      "staff": "Nhân viên MoveVN",
+      "ai": "MoveVN AI"
+    },
+    "vote": {
+      "helpful": "Câu trả lời hữu ích",
+      "notHelpful": "Câu trả lời chưa hữu ích"
+    },
+    "failed": "Chưa nhận được câu trả lời",
+    "progress": {
+      "searching": "MoveVN đang tìm câu trả lời…",
+      "vehicles": "Đang tìm xe…",
+      "availability": "Đang kiểm tra ngày trống…",
+      "pricing": "Đang tính giá chuyến đi…",
+      "preparing": "Đang chuẩn bị xác nhận…",
+      "processing": "MoveVN đang xử lý…",
+      "uncertain": "Kết nối đang gián đoạn. Tin nhắn vẫn được giữ; MoveVN sẽ kiểm tra lại trạng thái.",
+      "committed": "Đã ghi nhận kết quả. MoveVN đang đồng bộ thông tin…",
+      "stale": "Chưa xác nhận được trạng thái. Bạn có thể kiểm tra lại; tin nhắn đang được giữ nguyên."
+    },
+    "staff": {
+      "waiting": "Yêu cầu đã được gửi. Bạn có thể nhắn thêm trong lúc chờ nhân viên.",
+      "active": "Nhân viên đã tiếp nhận. Bạn tiếp tục trao đổi tại đây nhé.",
+      "confirmTitle": "Chuyển sang nhân viên?",
+      "confirmPlaceholder": "Bạn cần hỗ trợ vấn đề gì?",
+      "back": "Quay lại",
+      "confirm": "Đồng ý chuyển",
+      "startNew": "Bắt đầu trò chuyện mới",
+      "meet": "Gặp nhân viên"
+    },
+    "composer": {
+      "toStaff": "Nhắn cho nhân viên…",
+      "toAssistant": "Hỏi MoveVN…",
+      "send": "Gửi tin nhắn"
+    },
+    "retry": "Thử lại",
+    "errors": {
+      "connectFailed": "Chưa kết nối được với máy chủ. Bạn thử lại nhé.",
+      "acceptedButUnloaded": "Tin nhắn đã được nhận. Chưa tải được kết quả; hãy kiểm tra lại trạng thái.",
+      "sendUnconfirmed": "Chưa xác nhận tin nhắn đã được nhận. Thử gửi lại sẽ giữ nguyên mã tin nhắn.",
+      "loadConversation": "Không tải được hội thoại.",
+      "loadEarlier": "Chưa tải được tin nhắn cũ.",
+      "loadHistory": "Không tải được lịch sử.",
+      "handoff": "Chưa chuyển được yêu cầu. Bạn thử lại nhé.",
+      "feedback": "Chưa gửi được đánh giá.",
+      "quickBook": "Chưa mở được đặt xe nhanh. Bạn thử lại nhé.",
+      "fallback": "Chưa thể trả lời lúc này. Bạn thử lại hoặc gặp nhân viên nhé.",
+      "codes": {
+        "AI_SCHEMA_NOT_READY": "Trợ lý đang được cập nhật và tạm thời chưa sẵn sàng. Bạn thử lại sau ít phút nhé.",
+        "AI_OUT_OF_SCOPE": "Mình hỗ trợ tìm xe, booking, thanh toán và chính sách MoveVN. Bạn muốn mình giúp phần nào?",
+        "ASSISTANT_CONFLICT": "Hội thoại vừa thay đổi hoặc còn tin nhắn đang xử lý. Bạn kiểm tra trạng thái rồi thử lại nhé.",
+        "AI_STATE_SYNC_PENDING": "Kết quả đang được đồng bộ. Bạn hãy kiểm tra trạng thái trước khi gửi lại.",
+        "AI_QUEUE_DEADLINE_EXCEEDED": "Hàng đợi đang mất nhiều thời gian. Tin nhắn chưa được nhận; bạn thử gửi lại sau nhé.",
+        "AI_QUEUE_BUSY": "Hàng đợi đang đầy. Tin nhắn của bạn vẫn được giữ; hãy thử gửi lại sau một chút.",
+        "AI_UNAVAILABLE": "Trợ lý chưa được kết nối với AI. Bạn có thể thử lại sau hoặc liên hệ nhân viên.",
+        "AI_INVALID_KEY": "Trợ lý đang gặp sự cố kết nối. Bạn thử lại sau hoặc liên hệ nhân viên nhé.",
+        "AI_RATE_LIMITED": "Mình đang nhận nhiều yêu cầu nên chưa trả lời được ngay. Bạn chờ một chút rồi thử lại nhé.",
+        "AI_TIMEOUT": "Mình xử lý lâu hơn dự kiến nên chưa trả lời kịp. Bạn thử lại nhé; các điều kiện thuê vẫn còn trong cuộc trò chuyện.",
+        "AI_SOURCE_STALE": "Chính sách đã được cập nhật. Hãy hỏi lại để nhận thông tin mới nhất.",
+        "AI_NO_EVIDENCE": "Mình chưa có đủ thông tin xác thực để trả lời câu này. Bạn cho mình thêm chi tiết về xe, booking hoặc chính sách cần tìm nhé.",
+        "AI_PROVIDER_ERROR": "Chưa kết nối được với trợ lý. Bạn thử lại sau hoặc liên hệ nhân viên nhé.",
+        "AI_INVALID_RESPONSE": "Mình chưa nhận được câu trả lời hợp lệ. Bạn thử lại hoặc nhờ nhân viên hỗ trợ nhé.",
+        "AI_MISSING_SOURCES": "Mình chưa xác minh được nguồn chính sách cho câu trả lời này. Bạn có thể hỏi lại hoặc nhờ nhân viên hỗ trợ.",
+        "AI_INVALID_SOURCE": "Nguồn chính sách cần được kiểm tra lại. Bạn hỏi lại hoặc nhờ nhân viên hỗ trợ nhé.",
+        "AI_PROCESSING_ERROR": "Mình gặp sự cố khi xử lý câu hỏi. Bạn thử lại hoặc nhờ nhân viên hỗ trợ nhé."
+      },
+      "http": {
+        "400": "Yêu cầu chưa hợp lệ. Bạn kiểm tra nội dung rồi thử lại nhé.",
+        "401": "Phiên đăng nhập đã hết hạn. Bạn đăng nhập lại để tiếp tục nhé.",
+        "403": "Bạn chưa có quyền thực hiện yêu cầu này. Bạn có thể liên hệ nhân viên để được hỗ trợ.",
+        "404": "Không tìm thấy cuộc trò chuyện hoặc dữ liệu này. Bạn kiểm tra lại hoặc bắt đầu cuộc trò chuyện mới nhé.",
+        "413": "Nội dung quá dài. Bạn rút gọn tin nhắn rồi thử lại nhé.",
+        "422": "Yêu cầu chưa hợp lệ. Bạn kiểm tra nội dung rồi thử lại nhé."
+      }
+    },
+    "details": {
+      "lookupUnavailable": "Tra cứu đang gián đoạn. Bạn thử lại nhé.",
+      "basePrice": "Giá cơ bản; cần ngày nhận và trả để kiểm tra lịch trống.",
+      "rentalPeriod": "Lịch thuê: {{start}} – {{end}}",
+      "reviews": "★ {{rating}}/5 · {{n}} đánh giá",
+      "noReviews": "Xe này chưa có đánh giá công khai.",
+      "noPromotions": "Hiện chưa có mã giảm giá nào.",
+      "refund": "Dự kiến hoàn: {{amount}} · {{policy}}",
+      "discountPercent": "Giảm {{value}}%",
+      "discountPercentCapped": "Giảm {{value}}% (tối đa {{max}})",
+      "discountAmount": "Giảm {{amount}}",
+      "minOrder": "Đơn tối thiểu: {{amount}}",
+      "expiry": "HSD: {{date}}",
+      "perDay": "{{amount}}/ngày",
+      "perDays": "{{amount}} / {{days}} ngày",
+      "seats": "{{n}} chỗ",
+      "viewBooking": "Xem booking",
+      "viewDetail": "Xem chi tiết",
+      "bookVehicle": "Đặt xe này",
+      "bookVehicleKeep": "Đặt xe này · giữ ngày đã chọn",
+      "usePromo": "Dùng mã này",
+      "viewVehicle": "Xem xe",
+      "moreVehicles": "Xem thêm xe"
+    },
+    "booking": {
+      "quoteTitle": "Báo giá chuyến đi",
+      "rental": "Tiền thuê: {{amount}}",
+      "rentalDiscount": "Giảm theo thời gian thuê: −{{amount}}",
+      "promotion": "Khuyến mãi: −{{amount}}",
+      "deliveryFee": "Phí giao xe: {{amount}}",
+      "deliveryFeeDistance": "Phí giao xe ({{km}} km): {{amount}}",
+      "free": "Miễn phí",
+      "total": "Tổng tiền thuê: {{amount}}",
+      "deposit": "Thanh toán trước: {{amount}}",
+      "securityDeposit": "Tiền bảo đảm: {{amount}}",
+      "deliveryNote": "Giao xe{{address}}. Giá được kiểm tra lại khi xác nhận.",
+      "deliveryAddressSuffix": ": {{address}}",
+      "deliveryAddressFallback": " tới địa chỉ đã chọn",
+      "pickupNote": "Nhận xe tại địa chỉ của chủ xe. Giá được kiểm tra lại khi xác nhận.",
+      "returnAddress": "Trả xe: {{address}}",
+      "payment": {
+        "viewBooking": "Xem đơn #{{id}}",
+        "qr": "Mã QR thanh toán",
+        "openCheckout": "Mở trang thanh toán",
+        "getLink": "Lấy đường dẫn thanh toán",
+        "checkPaid": "Tôi đã thanh toán — kiểm tra",
+        "invalidLink": "Đường dẫn thanh toán không hợp lệ.",
+        "connectFailed": "Chưa kết nối được thanh toán. Bạn có thể mở đơn để thử lại.",
+        "notRecorded": "Chưa ghi nhận thanh toán.",
+        "recorded": "Đã ghi nhận thanh toán.",
+        "checkFailed": "Chưa kiểm tra được thanh toán."
+      },
+      "confirm": {
+        "cancelTitle": "Xác nhận hủy đơn #{{id}}",
+        "refund": "Hoàn: {{amount}} · Khấu trừ: {{forfeited}}",
+        "rose": "Giá tăng so với báo giá trước. Tôi đồng ý giá mới.",
+        "cancelled": "Đơn đã hủy.",
+        "created": "Đơn đã tạo, bạn có thể thanh toán bên dưới.",
+        "cancelAction": "Xác nhận hủy đơn",
+        "bookAction": "Xác nhận đặt xe",
+        "requote": "Báo giá lại",
+        "priceChanged": "Giá thay đổi, vui lòng xác nhận lại.",
+        "expired": "Xác nhận đã hết hạn hoặc thông tin đã thay đổi. Vui lòng báo giá lại.",
+        "requoteFailed": "Chưa thể báo giá lại.",
+        "draftSaved": "Thông tin đặt xe đã lưu. Bạn có thể tiếp tục trong chat hoặc mở Đặt xe nhanh."
+      }
+    },
+    "funnel": {
+      "title": "Đặt xe nhanh",
+      "close": "Đóng",
+      "steps": {
+        "dates": "Ngày thuê",
+        "vehicle": "Chọn xe",
+        "promo": "Khuyến mãi",
+        "pickup": "Nhận xe",
+        "confirm": "Xác nhận"
+      },
+      "datesInvalid": "Chọn ngày nhận trong tương lai và ngày trả sau ngày nhận.",
+      "vehicleMissing": "Bạn chọn một xe để tiếp tục nhé.",
+      "pickupMissing": "Chọn cách nhận xe và nhập địa chỉ nếu cần giao xe.",
+      "pickupGeoMissing": "Chọn địa chỉ giao từ danh sách gợi ý để tính phí theo khoảng cách.",
+      "returnGeoMissing": "Chọn địa chỉ trả từ danh sách gợi ý hoặc để trống để trả tại điểm nhận.",
+      "loadError": "Chưa tải được thông tin đặt xe.",
+      "saveError": "Thông tin đã thay đổi hoặc chưa hợp lệ. Vui lòng kiểm tra lại.",
+      "startAt": "Ngày nhận: {{date}}",
+      "endAt": "Ngày trả: {{date}}",
+      "notChosen": "Chưa chọn",
+      "choosePeriod": "Chọn ngày và giờ thuê",
+      "noVehicles": "Nhờ trợ lý tìm xe trong chat; xe tìm được sẽ xuất hiện ở đây.",
+      "selectedVehicle": "Đã chọn xe #{{id}}",
+      "promoTitle": "Mã khuyến mãi (nếu có)",
+      "promoLabel": "Mã khuyến mãi",
+      "promoHint": "Mã sẽ được kiểm tra khi báo giá.",
+      "pickupTitle": "Cách nhận xe",
+      "pickupSelf": "Tự đến nhận tại chủ xe",
+      "pickupDelivery": "Giao xe tận nơi — tính phí theo khoảng cách",
+      "deliveryAddress": "Địa chỉ giao xe",
+      "deliveryFeeHint": "Phí giao được tính theo cấu hình booking và hiển thị trước khi xác nhận.",
+      "returnAddress": "Địa chỉ trả (nếu khác điểm nhận)",
+      "note": "Ghi chú",
+      "back": "Quay lại",
+      "saving": "Đang lưu…",
+      "next": "Tiếp tục"
+    },
+    "fab": {
+      "open": "Mở trợ lý MoveVN",
+      "hide": "Ẩn trợ lý MoveVN",
+      "close": "Đóng trợ lý MoveVN"
+    }
+  }
+}

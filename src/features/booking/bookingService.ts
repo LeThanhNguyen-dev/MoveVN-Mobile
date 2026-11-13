@@ -131,3 +131,8 @@ export async function requestCheckInRevision(id: number, expectedVersion: number
   const res = await apiClient.post<ApiResponse<InspectionReportResponse>>("/api/bookings/" + id + "/check-in/revision-request", { expectedVersion, reason });
   return res.data.data!;
 }
+
+export async function acceptLatePickup(id: number): Promise<BookingResponse> {
+  const res = await apiClient.post<ApiResponse<BookingResponse>>(endpoints.bookings.acceptLatePickup(id));
+  return res.data.data!;
+}

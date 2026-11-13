@@ -1,0 +1,114 @@
+{
+  "bookingDetail": {
+    "errors": {
+      "loadBooking": "Không tải được đơn thuê và biên bản. Vui lòng thử lại.",
+      "actionFailed": "Không thể thực hiện thao tác. Vui lòng thử lại.",
+      "revisionFailed": "Không thể gửi yêu cầu lập lại biên bản.",
+      "openPayment": "Không thể mở trang thanh toán.",
+      "checkPayment": "Không kiểm tra được thanh toán.",
+      "cancelPolicy": "Không tải được chính sách hủy đơn.",
+      "cancelUnavailable": "Đơn này không thể hủy."
+    },
+    "alerts": {
+      "confirmPickupTitle": "Xác nhận nhận xe?",
+      "confirmPickupBody": "Chỉ xác nhận khi bạn đã xem toàn bộ ảnh và đồng ý với số km, nhiên liệu, hư hại trong biên bản.",
+      "reviewAgain": "Xem lại",
+      "agreeAndConfirm": "Đồng ý và xác nhận",
+      "pickupConfirmed": "Đã xác nhận nhận xe.",
+      "revisionRequested": "Đã yêu cầu lập lại biên bản. Chờ chủ xe gửi bản mới.",
+      "paymentReturn": "Sau khi thanh toán, quay lại app và bấm kiểm tra thanh toán hoặc tải lại đơn thuê.",
+      "paymentConfirmed": "Đã xác nhận thanh toán.",
+      "paymentIncomplete": "Thanh toán chưa hoàn tất. Bạn có thể kiểm tra lại sau.",
+      "cancelTitle": "Hủy đơn thuê?",
+      "cancelBody": "{{policy}}\nHoàn lại: {{refund}}\nKhông hoàn lại: {{forfeited}}",
+      "keepBooking": "Giữ đơn",
+      "confirmCancel": "Xác nhận hủy",
+      "cancelled": "Đã hủy đơn thuê.",
+      "reportSent": "Đã gửi biên bản. Đang chờ khách xác nhận.",
+      "checkoutConfirmed": "Đã xác nhận trả xe. Chờ chủ xe xác nhận nhận lại xe."
+    },
+    "header": {
+      "kicker": "Đơn thuê",
+      "title": "Chi tiết đơn thuê",
+      "loading": "Đang tải đơn thuê…",
+      "loadErrorTitle": "Không tải được đơn thuê",
+      "reload": "Tải lại đơn thuê",
+      "updated": "Đã cập nhật"
+    },
+    "hero": {
+      "kicker": "Đơn thuê xe",
+      "vehicleFallback": "Xe #{{id}}",
+      "pickup": "Nhận xe",
+      "return": "Trả xe",
+      "duration": "Thời lượng",
+      "days": "{{days}} ngày",
+      "deposit": "Đặt cọc",
+      "pickupPlace": "Nơi nhận",
+      "returnPlace": "Nơi trả",
+      "customerNote": "Ghi chú của khách",
+      "timezoneHint": "Thời gian hiển thị theo giờ Việt Nam (UTC+07:00)."
+    },
+    "approve": {
+      "title": "Yêu cầu thuê đang chờ duyệt",
+      "subtitle": "Phản hồi sớm để khách kịp đặt cọc",
+      "approve": "Duyệt đơn thuê",
+      "approved": "Đã duyệt đơn. Chờ khách đặt cọc.",
+      "reject": "Từ chối yêu cầu",
+      "rejectReason": "Lý do từ chối",
+      "rejectConfirm": "Xác nhận từ chối",
+      "rejected": "Đã từ chối đơn thuê."
+    },
+    "deposit": {
+      "title": "Thanh toán đặt cọc",
+      "subtitle": "Chủ xe đã duyệt yêu cầu thuê",
+      "noticeTitle": "Cần đặt cọc trước khi nhận xe",
+      "noticeBody": "Chủ xe đã duyệt. Vui lòng thanh toán đặt cọc trước khi nhận xe.",
+      "pay": "Thanh toán đặt cọc",
+      "check": "Kiểm tra thanh toán"
+    },
+    "cost": {
+      "title": "Chi phí đơn thuê",
+      "subtitle": "Đã gồm phí nền tảng",
+      "total": "Tổng tiền",
+      "rentalDeposit": "Đặt cọc thuê xe",
+      "securityDeposit": "Cọc đảm bảo",
+      "dueAt": "Hạn đặt cọc"
+    },
+    "inspection": {
+      "checkInTitle": "Biên bản nhận xe",
+      "checkOutTitle": "Biên bản trả xe",
+      "emptyCheckIn": "Chưa có biên bản nhận xe.",
+      "emptyCheckOut": "Chưa có biên bản trả xe.",
+      "createCheckIn": "Lập biên bản check-in",
+      "createCheckOut": "Lập biên bản check-out",
+      "confirmCheckIn": "Xác nhận nhận xe",
+      "confirmCheckOut": "Xác nhận trả xe",
+      "actionsTitle": "Thao tác",
+      "actionsSubtitle": "Kiểm tra biên bản, ảnh xe và thanh toán trước khi xác nhận",
+      "contractNote": "Cả chủ xe và khách cần ký hợp đồng để hợp đồng có hiệu lực trước khi xác nhận nhận xe. Bạn có thể ký trên web nếu chưa hoàn tất.",
+      "acceptCheckIn": "Đồng ý biên bản và nhận xe",
+      "acceptCheckOut": "Đồng ý biên bản và trả xe",
+      "checkoutDisagreeHint": "Nếu không đồng ý, hãy trao đổi với chủ xe hoặc liên hệ hỗ trợ trước khi xác nhận.",
+      "revisionAction": "Không đồng ý biên bản / Yêu cầu lập lại",
+      "revisionHint": "Ghi rõ nội dung cần sửa. Chuyến chỉ bắt đầu khi bạn đồng ý biên bản mới.",
+      "revisionReason": "Lý do không đồng ý",
+      "revisionSend": "Gửi yêu cầu lập lại",
+      "close": "Đóng",
+      "earlyPickupAvailable": "Xe trống: có thể check-in sớm tối đa 2 giờ. Giờ trả và giá thuê theo đơn đã đặt.",
+      "earlyPickupFallback": "Có thể check-in sớm tối đa 2 giờ nếu xe trống. Tải lại đơn để kiểm tra.",
+      "waitingPickupReport": "Chờ chủ xe chụp ảnh và lập biên bản nhận xe.",
+      "waitingReturnReport": "Khi trả xe, chủ xe sẽ chụp ảnh và lập biên bản để bạn đối chiếu."
+    },
+    "cancel": {
+      "title": "Hủy đơn thuê",
+      "subtitle": "Xem chính sách hoàn cọc trước khi hủy",
+      "action": "Xem chính sách và hủy đơn",
+      "reasonTitle": "Lý do hủy đơn",
+      "reasonSubtitle": "Ghi nhận từ hệ thống"
+    },
+    "history": {
+      "title": "Lịch sử đơn thuê",
+      "count": "{{count}} cập nhật"
+    }
+  }
+}

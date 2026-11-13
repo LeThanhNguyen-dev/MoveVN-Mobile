@@ -1,5 +1,6 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TripsStackParamList } from "@/navigation/types";
 import { getMyBookings } from "@/features/booking/bookingService";
@@ -12,6 +13,7 @@ import { getApiErrorMessage } from "@/services/apiClient";
 type ListNav = NativeStackNavigationProp<TripsStackParamList, "TripList">;
 
 export default function TripListScreen({ navigation }: { navigation: ListNav }) {
+  const { t } = useTranslation();
   const [items, setItems] = useState<BookingResponse[]>([]);
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState<SearchFilters>(EMPTY_SEARCH);
@@ -52,7 +54,7 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
         setPage(res.page);
       } catch (err) {
         if (request !== requestId.current) return;
-        if (replace) setError(getApiErrorMessage(err, "Không tải được danh sách chuyến đi."));
+        if (replace) setError(getApiErrorMessage(err, t("mobile:trip.list.loadError")));
       } finally {
         if (request === requestId.current) {
           fetching.current = false;
@@ -62,7 +64,7 @@ export default function TripListScreen({ navigation }: { navigation: ListNav }) 
         }
       }
     },
-    [search],
+    [search, t],
   );
 
   useFocusEffect(useCallback(() => {

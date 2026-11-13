@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { ArrowLeft, CalendarDays, Check, ChevronDown, List, Map as MapIcon, MapPin, SlidersHorizontal, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   FlatList,
@@ -10,6 +11,7 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
+import { localizedOption } from "@/i18n/liveLabels";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -39,10 +41,10 @@ import type { VehicleListItemResponse } from "@/features/vehicles/types";
 const PAGE_SIZE = 12;
 
 const SORT_OPTIONS = [
-  { value: "", label: "Mới nhất" },
-  { value: "price_asc", label: "Giá thấp đến cao" },
-  { value: "price_desc", label: "Giá cao đến thấp" },
-  { value: "rating_desc", label: "Đánh giá tốt nhất" },
+  localizedOption("", "vehicleList", "results.newest"),
+  localizedOption("price_asc", "vehicleList", "options.sort.priceAsc"),
+  localizedOption("price_desc", "vehicleList", "options.sort.priceDesc"),
+  localizedOption("rating_desc", "vehicleList", "options.sort.ratingDesc"),
 ];
 
 type VehicleListRoute = RouteProp<ExploreStackParamList, "VehicleList">;
@@ -57,6 +59,7 @@ export default function VehicleListScreen({
   route: VehicleListRoute;
   navigation: VehicleListNav;
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -103,7 +106,9 @@ export default function VehicleListScreen({
   useRefreshFavoritesOnFocus();
 
   const rentalDays = calculateRentalDays(startDate, endDate);
-  const areaText = province ? `${province}${district ? ` · ${district}` : ""}` : "Toàn quốc";
+  const areaText = province
+    ? `${province}${district ? ` · ${district}` : ""}`
+    : t("mobile:vehicleList.header.allCountry");
 
   const fetchPage = useCallback(
     async (
@@ -156,13 +161,13 @@ export default function VehicleListScreen({
           );
         }
       } catch {
-        if (replace) setError("Không tải được danh sách xe. Kéo xuống để thử lại.");
+        if (replace) setError(t("mobile:vehicleList.list.loadError"));
       } finally {
         setLoading(false);
         setLoadingMore(false);
       }
     },
-    [],
+    [t],
   );
 
   const currentLoc = { areaId, province, district, startDate, endDate };
@@ -292,7 +297,7 @@ export default function VehicleListScreen({
       aiSearchHasResultRef.current = true;
     } catch {
       setAiResultSignature("failed");
-      if (replace) setError("Không xử lý được tìm kiếm thông minh. Thử lại hoặc dùng bộ lọc thường.");
+      if (replace) setError(t("mobile:vehicleList.ai.searchError"));
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -333,7 +338,7 @@ export default function VehicleListScreen({
     if (filters.type) {
       list.push({
         key: "type",
-        label: filters.type === "Car" ? "Ô tô" : "Xe máy",
+        label: filters.type === "Car" ? t("common:car") : t("common:motorbike"),
         clear: () => setFilters((p) => ({ ...p, type: "" })),
       });
     }
@@ -355,7 +360,7 @@ export default function VehicleListScreen({
     if (filters.seatCount) {
       list.push({
         key: "seat",
-        label: `${filters.seatCount} chỗ`,
+        label: t("vehicleList:options.seats", { seats: filters.seatCount }),
         clear: () => setFilters((p) => ({ ...p, seatCount: "" })),
       });
     }
@@ -399,7 +404,7 @@ export default function VehicleListScreen({
     if (filters.customerLat && filters.customerLng) {
       list.push({
         key: "nearby",
-        label: `Quanh đây ${filters.radiusKm || "10"}km`,
+        label: t("mobile:vehicleList.list.nearby", { radius: filters.radiusKm || "10" }),
         clear: () =>
           setFilters((p) => ({
             ...p,
@@ -411,7 +416,7 @@ export default function VehicleListScreen({
       });
     }
     return list;
-  }, [filters]);
+  }, [filters, t]);
 
   const activeFilterCount =
     (filters.brandId ? 1 : 0) +
@@ -425,7 +430,7 @@ export default function VehicleListScreen({
     (filters.bikeType ? 1 : 0) +
     (filters.customerLat && filters.customerLng ? 1 : 0);
 
-  const sortLabel = SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Mới nhất";
+  const sortLabel = SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? t("vehicleList:results.newest");
   const mapParams = useMemo(() => ({
     page: 1,
     pageSize: 300,
@@ -546,13 +551,13 @@ export default function VehicleListScreen({
             accessibilityRole="button" accessibilityState={{ selected: viewMode === "list" }}
             style={[styles.viewSwitchButton, viewMode === "list" && styles.viewSwitchActive]}>
             <List size={16} color={viewMode === "list" ? theme.onBrand : theme.muted} />
-            <AppText style={[styles.viewSwitchText, viewMode === "list" && styles.viewSwitchTextActive]}>Danh sách</AppText>
+            <AppText style={[styles.viewSwitchText, viewMode === "list" && styles.viewSwitchTextActive]}>{t("vehicleList:results.list")}</AppText>
           </Pressable>
           <Pressable onPress={() => setViewMode("map")}
             accessibilityRole="button" accessibilityState={{ selected: viewMode === "map" }}
             style={[styles.viewSwitchButton, viewMode === "map" && styles.viewSwitchActive]}>
             <MapIcon size={16} color={viewMode === "map" ? theme.onBrand : theme.muted} />
-            <AppText style={[styles.viewSwitchText, viewMode === "map" && styles.viewSwitchTextActive]}>Bản đồ</AppText>
+            <AppText style={[styles.viewSwitchText, viewMode === "map" && styles.viewSwitchTextActive]}>{t("vehicleList:results.map")}</AppText>
           </Pressable>
         </View>
       </View>
@@ -574,13 +579,13 @@ export default function VehicleListScreen({
               <View style={styles.aiSearchingRow}>
                 <ActivityIndicator size="small" color={theme.brand} />
                 <AppText numberOfLines={2} style={styles.aiSummary}>
-                  AI đang tìm kiếm... {aiElapsed}s
+                  {t("vehicleList:ai.searching", { seconds: aiElapsed })}
                 </AppText>
               </View>
             ) : aiActiveQuery ? (
               <AppText numberOfLines={2} style={[styles.aiSummary, aiMatched === false && styles.aiNoMatch]}>
                 {aiMatched === false
-                  ? "Khong co ket qua AI phu hop, dang hien thi danh sach theo bo loc hien tai."
+                  ? t("vehicleList:ai.noMatch")
                   : `AI: ${aiSemanticQuery || aiActiveQuery}`}
               </AppText>
             ) : null}
@@ -599,8 +604,10 @@ export default function VehicleListScreen({
             <View style={styles.countRow}>
               <AppText style={styles.countText}>
                 {loading && items.length === 0
-                  ? "Đang tìm xe..."
-                  : `Tìm thấy ${totalCount} xe${rentalDays > 0 ? ` · ${rentalDays} ngày` : ""}`}
+                  ? t("mobile:vehicleList.list.searching")
+                  : rentalDays > 0
+                    ? t("mobile:vehicleList.list.countFoundDays", { total: totalCount, days: rentalDays })
+                    : t("mobile:vehicleList.list.countFound", { total: totalCount })}
               </AppText>
               {loading && items.length > 0 ? (
                 <ActivityIndicator size="small" color={theme.brand} />
@@ -625,8 +632,8 @@ export default function VehicleListScreen({
             </View>
           ) : (
             <View style={styles.center}>
-              <AppText display style={styles.emptyTitle}>Chưa có xe phù hợp</AppText>
-              <AppText style={styles.muted}>Thử đổi địa điểm, thời gian hoặc bộ lọc.</AppText>
+              <AppText display style={styles.emptyTitle}>{t("vehicleList:results.emptyTitle")}</AppText>
+              <AppText style={styles.muted}>{t("mobile:vehicleList.list.emptyHint")}</AppText>
               <Pressable
                 onPress={() => {
                   setFilters({ ...EMPTY_FILTERS, type: base.type });
@@ -634,7 +641,7 @@ export default function VehicleListScreen({
                 }}
                 style={styles.resetButton}
               >
-                <AppText style={styles.resetText}>Đặt lại bộ lọc</AppText>
+                <AppText style={styles.resetText}>{t("vehicleList:filters.reset")}</AppText>
               </Pressable>
             </View>
           )
@@ -642,13 +649,15 @@ export default function VehicleListScreen({
         ListFooterComponent={
           loadingMore ? (
             <ActivityIndicator color={theme.brand} style={styles.moreLoader} />
-          ) : null
+          ) : undefined
         }
       /> : (
         <View style={styles.mapScreen}>
           <View style={styles.mapControls}>
             {aiSearching ? (
-              <AppText style={styles.mapStatus}>AI đang tìm kiếm... {aiElapsed}s</AppText>
+              <AppText style={styles.mapStatus}>
+                {t("vehicleList:ai.searching", { seconds: aiElapsed })}
+              </AppText>
             ) : aiActiveQuery ? (
               <AppText numberOfLines={1} style={styles.mapStatus}>AI: {aiSemanticQuery || aiActiveQuery}</AppText>
             ) : null}
@@ -716,7 +725,7 @@ export default function VehicleListScreen({
         <View style={styles.sortOverlay}>
           <Pressable style={styles.sortBackdrop} onPress={() => setSortVisible(false)} />
           <View style={[styles.sortSheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-            <AppText display style={styles.sortTitle}>Sắp xếp</AppText>
+            <AppText display style={styles.sortTitle}>{t("vehicleList:results.sort")}</AppText>
             {SORT_OPTIONS.map((o) => {
               const active = sortBy === o.value;
               return (

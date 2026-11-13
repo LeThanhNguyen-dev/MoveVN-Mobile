@@ -36,7 +36,7 @@ afterEach(async () => { if (tree) await act(async () => tree!.unmount()); tree =
 it("lists own tickets, applies server filters, and resets pagination after filtering", async () => {
   await mount(); expect(text()).toContain(ticket.subject); await press("Trang sau"); expect(mocks.list.mock.calls.at(-1)?.[0]).toMatchObject({ page: 2 });
   await press("Đã xử lý"); expect(mocks.list.mock.calls.at(-1)?.[0]).toMatchObject({ page: 1, status: "Resolved" });
-  await fill("Tìm theo mã hoặc tiêu đề", " thanh toán "); await press("Tìm kiếm"); expect(mocks.list.mock.calls.at(-1)?.[0].keyword).toBe("thanh toán");
+  await fill("Tìm theo mã hoặc tiêu đề yêu cầu", " thanh toán "); await press("Tìm kiếm"); expect(mocks.list.mock.calls.at(-1)?.[0].keyword).toBe("thanh toán");
   await press("Xóa bộ lọc"); expect(mocks.list.mock.calls.at(-1)?.[0].status).toBeUndefined();
 });
 it("shows a retryable load error rather than a misleading empty ticket list", async () => {
@@ -52,7 +52,7 @@ it("validates create fields, retains failed text, and opens the saved ticket", a
 });
 it("links booking support to the actual booking and allows a new request after a closed ticket", async () => {
   mocks.list.mockResolvedValue({ items: [{ ...ticket, status: "Closed", bookingId: 50 }], totalCount: 1, page: 1, pageSize: 10 });
-  await mount({ bookingId: 50, bookingCode: "BK50" }); expect(mocks.list.mock.calls[0]?.[0].bookingId).toBe(50); await press("Tạo yêu cầu mới");
+  await mount({ bookingId: 50, bookingCode: "BK50" }); expect(mocks.list.mock.calls[0]?.[0].bookingId).toBe(50); await press("Tạo yêu cầu hỗ trợ mới");
   expect(text()).toContain("Liên quan: BK50"); await fill("Tiêu đề yêu cầu", "Bàn giao"); await fill("Nội dung yêu cầu", "Cần kiểm tra bàn giao"); await press("Gửi yêu cầu");
   expect(mocks.create.mock.calls[0]?.[0]).toMatchObject({ bookingId: 50, category: "Booking" });
 });

@@ -1,4 +1,9 @@
+import { assistantOperation } from "./assistantOperations";
 import { apiClient } from "@/services/apiClient";
+import i18n from "@/i18n";
+import { ASSISTANT_HANDOFF_SUBJECT } from "./assistantContent";
+import { decodeHistory, decodeMessage } from "./assistantProtocol";
+import type { AssistantLifecycle } from "./assistantProtocol";
 
 // Port từ FrontEnd (features/assistant/assistantService.ts), gồm cả booking
 // (draft/prepare/confirm/payment-link) để chatbot đặt xe nhanh trên mobile.
@@ -73,7 +78,7 @@ export type AssistantAnswer = {
   quickReplies?: string[];
 };
 
-export type TimelineItem = {
+export type TimelineItem = AssistantLifecycle & {
   id: string;
   role: "user" | "assistant" | "staff";
   content: string;
@@ -83,7 +88,7 @@ export type TimelineItem = {
   requestId?: string;
 };
 
-export type MessageResult = {
+export type MessageResult = AssistantLifecycle & {
   id: string;
   status: string;
   errorCode: string | null;
@@ -103,23 +108,22 @@ export async function createConversation() {
 }
 
 export async function getHistory(id: string, page = 1, signal?: AbortSignal) {
-  return (await apiClient.get<{ data: Page<TimelineItem> }>(`${base}/${id}/messages`, { params: { page, pageSize: 50 }, signal })).data
-    .data;
+  return decodeHistory((await apiClient.get<{ data: Page<TimelineItem> }>(`${base}/${id}/messages`, { params: { page, pageSize: 50 }, signal })).data.data);
 }
 
 export async function sendQuestion(id: string, content: string, clientMessageId: string) {
-  return (await apiClient.post<{ data: MessageResult }>(`${base}/${id}/messages`, { content, clientMessageId })).data.data;
+  return decodeMessage((await apiClient.post<{ data: MessageResult }>(`${base}/${id}/messages`, { content, clientMessageId })).data.data);
 }
 
 export async function getMessage(id: string, messageId: string, signal?: AbortSignal) {
-  return (await apiClient.get<{ data: MessageResult }>(`${base}/${id}/messages/${messageId}`, { signal })).data.data;
+  return decodeMessage((await apiClient.get<{ data: MessageResult }>(`${base}/${id}/messages/${messageId}`, { signal })).data.data);
 }
 
 export async function handoff(id: string, message: string) {
   return (
     await apiClient.post<{ data: Conversation }>(`${base}/${id}/handoff`, {
       confirmed: true,
-      subject: "Hỗ trợ từ trợ lý MoveVN",
+      subject: ASSISTANT_HANDOFF_SUBJECT,
       message,
     })
   ).data.data;
@@ -135,7 +139,11 @@ export type DraftSlots = {
   endAt?: string | null;
   pickupMode?: "self_pickup" | "delivery" | null;
   pickupAddress?: string | null;
+  pickupLatitude?: number | null;
+  pickupLongitude?: number | null;
   returnAddress?: string | null;
+  returnLatitude?: number | null;
+  returnLongitude?: number | null;
   promoCode?: string | null;
   customerNote?: string | null;
 };
@@ -154,6 +162,7 @@ export type AssistantQuote = {
   deposit: number;
   securityDeposit: number;
   deliveryFee: number | null;
+  deliveryDistanceKm?: number | null;
   expiresAt: string;
 };
 
@@ -204,26 +213,18 @@ export async function getConversationState(id: string, signal?: AbortSignal) {
 }
 
 export async function patchDraft(id: string, version: number, patch: Partial<DraftSlots>) {
-  return (await apiClient.patch<{ data: BookingDraft }>(`${base}/${id}/draft`, { version, patch })).data.data;
+  const payload = { version, patch };
+  return assistantOperation(id, "draft.patch", payload, async key => (await apiClient.patch<{ data: BookingDraft }>(`${base}/${id}/draft`, payload, { headers: { "Idempotency-Key": key } })).data.data);
 }
-
 export async function prepareDraft(id: string, version: number) {
-  return (await apiClient.post<{ data: BookingDraft }>(`${base}/${id}/draft/prepare`, { version })).data.data;
+  return assistantOperation(id, "draft.prepare", { version }, async key => (await apiClient.post<{ data: BookingDraft }>(`${base}/${id}/draft/prepare`, { version }, { headers: { "Idempotency-Key": key } })).data.data);
 }
-
 export async function confirmAction(token: string, acceptPriceChange = false) {
-  return (
-    await apiClient.post<{ data: ConfirmResult }>(
-      `/api/assistant/actions/${encodeURIComponent(token)}/confirm`,
-      { acceptPriceChange },
-    )
-  ).data.data;
+  return assistantOperation(token, "action.confirm", { acceptPriceChange }, async key => (await apiClient.post<{ data: ConfirmResult }>(`/api/assistant/actions/${encodeURIComponent(token)}/confirm`, { acceptPriceChange }, { headers: { "Idempotency-Key": key } })).data.data);
 }
-
 export async function getDraftPaymentLink(id: string) {
-  return (await apiClient.post<{ data: PaymentLink }>(`${base}/${id}/draft/payment-link`)).data.data;
+  return assistantOperation(id, "draft.payment-link", {}, async key => (await apiClient.post<{ data: PaymentLink }>(`${base}/${id}/draft/payment-link`, undefined, { headers: { "Idempotency-Key": key } })).data.data);
 }
-
 export async function getAssistantPaymentStatus(bookingId: number) {
   return (
     await apiClient.get<{ data: { status: string | { isConfirmed: boolean; message: string } } }>(
@@ -232,21 +233,46 @@ export async function getAssistantPaymentStatus(bookingId: number) {
   ).data.data;
 }
 
+const ASSISTANT_ERROR_CODES = new Set([
+  "AI_SCHEMA_NOT_READY",
+  "AI_OUT_OF_SCOPE",
+  "ASSISTANT_CONFLICT",
+  "AI_STATE_SYNC_PENDING",
+  "AI_QUEUE_DEADLINE_EXCEEDED",
+  "AI_QUEUE_BUSY",
+  "AI_UNAVAILABLE",
+  "AI_INVALID_KEY",
+  "AI_RATE_LIMITED",
+  "AI_TIMEOUT",
+  "AI_SOURCE_STALE",
+  "AI_NO_EVIDENCE",
+  "AI_PROVIDER_ERROR",
+  "AI_INVALID_RESPONSE",
+  "AI_MISSING_SOURCES",
+  "AI_INVALID_SOURCE",
+  "AI_PROCESSING_ERROR",
+]);
+
 export function assistantError(code?: string | null) {
-  const messages: Record<string, string> = {
-    AI_UNAVAILABLE: "Trợ lý chưa được kết nối với AI. Bạn có thể thử lại sau hoặc liên hệ nhân viên.",
-    AI_INVALID_KEY: "Trợ lý đang gặp sự cố kết nối. Bạn thử lại sau hoặc liên hệ nhân viên nhé.",
-    AI_RATE_LIMITED: "AI đang nhận nhiều yêu cầu. Bạn thử lại sau một chút nhé.",
-    AI_TIMEOUT: "Trợ lý phản hồi lâu hơn dự kiến. Bạn có thể gửi lại câu hỏi.",
-    AI_SOURCE_STALE: "Chính sách đã được cập nhật. Hãy hỏi lại để nhận thông tin mới nhất.",
-    AI_NO_EVIDENCE:
-      "Câu này nằm ngoài những việc mình hỗ trợ được (tìm xe, xem booking, chính sách thuê xe, khuyến mãi). Bạn hỏi về xe, booking hoặc chính sách giúp mình nhé.",
-    AI_PROVIDER_ERROR: "Chưa kết nối được với trợ lý. Bạn thử lại sau hoặc liên hệ nhân viên nhé.",
-    AI_INVALID_RESPONSE: "AI trả kết quả không đúng cấu trúc yêu cầu. Bạn thử gửi lại câu hỏi nhé. (AI_INVALID_RESPONSE)",
-    AI_MISSING_SOURCES:
-      "Câu này nằm ngoài những việc mình hỗ trợ được (tìm xe, xem booking, chính sách thuê xe, khuyến mãi). Bạn hỏi về xe, booking hoặc chính sách giúp mình nhé.",
-    AI_INVALID_SOURCE: "Nguồn chính sách AI sử dụng không vượt qua kiểm tra. Bạn thử hỏi lại nhé. (AI_INVALID_SOURCE)",
-    AI_PROCESSING_ERROR: "Backend gặp lỗi khi xử lý câu hỏi. Vui lòng kiểm tra log Assistant request. (AI_PROCESSING_ERROR)",
-  };
-  return messages[code ?? ""] ?? "Chưa thể trả lời lúc này. Bạn thử lại hoặc gặp nhân viên nhé.";
+  if (code === "queue_busy") code = "AI_QUEUE_BUSY";
+  if (code === "queue_deadline_exceeded") code = "AI_QUEUE_DEADLINE_EXCEEDED";
+  return i18n.t(
+    code && ASSISTANT_ERROR_CODES.has(code)
+      ? `mobile:assistant.errors.codes.${code}`
+      : "mobile:assistant.errors.fallback",
+  );
+}
+
+const ASSISTANT_HTTP_ERRORS = [400, 401, 403, 404, 413, 422];
+
+/** Show only allowlisted diagnostics; upstream bodies can include implementation details. */
+export function assistantFailure(error: unknown, fallback: string): string {
+  const value = error as { response?: { status?: number; data?: { code?: unknown } }; message?: string };
+  const code = value?.response?.data?.code;
+  if (typeof code === "string" && /^(AI_|ASSISTANT_|queue_)/.test(code)) return assistantError(code);
+  if (value?.message === "AI_INVALID_RESPONSE") return assistantError(value.message);
+  const status = value?.response?.status;
+  if (status && ASSISTANT_HTTP_ERRORS.includes(status))
+    return i18n.t(`mobile:assistant.errors.http.${status}`);
+  return fallback;
 }

@@ -1,3 +1,6 @@
+import i18n from "@/i18n";
+import { translatedLabels } from "@/i18n/liveLabels";
+
 export function pad2(n: number): string {
   return n.toString().padStart(2, "0");
 }
@@ -21,18 +24,19 @@ export function formatMoney(n?: number | null): string {
   return `${new Intl.NumberFormat("vi-VN").format(n)}đ`;
 }
 
-export const BOOKING_STATUS_LABELS: Record<string, string> = {
-  Pending: "Chờ duyệt",
-  Approved: "Đã duyệt",
-  Rejected: "Đã từ chối",
-  Cancelled: "Đã hủy",
-  DepositPaid: "Đã đặt cọc",
-  Confirmed: "Đã xác nhận",
-  InProgress: "Đang nhận xe",
-  Returning: "Đang trả xe",
-  Returned: "Đã trả xe, chờ nhận",
-  Completed: "Hoàn thành",
-};
+// Getters resolve the translation on every read so the labels follow the active language.
+export const BOOKING_STATUS_LABELS: Record<string, string> = translatedLabels("booking", {
+  Pending: "status.pending",
+  Approved: "status.approved",
+  Rejected: "status.rejected",
+  Cancelled: "status.cancelled",
+  DepositPaid: "status.depositPaid",
+  Confirmed: "status.confirmed",
+  InProgress: "status.inProgress",
+  Returning: "status.returning",
+  Returned: "status.returned",
+  Completed: "status.completed",
+});
 
 export function bookingStatusLabel(status: string): string {
   return BOOKING_STATUS_LABELS[status] ?? status;
@@ -130,13 +134,21 @@ export function rentalProgress(startStr?: string | null, endStr?: string | null,
   const absMs = Math.abs(remainingMs);
   const d = Math.floor(absMs / 86_400_000);
   const h = Math.floor((absMs % 86_400_000) / 3_600_000);
-  const remainText = d > 0 ? `${d} ngày ${h} giờ` : `${h} giờ`;
+  const remainText = d > 0
+    ? i18n.t("mobile:trip.progress.daysHours", { days: d, hours: h })
+    : i18n.t("mobile:trip.progress.hours", { hours: h });
   return {
     totalDays,
     elapsedDays,
     currentDay: Math.min(totalDays, elapsedDays + 1),
     remainingMs,
     overdue,
-    summary: overdue ? `Quá hạn ${remainText}` : `Ngày ${Math.min(totalDays, elapsedDays + 1)}/${totalDays} · còn ${remainText}`,
+    summary: overdue
+      ? i18n.t("mobile:trip.progress.overdueSummary", { duration: remainText })
+      : i18n.t("mobile:trip.progress.daySummary", {
+        day: Math.min(totalDays, elapsedDays + 1),
+        total: totalDays,
+        remaining: remainText,
+      }),
   };
 }

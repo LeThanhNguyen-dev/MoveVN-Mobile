@@ -1,0 +1,22 @@
+{
+  "closeDialog": "Close account dialog",
+  "fields": {
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "phone": "Phone number",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "confirmNewPassword": "Confirm new password",
+    "otp": "OTP code"
+  },
+  "placeholders": {
+    "email": "you@example.com",
+    "emailLogin": "Enter your email",
+    "password": "Enter your password",
+    "newPassword": "Create a password",
+    "confirmPassword": "Re-enter your password",
+    "fullName": "John Smith",
+    "phone": "0912345678"
+  }
+}

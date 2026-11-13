@@ -1,0 +1,124 @@
+{
+  "ownerAnalytics": {
+    "tabs": {
+      "overview": "Tổng quan",
+      "trends": "Biểu đồ",
+      "vehicles": "Đội xe",
+      "reports": "Báo cáo"
+    },
+    "header": {
+      "backAria": "Quay lại",
+      "title": "Thống kê đội xe"
+    },
+    "hero": {
+      "title": "Hiệu quả đội xe",
+      "description": "Thu nhập, đơn thuê và đánh giá của bạn."
+    },
+    "errors": {
+      "loadFailed": "Không tải được thống kê. Vui lòng thử lại.",
+      "exportFailed": "Chưa thể xuất Excel. Vui lòng thử lại.",
+      "shareUnsupported": "Thiết bị chưa hỗ trợ chia sẻ file Excel."
+    },
+    "period": {
+      "customizeAria": "Tùy chỉnh kỳ thống kê",
+      "customize": "Tùy chỉnh",
+      "timezone": "Giờ Việt Nam",
+      "viewAll": "Xem toàn bộ đội xe",
+      "vehiclePickerAria": "Chọn xe thống kê",
+      "vehicleNumber": "Xe #{{id}}"
+    },
+    "comparisonPeriod": "So với kỳ trước: {{from}} – {{to}}",
+    "granularity": {
+      "day": "Ngày",
+      "week": "Tuần",
+      "month": "Tháng",
+      "groupAria": "Nhóm theo {{unit}}"
+    },
+    "metrics": {
+      "incomeNote": "Giao dịch đã ghi nhận, không phải lợi nhuận hay tiền đã chuyển vào ngân hàng.",
+      "newRequests": "{{count}} yêu cầu mới",
+      "completedTripsHint": "Theo ngày hoàn tất",
+      "bookedDaysHint": "{{booked}}/{{fleet}} ngày đội xe"
+    },
+    "disputes": {
+      "description": "Hồ sơ tạo trong kỳ; trạng thái là hiện tại của nhóm hồ sơ này.",
+      "pickVehicle": "Chọn xe để xem từng hồ sơ và lịch sử đặt xe."
+    },
+    "ranking": {
+      "topBookedDescription": "Theo đơn hợp lệ thuộc nhóm yêu cầu mới trong kỳ.",
+      "topIncomeDescription": "Theo giao dịch thực ghi nhận qua ví trong kỳ."
+    },
+    "vehicles": {
+      "description": "{{count}} xe · Bao gồm xe chưa có đơn",
+      "sortIncome": "Thu nhập",
+      "sortAria": "Sắp xếp theo {{label}}",
+      "confirmedPerRequest": "Đơn hợp lệ / Yêu cầu",
+      "completedPerCancelled": "Hoàn tất / Hủy",
+      "bookedDaysValue": "{{booked}}/{{fleet}} ngày · {{percent}}",
+      "disputesValue": "{{created}} hồ sơ / {{open}} đang xử lý",
+      "viewDetails": "Xem thống kê chi tiết"
+    },
+    "pagination": {
+      "page": "Trang {{page}}/{{total}}",
+      "pageSpaced": "Trang {{page}} / {{total}}",
+      "prev": "Trang trước",
+      "next": "Trang sau",
+      "prevAria": "{{label}}: trang trước",
+      "nextAria": "{{label}}: trang sau"
+    },
+    "insight": {
+      "missingBookings": "{{without}}/{{total}} xe chưa có đơn hợp lệ được tạo trong kỳ. Bạn có thể xem lại lịch trống, giá thuê và nội dung tin đăng.",
+      "allHaveBookings": "Các xe đều có đơn hợp lệ trong kỳ. Tiếp tục theo dõi thu nhập và tỷ lệ hủy để đánh giá hiệu quả."
+    },
+    "reports": {
+      "completedWithoutDate": "Có {{count}} chuyến hoàn tất thiếu thời điểm ghi nhận trong dữ liệu cũ. Chưa đưa các chuyến này vào thống kê theo ngày."
+    },
+    "definitions": {
+      "aria": "Cách tính số liệu và lưu ý"
+    },
+    "actions": {
+      "exporting": "Đang xuất Excel…"
+    },
+    "footer": "Cập nhật {{time}}",
+    "picker": {
+      "closeAria": "Đóng bộ lọc xe",
+      "title": "Chọn xe thống kê",
+      "searchAria": "Tìm xe",
+      "searchPlaceholder": "Biển số hoặc tên xe",
+      "selectAria": "Chọn {{plate}}"
+    },
+    "trend": {
+      "metricCompletedTripValue": "Giá trị hoàn tất",
+      "chartAria": "Biểu đồ {{metric}}",
+      "tripsValue": "{{count}} chuyến",
+      "bookingsValue": "{{count}} đơn",
+      "hint": "Chạm cột để xem số liệu. Vuốt ngang để xem thêm kỳ."
+    },
+    "details": {
+      "bookingStatus": {
+        "Pending": "Chờ duyệt",
+        "Approved": "Đã duyệt",
+        "Confirmed": "Đã xác nhận",
+        "DepositPaid": "Đã đặt cọc",
+        "InProgress": "Đang thuê",
+        "Returning": "Đang trả xe",
+        "Returned": "Đã trả xe",
+        "Completed": "Hoàn tất",
+        "Cancelled": "Đã hủy",
+        "Rejected": "Đã từ chối"
+      },
+      "disputes": {
+        "description": "Hồ sơ tạo trong kỳ. Trạng thái hiện tại của hồ sơ.",
+        "viewAria": "Xem tranh chấp {{id}}"
+      },
+      "history": {
+        "description": "Yêu cầu tạo trong kỳ. Giá trị đơn chưa phải thu nhập chủ xe.",
+        "viewAria": "Xem đơn {{code}}",
+        "createdAt": "Tạo lúc {{time}}"
+      }
+    },
+    "exportDialog": {
+      "title": "Lưu hoặc chia sẻ thống kê chủ xe"
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "validation": {
+    "fullNameRequired": "Vui lòng nhập họ và tên.",
+    "fullNameTooLong": "Họ và tên không được vượt quá 200 ký tự.",
+    "emailRequired": "Vui lòng nhập email.",
+    "emailTooLong": "Email không được vượt quá 256 ký tự.",
+    "emailInvalid": "Email không đúng định dạng.",
+    "passwordLabel": "Mật khẩu",
+    "passwordRequired": "Vui lòng nhập {{label}}.",
+    "passwordMinLength": "{{label}} phải có ít nhất 8 ký tự.",
+    "confirmPasswordRequired": "Vui lòng nhập lại mật khẩu.",
+    "confirmPasswordMismatch": "Mật khẩu xác nhận không khớp.",
+    "otpRequired": "Vui lòng nhập mã OTP.",
+    "otpLength": "Mã OTP phải gồm đúng 6 chữ số.",
+    "phoneRequired": "Vui lòng nhập số điện thoại.",
+    "phoneInvalid": "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0."
+  },
+  "otp": {
+    "label": "Mã OTP",
+    "digitAria": "Ký tự OTP {{index}}"
+  },
+  "password": {
+    "show": "Hiện mật khẩu",
+    "hide": "Ẩn mật khẩu"
+  },
+  "imagePreview": {
+    "dialog": "Xem ảnh",
+    "close": "Đóng ảnh",
+    "previous": "Ảnh trước",
+    "next": "Ảnh sau",
+    "loadError": "Không thể tải hình ảnh",
+    "imageAlt": "Ảnh {{index}}"
+  }
+}

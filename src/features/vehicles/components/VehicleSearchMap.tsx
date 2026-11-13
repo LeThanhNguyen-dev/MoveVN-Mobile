@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import WebView from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
@@ -101,11 +102,12 @@ export default function VehicleSearchMap({
   radiusKm: number;
   onOpenVehicle: (vehicleId: number) => void;
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const webRef = useRef<WebView>(null);
+  const webRef = useRef<WebView<object>>(null);
   const cacheKey = useMemo(() => aiQuery
     ? JSON.stringify(["ai", aiQuery, aiFilters, params.sortBy ?? "", aiSearchVersion])
     : JSON.stringify(["filter", params]), [aiQuery, aiFilters, params, aiSearchVersion]);
@@ -157,8 +159,17 @@ export default function VehicleSearchMap({
     totalPrice: vehicle.totalDynamicPrice,
     distanceKm: vehicle.distanceKm,
   })), [located]);
-  const html = useMemo(() => buildVehicleSearchMapHtml(points, mapCenter, safeRadius, theme.brand, theme.surfaceAlt),
-    [points, mapCenter?.latitude, mapCenter?.longitude, safeRadius, theme.brand, theme.surfaceAlt]);
+  const mapCopy = useMemo(() => ({
+    perDaySuffix: t("mobile:vehicleList.map.perDaySuffix"),
+    totalRentalPrefix: t("mobile:vehicleList.map.totalRentalPrefix"),
+    distancePrefix: t("mobile:vehicleList.map.distancePrefix"),
+    distanceSuffix: t("mobile:vehicleList.map.distanceSuffix"),
+    clusterSuffix: t("mobile:vehicleList.map.clusterSuffix"),
+    viewVehicle: t("mobile:vehicleList.map.viewVehicle"),
+    pickupPopup: t("mobile:vehicleList.map.pickupPopup"),
+  }), [t]);
+  const html = useMemo(() => buildVehicleSearchMapHtml(points, mapCenter, safeRadius, theme.brand, theme.surfaceAlt, mapCopy),
+    [points, mapCenter?.latitude, mapCenter?.longitude, safeRadius, theme.brand, theme.surfaceAlt, mapCopy]);
   const webSource = useMemo(() => ({ html }), [html]);
   const visibleVehicles = clusterIds
     ? located.filter((vehicle) => clusterIds.includes(vehicle.id)) : located;
@@ -211,7 +222,7 @@ export default function VehicleSearchMap({
 
   return (
     <View style={styles.container} onLayout={(event) => setMapHeight(event.nativeEvent.layout.height)}>
-      <WebView
+      <WebView<object>
         ref={webRef}
         source={webSource}
         style={styles.map}
@@ -228,7 +239,7 @@ export default function VehicleSearchMap({
       {mapCenter ? (
         <Pressable style={[styles.recenter, { bottom: sheetHeight + 38 }]} onPress={() => {
           if (mapReady) webRef.current?.injectJavaScript("window.focusPickup(); true;");
-        }} accessibilityLabel="Về điểm nhận xe">
+        }} accessibilityLabel={t("mobile:vehicleList.map.recenterAria")}>
           <MapPin size={19} color={theme.brand} />
         </Pressable>
       ) : null}
@@ -242,24 +253,32 @@ export default function VehicleSearchMap({
       {loading ? (
         <View style={styles.loadingBadge}>
           <ActivityIndicator size="small" color={theme.brand} />
-          <AppText style={styles.loadingText}>Đang tải xe trên bản đồ...</AppText>
+          <AppText style={styles.loadingText}>{t("mobile:vehicleList.map.loading")}</AppText>
         </View>
       ) : null}
       {error || mapError ? (
         <View style={styles.errorBadge}>
-          <AppText style={styles.errorText}>{mapError ? "Không tải được bản đồ." : "Không tải thêm được xe trên bản đồ."}</AppText>
+          <AppText style={styles.errorText}>{mapError
+            ? t("mobile:vehicleList.map.mapError")
+            : t("mobile:vehicleList.map.vehiclesError")}</AppText>
         </View>
       ) : null}
       <View style={[styles.sheet, { height: sheetHeight, paddingBottom: Math.max(insets.bottom, 8) }]}>
         <View {...panResponder.panHandlers}>
           <Pressable onPress={() => setExpanded((value) => !value)} style={styles.sheetHandleArea}
-            accessibilityLabel={expanded ? "Thu gọn danh sách xe" : "Mở danh sách xe"}>
+            accessibilityLabel={expanded
+              ? t("mobile:vehicleList.map.collapseAria")
+              : t("mobile:vehicleList.map.expandAria")}>
             <View style={styles.sheetHandle} />
             <View style={styles.sheetTitleRow}>
               <View style={styles.sheetTitleWrap}>
-                <AppText display style={styles.sheetTitle}>{clusterIds ? `${visibleVehicles.length} xe tại vị trí này` : `${located.length} xe trên bản đồ`}</AppText>
+                <AppText display style={styles.sheetTitle}>{clusterIds
+                  ? t("vehicleList:map.vehiclesAtLocation", { total: visibleVehicles.length })
+                  : t("mobile:vehicleList.map.onMapCount", { total: located.length })}</AppText>
                 {expanded && result.totalCount > located.length ? (
-                  <AppText style={styles.sheetSubtitle}>{result.totalCount} xe phù hợp · chỉ hiện xe có vị trí</AppText>
+                  <AppText style={styles.sheetSubtitle}>
+                    {t("mobile:vehicleList.map.sheetSubtitle", { total: result.totalCount })}
+                  </AppText>
                 ) : null}
               </View>
               <ChevronUp size={18} color={theme.muted} style={expanded ? { transform: [{ rotate: "180deg" }] } : undefined} />
@@ -279,16 +298,20 @@ export default function VehicleSearchMap({
                       ? <Bike size={25} color={theme.brand} /> : <Car size={25} color={theme.brand} />}</View>}
                   <View style={styles.rowInfo}>
                     <AppText numberOfLines={1} style={styles.vehicleName}>{item.brandName} {item.modelName} {item.year}</AppText>
-                    <AppText style={styles.vehiclePrice}>{formatVehicleCurrency(item.averageDailyPrice ?? item.pricePerDay)}/ngày</AppText>
-                    {item.distanceKm != null ? <AppText style={styles.vehicleDistance}>Cách điểm nhận {item.distanceKm.toFixed(1)} km</AppText> : null}
+                    <AppText style={styles.vehiclePrice}>
+                      {t("common:pricePerDay", {
+                        price: formatVehicleCurrency(item.averageDailyPrice ?? item.pricePerDay),
+                      })}
+                    </AppText>
+                    {item.distanceKm != null ? <AppText style={styles.vehicleDistance}>{t("mobile:vehicleList.map.distance", { distance: item.distanceKm.toFixed(1) })}</AppText> : null}
                   </View>
                 </Pressable>
-                <Pressable onPress={() => onOpenVehicle(item.id)} style={styles.detailLink} accessibilityLabel={`Xem xe ${item.brandName} ${item.modelName}`}>
-                  <AppText style={styles.detailLinkText}>Xem xe</AppText>
+                <Pressable onPress={() => onOpenVehicle(item.id)} style={styles.detailLink} accessibilityLabel={t("mobile:vehicleList.viewVehicleAria", { title: `${item.brandName} ${item.modelName}` })}>
+                  <AppText style={styles.detailLinkText}>{t("common:viewVehicle")}</AppText>
                 </Pressable>
               </View>
             )}
-            ListEmptyComponent={!loading ? <AppText style={styles.emptyText}>Chưa có xe phù hợp có vị trí trên bản đồ.</AppText> : null}
+            ListEmptyComponent={!loading ? <AppText style={styles.emptyText}>{t("vehicleList:map.empty")}</AppText> : undefined}
           />
         ) : null}
       </View>

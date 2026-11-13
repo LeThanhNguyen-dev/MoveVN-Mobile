@@ -1,0 +1,27 @@
+{
+  "navigation": {
+    "trips": "Chuyến đi",
+    "deals": "Ưu đãi",
+    "explore": "Khám phá",
+    "messages": "Tin nhắn",
+    "account": "Tài khoản",
+    "ownerVehicles": "Xe của tôi",
+    "ownerBookings": "Đơn thuê",
+    "ownerOverview": "Tổng quan",
+    "tabUnreadAria": "{{label}}, {{badge}} chưa đọc",
+    "greeting": "Xin chào",
+    "viewAccountAria": "Xem thông tin tài khoản",
+    "switchRoleAria": "Chuyển sang {{role}}",
+    "roles": {
+      "Admin": "quản trị",
+      "Staff": "nhân viên",
+      "Owner": "chủ xe",
+      "Customer": "khách thuê"
+    },
+    "roleNotSupported": {
+      "title": "Vai trò chưa hỗ trợ trên app",
+      "description": "Tài khoản {{email}} có quyền {{role}}. Ứng dụng di động hiện chỉ phục vụ Khách thuê và Chủ xe — vui lòng dùng bản web để tiếp tục."
+    },
+    "yourNotifications": "Thông báo của bạn"
+  }
+}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Alert, PanResponder, Pressable, StyleSheet, View } from "react-native";
 import WebView from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
@@ -42,10 +43,11 @@ export default function GpsPlaybackScreen({
   route: PlaybackRoute;
   navigation: PlaybackNav;
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId, vehicleName } = route.params;
-  const webRef = useRef<WebView>(null);
+  const webRef = useRef<WebView<object>>(null);
   const [mapReady, setMapReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [road, setRoad] = useState<GpsRoadPathResponse | null>(null);
@@ -72,10 +74,10 @@ export default function GpsPlaybackScreen({
         setRoad(roadPath);
         setSummary(tripSummary);
         if (!roadPath || roadPath.path.length < 2) {
-          Alert.alert("Chưa có hành trình", "Chuyến này chưa có đủ điểm GPS để phát lại.");
+          Alert.alert(t("mobile:gps.playback.emptyTitle"), t("mobile:gps.playback.emptyBody"));
         }
       } catch (error) {
-        Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được hành trình chuyến đi."));
+        Alert.alert(t("mobile:gps.errorTitle"), getApiErrorMessage(error, t("mobile:gps.playback.loadError")));
       } finally {
         if (active) setLoading(false);
       }
@@ -83,7 +85,7 @@ export default function GpsPlaybackScreen({
     return () => {
       active = false;
     };
-  }, [bookingId]);
+  }, [bookingId, t]);
 
   // Đẩy polyline vào map ngay khi map JS sẵn sàng + có dữ liệu.
   useEffect(() => {
@@ -144,10 +146,12 @@ export default function GpsPlaybackScreen({
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Pressable onPress={handleBack} style={styles.backButton} accessibilityLabel="Quay lại">
+        <Pressable onPress={handleBack} style={styles.backButton} accessibilityLabel={t("mobile:gps.backAria")}>
           <ArrowLeft color={theme.text} size={20} />
         </Pressable>
-        <AppText numberOfLines={1} style={styles.headerTitle}>Hành trình · {vehicleName || `Booking #${bookingId}`}</AppText>
+        <AppText numberOfLines={1} style={styles.headerTitle}>
+          {t("mobile:gps.playback.title", { name: vehicleName || t("mobile:gps.bookingFallback", { id: bookingId }) })}
+        </AppText>
         <View style={styles.backButton} />
       </View>
 
@@ -173,7 +177,7 @@ export default function GpsPlaybackScreen({
         {loading ? (
           <View style={styles.loadingBadge}>
             <ActivityIndicator size="small" color={theme.brand} />
-            <AppText style={styles.loadingText}>Đang tải hành trình...</AppText>
+            <AppText style={styles.loadingText}>{t("mobile:gps.playback.loading")}</AppText>
           </View>
         ) : null}
       </View>
@@ -184,7 +188,11 @@ export default function GpsPlaybackScreen({
             style={[styles.playButton, lastIndex < 1 && styles.disabled]}
             disabled={lastIndex < 1}
             onPress={() => (index >= lastIndex ? (setIndex(0), setPlaying(true)) : setPlaying((value) => !value))}
-            accessibilityLabel={playing ? "Tạm dừng" : index >= lastIndex ? "Phát lại" : "Phát"}
+            accessibilityLabel={playing
+              ? t("mobile:gps.playback.pause")
+              : index >= lastIndex
+                ? t("mobile:gps.playback.replay")
+                : t("mobile:gps.playback.play")}
           >
             {playing
               ? <Pause size={20} color={theme.onBrand} />
@@ -198,7 +206,7 @@ export default function GpsPlaybackScreen({
                 key={step}
                 onPress={() => setSpeedStep(step)}
                 style={[styles.speedButton, speedStep === step && styles.speedButtonActive]}
-                accessibilityLabel={`Tốc độ phát ×${step}`}
+                accessibilityLabel={t("mobile:gps.playback.speedAria", { speed: step })}
               >
                 <AppText style={[styles.speedText, speedStep === step && styles.speedTextActive]}>×{step}</AppText>
               </Pressable>
@@ -213,17 +221,19 @@ export default function GpsPlaybackScreen({
             trackWidthRef.current = event.nativeEvent.layout.width;
           }}
           {...panResponder.panHandlers}
-          accessibilityLabel="Vị trí phát lại trong hành trình"
+          accessibilityLabel={t("mobile:gps.playback.sliderAria")}
         >
           <View style={styles.sliderTrack} />
           <View style={[styles.sliderFill, { width: `${Math.round(progressRatio * 100)}%` }]} />
           <View style={[styles.sliderKnob, { left: `${Math.round(progressRatio * 100)}%` }]} />
         </View>
         <View style={styles.sliderMeta}>
-          <AppText style={styles.metaText}>Điểm {lastIndex > 0 ? Math.min(index, lastIndex) + 1 : 0}/{lastIndex + 1}</AppText>
+          <AppText style={styles.metaText}>
+            {t("mobile:gps.playback.pointCounter", { current: lastIndex > 0 ? Math.min(index, lastIndex) + 1 : 0, total: lastIndex + 1 })}
+          </AppText>
           {road ? (
             <AppText style={styles.metaText}>
-              {road.matched ? "Đã khớp theo đường phố" : "Nối giữa các điểm GPS"}
+              {road.matched ? t("mobile:gps.playback.matched") : t("mobile:gps.playback.unmatched")}
             </AppText>
           ) : null}
         </View>
@@ -231,21 +241,21 @@ export default function GpsPlaybackScreen({
         {summary ? (
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
-              <AppText style={styles.summaryLabel}>Quãng đường</AppText>
+              <AppText style={styles.summaryLabel}>{t("mobile:gps.playback.distance")}</AppText>
               <AppText style={styles.summaryValue}>{formatKm(summary.distanceKm)}</AppText>
             </View>
             <View style={styles.summaryRow}>
-              <AppText style={styles.summaryLabel}>Tốc độ tối đa / trung bình</AppText>
+              <AppText style={styles.summaryLabel}>{t("mobile:gps.playback.speedRange")}</AppText>
               <AppText style={styles.summaryValue}>{formatSpeed(summary.maxSpeedKmh)} · {formatSpeed(summary.avgSpeedKmh)}</AppText>
             </View>
             <View style={styles.summaryRow}>
-              <AppText style={styles.summaryLabel}>Số lần mất tín hiệu</AppText>
+              <AppText style={styles.summaryLabel}>{t("mobile:gps.playback.signalLost")}</AppText>
               <AppText style={[styles.summaryValue, summary.signalLostCount > 0 && { color: theme.danger }]}>
                 {summary.signalLostCount}
               </AppText>
             </View>
             {!summary.persisted ? (
-              <AppText style={styles.temporaryNote}>Chuyến chưa kết thúc — số liệu tính tạm từ log hiện có.</AppText>
+              <AppText style={styles.temporaryNote}>{t("mobile:gps.playback.provisionalNote")}</AppText>
             ) : null}
           </View>
         ) : null}

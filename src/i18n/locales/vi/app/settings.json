@@ -1,0 +1,14 @@
+{
+  "startup": {
+    "opening": "Đang mở MoveVN...",
+    "sessionError": "Chưa thể kiểm tra phiên đăng nhập. Hãy kiểm tra kết nối và thử lại.",
+    "retry": "Thử lại"
+  },
+  "language": {
+    "label": "Ngôn ngữ",
+    "vi": "Tiếng Việt",
+    "en": "English",
+    "switchToEnglish": "Chuyển sang English",
+    "switchToVietnamese": "Chuyển sang Tiếng Việt"
+  }
+}

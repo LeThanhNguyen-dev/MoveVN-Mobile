@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeftRight,
   BadgePercent,
@@ -10,6 +11,7 @@ import {
   FileBadge,
   FileText,
   Flag,
+  Globe,
   Headphones,
   Heart,
   IdCard,
@@ -50,6 +52,8 @@ import SupportCenterScreen from "@/features/app/screens/SupportCenterScreen";
 import VerificationHubScreen from "@/features/app/screens/VerificationHubScreen";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
+import { useLanguageStore } from "@/theme/useLanguageStore";
+import LanguageToggle from "@/components/LanguageToggle";
 import { useNotificationStore } from "@/features/notifications/useNotifications";
 import { useAssistantUi } from "@/features/assistant/useAssistantUi";
 import { openFavoriteVehicles } from "@/features/favorites/favoriteActions";
@@ -74,18 +78,12 @@ type AccountSection = {
   items: AccountMenuItem[];
 };
 
-const roleLabels: Record<UserRole, string> = {
-  Admin: "Quản trị",
-  Staff: "Nhân viên",
-  Owner: "Chủ xe",
-  Customer: "Khách hàng",
-};
-
 const verificationTotal = 4;
 
 export default function AccountTabScreen({
   onProfilePress,
   onWalletPress,
+  onAnalyticsPress,
   user,
   initialDisputes,
   onConsumedDisputes,
@@ -94,6 +92,7 @@ export default function AccountTabScreen({
 }: {
   onProfilePress: () => void;
   onWalletPress?: () => void;
+  onAnalyticsPress?: () => void;
   user: AuthUser;
   initialDisputes?: DisputeCreatePrefill | null;
   onConsumedDisputes?: () => void;
@@ -124,8 +123,19 @@ export default function AccountTabScreen({
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { mode, theme, toggleMode } = useTheme();
+  const { t } = useTranslation("app");
+  const language = useLanguageStore((state) => state.language);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const isDark = mode === "dark";
+  const roleLabels = useMemo<Record<UserRole, string>>(
+    () => ({
+      Admin: t("account:roles.Admin"),
+      Staff: t("account:roles.Staff"),
+      Owner: t("account:roles.Owner"),
+      Customer: t("account:roles.Customer"),
+    }),
+    [t],
+  );
   const canViewOwnerAnalytics = activeRole === "Owner" && user.roles.includes("Owner");
 
   useEffect(() => {
@@ -244,28 +254,28 @@ export default function AccountTabScreen({
 
   const sections: AccountSection[] = [
     {
-      title: "Quản lý",
+      title: t("mobile:account.sections.manage"),
       items: [
-        { key: "notifications", label: "Thông báo", icon: Bell, accent: theme.brand, value: unreadCount > 0 ? `${unreadCount} chưa đọc` : undefined, onPress: () => useNotificationStore.setState({ centerOpen: true }) },
-        { key: "wallet", label: "Ví của tôi", icon: Wallet, accent: "#059669", onPress: onWalletPress },
-        ...(activeRole === "Customer" && user.roles.includes("Customer") ? [{ key: "favorites", label: "Yêu thích", icon: Heart, accent: "#E11D48", onPress: openFavoriteVehicles }] : []),
-        { key: "deals", label: "Ưu đãi", icon: BadgePercent, accent: "#D97706" },
-        { key: "disputes", label: "Tranh chấp", icon: Scale, accent: "#DC2626", onPress: () => setShowDisputes(true) },
-        { key: "violations", label: "Báo cáo vi phạm của tôi", icon: Flag, accent: "#EA580C", onPress: () => openViolations() },
-        { key: "availability-alerts", label: "Thông báo xe trống", icon: Bell, accent: theme.brand, onPress: () => openAvailabilityAlerts() },
-        ...(canViewOwnerAnalytics ? [{ key: "stats", label: "Thống kê", icon: BarChart3, accent: "#2563EB", onPress: () => setShowAnalytics(true) }] : []),
+        { key: "notifications", label: t("common:notifications.title"), icon: Bell, accent: theme.brand, value: unreadCount > 0 ? t("mobile:account.status.unreadCount", { total: unreadCount }) : undefined, onPress: () => useNotificationStore.setState({ centerOpen: true }) },
+        { key: "wallet", label: t("account:quickLinks.wallet.title"), icon: Wallet, accent: "#059669", onPress: onWalletPress },
+        ...(activeRole === "Customer" && user.roles.includes("Customer") ? [{ key: "favorites", label: t("mobile:account.menu.favorites"), icon: Heart, accent: "#E11D48", onPress: openFavoriteVehicles }] : []),
+        { key: "deals", label: t("mobile:account.menu.deals"), icon: BadgePercent, accent: "#D97706" },
+        { key: "disputes", label: t("mobile:account.menu.disputes"), icon: Scale, accent: "#DC2626", onPress: () => setShowDisputes(true) },
+        { key: "violations", label: t("violations:list.titleMine"), icon: Flag, accent: "#EA580C", onPress: () => openViolations() },
+        { key: "availability-alerts", label: t("mobile:account.menu.availabilityAlerts"), icon: Bell, accent: theme.brand, onPress: () => openAvailabilityAlerts() },
+        ...(canViewOwnerAnalytics ? [{ key: "stats", label: t("mobile:account.menu.stats"), icon: BarChart3, accent: "#2563EB", onPress: () => onAnalyticsPress ? onAnalyticsPress() : setShowAnalytics(true) }] : []),
       ],
     },
     {
-      title: "Hỗ trợ",
+      title: t("common:notifications.categories.support"),
       items: [
-        { key: "support-tickets", label: "Yêu cầu hỗ trợ của tôi", icon: Headphones, accent: "#7C3AED", onPress: () => openSupportTickets() },
+        { key: "support-tickets", label: t("mobile:account.menu.supportTickets"), icon: Headphones, accent: "#7C3AED", onPress: () => openSupportTickets() },
         {
           key: "chatbot",
-          label: "Chatbot MoveVN",
+          label: t("mobile:account.menu.chatbot"),
           icon: Bot,
           accent: theme.brand,
-          value: fabHidden ? "Mở lại" : undefined,
+          value: fabHidden ? t("mobile:account.menu.chatbotReopen") : undefined,
           onPress: () => {
             const ui = useAssistantUi.getState();
             ui.setFabHidden(false);
@@ -274,14 +284,14 @@ export default function AccountTabScreen({
         },
         {
           key: "support",
-          label: "Trung tâm hỗ trợ",
+          label: t("support:list.title"),
           icon: Headphones,
           accent: "#0F766E",
           onPress: () => setShowSupport(true),
         },
         {
           key: "policy",
-          label: "Điều khoản & chính sách",
+          label: t("mobile:account.menu.policy"),
           icon: FileText,
           accent: "#64748B",
           onPress: () => setShowPolicies(true),
@@ -289,26 +299,26 @@ export default function AccountTabScreen({
       ],
     },
     {
-      title: "Bảo mật",
+      title: t("mobile:account.sections.security"),
       items: [
         {
           key: "pin",
-          label: isPinSet === false ? "Thiết lập mã PIN" : "Mã PIN",
+          label: isPinSet === false ? t("accountSecurity:pin.setup.title") : t("accountSecurity:pin.verify.pinLabel"),
           icon: Lock,
           accent: theme.brand,
-          value: isPinSet === false ? "Chưa thiết lập" : "Đổi mã PIN",
+          value: isPinSet === false ? t("account:quickLinks.pin.notSet") : t("account:quickLinks.pin.title"),
           onPress: handlePinAction,
         },
         {
           key: "password",
-          label: "Đổi mật khẩu",
+          label: t("account:quickLinks.password.title"),
           icon: KeyRound,
           accent: "#D97706",
           onPress: () => setShowChangePassword(true),
         },
         {
           key: "sessions",
-          label: "Phiên đăng nhập",
+          label: t("accountSecurity:sessions.title"),
           icon: Monitor,
           accent: "#2563EB",
           onPress: () => setShowSessions(true),
@@ -422,7 +432,7 @@ export default function AccountTabScreen({
   return (
     <>
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.scroll}>
-      <Pressable accessibilityLabel="Xem thông tin tài khoản" accessibilityRole="button" onPress={onProfilePress} style={styles.profileCard}>
+      <Pressable accessibilityLabel={t("mobile:account.profile.openA11y")} accessibilityRole="button" onPress={onProfilePress} style={styles.profileCard}>
         <View style={styles.avatar}>
           {user.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
@@ -431,8 +441,8 @@ export default function AccountTabScreen({
           )}
         </View>
         <View style={styles.profileInfo}>
-          <AppText numberOfLines={1} style={styles.profileName}>{user.fullName || "Tài khoản MoveVN"}</AppText>
-          <AppText numberOfLines={1} style={styles.profileMeta}>{user.email || user.phone || "Xem thông tin tài khoản"}</AppText>
+          <AppText numberOfLines={1} style={styles.profileName}>{user.fullName || t("mobile:account.profile.fallbackName")}</AppText>
+          <AppText numberOfLines={1} style={styles.profileMeta}>{user.email || user.phone || t("mobile:account.profile.openA11y")}</AppText>
           <View style={styles.roleRow}>
             {(user.roles.length ? user.roles : ["Customer"]).map((role) => (
               <View key={role} style={styles.rolePill}>
@@ -453,16 +463,16 @@ export default function AccountTabScreen({
           )}
         </View>
         <View style={styles.ownerInfo}>
-          <AppText display style={styles.ownerTitle}>{roleAction.title}</AppText>
-          <AppText style={styles.ownerDescription}>{roleAction.description}</AppText>
+          <AppText display style={styles.ownerTitle}>{t(roleAction.titleKey)}</AppText>
+          <AppText style={styles.ownerDescription}>{t(roleAction.descriptionKey)}</AppText>
         </View>
         <ChevronRight color={theme.brand} size={21} strokeWidth={2.5} />
       </Pressable>
 
       <View style={styles.section}>
-        <AppText display style={styles.sectionTitle}>Giao diện</AppText>
+        <AppText display style={styles.sectionTitle}>{t("mobile:account.sections.appearance")}</AppText>
         <View style={styles.menuCard}>
-          <View style={styles.menuRow}>
+          <View style={[styles.menuRow, styles.menuDivider]}>
             <View style={[styles.menuIcon, { backgroundColor: theme.brandSoft }]}>
               {isDark ? (
                 <Moon color={theme.brand} size={20} strokeWidth={2.3} />
@@ -471,11 +481,11 @@ export default function AccountTabScreen({
               )}
             </View>
             <View style={styles.menuContent}>
-              <AppText numberOfLines={1} style={styles.menuLabel}>Chế độ tối</AppText>
-              <AppText style={styles.themeHint}>{isDark ? "Đang dùng giao diện tối" : "Đang dùng giao diện sáng"}</AppText>
+              <AppText numberOfLines={1} style={styles.menuLabel}>{t("mobile:account.theme.title")}</AppText>
+              <AppText style={styles.themeHint}>{isDark ? t("mobile:account.theme.activeDark") : t("mobile:account.theme.activeLight")}</AppText>
             </View>
             <Switch
-              accessibilityLabel="Chuyển chế độ sáng tối"
+              accessibilityLabel={t("mobile:account.theme.toggleA11y")}
               accessibilityRole="switch"
               onValueChange={() => {
                 void toggleMode();
@@ -485,13 +495,23 @@ export default function AccountTabScreen({
               value={isDark}
             />
           </View>
+          <View style={styles.menuRow}>
+            <View style={[styles.menuIcon, { backgroundColor: theme.brandSoft }]}>
+              <Globe color={theme.brand} size={20} strokeWidth={2.3} />
+            </View>
+            <View style={styles.menuContent}>
+              <AppText numberOfLines={1} style={styles.menuLabel}>{t("app:language.label")}</AppText>
+              <AppText style={styles.themeHint}>{language === "en" ? t("app:language.en") : t("app:language.vi")}</AppText>
+            </View>
+            <LanguageToggle />
+          </View>
         </View>
       </View>
 
       <VerificationSection
-        cccdValue={cccdVerified ? "Đã xác minh" : undefined}
-        gplxValue={gplxVerified ? "Đã xác minh" : undefined}
-        overviewValue={hubVerifiedCount === 2 ? "Đã xác minh" : `${hubVerifiedCount}/2`}
+        cccdValue={cccdVerified ? t("account:verified") : undefined}
+        gplxValue={gplxVerified ? t("account:verified") : undefined}
+        overviewValue={hubVerifiedCount === 2 ? t("account:verified") : `${hubVerifiedCount}/2`}
         onCccd={() => setShowCccd(true)}
         onGplx={() => {
           setLicenseReturn("account");
@@ -518,7 +538,7 @@ export default function AccountTabScreen({
 
       <Pressable accessibilityRole="button" onPress={() => { void signOut(); }} style={styles.logoutButton}>
         <LogOut color={theme.danger} size={19} strokeWidth={2.4} />
-        <AppText style={styles.logoutText}>Đăng xuất</AppText>
+        <AppText style={styles.logoutText}>{t("accountSecurity:sessions.signOut")}</AppText>
       </Pressable>
     </ScrollView>
     <PinSetupModal
@@ -552,6 +572,7 @@ function VerificationSection({
   onOverview: () => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [expanded, setExpanded] = useState(true);
 
@@ -568,7 +589,7 @@ function VerificationSection({
           </View>
           <View style={styles.menuContent}>
             <AppText numberOfLines={1} style={styles.menuLabel}>
-              Xác minh
+              {t("mobile:account.verification.title")}
             </AppText>
           </View>
           {expanded ? (
@@ -591,7 +612,7 @@ function VerificationSection({
               <View style={styles.menuContent}>
                 <View style={styles.menuLine}>
                   <AppText numberOfLines={1} style={styles.menuLabel}>
-                    Tổng quan xác minh
+                    {t("mobile:account.verification.overview")}
                   </AppText>
                   <AppText numberOfLines={1} style={styles.menuValue}>{overviewValue}</AppText>
                 </View>
@@ -610,7 +631,7 @@ function VerificationSection({
               <View style={styles.menuContent}>
                 <View style={styles.menuLine}>
                   <AppText numberOfLines={1} style={styles.menuLabel}>
-                    CCCD / CMND
+                    {t("accountVerification:overview.items.cccd")}
                   </AppText>
                   {cccdValue ? <AppText numberOfLines={1} style={styles.menuValue}>{cccdValue}</AppText> : null}
                 </View>
@@ -625,7 +646,7 @@ function VerificationSection({
               <View style={styles.menuContent}>
                 <View style={styles.menuLine}>
                   <AppText numberOfLines={1} style={styles.menuLabel}>
-                    Giấy phép lái xe
+                    {t("accountVerification:overview.items.license")}
                   </AppText>
                   {gplxValue ? <AppText numberOfLines={1} style={styles.menuValue}>{gplxValue}</AppText> : null}
                 </View>
@@ -672,23 +693,23 @@ function getRoleAction(roles: UserRole[], activeRole: UserRole | null) {
 
   if (hasOwner && activeRole === "Owner" && hasCustomer) {
     return {
-      title: "Chuyển sang Khách hàng",
-      description: "Thuê xe và quản lý nhu cầu di chuyển của bạn",
+      titleKey: "mobile:account.roleAction.switchToCustomer",
+      descriptionKey: "mobile:account.roleAction.switchToCustomerDescription",
       targetRole: "Customer" as UserRole,
     };
   }
 
   if (hasOwner && activeRole !== "Owner") {
     return {
-      title: "Chuyển sang Chủ xe",
-      description: "Quản lý xe, đơn thuê và doanh thu",
+      titleKey: "mobile:account.roleAction.switchToOwner",
+      descriptionKey: "mobile:account.roleAction.switchToOwnerDescription",
       targetRole: "Owner" as UserRole,
     };
   }
 
   return {
-    title: "Đăng ký làm chủ xe",
-    description: "Tạo hồ sơ cho thuê xe trên MoveVN",
+    titleKey: "accountProfile:becomeOwner",
+    descriptionKey: "mobile:account.roleAction.becomeOwnerDescription",
     targetRole: null,
   };
 }

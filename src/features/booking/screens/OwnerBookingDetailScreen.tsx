@@ -11,6 +11,7 @@ import ReturnProgress from "../components/ReturnProgress";
 import InspectionReportCard from "../components/InspectionReportCard";
 import CheckoutEditor from "../components/CheckoutEditor";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AppState,
   ActivityIndicator,
@@ -47,6 +48,7 @@ import { escrowHoldInfo, formatDateTime, formatMoney, rentalProgress } from "@/f
 import RiskScoreBadge from "@/features/booking/components/RiskScoreBadge";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
+import ExtensionRequestPanel from "@/features/contracts/components/ExtensionRequestPanel";
 import BookingTimeline from "@/features/booking/components/BookingTimeline";
 import BookingPricingDetails from "@/features/booking/components/BookingPricingDetails";
 import { createOwnerReview, getBookingReviews, hasReviewed, type ReviewResponse } from "@/features/review/reviewService";
@@ -75,6 +77,7 @@ export default function OwnerBookingDetailScreen({
   onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId } = route.params;
@@ -134,11 +137,11 @@ export default function OwnerBookingDetailScreen({
     } catch (err) {
       if (request !== loadId.current) return;
       setDataReady(false);
-      Alert.alert("Lỗi", getApiErrorMessage(err, "Không tải được chi tiết đơn thuê."));
+      Alert.alert(t("booking:detail.toast.errorTitle"), getApiErrorMessage(err, t("mobile:ownerBooking.detail.loadError")));
     } finally {
       if (request === loadId.current) setLoading(false);
     }
-  }, [bookingId]);
+  }, [bookingId, t]);
 
   useBookingNotificationRefresh(bookingId, useCallback(() => { if (!actionLock.current && !form) void load(); }, [load, form]));
   useFocusEffect(useCallback(() => { void load(); return () => { loadId.current++; }; }, [load]));
@@ -155,12 +158,12 @@ export default function OwnerBookingDetailScreen({
     try {
       await fn();
       await load();
-      if (success) Alert.alert("Thành công", success);
+      if (success) Alert.alert(t("booking:detail.toast.successTitle"), success);
       return true;
     } catch (err) {
-      const message = getApiErrorMessage(err, "Vui lòng thử lại sau.");
+      const message = getApiErrorMessage(err, t("mobile:trip.dialogs.tryAgain"));
       onError?.(message);
-      Alert.alert("Thất bại", message);
+      Alert.alert(t("mobile:trip.dialogs.failedTitle"), message);
       return false;
     } finally {
       actionLock.current = false;
@@ -169,22 +172,22 @@ export default function OwnerBookingDetailScreen({
   }
 
   function backToList(message: string) {
-    Alert.alert("Thành công", message, [{ text: "Về danh sách", onPress: handleBack }]);
+    Alert.alert(t("booking:detail.toast.successTitle"), message, [{ text: t("mobile:trip.dialogs.backToList"), onPress: handleBack }]);
   }
 
   async function submitReason() {
     if (!reasonModal || !reason.trim()) {
-      Alert.alert("Thiếu lý do", "Vui lòng nhập lý do.");
+      Alert.alert(t("mobile:trip.dialogs.cancelReasonRequiredTitle"), t("mobile:ownerBooking.reason.required"));
       return;
     }
     const mode = reasonModal.mode;
     setReasonModal(null);
     if (mode === "reject") {
       const ok = await runAction("reject", () => rejectBooking(bookingId, reason.trim()).then(() => undefined));
-      if (ok) backToList("Đã từ chối đơn thuê.");
+      if (ok) backToList(t("mobile:ownerBooking.actions.rejected"));
     } else {
       const ok = await runAction("cancel", () => cancelBookingByOwner(bookingId, reason.trim()).then(() => undefined));
-      if (ok) backToList("Đã hủy. Toàn bộ cọc hoàn vào ví khách.");
+      if (ok) backToList(t("mobile:ownerBooking.actions.cancelled"));
     }
     setReason("");
   }
@@ -196,12 +199,12 @@ export default function OwnerBookingDetailScreen({
     return (
       <View style={styles.screen}>
         <DetailHeader
-          kicker={handover ? "Đơn cho thuê" : undefined}
-          title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Đơn cho thuê"}
+          kicker={handover ? t("mobile:ownerBooking.detail.kicker") : undefined}
+          title={handover ? (handover === "CheckIn" ? t("booking:detail.handoverCheckIn") : t("booking:detail.handoverCheckOut")) : t("mobile:ownerBooking.detail.kicker")}
           onBack={handleBack}
         />
         <View style={styles.center}>
-          {loading ? <ActivityIndicator color={theme.brand} /> : <Text style={styles.muted}>Không tải được.</Text>}
+          {loading ? <ActivityIndicator color={theme.brand} /> : <Text style={styles.muted}>{t("mobile:trip.detail.loadFailed")}</Text>}
         </View>
       </View>
     );
@@ -222,25 +225,25 @@ export default function OwnerBookingDetailScreen({
 
   const checkInActions = <>
         {actions.createCheckIn && (
-          <DetailButton icon={ClipboardCheck} label={checkInReport?.requiresRevision ? "Lập lại và gửi biên bản nhận xe" : "Lập biên bản nhận xe"} onPress={() => setForm("CheckIn")} disabled={!dataReady || busy !== null} />
+          <DetailButton icon={ClipboardCheck} label={checkInReport?.requiresRevision ? t("mobile:ownerBooking.actions.createCheckInRevision") : t("mobile:ownerBooking.actions.createCheckIn")} onPress={() => setForm("CheckIn")} disabled={!dataReady || busy !== null} />
         )}
         {status === "DepositPaid" && !checkInReport && !pickupReached && booking.canCheckInNow === true ? (
-          <Text style={styles.hint}>Xe trống: có thể nhận sớm tối đa 2 tiếng. Bạn có thể lập biên bản nhận xe ngay. Giờ trả và giá thuê giữ theo booking.</Text>
+          <Text style={styles.hint}>{t("mobile:ownerBooking.checkIn.earlyPickupHint")}</Text>
         ) : null}
 
-        {status === "DepositPaid" && !checkInReport && booking.canCheckInNow !== true ? <Text style={styles.hint}>{booking.checkInUnavailableReason || "Tải lại để kiểm tra khả năng nhận xe."}{booking.checkInOpensAt ? ` Mở nhận sớm từ ${formatDateTime(booking.checkInOpensAt)}.` : ""}</Text> : null}
+        {status === "DepositPaid" && !checkInReport && booking.canCheckInNow !== true ? <Text style={styles.hint}>{booking.checkInUnavailableReason || t("mobile:ownerBooking.checkIn.reloadHint")}{booking.checkInOpensAt ? t("mobile:ownerBooking.checkIn.opensAt", { time: formatDateTime(booking.checkInOpensAt) }) : ""}</Text> : null}
   </>;
   const checkOutActions = <>
     <ReturnProgress booking={booking} report={checkOutReport} role="Owner" />
     <OutstandingSurcharge booking={booking} report={checkOutReport} role="Owner" onUpdated={load} />
         {actions.createCheckOut && (
-          <DetailButton icon={PackageCheck} label="Lập biên bản trả xe" onPress={() => setForm("CheckOut")} disabled={!dataReady || busy !== null} />
+          <DetailButton icon={PackageCheck} label={t("mobile:ownerBooking.actions.createCheckOut")} onPress={() => setForm("CheckOut")} disabled={!dataReady || busy !== null} />
         )}
 
         {checkOutReport ? <CheckoutEditor booking={booking} report={checkOutReport} initialKm={checkInReport?.odometerKm} onSaved={load} /> : null}
 
         {actions.confirmReceipt && (
-          <DetailButton icon={CircleCheck} label="Xác nhận đã nhận xe" onPress={() => runAction("receipt", () => confirmReceipt(bookingId, {}).then(() => undefined), "Đã xác nhận nhận xe.")} disabled={!dataReady || busy !== null} />
+          <DetailButton icon={CircleCheck} label={t("booking:detail.confirmReceipt")} onPress={() => runAction("receipt", () => confirmReceipt(bookingId, {}).then(() => undefined), t("mobile:ownerBooking.actions.receiptConfirmed"))} disabled={!dataReady || busy !== null} />
         )}
 
 
@@ -249,11 +252,11 @@ export default function OwnerBookingDetailScreen({
   return (
     <View style={styles.screen}>
       <DetailHeader
-        kicker={handover ? "Đơn cho thuê" : undefined}
-        title={handover ? (handover === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out") : "Đơn cho thuê"}
+        kicker={handover ? t("mobile:ownerBooking.detail.kicker") : undefined}
+        title={handover ? (handover === "CheckIn" ? t("booking:detail.handoverCheckIn") : t("booking:detail.handoverCheckOut")) : t("mobile:ownerBooking.detail.kicker")}
         onBack={handleBack}
         right={
-          <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin với khách thuê" onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.headerChat}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:ownerBooking.detail.chatA11y")} onPress={() => navigation.navigate("BookingChat", { bookingId })} style={styles.headerChat}>
             <MessageSquare color={theme.brand} size={18} strokeWidth={2.1} />
           </Pressable>
         }
@@ -270,17 +273,17 @@ export default function OwnerBookingDetailScreen({
                 </View>
                 <View style={styles.handoverBody}>
                   <Text style={styles.handoverCode}>{booking.bookingCode}</Text>
-                  <Text style={styles.handoverVehicle} numberOfLines={1}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text>
+                  <Text style={styles.handoverVehicle} numberOfLines={1}>{booking.vehicleName || t("mobile:ownerBooking.detail.vehicleFallback", { id: booking.vehicleId })}</Text>
                 </View>
                 <DetailPill
-                  label={activeHandoverReport ? (activeHandoverReport.isCustomerConfirmed ? "Đã xác nhận" : activeHandoverReport.requiresRevision ? "Cần lập lại" : "Chờ khách xác nhận") : "Chưa có biên bản"}
+                  label={activeHandoverReport ? (activeHandoverReport.isCustomerConfirmed ? t("booking:status.confirmed") : activeHandoverReport.requiresRevision ? t("mobile:trip.detail.reportStatusRevision") : t("booking:detail.reportAwaiting")) : t("booking:detail.noReport")}
                   tone={activeHandoverReport ? (activeHandoverReport.isCustomerConfirmed ? "mint" : activeHandoverReport.requiresRevision ? "danger" : "warn") : "neutral"}
                 />
               </View>
-              <DetailButton variant="ghost" icon={RotateCcw} label="Tải lại biên bản" disabled={busy !== null} onPress={() => void load()} />
+              <DetailButton variant="ghost" icon={RotateCcw} label={t("mobile:trip.detail.reloadReport")} disabled={busy !== null} onPress={() => void load()} />
             </DetailCard>
 
-            {!dataReady ? <DetailNotice icon={TriangleAlert} title="Chưa tải được dữ liệu mới" tone="warn">Tải lại trước khi thao tác.</DetailNotice> : null}
+            {!dataReady ? <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.staleTitle")} tone="warn">{t("mobile:trip.detail.staleBodyHandover")}</DetailNotice> : null}
 
             {activeHandoverReport ? (
               <InspectionReportCard booking={booking} report={activeHandoverReport} />
@@ -288,10 +291,10 @@ export default function OwnerBookingDetailScreen({
               <DetailCard>
                 <DetailSectionHeader
                   icon={handover === "CheckIn" ? KeyRound : PackageCheck}
-                  title="Chưa có biên bản"
-                  subtitle="Biên bản sẽ xuất hiện khi bạn lập"
+                  title={t("booking:detail.noReport")}
+                  subtitle={t("mobile:ownerBooking.handover.placeholderSubtitle")}
                 />
-                <Text style={styles.hint}>Thao tác khả dụng sẽ xuất hiện theo trạng thái chuyến đi.</Text>
+                <Text style={styles.hint}>{t("mobile:trip.detail.reportPlaceholderHint")}</Text>
               </DetailCard>
             )}
 
@@ -299,8 +302,8 @@ export default function OwnerBookingDetailScreen({
               <DetailSectionHeader
                 icon={handover === "CheckIn" ? KeyRound : PackageCheck}
                 tone={handover === "CheckIn" ? "brand" : "mint"}
-                title={handover === "CheckIn" ? "Xác nhận nhận xe" : "Xác nhận trả xe"}
-                subtitle="Kiểm tra biên bản, ảnh xe và các khoản thanh toán trước khi xác nhận"
+                title={handover === "CheckIn" ? t("mobile:trip.detail.confirmPickupTitle") : t("mobile:trip.detail.confirmReturnTitle")}
+                subtitle={t("mobile:trip.detail.confirmHandoverSubtitle")}
               />
               {handover === "CheckIn" ? checkInActions : checkOutActions}
             </DetailCard>
@@ -314,10 +317,10 @@ export default function OwnerBookingDetailScreen({
           onOpenUserProfile={(id) => (onOpenUserProfile ? onOpenUserProfile(id) : navigation.navigate("BookingUserProfile", { userId: id }))}
         />
         <View style={styles.body}>
-        {!dataReady ? <DetailNotice icon={TriangleAlert} title="Chưa tải được dữ liệu mới" tone="warn">Quay lại màn hoặc tải lại trước khi thao tác.</DetailNotice> : null}
+        {!dataReady ? <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.staleTitle")} tone="warn">{t("mobile:trip.detail.staleBody")}</DetailNotice> : null}
 
         <View style={styles.toolbarRow}>
-          <DetailButton variant="ghost" icon={RotateCcw} label="Tải lại" disabled={busy !== null} onPress={() => void load()} style={styles.toolbarButton} />
+          <DetailButton variant="ghost" icon={RotateCcw} label={t("mobile:trip.detail.reload")} disabled={busy !== null} onPress={() => void load()} style={styles.toolbarButton} />
           {onOpenDisputes ? (
             <Pressable
               accessibilityRole="button"
@@ -325,13 +328,13 @@ export default function OwnerBookingDetailScreen({
               style={({ pressed }) => [styles.disputeButton, pressed && styles.pressed]}
             >
               <TriangleAlert color={p.danger} size={15} strokeWidth={2.1} />
-              <Text style={styles.disputeLink}>Tranh chấp</Text>
+              <Text style={styles.disputeLink}>{t("mobile:trip.detail.dispute")}</Text>
             </Pressable>
           ) : null}
         </View>
 
         <View style={styles.statusChips}>
-          {booking.escrowStatus === "Held" ? <DetailPill label={`Giữ cọc ${formatMoney(booking.escrowAmount)}`} tone="mint" /> : null}
+          {booking.escrowStatus === "Held" ? <DetailPill label={t("mobile:trip.detail.escrowHold", { amount: formatMoney(booking.escrowAmount) })} tone="mint" /> : null}
           <RiskScoreBadge score={booking.riskScore} />
         </View>
 
@@ -342,9 +345,9 @@ export default function OwnerBookingDetailScreen({
                 <View style={styles.progressIcon}>
                   <Clock3 color={p.brand} size={15} strokeWidth={2.1} />
                 </View>
-                <Text style={styles.progressTitle}>{progress.overdue ? "Khách đã quá hạn trả xe" : "Đang trong chuyến"}</Text>
+                <Text style={styles.progressTitle}>{progress.overdue ? t("mobile:ownerBooking.progress.overdueTitle") : t("mobile:trip.progress.titleActive")}</Text>
               </View>
-              <DetailPill label={progress.overdue ? "Quá hạn" : `Ngày ${progress.currentDay}/${progress.totalDays}`} tone={progress.overdue ? "danger" : "brand"} />
+              <DetailPill label={progress.overdue ? t("mobile:trip.progress.overduePill") : t("mobile:trip.progress.dayPill", { day: progress.currentDay, total: progress.totalDays })} tone={progress.overdue ? "danger" : "brand"} />
             </View>
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${progressPercent}%` }, progress.overdue && styles.progressFillOverdue]} />
@@ -354,10 +357,10 @@ export default function OwnerBookingDetailScreen({
         )}
 
         {(status === "InProgress" || status === "Returning") && (
-          <DetailButton variant="secondary" icon={MapPin} label="Xem vị trí xe (GPS)" disabled={busy !== null} onPress={() => navigation.navigate("OwnerTracking", { bookingId, vehicleName: booking.vehicleName })} />
+          <DetailButton variant="secondary" icon={MapPin} label={t("mobile:ownerBooking.detail.viewGps")} disabled={busy !== null} onPress={() => navigation.navigate("OwnerTracking", { bookingId, vehicleName: booking.vehicleName })} />
         )}
         {status === "Completed" && (
-          <DetailButton variant="secondary" icon={CalendarDays} label="Xem hành trình chuyến đi" disabled={busy !== null} onPress={() => navigation.navigate("OwnerPlayback", { bookingId, vehicleName: booking.vehicleName })} />
+          <DetailButton variant="secondary" icon={CalendarDays} label={t("booking:detail.viewTripPlayback")} disabled={busy !== null} onPress={() => navigation.navigate("OwnerPlayback", { bookingId, vehicleName: booking.vehicleName })} />
         )}
 
         <ReturnProgress booking={booking} report={checkOutReport} role="Owner" />
@@ -366,17 +369,17 @@ export default function OwnerBookingDetailScreen({
           <DetailCard>
             <DetailSectionHeader
               icon={CircleCheck}
-              title="Yêu cầu thuê đang chờ duyệt"
-              subtitle="Phản hồi sớm để khách kịp đặt cọc"
+              title={t("mobile:ownerBooking.pending.title")}
+              subtitle={t("mobile:ownerBooking.pending.subtitle")}
             />
             {autoCancelHours != null && booking.createdAt ? (
-              <DetailNotice icon={Clock3} title="Hạn phản hồi" tone="warn">
-                Vui lòng phản hồi trước {formatDateTime(new Date(new Date(booking.createdAt).getTime() + autoCancelHours * 3600000).toISOString())}. Quá {autoCancelHours} giờ hệ thống sẽ tự động từ chối đơn.
+              <DetailNotice icon={Clock3} title={t("mobile:ownerBooking.pending.deadlineTitle")} tone="warn">
+                {t("mobile:ownerBooking.pending.deadlineBody", { time: formatDateTime(new Date(new Date(booking.createdAt).getTime() + autoCancelHours * 3600000).toISOString()), hours: autoCancelHours })}
               </DetailNotice>
             ) : null}
             {(booking.riskFactors ?? []).length > 0 ? (
               <View style={styles.riskBlock}>
-                <Text style={styles.riskTitle}>Yếu tố rủi ro khách thuê</Text>
+                <Text style={styles.riskTitle}>{t("mobile:ownerBooking.pending.riskTitle")}</Text>
                 {(booking.riskFactors ?? []).map((f) => (
                   <Text key={f} style={styles.bullet}>
                     • {f}
@@ -388,15 +391,15 @@ export default function OwnerBookingDetailScreen({
               <View style={styles.actionRow}>
                 <DetailButton
                   icon={CircleCheck}
-                  label={busy === "approve" ? "Đang duyệt..." : "Duyệt đơn thuê"}
-                  onPress={() => void runAction("approve", () => approveBooking(bookingId).then(() => undefined), "Đã duyệt. Hợp đồng tự tạo để 2 bên ký.")}
+                  label={busy === "approve" ? t("mobile:ownerBooking.actions.approving") : t("mobile:ownerBooking.actions.approve")}
+                  onPress={() => void runAction("approve", () => approveBooking(bookingId).then(() => undefined), t("mobile:ownerBooking.actions.approved"))}
                   disabled={!dataReady || busy !== null}
                   style={styles.flexButton}
                 />
                 <DetailButton
                   variant="secondary"
                   icon={XCircle}
-                  label="Từ chối"
+                  label={t("mobile:ownerBooking.actions.reject")}
                   onPress={() => { setReason(""); setReasonModal({ mode: "reject" }); }}
                   disabled={!dataReady || busy !== null}
                   style={styles.flexButton}
@@ -407,16 +410,16 @@ export default function OwnerBookingDetailScreen({
         ) : null}
 
         <DetailCard>
-          <DetailSectionHeader icon={MapPin} title="Nhận & trả xe" subtitle="Địa điểm bàn giao" />
+          <DetailSectionHeader icon={MapPin} title={t("mobile:trip.detail.placesTitle")} subtitle={t("mobile:trip.detail.placesSubtitle")} />
           <View style={styles.placeBlock}>
             <View style={styles.placeRail}><View style={styles.placeDotBrand} /><View style={styles.placeLine} /></View>
             <View style={styles.placeBody}>
-              <Text style={styles.placeLabel}>Điểm nhận xe</Text>
+              <Text style={styles.placeLabel}>{t("mobile:trip.detail.pickupPoint")}</Text>
               <Text style={styles.placeAddress}>{booking.pickupAddress}</Text>
-              <Text style={styles.hint}>Dự kiến {formatDateTime(booking.startDate)}</Text>
+              <Text style={styles.hint}>{t("mobile:trip.detail.expectedAt", { time: formatDateTime(booking.startDate) })}</Text>
               {booking.deliveryDistanceKm != null ? (
                 <Text style={styles.hint}>
-                  Cách vị trí xe {booking.deliveryDistanceKm} km{booking.deliveryFee > 0 ? ` · Phí giao xe ${formatMoney(booking.deliveryFee)}` : " · Miễn phí giao xe"}
+                  {t("mobile:trip.detail.vehicleDistance", { km: booking.deliveryDistanceKm })}{booking.deliveryFee > 0 ? t("mobile:trip.detail.deliveryFeeSuffix", { amount: formatMoney(booking.deliveryFee) }) : t("mobile:trip.detail.deliveryFreeSuffix")}
                 </Text>
               ) : null}
             </View>
@@ -424,66 +427,66 @@ export default function OwnerBookingDetailScreen({
           <View style={styles.placeBlock}>
             <View style={styles.placeRail}><View style={styles.placeDotInk} /></View>
             <View style={styles.placeBody}>
-              <Text style={styles.placeLabel}>Điểm trả xe</Text>
+              <Text style={styles.placeLabel}>{t("mobile:trip.detail.returnPoint")}</Text>
               <Text style={styles.placeAddress}>{booking.returnAddress || booking.pickupAddress}</Text>
-              <Text style={styles.hint}>Dự kiến {formatDateTime(booking.endDate)}</Text>
+              <Text style={styles.hint}>{t("mobile:trip.detail.expectedAt", { time: formatDateTime(booking.endDate) })}</Text>
             </View>
           </View>
           {booking.customerNote ? (
             <View style={styles.noteBox}>
-              <Text style={styles.noteLabel}>Ghi chú của khách</Text>
+              <Text style={styles.noteLabel}>{t("mobile:ownerBooking.detail.customerNote")}</Text>
               <Text style={styles.noteText}>{booking.customerNote}</Text>
             </View>
           ) : null}
         </DetailCard>
 
         <DetailCard>
-          <DetailSectionHeader icon={ReceiptText} title="Chi phí & thanh toán" subtitle="Đã gồm phí nền tảng" right={<DetailPill label={formatMoney(booking.totalAmount)} tone="brand" />} />
+          <DetailSectionHeader icon={ReceiptText} title={t("mobile:ownerBooking.cost.title")} subtitle={t("mobile:trip.detail.costSubtitle")} right={<DetailPill label={formatMoney(booking.totalAmount)} tone="brand" />} />
           <View style={styles.rows}>
-            <DetailRow label={`Giá thuê (${booking.totalDays} ngày)`} value={formatMoney(booking.basePrice)} />
+            <DetailRow label={t("mobile:trip.detail.rentalPriceDays", { days: booking.totalDays })} value={formatMoney(booking.basePrice)} />
             {booking.discountPercent > 0 ? (
-              <DetailRow label={`Giảm giá (${booking.discountPercent}%)`} value={`-${formatMoney(booking.discountAmount)}`} tone="success" />
+              <DetailRow label={t("booking:detail.discount", { percent: booking.discountPercent })} value={`-${formatMoney(booking.discountAmount)}`} tone="success" />
             ) : null}
             {booking.promotionDiscount > 0 ? (
-              <DetailRow label={`Mã ${booking.promotionCode ?? ""}`} value={`-${formatMoney(booking.promotionDiscount)}`} tone="success" />
+              <DetailRow label={t("booking:detail.promoCode", { code: booking.promotionCode ?? "" })} value={`-${formatMoney(booking.promotionDiscount)}`} tone="success" />
             ) : null}
             {booking.deliveryFee > 0 ? (
               <DetailRow
-                label={`Phí giao xe tận nơi${booking.deliveryDistanceKm != null ? ` (${booking.deliveryDistanceKm} km)` : ""}`}
+                label={booking.deliveryDistanceKm != null ? t("booking:detail.deliveryFeeWithKm", { km: booking.deliveryDistanceKm }) : t("booking:detail.deliveryFee")}
                 value={`+${formatMoney(booking.deliveryFee)}`}
               />
             ) : null}
-            <DetailRow label="Phí nền tảng (đã gồm trong tổng)" value={formatMoney(booking.platformFee)} tone="muted" />
+            <DetailRow label={t("mobile:trip.detail.platformFeeIncluded")} value={formatMoney(booking.platformFee)} tone="muted" />
           </View>
           <View style={styles.totalRow}>
             <View style={styles.totalBody}>
-              <Text style={styles.totalLabel}>Tổng cộng</Text>
-              <Text style={styles.totalHint}>Đã trừ ưu đãi, chưa gồm thế chấp</Text>
+              <Text style={styles.totalLabel}>{t("booking:create.total")}</Text>
+              <Text style={styles.totalHint}>{t("mobile:trip.detail.totalHint")}</Text>
             </View>
             <Text style={styles.totalValue}>{formatMoney(booking.totalAmount)}</Text>
           </View>
           <View style={styles.scheduleBox}>
-            <Text style={styles.scheduleTitle}>Lịch thanh toán</Text>
+            <Text style={styles.scheduleTitle}>{t("mobile:ownerBooking.cost.scheduleTitle")}</Text>
             <View style={styles.scheduleRow}>
               <Text style={styles.scheduleLabel}>
-                {["DepositPaid", "Confirmed", "InProgress", "Completed"].includes(status) ? "Đã chuyển tiền cọc" : "Cần chuyển tiền cọc"}
+                {["DepositPaid", "Confirmed", "InProgress", "Completed"].includes(status) ? t("mobile:ownerBooking.cost.depositSent") : t("mobile:ownerBooking.cost.depositDue")}
               </Text>
               <Text style={styles.scheduleValue}>{formatMoney(booking.depositAmount)}</Text>
             </View>
             {remainingAmount > 0 ? (
               <View style={styles.scheduleRow}>
-                <Text style={styles.scheduleLabel}>Khách trả khi nhận xe</Text>
+                <Text style={styles.scheduleLabel}>{t("mobile:ownerBooking.cost.customerPaysOnPickup")}</Text>
                 <Text style={styles.scheduleValue}>{formatMoney(remainingAmount)}</Text>
               </View>
             ) : null}
             {booking.securityDepositAmount > 0 ? (
               <View style={styles.scheduleRow}>
-                <Text style={styles.scheduleLabel}>Thế chấp (hoàn khi trả xe)</Text>
+                <Text style={styles.scheduleLabel}>{t("mobile:ownerBooking.cost.securityDeposit")}</Text>
                 <Text style={styles.scheduleValue}>{formatMoney(booking.securityDepositAmount)}</Text>
               </View>
             ) : null}
           </View>
-          {booking.paymentDueAt && status === "Approved" ? <Text style={styles.hint}>Hạn thanh toán cọc: {formatDateTime(booking.paymentDueAt)}</Text> : null}
+          {booking.paymentDueAt && status === "Approved" ? <Text style={styles.hint}>{t("mobile:ownerBooking.cost.paymentDueAt", { time: formatDateTime(booking.paymentDueAt) })}</Text> : null}
           <BookingPricingDetails booking={booking} />
         </DetailCard>
 
@@ -493,28 +496,29 @@ export default function OwnerBookingDetailScreen({
           <DetailButton
             variant="danger"
             icon={TriangleAlert}
-            label="Hủy booking (hoàn 100% cọc)"
+            label={t("mobile:ownerBooking.actions.cancelBookingFullRefund")}
             onPress={() => { setReason(""); setReasonModal({ mode: "cancel" }); }}
             disabled={!dataReady || busy !== null}
           />
         )}
 
         <ContractBlock bookingStatus={booking.status} bookingId={booking.id} userId={userId} canManage onChanged={() => load()} />
+        <ExtensionRequestPanel booking={booking} onBookingChanged={() => load()} />
 
         <DetailCard>
-          <DetailSectionHeader icon={Camera} title="Bàn giao xe" subtitle="Biên bản nhận xe và trả xe" />
+          <DetailSectionHeader icon={Camera} title={t("mobile:trip.detail.handoverKicker")} subtitle={t("mobile:trip.detail.handoverSectionSubtitle")} />
           <InspectionSummaryLink booking={booking} type="CheckIn" report={checkInReport} onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckIn" })} />
           <InspectionSummaryLink booking={booking} type="CheckOut" report={checkOutReport} divider onPress={() => navigation.navigate("OwnerBookingHandover", { bookingId, inspectionType: "CheckOut" })} />
         </DetailCard>
 
         {status === "Completed" && booking.escrowStatus === "Held" ? (
           hold.withinHoldWindow ? (
-            <Text style={styles.hint}>Tiền cọc đang giữ để đối soát. Còn khoảng {hold.remainingHours} giờ nữa mới được giải ngân.</Text>
+            <Text style={styles.hint}>{t("mobile:ownerBooking.settle.holdHint", { hours: hold.remainingHours })}</Text>
           ) : (
             <DetailButton
               icon={Wallet}
-              label="Giải ngân tiền cọc"
-              onPress={() => void runAction("settle", () => requestSettlement(bookingId).then(() => undefined), "Đã giải ngân escrow.")}
+              label={t("mobile:ownerBooking.settle.action")}
+              onPress={() => void runAction("settle", () => requestSettlement(bookingId).then(() => undefined), t("mobile:ownerBooking.settle.done"))}
               disabled={!dataReady || busy !== null || !actions.settle}
             />
           )
@@ -524,17 +528,20 @@ export default function OwnerBookingDetailScreen({
           <DetailCard>
             <DetailSectionHeader
               icon={Wallet}
-              title="Chờ cọc bổ sung để gia hạn"
-              subtitle="Yêu cầu gia hạn của khách"
+              title={t("mobile:ownerBooking.topUp.title")}
+              subtitle={t("mobile:ownerBooking.topUp.subtitle")}
               right={<DetailPill label={formatMoney(pendingTopUp.amount)} tone="warn" />}
             />
-            <Text style={styles.hint}>Khách cần thanh toán {formatMoney(pendingTopUp.amount)}{pendingTopUp.dueAt ? ` trước ${formatDateTime(pendingTopUp.dueAt)}` : ""}. Nếu quá hạn, yêu cầu gia hạn bị hủy và hợp đồng cũ tiếp tục hiệu lực.</Text>
+            <Text style={styles.hint}>{t("mobile:ownerBooking.topUp.body", {
+              amount: formatMoney(pendingTopUp.amount),
+              due: pendingTopUp.dueAt ? t("mobile:ownerBooking.topUp.beforeDue", { time: formatDateTime(pendingTopUp.dueAt) }) : "",
+            })}</Text>
           </DetailCard>
         ) : null}
 
         {(status === "Cancelled" || status === "Rejected") && booking.cancelReason ? (
           <DetailCard>
-            <DetailSectionHeader icon={TriangleAlert} title={`Lý do ${status === "Rejected" ? "từ chối" : "hủy"}`} subtitle="Ghi nhận từ hệ thống" />
+            <DetailSectionHeader icon={TriangleAlert} title={status === "Rejected" ? t("mobile:trip.detail.cancelReasonRejected") : t("booking:detail.cancelReasonLabel")} subtitle={t("mobile:trip.detail.cancelReasonSubtitle")} />
             <Text style={styles.muted}>{booking.cancelReason}</Text>
           </DetailCard>
         ) : null}
@@ -543,14 +550,14 @@ export default function OwnerBookingDetailScreen({
           <DetailCard>
             <DetailSectionHeader
               icon={Star}
-              title="Đánh giá khách thuê"
-              subtitle={alreadyReviewed ? "Cảm ơn bạn đã chia sẻ trải nghiệm" : "Chia sẻ trải nghiệm của bạn"}
+              title={t("mobile:ownerBooking.review.title")}
+              subtitle={alreadyReviewed ? t("mobile:trip.detail.reviewThanksSubtitle") : t("mobile:trip.detail.reviewShareSubtitle")}
             />
             {!alreadyReviewed ? (
               <View style={styles.reviewPrompt}>
                 <Text style={[styles.reviewPromptStars, { color: theme.brand }]}>★★★★★</Text>
-                <Text style={styles.muted}>Bạn chưa đánh giá khách thuê cho đơn này.</Text>
-                <DetailButton icon={Star} label="Viết đánh giá" onPress={() => setReviewOpen(true)} disabled={!dataReady || busy !== null} />
+                <Text style={styles.muted}>{t("mobile:ownerBooking.review.notReviewed")}</Text>
+                <DetailButton icon={Star} label={t("booking:detail.writeReview")} onPress={() => setReviewOpen(true)} disabled={!dataReady || busy !== null} />
               </View>
             ) : null}
             {bookingReviews.filter((review) => review.reviewType === "Owner").map((review) => (
@@ -558,7 +565,7 @@ export default function OwnerBookingDetailScreen({
                 <View style={styles.reviewHeader}>
                   {review.reviewerAvatar ? <Image source={{ uri: review.reviewerAvatar }} style={styles.reviewAvatar} /> : <View style={styles.reviewAvatarFallback}><Text style={styles.reviewAvatarText}>{(review.reviewerName || "C").slice(0, 1).toUpperCase()}</Text></View>}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.reviewName}>{review.reviewerName || "Chủ xe"}</Text>
+                    <Text style={styles.reviewName}>{review.reviewerName || t("mobile:ownerBooking.review.reviewerFallback")}</Text>
                     <Text style={styles.reviewStars}>{"★".repeat(review.rating)}{"☆".repeat(Math.max(0, 5 - review.rating))}</Text>
                   </View>
                   <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString("vi-VN")}</Text>
@@ -566,7 +573,7 @@ export default function OwnerBookingDetailScreen({
                 {review.comment ? <Text style={styles.reviewComment}>{review.comment}</Text> : null}
               </View>
             ))}
-            {alreadyReviewed && bookingReviews.filter((review) => review.reviewType === "Owner").length === 0 ? <Text style={styles.muted}>Bạn đã gửi đánh giá cho booking này.</Text> : null}
+            {alreadyReviewed && bookingReviews.filter((review) => review.reviewType === "Owner").length === 0 ? <Text style={styles.muted}>{t("mobile:ownerBooking.review.submitted")}</Text> : null}
           </DetailCard>
         )}
 
@@ -580,24 +587,24 @@ export default function OwnerBookingDetailScreen({
       <Modal visible={reasonModal !== null} transparent animationType="fade" onRequestClose={() => setReasonModal(null)}>
         <View style={styles.backdrop}>
           <View style={styles.modal}>
-            <Text style={styles.cardTitle}>{reasonModal?.mode === "reject" ? "Từ chối đơn thuê" : "Hủy booking"}</Text>
+            <Text style={styles.cardTitle}>{reasonModal?.mode === "reject" ? t("mobile:ownerBooking.reason.rejectTitle") : t("booking:detail.cancelBooking")}</Text>
             {reasonModal?.mode === "cancel" && (
-              <Text style={styles.muted}>Toàn bộ tiền cọc sẽ hoàn 100% vào ví khách.</Text>
+              <Text style={styles.muted}>{t("mobile:ownerBooking.reason.cancelBody")}</Text>
             )}
             <TextInput
               value={reason}
               onChangeText={setReason}
-              placeholder="Nhập lý do..."
+              placeholder={t("mobile:ownerBooking.reason.placeholder")}
               placeholderTextColor={theme.placeholder}
               multiline
               style={[styles.input, styles.multiline]}
             />
             <View style={styles.modalActions}>
               <Pressable onPress={() => setReasonModal(null)} style={styles.ghostButton}>
-                <Text style={styles.ghostText}>Đóng</Text>
+                <Text style={styles.ghostText}>{t("common:closeAction")}</Text>
               </Pressable>
               <Pressable onPress={submitReason} style={styles.primaryButton}>
-                <Text style={styles.primaryText}>Xác nhận</Text>
+                <Text style={styles.primaryText}>{t("common:confirm")}</Text>
               </Pressable>
             </View>
           </View>
@@ -610,13 +617,13 @@ export default function OwnerBookingDetailScreen({
             <View style={styles.modalHead}>
               <View style={styles.modalIcon}><Star color={theme.brand} size={18} strokeWidth={2.1} /></View>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.modalTitle}>Đánh giá khách thuê</Text>
-                <Text style={styles.modalHint}>Chọn số sao tổng quan (bắt buộc)</Text>
+                <Text style={styles.modalTitle}>{t("mobile:ownerBooking.review.title")}</Text>
+                <Text style={styles.modalHint}>{t("mobile:ownerBooking.review.starsHint")}</Text>
               </View>
             </View>
             <View style={styles.stars}>
               {[1, 2, 3, 4, 5].map((s) => (
-                <Pressable key={s} accessibilityRole="button" accessibilityLabel={`${s} sao`} onPress={() => setRating(s)} style={styles.star}>
+                <Pressable key={s} accessibilityRole="button" accessibilityLabel={t("mobile:ownerBooking.review.starA11y", { count: s })} onPress={() => setRating(s)} style={styles.star}>
                   <Text style={[styles.starText, s <= rating && styles.starActive]}>★</Text>
                 </Pressable>
               ))}
@@ -624,23 +631,23 @@ export default function OwnerBookingDetailScreen({
             <TextInput
               value={comment}
               onChangeText={setComment}
-              placeholder="Nhận xét về khách..."
+              placeholder={t("mobile:ownerBooking.review.commentPlaceholder")}
               placeholderTextColor={theme.placeholder}
               multiline
               style={[styles.input, styles.multiline]}
             />
             <View style={styles.modalActions}>
-              <DetailButton variant="ghost" label="Đóng" disabled={busy !== null} onPress={() => setReviewOpen(false)} style={styles.flexButton} />
+              <DetailButton variant="ghost" label={t("common:closeAction")} disabled={busy !== null} onPress={() => setReviewOpen(false)} style={styles.flexButton} />
               <DetailButton
                 icon={Star}
-                label={busy === "review" ? "Đang gửi..." : "Gửi đánh giá"}
+                label={busy === "review" ? t("mobile:trip.review.submitting") : t("booking:detail.submitReview")}
                 disabled={!dataReady || busy !== null}
                 onPress={() => {
                   if (rating < 1) {
-                    Alert.alert("Thiếu đánh giá", "Vui lòng chọn từ 1 đến 5 sao.");
+                    Alert.alert(t("mobile:trip.dialogs.ratingMissingTitle"), t("mobile:ownerBooking.review.ratingRequired"));
                     return;
                   }
-                  void runAction("review", () => createOwnerReview({ bookingId, rating, comment: comment.trim() || undefined }).then(() => undefined), "Cảm ơn đánh giá của bạn.").then((ok) => { if (ok) setReviewOpen(false); });
+                  void runAction("review", () => createOwnerReview({ bookingId, rating, comment: comment.trim() || undefined }).then(() => undefined), t("mobile:trip.dialogs.reviewThanks")).then((ok) => { if (ok) setReviewOpen(false); });
                 }}
                 style={styles.flexButton}
               />
@@ -654,7 +661,7 @@ export default function OwnerBookingDetailScreen({
           {viewingImage ? (
             <Image source={{ uri: viewingImage }} style={styles.fullImage} resizeMode="contain" />
           ) : null}
-          <Text style={styles.fullHint}>Chạm để đóng</Text>
+          <Text style={styles.fullHint}>{t("mobile:trip.dialogs.tapToClose")}</Text>
         </Pressable>
       </Modal>
     </View>

@@ -1,0 +1,158 @@
+{
+  "wallet": {
+    "a11y": {
+      "back": "Back",
+      "unlockBalance": "Unlock balance",
+      "showBalance": "Show balance",
+      "hideBalance": "Hide balance",
+      "withdrawalStatus": "Status: {{status}}",
+      "copyAccountNumber": "Copy account number",
+      "openBankList": "Open bank list",
+      "closeBankList": "Close bank list",
+      "closePayment": "Close payment"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "history": "History",
+      "bank": "Bank"
+    },
+    "balance": {
+      "earned": "Total earnings",
+      "topUp": "Topped up",
+      "spent": "Spent",
+      "pendingTopUp": "Waiting for top-up #{{code}}..."
+    },
+    "detail": {
+      "time": "Time",
+      "balanceAfter": "Balance after",
+      "reference": "Reference ID",
+      "status": "Status",
+      "note": "Note"
+    },
+    "pin": {
+      "setupPurpose": "Set a 6-digit PIN to protect your wallet balance and withdrawals.",
+      "verifyBalance": "Enter your PIN to view your wallet balance.",
+      "verifyWithdraw": "Enter your PIN to confirm this withdrawal request."
+    },
+    "errors": {
+      "loadWallet": "Couldn't load your wallet.",
+      "loadHistory": "Couldn't load transaction history."
+    },
+    "home": {
+      "bankMissingTitle": "No bank account linked",
+      "bankMissingSubtitle": "Set one up to withdraw to your account.",
+      "recentTitle": "Recent transactions",
+      "viewAll": "View all",
+      "emptyRecent": "No transactions yet. Top up to get started."
+    },
+    "history": {
+      "txTab": "Transactions",
+      "chipAll": "All",
+      "chipDeposit": "Deposit",
+      "chipEarning": "Earnings",
+      "monthTitle": "{{month}}/{{year}}",
+      "unknownTime": "Unknown time",
+      "searchPlaceholder": "Search loaded results by note...",
+      "noMatch": "No matching transactions found.",
+      "loadMoreCount": "Load more ({{count}})"
+    },
+    "cashflow": {
+      "topUpDesc": "Pay via PayOS; the money reaches your wallet once confirmed.",
+      "topUpPlaceholder": "Or enter an amount (VND)",
+      "topUpHint": "Minimum {{min}} · maximum {{max}} per top-up.",
+      "payWithPayOS": "Pay with PayOS",
+      "withdrawTitle": "Withdraw to bank",
+      "toBank": "To: {{bank}} · {{account}}",
+      "notSet": "not set",
+      "setupBankLink": "Set up a bank account now →",
+      "activeRequest": "Request #{{id}} is {{status}}",
+      "activeRequestHint": "Please wait for it to finish or cancel it before creating a new request.",
+      "withdrawPlaceholder": "Withdrawal amount (VND)",
+      "withdrawHint": "Minimum {{min}} · maximum {{max}}.",
+      "withdrawMax": "Withdraw max",
+      "withdrawSubmit": "Create withdrawal request",
+      "pendingTitle": "Withdrawal requests"
+    },
+    "bank": {
+      "verified": "Verified",
+      "copied": "Account number copied.",
+      "changeAccount": "Use a different account",
+      "changeHint": "Changing the account requires email OTP verification to protect your withdrawals.",
+      "selectBank": "Select a payout bank",
+      "searchPlaceholder": "Search Vietcombank, BIDV, MB...",
+      "noBank": "No matching bank found.",
+      "accountPlaceholder": "e.g. 0123456789",
+      "accountHint": "6–19 digits, no spaces.",
+      "holderPlaceholder": "NGUYEN VAN A (uppercase)",
+      "holderHint": "Enter the name exactly as printed on the card or account.",
+      "cancelChanges": "Discard changes",
+      "otpTitle": "Verify OTP",
+      "otpDescPrefix": "A 6-digit code was sent to your email for account",
+      "otpDescSuffix": ".",
+      "editInfo": "Edit details",
+      "resendIn": "Resend in {{seconds}}s",
+      "resend": "Resend code"
+    },
+    "payment": {
+      "title": "PayOS payment",
+      "openFailed": "Couldn't open the payment link.",
+      "loadFailed": "Couldn't load the payment page.",
+      "openInBrowser": "Open in browser"
+    },
+    "alerts": {
+      "failedTitle": "Failed",
+      "noticeTitle": "Notice",
+      "invalidAmountTitle": "Invalid amount",
+      "amountTooSmallTitle": "Amount too small",
+      "amountTooLargeTitle": "Amount too large",
+      "noPayoutAccountTitle": "No payout account",
+      "insufficientTitle": "Insufficient balance",
+      "pendingRequestTitle": "A request is pending",
+      "cancelRequestTitle": "Cancel request",
+      "keep": "Keep it",
+      "confirmCancel": "Yes, cancel",
+      "otpSentTitle": "Sent",
+      "missingOtpTitle": "Missing code",
+      "timeoutTitle": "Timed out",
+      "topUpDone": "Money added to your wallet.",
+      "paymentEnded": "This transaction has ended.",
+      "checkBalanceHint": "Reopen the wallet screen to check your balance.",
+      "topUpAmountRequired": "Please enter the top-up amount (VND).",
+      "topUpMin": "The minimum top-up amount is {{amount}} VND.",
+      "topUpMax": "The maximum top-up amount is {{amount}} VND.",
+      "topUpCreateFailed": "Couldn't create the top-up link.",
+      "withdrawAmountRequired": "Please enter the withdrawal amount (VND).",
+      "withdrawMin": "The minimum withdrawal amount is {{amount}} VND.",
+      "withdrawMax": "The maximum withdrawal amount is {{amount}} VND.",
+      "noPayoutAccountMessage": "Set up a bank account before withdrawing.",
+      "insufficientMessage": "Available balance: {{balance}} VND.",
+      "pendingRequestMessage": "Request #{{id}} is pending. Please wait for it to finish or cancel it before creating a new request.",
+      "withdrawCreated": "Withdrawal request created. The money reaches your account once staff approve it.",
+      "withdrawCreateFailed": "Couldn't create the withdrawal request.",
+      "cancelRequestBody": "The held amount will be returned to your wallet immediately.",
+      "cancelRequestFailed": "Couldn't cancel the request.",
+      "bankMissingInfo": "Please enter the bank, account number and account holder.",
+      "otpSentMessage": "The OTP has been sent to your email.",
+      "otpSendFailed": "Couldn't send the OTP.",
+      "otpRequired": "Please enter the full OTP.",
+      "bankSaved": "Bank account saved.",
+      "bankSaveFailed": "Couldn't save the account."
+    },
+    "txTypes": {
+      "bookingEarning": "Booking earnings",
+      "platformFeeRevenue": "Platform fee",
+      "payoutReversal": "Withdrawal reversal",
+      "adminAdjust": "Adjustment",
+      "bookingPayment": "Deposit",
+      "penalty": "Penalty",
+      "bookingEarningReversal": "Earnings reversal",
+      "autoPayout": "Bank transfer"
+    },
+    "statuses": {
+      "pending": "Pending approval",
+      "needsManualReview": "Manual review",
+      "completed": "Completed",
+      "rejected": "Rejected"
+    }
+  }
+}

@@ -8,6 +8,8 @@ import {
   UserRound,
 } from "lucide-react-native";
 import { memo, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Pressable, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
@@ -28,39 +30,39 @@ type BookingCardProps = {
 type ActionTone = "primary" | "soft" | "ghost";
 
 /** Nhãn CTA chỉ để mở trang chi tiết — mọi thao tác duyệt/trả xe nằm ở màn chi tiết. */
-function primaryAction(booking: BookingResponse, variant: "customer" | "owner"): { label: string; tone: ActionTone } {
+function primaryAction(booking: BookingResponse, variant: "customer" | "owner", t: TFunction): { label: string; tone: ActionTone } {
   const s = booking.status;
   const finished = s === "Completed" || s === "Cancelled" || s === "Rejected";
-  if (finished) return { label: s === "Completed" ? "Xem lại" : "Chi tiết", tone: "ghost" };
+  if (finished) return { label: s === "Completed" ? t("mobile:bookingList.card.actionReview") : t("booking:list.viewDetail"), tone: "ghost" };
 
   if (variant === "owner") {
     switch (s) {
       case "Pending":
-        return { label: "Xử lý đơn", tone: "primary" };
+        return { label: t("mobile:bookingList.card.actionHandleOrder"), tone: "primary" };
       case "InProgress":
-        return { label: "Theo dõi", tone: "primary" };
+        return { label: t("mobile:bookingList.card.actionTrack"), tone: "primary" };
       case "Returning":
-        return { label: "Nhận xe", tone: "primary" };
+        return { label: t("mobile:bookingList.card.actionReceiveVehicle"), tone: "primary" };
       case "Returned":
-        return { label: "Xem biên bản", tone: "soft" };
+        return { label: t("mobile:bookingList.card.actionViewReport"), tone: "soft" };
       default:
-        return { label: "Chi tiết", tone: "soft" };
+        return { label: t("booking:list.viewDetail"), tone: "soft" };
     }
   }
 
   switch (s) {
     case "Pending":
-      return { label: "Xem đơn", tone: "soft" };
+      return { label: t("mobile:bookingList.card.actionViewOrder"), tone: "soft" };
     case "Approved":
-      return { label: "Thanh toán cọc", tone: "primary" };
+      return { label: t("mobile:bookingList.card.actionPayDeposit"), tone: "primary" };
     case "InProgress":
-      return { label: "Trả xe", tone: "primary" };
+      return { label: t("mobile:bookingList.card.actionReturnVehicle"), tone: "primary" };
     case "Returning":
-      return { label: "Bàn giao trả", tone: "primary" };
+      return { label: t("mobile:bookingList.card.actionHandoverReturn"), tone: "primary" };
     case "Returned":
-      return { label: "Xem biên bản", tone: "soft" };
+      return { label: t("mobile:bookingList.card.actionViewReport"), tone: "soft" };
     default:
-      return { label: "Chi tiết", tone: "soft" };
+      return { label: t("booking:list.viewDetail"), tone: "soft" };
   }
 }
 
@@ -77,22 +79,23 @@ function initials(name?: string): string {
   return `${first}${last}`.toUpperCase();
 }
 
-function priceNote(booking: BookingResponse, variant: "customer" | "owner"): { text: string; success: boolean } {
+function priceNote(booking: BookingResponse, variant: "customer" | "owner", t: TFunction): { text: string; success: boolean } {
   const s = booking.status;
-  if (s === "Completed") return { text: "Đã kết thúc", success: false };
-  if (s === "Cancelled") return { text: "Đã hủy", success: false };
-  if (s === "Rejected") return { text: "Đã từ chối", success: false };
+  if (s === "Completed") return { text: t("mobile:bookingList.card.priceFinished"), success: false };
+  if (s === "Cancelled") return { text: t("booking:status.cancelled"), success: false };
+  if (s === "Rejected") return { text: t("booking:status.rejected"), success: false };
   if (variant === "owner" && (s === "Pending" || s === "Approved")) {
-    return { text: `Cọc dự kiến ${formatMoney(booking.depositAmount)}`, success: false };
+    return { text: t("mobile:bookingList.card.priceDepositExpected", { amount: formatMoney(booking.depositAmount) }), success: false };
   }
   if (s === "DepositPaid" || s === "Confirmed" || s === "InProgress" || s === "Returning" || s === "Returned") {
-    return { text: `Đã cọc ${formatMoney(booking.depositAmount)}`, success: true };
+    return { text: t("mobile:bookingList.card.priceDeposited", { amount: formatMoney(booking.depositAmount) }), success: true };
   }
-  return { text: `Cọc ${formatMoney(booking.depositAmount)}`, success: false };
+  return { text: t("mobile:bookingList.card.priceDeposit", { amount: formatMoney(booking.depositAmount) }), success: false };
 }
 
 function BookingCard({ booking, variant, onPress, onOpenUserProfile }: BookingCardProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const warning = theme.mode === "dark" ? "#FBBF24" : "#D97706";
   const warningSoft = theme.mode === "dark" ? "#3A2A0F" : "#FFF7E6";
@@ -118,8 +121,8 @@ function BookingCard({ booking, variant, onPress, onOpenUserProfile }: BookingCa
       : progress.summary.split(" · ")[1] ?? progress.summary
     : "";
 
-  const action = primaryAction(booking, variant);
-  const note = priceNote(booking, variant);
+  const action = primaryAction(booking, variant, t);
+  const note = priceNote(booking, variant, t);
   const ctaColor =
     action.tone === "primary" ? theme.onBrand : action.tone === "soft" ? theme.brand : theme.muted;
   const ctaBg =
@@ -131,7 +134,10 @@ function BookingCard({ booking, variant, onPress, onOpenUserProfile }: BookingCa
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${booking.vehicleName ?? `Xe #${booking.vehicleId}`} · ${booking.bookingCode}`}
+      accessibilityLabel={t("mobile:bookingList.card.a11y.openBooking", {
+        vehicle: booking.vehicleName ?? t("booking:list.vehicleFallback", { id: booking.vehicleId }),
+        code: booking.bookingCode,
+      })}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <View style={styles.row}>
@@ -152,7 +158,7 @@ function BookingCard({ booking, variant, onPress, onOpenUserProfile }: BookingCa
           )}
           <View style={styles.daysBadge}>
             <Clock color="#FFFFFF" size={9} strokeWidth={2.4} />
-            <AppText style={styles.daysBadgeText}>{booking.totalDays} ngày</AppText>
+            <AppText style={styles.daysBadgeText}>{t("booking:detail.daysCount", { count: booking.totalDays })}</AppText>
           </View>
         </View>
 
@@ -165,7 +171,7 @@ function BookingCard({ booking, variant, onPress, onOpenUserProfile }: BookingCa
           </View>
 
           <AppText numberOfLines={1} style={styles.vehicle}>
-            {booking.vehicleName ?? `Xe #${booking.vehicleId}`}
+            {booking.vehicleName ?? t("booking:list.vehicleFallback", { id: booking.vehicleId })}
           </AppText>
 
           {variant === "owner" ? (
@@ -174,17 +180,19 @@ function BookingCard({ booking, variant, onPress, onOpenUserProfile }: BookingCa
                 <AppText style={styles.avatarText}>{initials(booking.customerName)}</AppText>
               </View>
               <AppText numberOfLines={1} style={styles.partyName}>
-                {booking.customerName || `Khách #${booking.customerId}`}
+                {booking.customerName || t("mobile:bookingList.card.customerFallback", { id: booking.customerId })}
               </AppText>
               {onOpenUserProfile && booking.customerId ? (
                 <Pressable
                   onPress={() => onOpenUserProfile(booking.customerId)}
                   accessibilityRole="link"
-                  accessibilityLabel={`Xem hồ sơ ${booking.customerName || `khách #${booking.customerId}`}`}
+                  accessibilityLabel={t("mobile:bookingList.card.a11y.viewProfile", {
+                    name: booking.customerName || t("mobile:bookingList.card.customerFallbackLower", { id: booking.customerId }),
+                  })}
                   hitSlop={6}
                   style={styles.profileLink}
                 >
-                  <AppText style={styles.profileLinkText}>Hồ sơ</AppText>
+                  <AppText style={styles.profileLinkText}>{t("mobile:bookingList.card.profile")}</AppText>
                   <ChevronRight color={theme.brand} size={11} strokeWidth={2.4} />
                 </Pressable>
               ) : null}
@@ -193,7 +201,7 @@ function BookingCard({ booking, variant, onPress, onOpenUserProfile }: BookingCa
             <View style={styles.partyRow}>
               <UserRound color={theme.faint} size={11} strokeWidth={2.2} />
               <AppText numberOfLines={1} style={styles.partyName}>
-                {booking.ownerName || "Chủ xe"}
+                {booking.ownerName || t("booking:detail.roleOwner")}
               </AppText>
             </View>
           )}
@@ -233,7 +241,7 @@ function BookingCard({ booking, variant, onPress, onOpenUserProfile }: BookingCa
               </AppText>
             </View>
             <AppText style={styles.stateMeta}>
-              Ngày {progress.currentDay}/{progress.totalDays}
+              {t("mobile:trip.progress.dayPill", { day: progress.currentDay, total: progress.totalDays })}
             </AppText>
           </View>
           <View style={styles.track}>
@@ -251,15 +259,15 @@ function BookingCard({ booking, variant, onPress, onOpenUserProfile }: BookingCa
       ) : variant === "owner" && booking.status === "Pending" ? (
         <View style={[styles.urgent, { borderColor: warningBorder, backgroundColor: warningSoft }]}>
           <Clock color={warning} size={12} strokeWidth={2.2} />
-          <AppText style={[styles.urgentText, { color: warning }]}>Đơn đang chờ bạn duyệt · phản hồi sớm để khách không hủy.</AppText>
+          <AppText style={[styles.urgentText, { color: warning }]}>{t("mobile:bookingList.card.pendingNote")}</AppText>
         </View>
       ) : variant === "customer" && booking.status === "Approved" ? (
         <View style={styles.infoBand}>
           <Clock color={theme.brand} size={12} strokeWidth={2.2} />
           <AppText numberOfLines={1} style={styles.infoBandText}>
             {booking.paymentDueAt
-              ? `Hạn cọc ${formatDateTime(booking.paymentDueAt)}`
-              : "Hoàn tất cọc để giữ chuyến."}
+              ? t("mobile:bookingList.card.depositDue", { time: formatDateTime(booking.paymentDueAt) })
+              : t("mobile:bookingList.reminder.depositKeepTrip")}
           </AppText>
         </View>
       ) : null}

@@ -1,0 +1,80 @@
+{
+  "home": {
+    "header": {
+      "eyebrow": "Vehicle owner space",
+      "title": "Vehicle owner overview",
+      "description": "Track work that needs attention, prepare vehicle hand-overs and quickly open your rental management tools."
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "addVehicle": "Add vehicle",
+      "retry": "Try again"
+    },
+    "metrics": {
+      "pending": {
+        "label": "Pending requests",
+        "description": "Open the list to review and respond to requests"
+      },
+      "returns": {
+        "label": "Awaiting return confirmation",
+        "description": "The customer has reported a return; the owner needs to check"
+      },
+      "pickups": {
+        "label": "Pick-ups in the next 24 hours",
+        "description": "Confirmed trips with pick-up time approaching"
+      },
+      "dueReturns": {
+        "label": "Returns in the next 24 hours",
+        "description": "Handed-over vehicles with expected return time approaching"
+      }
+    },
+    "fleet": {
+      "title": "Fleet status",
+      "description": "Current operating figures across all of your vehicles.",
+      "openCalendar": "Open fleet calendar",
+      "loading": "Loading fleet status",
+      "summary": {
+        "available": "Available vehicles",
+        "rented": "Rented on time",
+        "overdue": "Overdue returns",
+        "blocked": "Blocked dates"
+      },
+      "overdueAlert": "{{count}} vehicles are past their return time and need checking.",
+      "checkCalendar": "Check on the calendar",
+      "footer": "{{count}} vehicles in the fleet · Updated {{updatedAt}} · Vietnam time UTC+7"
+    },
+    "errors": {
+      "fleet": "Unable to load fleet status. Please try again.",
+      "pending": "Unable to load pending requests.",
+      "returned": "Unable to load trips awaiting return."
+    },
+    "worklists": {
+      "pending": {
+        "title": "Requests to approve",
+        "description": "Open each request to check the customer, rental schedule and respond."
+      },
+      "returned": {
+        "title": "Awaiting return confirmation",
+        "description": "Inspect the vehicle and return records before completing the rental."
+      },
+      "viewAll": "View all",
+      "loading": "Loading {{name}}",
+      "emptyPending": "No pending requests",
+      "emptyReturned": "No trips awaiting return confirmation",
+      "emptyHint": "New requests will appear here.",
+      "vehicleFallback": "Vehicle #{{id}}",
+      "customerFallback": "Customer #{{id}}",
+      "pickupLabel": "Pick-up:",
+      "returnLabel": "Expected return:",
+      "footer": "Showing {{shown}} / {{total}} requests · Open the list to see more."
+    },
+    "shortcuts": {
+      "title": "Quick access",
+      "description": "Choose the task you want to perform.",
+      "vehicles": "Manage vehicles",
+      "calendar": "Vehicle pick-up and return calendar",
+      "bookings": "All rental requests",
+      "statistics": "Fleet analytics"
+    }
+  }
+}

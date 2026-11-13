@@ -1,10 +1,13 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import QRCode from "react-native-qrcode-svg";
 
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
+import { getFormatLocale } from "@/i18n/formatLocale";
 import { getApiErrorMessage } from "@/services/apiClient";
+import { actionIsExpired } from "@/features/assistant/assistantProtocol";
 import {
   confirmAction,
   getAssistantPaymentStatus,
@@ -13,6 +16,7 @@ import {
   prepareDraft,
   type AssistantQuote,
   type BookingDraft,
+  type DraftSlots,
   type CancellationProposal,
   type ConfirmResult,
   type PaymentLink,
@@ -24,31 +28,49 @@ export type AssistantBlock = { type: string; data: Record<string, unknown> };
 // thanh toán — để chatbot đặt xe ngay trong đoạn chat trên mobile.
 
 const money = (value: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
+  new Intl.NumberFormat(getFormatLocale(), { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
 
-const formatDateTime = (value: string) => new Date(value).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+const formatDateTime = (value: string) => new Date(value).toLocaleString(getFormatLocale(), { timeZone: "Asia/Ho_Chi_Minh" });
 
 function checkoutUrl(value?: string) {
   try { const url = new URL(value ?? ""); return url.protocol === "https:" ? url.href : null; }
   catch { return null; }
 }
 
-export function QuoteCard({ quote }: { quote: AssistantQuote }) {
+export function QuoteCard({ quote, slots }: { quote: AssistantQuote; slots?: DraftSlots }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
+  const delivery = quote.deliveryDistanceKm != null
+    ? t("mobile:assistant.booking.deliveryFeeDistance", {
+        km: quote.deliveryDistanceKm,
+        amount: (quote.deliveryFee ?? 0) > 0 ? money(quote.deliveryFee!) : t("mobile:assistant.booking.free"),
+      })
+    : t("mobile:assistant.booking.deliveryFee", {
+        amount: (quote.deliveryFee ?? 0) > 0 ? money(quote.deliveryFee!) : t("mobile:assistant.booking.free"),
+      });
+  const pickupNote = slots?.pickupMode === "delivery" || quote.deliveryDistanceKm != null
+    ? t("mobile:assistant.booking.deliveryNote", {
+        address: slots?.pickupAddress
+          ? t("mobile:assistant.booking.deliveryAddressSuffix", { address: slots.pickupAddress })
+          : t("mobile:assistant.booking.deliveryAddressFallback"),
+      })
+    : t("mobile:assistant.booking.pickupNote");
   return (
     <View style={styles.quoteCard}>
-      <Text style={styles.cardTitle}>Báo giá chuyến đi</Text>
+      <Text style={styles.cardTitle}>{t("mobile:assistant.booking.quoteTitle")}</Text>
       <Text style={styles.body}>
         {formatDateTime(quote.startAt)} → {formatDateTime(quote.endAt)}
       </Text>
-      <Text style={styles.body}>Tiền thuê: {money(quote.rental)}</Text>
-      {quote.rentalDiscount > 0 ? <Text style={styles.body}>Giảm theo thời gian thuê: −{money(quote.rentalDiscount)}</Text> : null}
-      {quote.promotionDiscount > 0 ? <Text style={styles.body}>Khuyến mãi: −{money(quote.promotionDiscount)}</Text> : null}
-      <Text style={styles.total}>Tổng tiền thuê: {money(quote.total)}</Text>
-      <Text style={styles.body}>Thanh toán trước: {money(quote.deposit)}</Text>
-      <Text style={styles.body}>Tiền bảo đảm: {money(quote.securityDeposit)}</Text>
-      <Text style={styles.muted}>Nhận xe tại địa chỉ của chủ xe. Giá được kiểm tra lại khi xác nhận.</Text>
+      <Text style={styles.body}>{t("mobile:assistant.booking.rental", { amount: money(quote.rental) })}</Text>
+      {quote.rentalDiscount > 0 ? <Text style={styles.body}>{t("mobile:assistant.booking.rentalDiscount", { amount: money(quote.rentalDiscount) })}</Text> : null}
+      {quote.promotionDiscount > 0 ? <Text style={styles.body}>{t("mobile:assistant.booking.promotion", { amount: money(quote.promotionDiscount) })}</Text> : null}
+      {quote.deliveryDistanceKm != null || (quote.deliveryFee ?? 0) > 0 ? <Text style={styles.body}>{delivery}</Text> : null}
+      <Text style={styles.total}>{t("mobile:assistant.booking.total", { amount: money(quote.total) })}</Text>
+      <Text style={styles.body}>{t("mobile:assistant.booking.deposit", { amount: money(quote.deposit) })}</Text>
+      <Text style={styles.body}>{t("mobile:assistant.booking.securityDeposit", { amount: money(quote.securityDeposit) })}</Text>
+      <Text style={styles.muted}>{pickupNote}</Text>
+      {slots?.returnAddress ? <Text style={styles.muted}>{t("mobile:assistant.booking.returnAddress", { address: slots.returnAddress })}</Text> : null}
     </View>
   );
 }
@@ -65,6 +87,7 @@ export function BookingPaymentCard({
   onViewBooking?: (id: number) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
   const [payment, setPayment] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -84,10 +107,10 @@ export function BookingPaymentCard({
       if (url) {
         await Linking.openURL(url);
       } else {
-        setMessage("Đường dẫn thanh toán không hợp lệ.");
+        setMessage(t("mobile:assistant.booking.payment.invalidLink"));
       }
     } catch (err) {
-      setMessage(getApiErrorMessage(err, "Chưa kết nối được thanh toán. Bạn có thể mở đơn để thử lại."));
+      setMessage(getApiErrorMessage(err, t("mobile:assistant.booking.payment.connectFailed")));
     } finally {
       actionLock.current = false;
       setBusy(false);
@@ -102,13 +125,13 @@ export function BookingPaymentCard({
       const result = await getAssistantPaymentStatus(bookingId);
       setMessage(
         typeof result.status === "string"
-          ? "Chưa ghi nhận thanh toán."
+          ? t("mobile:assistant.booking.payment.notRecorded")
           : result.status.isConfirmed
-            ? "Đã ghi nhận thanh toán."
+            ? t("mobile:assistant.booking.payment.recorded")
             : result.status.message,
       );
     } catch (err) {
-      setMessage(getApiErrorMessage(err, "Chưa kiểm tra được thanh toán."));
+      setMessage(getApiErrorMessage(err, t("mobile:assistant.booking.payment.checkFailed")));
     } finally {
       actionLock.current = false;
       setBusy(false);
@@ -117,19 +140,19 @@ export function BookingPaymentCard({
 
   return (
     <View style={styles.paymentCard}>
-      <Pressable disabled={!onViewBooking} onPress={() => onViewBooking?.(bookingId)}><Text style={styles.cardTitle}>Xem đơn #{bookingId}</Text></Pressable>
+      <Pressable disabled={!onViewBooking} onPress={() => onViewBooking?.(bookingId)}><Text style={styles.cardTitle}>{t("mobile:assistant.booking.payment.viewBooking", { id: bookingId })}</Text></Pressable>
       {safeCheckout ? (
         <Pressable disabled={busy} onPress={openCheckout} style={styles.primaryButton}>
-          <Text style={styles.primaryText}>Mở trang thanh toán</Text>
+          <Text style={styles.primaryText}>{t("mobile:assistant.booking.payment.openCheckout")}</Text>
         </Pressable>
       ) : (
         <Pressable disabled={busy} onPress={openCheckout} style={styles.primaryButton}>
-          {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>Lấy đường dẫn thanh toán</Text>}
+          {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>{t("mobile:assistant.booking.payment.getLink")}</Text>}
         </Pressable>
       )}
-      {!!safeCheckout && !!payment?.qrCode && <View accessibilityLabel="Mã QR thanh toán" style={{ alignItems: "center", padding: 8 }}><QRCode value={payment.qrCode} size={160} quietZone={8} /></View>}
+      {!!safeCheckout && !!payment?.qrCode && <View accessibilityLabel={t("mobile:assistant.booking.payment.qr")} style={{ alignItems: "center", padding: 8 }}><QRCode value={payment.qrCode} size={160} quietZone={8} /></View>}
       <Pressable disabled={busy} onPress={checkPaid}>
-        <Text style={styles.link}>Tôi đã thanh toán — kiểm tra</Text>
+        <Text style={styles.link}>{t("mobile:assistant.booking.payment.checkPaid")}</Text>
       </Pressable>
       {message ? <Text style={styles.body}>{message}</Text> : null}
     </View>
@@ -142,21 +165,27 @@ export function ConfirmationCard({
   onChanged,
   onBooked,
   onViewBooking,
+  disabled = false,
 }: {
   conversationId: string;
   proposal: BookingDraft | CancellationProposal;
   onChanged?: () => void;
   onBooked?: (bookingId: number) => void;
   onViewBooking?: (bookingId: number) => void;
+  disabled?: boolean;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
   const [current, setCurrent] = useState(proposal);
   const [result, setResult] = useState<ConfirmResult | null>(null);
   const [ack, setAck] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [, tick] = useState(0);
   const actionLock = useRef(false);
+
+  useEffect(() => { const delay = Date.parse(current.expiresAt) - Date.now(); if (!Number.isFinite(delay) || delay <= 0) return; const timer = setTimeout(() => tick(value => value + 1), Math.min(delay + 1, 2147483647)); return () => clearTimeout(timer); }, [current.expiresAt]);
 
   useEffect(() => {
     setCurrent(proposal);
@@ -169,7 +198,7 @@ export function ConfirmationCard({
   const rose = !!bookingDraft?.quote && bookingDraft.previousTotal != null && bookingDraft.quote.total > bookingDraft.previousTotal;
 
   async function confirm() {
-    if (!current.confirmToken || actionLock.current || Boolean(rose && !ack)) return;
+    if (disabled || actionIsExpired(current) || !current.confirmToken || actionLock.current || Boolean(rose && !ack)) return;
     actionLock.current = true;
     setBusy(true);
     setError("");
@@ -178,14 +207,18 @@ export function ConfirmationCard({
       if (response.status === "PriceChanged" && response.draft) {
         setCurrent(response.draft);
         setAck(false);
-        setError(response.message ?? "Giá thay đổi, vui lòng xác nhận lại.");
+        setError(response.message ?? t("mobile:assistant.booking.confirm.priceChanged"));
       } else {
         setResult(response);
-        if (response.bookingId && response.status === "PaymentPending") onBooked?.(response.bookingId);
+        if (!cancel && response.status === "PaymentPending" && Number.isSafeInteger(response.bookingId) && response.bookingId! > 0) {
+          // A custom completion handler owns navigation; otherwise use the
+          // existing booking-detail route (which also closes the chat modal).
+          (onBooked ?? onViewBooking)?.(response.bookingId!);
+        }
       }
       onChanged?.();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Xác nhận đã hết hạn hoặc thông tin đã thay đổi. Vui lòng báo giá lại."));
+      setError(getApiErrorMessage(err, t("mobile:assistant.booking.confirm.expired")));
     } finally {
       actionLock.current = false;
       setBusy(false);
@@ -205,7 +238,7 @@ export function ConfirmationCard({
         onChanged?.();
       }
     } catch (err) {
-      setError(getApiErrorMessage(err, "Chưa thể báo giá lại."));
+      setError(getApiErrorMessage(err, t("mobile:assistant.booking.confirm.requoteFailed")));
     } finally {
       actionLock.current = false;
       setBusy(false);
@@ -216,22 +249,24 @@ export function ConfirmationCard({
     <View style={styles.confirmCard}>
       {cancel ? (
         <>
-          <Text style={styles.cardTitle}>Xác nhận hủy đơn #{(current as CancellationProposal).bookingId}</Text>
+          <Text style={styles.cardTitle}>{t("mobile:assistant.booking.confirm.cancelTitle", { id: (current as CancellationProposal).bookingId })}</Text>
           <Text style={styles.body}>{(current as CancellationProposal).quote.policyMessage}</Text>
           <Text style={styles.body}>
-            Hoàn: {money((current as CancellationProposal).quote.refundAmount)} · Khấu trừ:{" "}
-            {money((current as CancellationProposal).quote.forfeitedAmount)}
+            {t("mobile:assistant.booking.confirm.refund", {
+              amount: money((current as CancellationProposal).quote.refundAmount),
+              forfeited: money((current as CancellationProposal).quote.forfeitedAmount),
+            })}
           </Text>
         </>
       ) : (
-        bookingDraft?.quote && <QuoteCard quote={bookingDraft.quote} />
+        bookingDraft?.quote && <QuoteCard quote={bookingDraft.quote} slots={bookingDraft.slots} />
       )}
-      {rose && !result ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: ack }} disabled={busy} onPress={() => setAck(value => !value)}><Text style={styles.warn}>{ack ? "✓ " : "☐ "}Giá tăng so với báo giá trước. Tôi đồng ý giá mới.</Text></Pressable> : null}
+      {rose && !result ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: ack }} disabled={busy} onPress={() => setAck(value => !value)}><Text style={styles.warn}>{ack ? "✓ " : "☐ "}{t("mobile:assistant.booking.confirm.rose")}</Text></Pressable> : null}
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       {result ? (
         <>
           <Text style={styles.cardTitle}>
-            {result.status === "Cancelled" ? "Đơn đã hủy." : "Đơn đã tạo, bạn có thể thanh toán bên dưới."}
+            {result.status === "Cancelled" ? t("mobile:assistant.booking.confirm.cancelled") : t("mobile:assistant.booking.confirm.created")}
           </Text>
           {result.message ? <Text style={styles.body}>{result.message}</Text> : null}
           {result.status === "PaymentPending" && result.bookingId ? (
@@ -241,19 +276,19 @@ export function ConfirmationCard({
       ) : (
         <>
           <Pressable
-            disabled={busy || !current.confirmToken || Boolean(rose && !ack)}
+            disabled={disabled || actionIsExpired(current) || busy || !current.confirmToken || Boolean(rose && !ack)}
             onPress={() => void confirm()}
             style={[styles.primaryButton, (busy || !current.confirmToken || Boolean(rose && !ack)) && styles.disabled]}
           >
             {busy ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={styles.primaryText}>{cancel ? "Xác nhận hủy đơn" : "Xác nhận đặt xe"}</Text>
+              <Text style={styles.primaryText}>{cancel ? t("mobile:assistant.booking.confirm.cancelAction") : t("mobile:assistant.booking.confirm.bookAction")}</Text>
             )}
           </Pressable>
           {!cancel ? (
             <Pressable disabled={busy} onPress={() => void requote()}>
-              <Text style={styles.link}>Báo giá lại</Text>
+              <Text style={styles.link}>{t("mobile:assistant.booking.confirm.requote")}</Text>
             </Pressable>
           ) : null}
         </>
@@ -268,13 +303,16 @@ export const AgentBlocks = memo(function AgentBlocks({
   onChanged,
   onBooked,
   onViewBooking,
+  disabled = false,
 }: {
   blocks: AssistantBlock[];
   conversationId: string;
   onChanged: () => void;
   onBooked?: (bookingId: number) => void;
   onViewBooking?: (bookingId: number) => void;
+  disabled?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       {blocks.map((block, index) => {
@@ -287,13 +325,14 @@ export const AgentBlocks = memo(function AgentBlocks({
               onChanged={onChanged}
               onBooked={onBooked}
               onViewBooking={onViewBooking}
+              disabled={disabled}
             />
           );
         if (block.type === "quoteCard") return <QuoteCard key={index} quote={block.data as unknown as AssistantQuote} />;
         if (block.type === "draftCard")
           return (
             <Text key={index} style={{ color: "#6b7280", fontSize: 12 }}>
-              Thông tin đặt xe đã lưu. Bạn có thể tiếp tục trong chat hoặc mở Đặt xe nhanh.
+              {t("mobile:assistant.booking.confirm.draftSaved")}
             </Text>
           );
         return null;

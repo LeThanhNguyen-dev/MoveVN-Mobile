@@ -1,4 +1,5 @@
 import type { CmsAccordionItem, CmsSection } from "@/features/cms/types";
+import i18n from "@/i18n";
 
 let sectionIdCounter = 0;
 
@@ -124,7 +125,7 @@ function parseV2Envelope(content: string): CmsSection[] | null {
         kind: "richtext",
         id,
         title,
-        html: `<p>${escapeHtml(`Nội dung tạm thời chưa được hỗ trợ hiển thị (loại: ${type}).`)}</p>`,
+        html: `<p>${escapeHtml(i18n.t("mobile:cms.unsupportedType", { type }))}</p>`,
       });
     }
   }

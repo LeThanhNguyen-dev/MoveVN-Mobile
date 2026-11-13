@@ -1,0 +1,51 @@
+{
+  "gps": {
+    "backAria": "Back",
+    "errorTitle": "Error",
+    "bookingFallback": "Booking #{{id}}",
+    "playback": {
+      "title": "Trip route · {{name}}",
+      "loading": "Loading route...",
+      "loadError": "Could not load the trip route.",
+      "emptyTitle": "No route yet",
+      "emptyBody": "This trip doesn't have enough GPS points to replay.",
+      "play": "Play",
+      "pause": "Pause",
+      "replay": "Replay",
+      "speedAria": "Playback speed ×{{speed}}",
+      "sliderAria": "Playback position in the route",
+      "pointCounter": "Point {{current}}/{{total}}",
+      "matched": "Matched to real streets",
+      "unmatched": "Connected between GPS points",
+      "distance": "Distance",
+      "speedRange": "Max / average speed",
+      "signalLost": "Signal losses",
+      "provisionalNote": "The trip hasn't ended — figures are provisional from the current log."
+    },
+    "tracking": {
+      "title": "Vehicle location · {{name}}",
+      "loading": "Loading vehicle location...",
+      "recenterAria": "Center on vehicle",
+      "loadError": "Could not load the vehicle location.",
+      "requestSentTitle": "Request sent",
+      "requestSentBody": "The renter will be notified to turn on GPS.",
+      "requestError": "Could not send the GPS request.",
+      "status": {
+        "live": "Live updates",
+        "stale": "Signal lost",
+        "ended": "Ended",
+        "none": "No data yet"
+      },
+      "updatedAt": "· updated {{time}}",
+      "speed": "Speed: {{speed}} km/h",
+      "coordinates": "Coordinates: {{lat}}, {{lng}}",
+      "staleHint": "No new location received for a while. The renter may have turned GPS off or lost connection — the map is showing the last known point.",
+      "requestGps": "Ask renter to enable GPS",
+      "requesting": "Sending..."
+    },
+    "publisher": {
+      "sendFailed": "Couldn't send your location. Will retry.",
+      "permissionDenied": "You haven't turned on location sharing. The owner can't follow the trip."
+    }
+  }
+}

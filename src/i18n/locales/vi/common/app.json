@@ -1,0 +1,75 @@
+{
+  "skipToContent": "Đến nội dung chính",
+  "loading": "Đang tải...",
+  "retry": "Thử lại",
+  "list": "Danh sách",
+  "tableOfContents": "Mục lục",
+  "contentLoadError": "Không thể tải nội dung. Vui lòng thử lại.",
+  "contentNotFound": "Không tìm thấy nội dung.",
+  "contentUpdating": "Nội dung đang được cập nhật.",
+  "contact": "Liên hệ",
+  "noImage": "Chưa có hình ảnh",
+  "areaUpdating": "Chưa cập nhật khu vực",
+  "new": "Mới",
+  "currencySymbol": "đ",
+  "dialogClose": "Đóng hộp thoại",
+  "originalInVietnamese": "Nội dung gốc bằng tiếng Việt",
+  "checkingSession": "Đang kiểm tra phiên đăng nhập...",
+  "opening": "Đang mở...",
+  "noTime": "Chưa có thời gian",
+  "closeNotification": "Đóng thông báo",
+  "promotionImageAlt": "Xem hình ảnh ưu đãi",
+  "closeAction": "Đóng",
+  "underDevelopmentTitle": "Tính năng đang phát triển",
+  "underDevelopmentDescription": "Tính năng này hiện đang được xây dựng và sẽ sớm ra mắt.",
+  "pagination": "Phân trang",
+  "showingPage": "Hiển thị trang {{page}}/{{totalPages}}",
+  "previousPage": "Trước",
+  "nextPage": "Sau",
+  "tableToggleHint": "Bấm để mở hoặc thu gọn chi tiết",
+  "tableExpandAll": "Xem đầy đủ",
+  "tableCollapse": "Thu gọn",
+  "vietnameseTime": "giờ Việt Nam",
+  "cancel": "Hủy",
+  "confirm": "Xác nhận",
+  "genericError": "Có lỗi xảy ra.",
+  "mapCenterVehicle": "Về vị trí xe",
+  "mapFullscreen": "Toàn màn hình",
+  "selectPlaceholder": "Chọn",
+  "selectListAriaLabel": "Lựa chọn",
+  "pages": {
+    "notFound": {
+      "title": "Không tìm thấy trang",
+      "description": "Đường dẫn bạn đang mở không tồn tại hoặc đã được thay đổi.",
+      "backHome": "Về trang chủ"
+    },
+    "forbidden": {
+      "title": "Không có quyền truy cập",
+      "description": "Tài khoản hiện tại không có vai trò phù hợp để mở khu vực này.",
+      "backToMyArea": "Về khu vực của tôi"
+    }
+  },
+  "activeToggle": {
+    "activate": "Kích hoạt",
+    "deactivate": "Tắt hoạt động",
+    "activateAction": "kích hoạt",
+    "deactivateAction": "tắt",
+    "confirmQuestion": "Bạn có chắc muốn {{action}}",
+    "cascadePrefix": "Tắt",
+    "cascadeSuffix": "sẽ kéo theo tắt",
+    "cascadeSeparator": " và ",
+    "modelsCount": "{{count}} dòng xe",
+    "variantsCount": "{{count}} phiên bản",
+    "errors": {
+      "brandDisabled": "Không thể kích hoạt vì hãng xe đang bị tắt.",
+      "modelDisabled": "Không thể kích hoạt vì dòng xe đang bị tắt."
+    }
+  },
+  "userStatusToggle": {
+    "activate": "Kích hoạt",
+    "deactivate": "Ngừng hoạt động",
+    "activateAction": "kích hoạt",
+    "deactivateAction": "ngừng hoạt động",
+    "confirmQuestion": "Bạn có chắc muốn {{action}}"
+  }
+}

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, ChevronRight, FileText, Search, X } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native"
 import AppText from "@/components/AppText";
 import { filterPolicyItems } from "@/features/cms/utils/groups";
@@ -16,6 +17,7 @@ type PolicyDocsScreenProps = {
 
 export default function PolicyDocsScreen({ group, initialQuery = "", onBack, onOpenSlug }: PolicyDocsScreenProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [query, setQuery] = useState(initialQuery);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -26,7 +28,7 @@ export default function PolicyDocsScreen({ group, initialQuery = "", onBack, onO
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("mobile:cms.a11y.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
         <AppText display numberOfLines={1} style={styles.topBarTitle}>
@@ -43,11 +45,11 @@ export default function PolicyDocsScreen({ group, initialQuery = "", onBack, onO
         <View style={[styles.searchBox, searchFocused && styles.searchBoxFocused]}>
           <Search color={theme.faint} size={19} strokeWidth={2.3} />
           <TextInput
-            accessibilityLabel={`Tìm kiếm trong ${group.title}`}
+            accessibilityLabel={t("mobile:cms.docs.searchAria", { title: group.title })}
             onBlur={() => setSearchFocused(false)}
             onChangeText={setQuery}
             onFocus={() => setSearchFocused(true)}
-            placeholder="Tìm văn bản"
+            placeholder={t("mobile:cms.docs.searchPlaceholder")}
             placeholderTextColor={theme.placeholder}
             returnKeyType="search"
             style={styles.searchInput}
@@ -55,7 +57,7 @@ export default function PolicyDocsScreen({ group, initialQuery = "", onBack, onO
           />
           {query.length > 0 ? (
             <Pressable
-              accessibilityLabel="Xóa tìm kiếm"
+              accessibilityLabel={t("mobile:cms.searchClearAria")}
               accessibilityRole="button"
               onPress={() => setQuery("")}
               style={styles.clearButton}
@@ -66,21 +68,21 @@ export default function PolicyDocsScreen({ group, initialQuery = "", onBack, onO
         </View>
 
         <View style={styles.sectionHeader}>
-          <AppText display style={styles.sectionTitle}>Danh sách văn bản</AppText>
+          <AppText display style={styles.sectionTitle}>{t("mobile:cms.docs.sectionTitle")}</AppText>
           <AppText style={styles.sectionCount}>
-            {searching ? `${docs.length} kết quả` : `${group.items.length} văn bản`}
+            {searching
+              ? t("mobile:cms.resultCount", { count: docs.length })
+              : t("mobile:cms.docCount", { count: group.items.length })}
           </AppText>
         </View>
 
         {docs.length === 0 ? (
           <View style={styles.stateCard}>
             <AppText display style={styles.stateTitle}>
-              {searching ? "Không tìm thấy văn bản phù hợp" : "Chưa có văn bản"}
+              {searching ? t("mobile:cms.docs.emptySearchTitle") : t("mobile:cms.docs.emptyTitle")}
             </AppText>
             <AppText style={styles.muted}>
-              {searching
-                ? "Thử từ khóa khác."
-                : "Nhóm tài liệu này đang được cập nhật. Vui lòng quay lại sau."}
+              {searching ? t("mobile:cms.searchEmptyHint") : t("mobile:cms.docs.emptyDescription")}
             </AppText>
           </View>
         ) : (

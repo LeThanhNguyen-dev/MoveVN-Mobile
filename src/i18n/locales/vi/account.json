@@ -1,0 +1,92 @@
+{
+  "loader": "Đang tải thông tin tài khoản...",
+  "roles": {
+    "Admin": "Quản trị",
+    "Staff": "Nhân viên",
+    "Owner": "Chủ xe",
+    "Customer": "Khách hàng"
+  },
+  "verified": "Đã xác minh",
+  "unverified": "Chưa xác minh",
+  "viewProfile": "Xem hồ sơ",
+  "identityTitle": "Xác minh danh tính",
+  "details": "Chi tiết",
+  "items": {
+    "email": "Email",
+    "cccd": "CCCD",
+    "license": "GPLX",
+    "bank": "Ngân hàng"
+  },
+  "quickLinks": {
+    "wallet": {
+      "title": "Ví của tôi",
+      "description": "Quản lý số dư và giao dịch"
+    },
+    "password": {
+      "title": "Đổi mật khẩu",
+      "description": "Cập nhật mật khẩu tài khoản"
+    },
+    "pin": {
+      "title": "Đổi mã PIN",
+      "description": "Cập nhật mã PIN bảo mật",
+      "notSet": "Chưa thiết lập"
+    },
+    "sessions": {
+      "title": "Phiên đăng nhập",
+      "description": "Quản lý thiết bị đã đăng nhập"
+    },
+    "cccd": {
+      "title": "Xác thực CCCD",
+      "description": "Căn cước công dân"
+    },
+    "bank": {
+      "title": "Thông tin ngân hàng",
+      "description": "Quản lý tài khoản thụ hưởng"
+    }
+  },
+  "customerHome": {
+    "title": "Khu vực khách hàng",
+    "description": "Theo dõi lịch thuê, chi phí và trạng thái từng chuyến xe trong một màn hình gọn để bạn luôn biết chuyến đi tiếp theo đang ở đâu.",
+    "homeButton": "Về trang chủ",
+    "findVehicle": "Tìm xe",
+    "stats": {
+      "totalSpend": "Tổng chi tiêu",
+      "totalSpendHint": "Chi phí dịch vụ đã ghi nhận",
+      "tripsBooked": "Chuyến đã đặt",
+      "tripsCount": "{{count}} chuyến",
+      "completedTrips": "Đã hoàn thành {{count}} chuyến",
+      "active": "Đang hoạt động",
+      "activeHint": "Đã xác nhận, đã cọc hoặc đang chạy",
+      "pending": "Chờ phản hồi",
+      "requestCount": "{{count}} yêu cầu",
+      "pendingHint": "Đang chờ chủ xe xác nhận"
+    },
+    "spending": {
+      "title": "Dòng chi tiêu",
+      "description": "Tổng chi phí theo tháng, tính trên các booking đã có giá trị giao dịch.",
+      "last6Months": "6 tháng gần nhất",
+      "chartAria": "Biểu đồ chi tiêu theo tháng"
+    },
+    "completion": {
+      "title": "Tỉ lệ hoàn thành",
+      "description": "Tình trạng hoàn tất các chuyến xe của bạn.",
+      "rateLabel": "Hoàn tất",
+      "completedLabel": "Đã hoàn thành",
+      "remainingLabel": "Còn lại",
+      "noData": "Chưa có dữ liệu chuyến đi."
+    },
+    "recent": {
+      "title": "Lịch sử đặt xe gần đây",
+      "description": "Theo dõi nhanh những booking mới nhất và mở chi tiết khi cần xử lý.",
+      "viewAll": "Xem tất cả",
+      "empty": "Chưa có chuyến đi nào được đặt.",
+      "colCode": "Mã booking",
+      "colStart": "Ngày nhận",
+      "colEnd": "Ngày trả",
+      "colTotal": "Tổng chi phí",
+      "colStatus": "Trạng thái",
+      "colActions": "Thao tác",
+      "details": "Chi tiết"
+    }
+  }
+}

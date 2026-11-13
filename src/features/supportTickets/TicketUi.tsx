@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { ArrowLeft, RefreshCw, Search } from "lucide-react-native";
 import AppText from "@/components/AppText";
@@ -13,17 +14,19 @@ export function TicketButton({ title, onPress, disabled, busy, secondary, icon }
     <AppText style={[styles.buttonText, secondary && { color: theme.brand }]}>{title}</AppText>
   </Pressable>;
 }
-export function TicketHeader({ title, subtitle, onBack, onRefresh, busy, compact = false, refreshLabel = "Làm mới yêu cầu" }: { title: string; subtitle?: string; onBack: () => void; onRefresh?: () => void; busy?: boolean; compact?: boolean; refreshLabel?: string }) {
+export function TicketHeader({ title, subtitle, onBack, onRefresh, busy, compact = false, refreshLabel }: { title: string; subtitle?: string; onBack: () => void; onRefresh?: () => void; busy?: boolean; compact?: boolean; refreshLabel?: string }) {
+  const { t } = useTranslation();
   const { theme } = useTheme(); const styles = ticketStyles(theme);
   return <View style={[styles.header, compact && styles.compactHeader]}>
-    <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" hitSlop={4} onPress={onBack} style={[styles.iconButton, compact && styles.compactHeaderIcon]}><ArrowLeft color={theme.text} size={compact ? 21 : 23} /></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:supportTicket.ui.backAria")} hitSlop={4} onPress={onBack} style={[styles.iconButton, compact && styles.compactHeaderIcon]}><ArrowLeft color={theme.text} size={compact ? 21 : 23} /></Pressable>
     <View style={{ flex: 1, minWidth: 0 }}><AppText display numberOfLines={compact ? 1 : undefined} style={[styles.heading, compact && styles.compactHeading]}>{title}</AppText>{subtitle && <AppText numberOfLines={1} style={styles.muted}>{subtitle}</AppText>}</View>
-    {onRefresh && <Pressable accessibilityRole="button" accessibilityLabel={refreshLabel} disabled={busy} hitSlop={4} onPress={onRefresh} style={[styles.iconButton, compact && styles.compactHeaderIcon]}>{busy ? <ActivityIndicator size="small" color={theme.brand} /> : <RefreshCw color={theme.brand} size={compact ? 18 : 20} />}</Pressable>}
+    {onRefresh && <Pressable accessibilityRole="button" accessibilityLabel={refreshLabel ?? t("mobile:supportTicket.ui.refreshLabel")} disabled={busy} hitSlop={4} onPress={onRefresh} style={[styles.iconButton, compact && styles.compactHeaderIcon]}>{busy ? <ActivityIndicator size="small" color={theme.brand} /> : <RefreshCw color={theme.brand} size={compact ? 18 : 20} />}</Pressable>}
   </View>;
 }
 export function TicketNotice({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  const { t } = useTranslation();
   const { theme } = useTheme(); const styles = ticketStyles(theme);
-  return <View accessibilityRole="alert" style={[styles.card, { backgroundColor: theme.errorSoft, borderColor: theme.errorBorder }]}><AppText style={{ color: theme.error, lineHeight: 21 }}>{message}</AppText>{onRetry && <TicketButton secondary title="Thử lại" onPress={onRetry} />}</View>;
+  return <View accessibilityRole="alert" style={[styles.card, { backgroundColor: theme.errorSoft, borderColor: theme.errorBorder }]}><AppText style={{ color: theme.error, lineHeight: 21 }}>{message}</AppText>{onRetry && <TicketButton secondary title={t("support:retry")} onPress={onRetry} />}</View>;
 }
 export function TicketStatus({ status }: { status: string }) {
   const { theme } = useTheme();
@@ -39,13 +42,14 @@ export function TicketSearchField({ value, onChangeText, onSearch, placeholder, 
   value: string; onChangeText: (value: string) => void; onSearch: () => void;
   placeholder: string; label: string;
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme(); const styles = ticketStyles(theme);
   return <View style={styles.searchField}>
     <Search size={17} color={theme.muted} />
     <TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText}
       maxLength={100} placeholder={placeholder} placeholderTextColor={theme.placeholder}
       returnKeyType="search" onSubmitEditing={onSearch} style={styles.searchInput} />
-    <Pressable accessibilityRole="button" accessibilityLabel="Tìm kiếm" onPress={onSearch}
+    <Pressable accessibilityRole="button" accessibilityLabel={t("support:list.searchSubmit")} onPress={onSearch}
       style={styles.searchButton}>
       <Search size={17} color={theme.onBrand} />
     </Pressable>

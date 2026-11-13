@@ -1,4 +1,6 @@
 import { useMemo, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
@@ -33,6 +35,7 @@ export default function TrafficFinePanel({
   onChange: (detail: DisputeDetailResponse) => void;
 }) {
   const { theme, mode } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const userId = useAuthStore((state) => state.user?.userId);
   const [note, setNote] = useState("");
@@ -47,11 +50,8 @@ export default function TrafficFinePanel({
   if (!fine) {
     return (
       <View style={styles.oldBox}>
-        <Text style={styles.title}>Hồ sơ phạt nguội cũ</Text>
-        <Text style={styles.body}>
-          Hồ sơ chưa có thông tin thông báo và chứng từ thanh toán theo luồng mới. Cần lập hồ sơ phạt nguội mới có đầy đủ thông tin để theo
-          dõi.
-        </Text>
+        <Text style={styles.title}>{t("disputes:trafficFine.legacyTitle")}</Text>
+        <Text style={styles.body}>{t("mobile:dispute.fine.legacyDescription")}</Text>
       </View>
     );
   }
@@ -91,7 +91,7 @@ export default function TrafficFinePanel({
       let evidence: { urls: string[]; tokens: string[] } | undefined;
       if (action === "payment-proof") {
         if (!validProofAssets(files) || !parseVietnamDateTime(paidAt) || !reference.trim()) {
-          throw new Error("Cần ngày thanh toán (YYYY-MM-DD HH:mm), mã biên lai và 1–6 ảnh JPG/PNG/WebP, mỗi ảnh tối đa 5 MB.");
+          throw new Error(i18n.t("mobile:dispute.fine.proofRequired"));
         }
         evidence = await uploadDisputeEvidenceImages(
           files.map(({ uri, name, mime }) => ({ uri, name, type: mime })),
@@ -117,7 +117,7 @@ export default function TrafficFinePanel({
       setPaidAt("");
       setReference("");
     } catch (err) {
-      setError(getApiErrorMessage(err, err instanceof Error ? err.message : "Vui lòng thử lại."));
+      setError(getApiErrorMessage(err, err instanceof Error ? err.message : t("disputes:trafficFine.toastTryAgain")));
       try {
         onChange(await getDisputeById(dispute.id));
       } catch {
@@ -130,9 +130,9 @@ export default function TrafficFinePanel({
   }
 
   return (
-    <View style={styles.box} accessibilityLabel="Hồ sơ phạt nguội">
+    <View style={styles.box} accessibilityLabel={t("disputes:trafficFine.title")}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Hồ sơ phạt nguội</Text>
+        <Text style={styles.title}>{t("disputes:trafficFine.title")}</Text>
         {(() => {
           const st = getFineStatusStyle(fine.status, mode);
           return (
@@ -140,7 +140,7 @@ export default function TrafficFinePanel({
               <View style={[styles.dot, { backgroundColor: st.dot }]} />
               <Text style={[styles.badgeText, { color: st.text }]}>
                 {trafficFineStatusLabels[fine.status] ?? fine.status}
-                {fine.isOverdue ? " · Quá hạn" : ""}
+                {fine.isOverdue ? t("disputes:trafficFine.overdueSuffix") : ""}
               </Text>
             </View>
           );
@@ -148,78 +148,98 @@ export default function TrafficFinePanel({
       </View>
 
       <View style={styles.kv}>
-        <Text style={styles.muted}>Số thông báo / biên bản</Text>
+        <Text style={styles.muted}>{t("disputes:trafficFine.noticeNumber")}</Text>
         <Text style={styles.value}>{fine.noticeNumber}</Text>
       </View>
       <View style={styles.kv}>
-        <Text style={styles.muted}>Đơn vị thông báo</Text>
+        <Text style={styles.muted}>{t("disputes:trafficFine.issuingAuthority")}</Text>
         <Text style={styles.value}>{fine.issuingAuthority}</Text>
       </View>
       <View style={styles.kv}>
-        <Text style={styles.muted}>Biển số xe</Text>
+        <Text style={styles.muted}>{t("disputes:trafficFine.licensePlate")}</Text>
         <Text style={styles.value}>{fine.licensePlate}</Text>
       </View>
       <View style={styles.kv}>
-        <Text style={styles.muted}>Số tiền phạt</Text>
+        <Text style={styles.muted}>{t("disputes:trafficFine.amount")}</Text>
         <Text style={styles.value}>{formatDisputeMoney(fine.amount)}</Text>
       </View>
       <View style={styles.kv}>
-        <Text style={styles.muted}>Thời điểm vi phạm</Text>
+        <Text style={styles.muted}>{t("disputes:trafficFine.violationAt")}</Text>
         <Text style={styles.value}>{formatDisputeDateTime(fine.violationAt)}</Text>
       </View>
       <View style={styles.kv}>
-        <Text style={styles.muted}>Hạn xử lý theo thông báo</Text>
+        <Text style={styles.muted}>{t("disputes:trafficFine.dueAt")}</Text>
         <Text style={styles.value}>{formatDisputeDateTime(fine.dueAt)}</Text>
       </View>
       <Text style={styles.muted}>
-        Khoảng thuê đối chiếu: {formatDisputeDateTime(fine.rentalStartAt)} → {formatDisputeDateTime(fine.rentalEndAt)}
+        {t("disputes:trafficFine.rentalPeriod")}: {formatDisputeDateTime(fine.rentalStartAt)} → {formatDisputeDateTime(fine.rentalEndAt)}
       </Text>
       <Text style={styles.muted}>
-        {fine.hasConfirmedRentalTimes ? "Dựa trên nhận xe và giờ trả thực tế." : "Có sử dụng giờ dự kiến/biên bản."}{" "}
-        {fine.matchesRentalPeriod ? "Thời điểm vi phạm nằm trong khoảng đối chiếu." : "Thời điểm vi phạm nằm ngoài khoảng đối chiếu."}
+        {fine.hasConfirmedRentalTimes
+          ? t("disputes:trafficFine.rentalPeriodConfirmed")
+          : t("mobile:dispute.fine.rentalEstimated")}{" "}
+        {fine.matchesRentalPeriod
+          ? t("disputes:trafficFine.rentalPeriodMatch")
+          : t("disputes:trafficFine.rentalPeriodMismatch")}
       </Text>
       <Text style={styles.body}>
         {fine.paymentMode === "ReimburseOwner"
-          ? "Khách hoàn trả đúng khoản chủ xe đã nộp phạt. Chủ xe xác nhận đã nhận đủ tiền."
-          : "Khách tự nộp phạt cho cơ quan xử lý và gửi biên lai."}{" "}
-        MoveVN theo dõi chứng từ; không tự trừ ví hoặc cọc booking.
+          ? t("mobile:dispute.fine.paymentModeReimburse")
+          : t("mobile:dispute.fine.paymentModeDirect")}
+        {t("disputes:trafficFine.trackingNote")}
       </Text>
       {fine.ownerPaidAt ? (
         <Text style={styles.body}>
-          Chủ xe đã nộp phạt ngày {formatDisputeDateTime(fine.ownerPaidAt)}
+          {t("disputes:trafficFine.ownerPaidAt", { date: formatDisputeDateTime(fine.ownerPaidAt) })}
           {fine.ownerPaymentEvidenceUrls
-            ? ` · ${evidenceList(fine.ownerPaymentEvidenceUrls).length} ảnh biên lai`
+            ? t("mobile:dispute.fine.receiptPhotos", { count: evidenceList(fine.ownerPaymentEvidenceUrls).length })
             : ""}
         </Text>
       ) : null}
       {fine.verificationNote ? (
         <Text style={styles.body}>
-          Kết quả đối chiếu: {fine.verificationNote} ({formatDisputeDateTime(fine.verifiedAt)})
+          {t("disputes:trafficFine.verificationResult", {
+            note: fine.verificationNote,
+            date: formatDisputeDateTime(fine.verifiedAt),
+          })}
         </Text>
       ) : null}
       {fine.customerRespondedAt ? (
         <Text style={styles.body}>
-          Phản hồi khách: {fine.customerResponse || "Đồng ý trách nhiệm"} ({formatDisputeDateTime(fine.customerRespondedAt)})
+          {t("disputes:trafficFine.customerResponse", {
+            response: fine.customerResponse || t("disputes:trafficFine.responseAccepted"),
+            date: formatDisputeDateTime(fine.customerRespondedAt),
+          })}
         </Text>
       ) : null}
-      {fine.rejectionReason ? <Text style={styles.warn}>Lý do từ chối hồ sơ: {fine.rejectionReason}.</Text> : null}
+      {fine.rejectionReason ? (
+        <Text style={styles.warn}>{t("mobile:dispute.fine.rejectionReason", { reason: fine.rejectionReason })}</Text>
+      ) : null}
 
       {fine.paymentProofs.length > 0 ? (
         <View style={styles.proofs}>
-          <Text style={styles.title}>Lịch sử chứng từ thanh toán</Text>
+          <Text style={styles.title}>{t("disputes:trafficFine.proofHistory")}</Text>
           {fine.paymentProofs.map((p) => (
             <View key={p.id} style={styles.proof}>
               <Text style={styles.value}>
                 {formatDisputeMoney(p.amount)} · {p.transactionReference} ·{" "}
-                {p.status === "Approved" ? "Đã xác minh" : p.status === "Rejected" ? "Chứng từ bị từ chối" : "Chờ xác minh"}
+                {p.status === "Approved"
+                  ? t("disputes:trafficFine.proofApproved")
+                  : p.status === "Rejected"
+                    ? t("disputes:trafficFine.proofRejected")
+                    : t("disputes:trafficFine.proofPending")}
               </Text>
-              <Text style={styles.muted}>Ngày thanh toán: {formatDisputeDateTime(p.paidAt)}</Text>
+              <Text style={styles.muted}>{t("disputes:trafficFine.proofPaidAt", { date: formatDisputeDateTime(p.paidAt) })}</Text>
               {p.note ? <Text style={styles.body}>{p.note}</Text> : null}
               {p.ownerReceiptConfirmedAt ? (
-                <Text style={styles.body}>Chủ xe xác nhận đã nhận tiền: {formatDisputeDateTime(p.ownerReceiptConfirmedAt)}</Text>
+                <Text style={styles.body}>
+                  {t("disputes:trafficFine.ownerReceiptConfirmedAt", { date: formatDisputeDateTime(p.ownerReceiptConfirmedAt) })}
+                </Text>
               ) : null}
               {p.reviewNote ? (
-                <Text style={styles.body}>Kết quả kiểm tra: {p.reviewNote} ({formatDisputeDateTime(p.reviewedAt)})</Text>
+                <Text style={styles.body}>
+                  {t("disputes:trafficFine.reviewResult", { note: p.reviewNote, date: formatDisputeDateTime(p.reviewedAt) })}
+                </Text>
               ) : null}
             </View>
           ))}
@@ -228,19 +248,19 @@ export default function TrafficFinePanel({
 
       {customer && fine.status === "AwaitingCustomerResponse" ? (
         <View style={styles.actions}>
-          <Text style={styles.body}>Đồng ý trách nhiệm chưa đồng nghĩa đã thanh toán.</Text>
-          <Text style={styles.label}>Lý do (bắt buộc khi phản đối)</Text>
+          <Text style={styles.body}>{t("disputes:trafficFine.acceptanceHint")}</Text>
+          <Text style={styles.label}>{t("mobile:dispute.fine.dissentReasonLabel")}</Text>
           <TextInput value={note} onChangeText={setNote} maxLength={2000} multiline style={[styles.input, styles.multiline]} />
           <View style={styles.actionRow}>
             <Pressable disabled={busy} onPress={() => void act("respond", { acceptResponsibility: true })} style={styles.primaryButton}>
-              {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>Đồng ý trách nhiệm</Text>}
+              {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>{t("disputes:trafficFine.accept")}</Text>}
             </Pressable>
             <Pressable
               disabled={busy || !note.trim()}
               onPress={() => void act("respond", { acceptResponsibility: false })}
               style={[styles.secondaryButton, (busy || !note.trim()) && styles.disabled]}
             >
-              <Text style={styles.secondaryText}>Phản đối trách nhiệm</Text>
+              <Text style={styles.secondaryText}>{t("disputes:trafficFine.dispute")}</Text>
             </Pressable>
           </View>
         </View>
@@ -249,29 +269,38 @@ export default function TrafficFinePanel({
       {customer && fine.status === "AwaitingPayment" ? (
         <View style={styles.actions}>
           <Text style={styles.title}>
-            Gửi chứng từ {fine.paymentMode === "ReimburseOwner" ? "hoàn trả chủ xe" : "nộp phạt"}
+            {t("disputes:trafficFine.submitProofTitle", {
+              mode:
+                fine.paymentMode === "ReimburseOwner"
+                  ? t("disputes:trafficFine.submitProofModeReimburse")
+                  : t("disputes:trafficFine.submitProofModeDirect"),
+            })}
           </Text>
-          <Text style={styles.body}>Số tiền cần chứng minh: {formatDisputeMoney(fine.amount)}</Text>
-          <Text style={styles.label}>Thời điểm thanh toán (VD: 2026-10-05 14:30)</Text>
+          <Text style={styles.body}>{t("disputes:trafficFine.amountToProve", { amount: formatDisputeMoney(fine.amount) })}</Text>
+          <Text style={styles.label}>{t("mobile:dispute.fine.paidAtLabel")}</Text>
           <TextInput value={paidAt} onChangeText={setPaidAt} placeholder="YYYY-MM-DD HH:mm" placeholderTextColor={theme.placeholder} style={styles.input} />
-          <Text style={styles.label}>Mã biên lai / giao dịch</Text>
+          <Text style={styles.label}>{t("disputes:trafficFine.referenceLabel")}</Text>
           <TextInput value={reference} onChangeText={setReference} maxLength={150} style={styles.input} />
           <Pressable onPress={() => void pickFiles()} style={styles.secondaryButton}>
-            <Text style={styles.secondaryText}>Chọn ảnh chứng từ ({files.length}/6)</Text>
+            <Text style={styles.secondaryText}>{t("mobile:dispute.fine.pickProof", { count: files.length, max: 6 })}</Text>
           </Pressable>
           <Pressable
             disabled={busy || !validProofAssets(files) || !parseVietnamDateTime(paidAt) || !reference.trim()}
             onPress={() => void act("payment-proof")}
             style={[styles.primaryButton, (busy || !validProofAssets(files) || !parseVietnamDateTime(paidAt) || !reference.trim()) && styles.disabled]}
           >
-            {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>Gửi chứng từ để xác minh</Text>}
+            {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>{t("disputes:trafficFine.submitProof")}</Text>}
           </Pressable>
         </View>
       ) : null}
 
       {owner && fine.paymentMode === "ReimburseOwner" && pending && !pending.ownerReceiptConfirmedAt ? (
         <Pressable disabled={busy} onPress={() => void act("confirm-owner-receipt")} style={[styles.primaryButton, busy && styles.disabled]}>
-          {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>Tôi xác nhận đã nhận đủ {formatDisputeMoney(fine.amount)}</Text>}
+          {busy ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.primaryText}>{t("disputes:trafficFine.confirmReceipt", { amount: formatDisputeMoney(fine.amount) })}</Text>
+          )}
         </Pressable>
       ) : null}
 

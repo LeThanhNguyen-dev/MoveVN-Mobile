@@ -141,6 +141,7 @@ export const endpoints = {
     reportNoShow: (id: number) => `/api/bookings/${id}/no-show/report`,
     confirmReceipt: (id: number) => `/api/bookings/${id}/check-out/confirm-receipt`,
     settlement: (id: number) => `/api/bookings/${id}/settlement`,
+    acceptLatePickup: (id: number) => `/api/bookings/${id}/accept-late-pickup`,
   },
   contracts: {
     base: "/api/contracts",
@@ -155,6 +156,12 @@ export const endpoints = {
     viewByGrant: (id: number) => `/api/contracts/${id}/view`,
     requestSignOtp: (id: number) => `/api/contracts/${id}/request-sign-otp`,
     verifySignOtp: (id: number) => `/api/contracts/${id}/verify-sign-otp`,
+  },
+  extensionRequests: {
+    base: "/api/extension-requests",
+    byBooking: (bookingId: number) => `/api/extension-requests?bookingId=${bookingId}`,
+    approve: (id: number) => `/api/extension-requests/${id}/approve`,
+    reject: (id: number) => `/api/extension-requests/${id}/reject`,
   },
   payments: {
     check: (orderCode: number) => `/api/payments/check/${orderCode}`,

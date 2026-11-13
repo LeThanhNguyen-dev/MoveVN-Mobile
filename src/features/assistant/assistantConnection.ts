@@ -11,29 +11,30 @@ export function subscribeAssistant(
   onConnection: (connected: boolean) => void,
 ) {
   let disposed = false;
+  let attempts = 0;
+  let retryTimer: ReturnType<typeof setTimeout> | undefined;
   const connection = new HubConnectionBuilder()
     .withUrl(`${getApiBaseUrl()}/hubs/chat`, { accessTokenFactory: () => getToken() ?? "" })
-    .withAutomaticReconnect()
+    .withAutomaticReconnect([0, 2000, 5000, 10000])
     .configureLogging(LogLevel.Error)
     .build();
   connection.on("AssistantUpdated", onUpdate);
   connection.onreconnecting(() => onConnection(false));
   connection.onreconnected(() => onConnection(true));
-  connection.onclose(() => {
-    if (!disposed) onConnection(false);
-  });
-  void connection
-    .start()
-    .then(() => {
-      if (disposed) void connection.stop();
-      else onConnection(true);
-    })
-    .catch(() => {
-      if (!disposed) onConnection(false);
+  function start() {
+    if (disposed) return;
+    void connection.start().then(() => {
+      attempts = 0;
+      if (disposed) void connection.stop(); else onConnection(true);
+    }).catch(() => {
+      if (disposed) return;
+      onConnection(false);
+      if (attempts < 5) retryTimer = setTimeout(start, Math.min(15000, 1000 * 2 ** attempts++));
     });
-  return () => {
-    disposed = true;
-    connection.off("AssistantUpdated", onUpdate);
-    void connection.stop();
-  };
+  }
+  connection.onclose(() => {
+    if (!disposed) { onConnection(false); if (attempts < 5) retryTimer = setTimeout(start, Math.min(15000, 1000 * 2 ** attempts++)); }
+  });
+  start();
+  return () => { disposed = true; clearTimeout(retryTimer); connection.off("AssistantUpdated", onUpdate); void connection.stop(); };
 }

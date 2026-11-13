@@ -1,0 +1,53 @@
+{
+  "voucher": {
+    "nav": {
+      "promotions": "Promotions",
+      "hunt": "Voucher hunt"
+    },
+    "card": {
+      "maxDiscount": "Up to {{amount}}",
+      "offerFallback": "MoveVN offer",
+      "copy": "Copy",
+      "copied": "Copied",
+      "detailAria": "View details"
+    },
+    "detail": {
+      "eyebrow": "OFFER DETAILS",
+      "fallbackTitle": "Promotion details",
+      "closeAria": "Close promotion details",
+      "fallbackDescription": "This MoveVN offer is live now.",
+      "applicableTo": "Applies to {{vehicle}}.",
+      "allVehicles": "All vehicles",
+      "allVehiclesLower": "all vehicles",
+      "codeLabel": "OFFER CODE",
+      "copyCodeAria": "Copy offer code",
+      "copy": "Copy",
+      "copied": "Copied",
+      "usedPercent": "{{percent}}% used",
+      "usageCount": "{{used}}/{{maxUsage}} uses",
+      "validityLabel": "Validity",
+      "untilDate": "Until {{date}}",
+      "fromDate": "From {{date}}",
+      "unlimited": "No expiry",
+      "vehicleFieldLabel": "Vehicle type",
+      "conditionsTitle": "TERMS & CONDITIONS",
+      "conditionDiscount": "{{discount}} on every eligible trip.",
+      "conditionDiscountMax": "{{discount}} on every eligible trip, up to {{maxDiscountAmount}}.",
+      "conditionMinOrder": "Applies only to trips with a minimum value of {{minOrderAmount}}.",
+      "conditionNoMinOrder": "No minimum order value required.",
+      "conditionVehicle": "Applies to {{vehicle}} on MoveVN.",
+      "conditionUsageLimit": "Limited to {{maxUsage}} uses, {{usage}} already used.",
+      "conditionOncePerAccount": "One use per account for each voucher code.",
+      "conditionNoStacking": "Not valid in combination with other promotions and cannot be exchanged for cash.",
+      "openingClaim": "Opening voucher hunt... ✓"
+    },
+    "hunt": {
+      "expiresIn": "Expires in {{days}} days",
+      "noOthers": "No other vouchers are available to claim right now."
+    },
+    "wallet": {
+      "bookNowTitle": "Book a ride now",
+      "bookNowMessage": "Open the Explore tab to pick a vehicle and use your voucher when booking."
+    }
+  }
+}

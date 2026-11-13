@@ -1,5 +1,6 @@
 import { useMemo, type ComponentType } from "react";
 import { Pressable, StyleSheet, View } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { Check, CheckCheck, Clock, TriangleAlert, X } from "lucide-react-native";
 import type { Theme } from "@/theme/tokens";
@@ -43,6 +44,7 @@ export default function WithdrawalRow({
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
   const look = lookForStatus(w.status, theme);
   const Icon = look.icon;
 
@@ -50,7 +52,9 @@ export default function WithdrawalRow({
     <View style={styles.row}>
       {/* Vòng tròn trạng thái: màu tương ứng từng trạng thái rút tiền */}
       <View
-        accessibilityLabel={`Trạng thái: ${withdrawalStatusLabel(w.status)}`}
+        accessibilityLabel={t("mobile:wallet.a11y.withdrawalStatus", {
+          status: withdrawalStatusLabel(w.status),
+        })}
         style={[styles.statusCircle, { backgroundColor: look.softBg, borderColor: look.color }]}
       >
         <Icon color={look.color} size={19} strokeWidth={2.4} />
@@ -70,7 +74,9 @@ export default function WithdrawalRow({
       </View>
       {isCancellable(w) && (
         <Pressable onPress={() => onCancel(w.id)} style={styles.cancelButton}>
-          <AppText style={styles.cancelText}>Hủy</AppText>
+          <AppText style={styles.cancelText}>
+            {t("accountWallet:withdrawals.cancel")}
+          </AppText>
         </Pressable>
       )}
     </View>

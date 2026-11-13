@@ -1,5 +1,7 @@
 import { TicketPercent, Wallet, X } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import {
   ActivityIndicator,
   Modal,
@@ -25,8 +27,10 @@ type Props = {
 
 function describe(v: VoucherClaimResponse): string {
   const off = v.discountType === "Percentage" ? `${v.discountValue}%` : formatMoney(v.discountValue);
-  const cap = v.maxDiscountAmount ? ` · tối đa ${formatMoney(v.maxDiscountAmount)}` : "";
-  return `Giảm ${off}${cap}`;
+  const cap = v.maxDiscountAmount
+    ? ` · ${i18n.t("booking:checkout.pickerMax", { amount: formatMoney(v.maxDiscountAmount) })}`
+    : "";
+  return i18n.t("mobile:checkout.voucher.discount", { off }) + cap;
 }
 
 function usableFor(v: VoucherClaimResponse, vehicleType: string | null | undefined): boolean {
@@ -43,6 +47,7 @@ export default function CheckoutVoucherSheet({
   onClose,
 }: Props) {
   const { p } = useCheckoutTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(p), [p]);
 
   return (
@@ -54,7 +59,7 @@ export default function CheckoutVoucherSheet({
       visible={visible}
     >
       <View style={styles.root}>
-        <Pressable accessibilityLabel="Đóng ví voucher" onPress={onClose} style={styles.backdrop} />
+        <Pressable accessibilityLabel={t("mobile:checkout.voucher.closeAria")} onPress={onClose} style={styles.backdrop} />
         <View style={[styles.sheet, { paddingBottom: Math.max(bottomInset, 16) }]}>
           <View style={styles.handle} />
 
@@ -63,11 +68,11 @@ export default function CheckoutVoucherSheet({
               <Wallet color={p.brand} size={18} strokeWidth={2.1} />
             </View>
             <View style={styles.headBody}>
-              <AppText style={styles.title}>Ví voucher</AppText>
-              <AppText style={styles.subtitle}>Chọn mã giảm giá cho đơn này</AppText>
+              <AppText style={styles.title}>{t("promo:wallet.pageTitle")}</AppText>
+              <AppText style={styles.subtitle}>{t("mobile:checkout.voucher.subtitle")}</AppText>
             </View>
             <Pressable
-              accessibilityLabel="Đóng"
+              accessibilityLabel={t("common:closeAction")}
               hitSlop={8}
               onPress={onClose}
               style={({ pressed }) => [styles.close, pressed && styles.pressed]}
@@ -79,14 +84,14 @@ export default function CheckoutVoucherSheet({
           {loading ? (
             <View style={styles.state}>
               <ActivityIndicator color={p.brand} />
-              <AppText style={styles.stateText}>Đang tải voucher…</AppText>
+              <AppText style={styles.stateText}>{t("mobile:checkout.voucher.loading")}</AppText>
             </View>
           ) : vouchers.length === 0 ? (
             <View style={styles.state}>
               <TicketPercent color={p.faint} size={26} strokeWidth={1.8} />
-              <AppText style={styles.stateTitle}>Ví đang trống</AppText>
+              <AppText style={styles.stateTitle}>{t("mobile:checkout.voucher.emptyTitle")}</AppText>
               <AppText style={styles.stateText}>
-                Săn mã ưu đãi ở tab Ưu đãi rồi quay lại đây.
+                {t("mobile:checkout.voucher.emptyBody")}
               </AppText>
             </View>
           ) : (
@@ -123,15 +128,15 @@ export default function CheckoutVoucherSheet({
                       </AppText>
                       <AppText style={styles.meta} numberOfLines={1}>
                         {describe(v)}
-                        {v.minOrderAmount ? ` · đơn từ ${formatMoney(v.minOrderAmount)}` : ""}
+                        {v.minOrderAmount ? t("mobile:checkout.voucher.minOrder", { amount: formatMoney(v.minOrderAmount) }) : ""}
                       </AppText>
                       {!ok ? (
-                        <AppText style={styles.blocked}>Không áp dụng cho loại xe này</AppText>
+                        <AppText style={styles.blocked}>{t("mobile:checkout.voucher.blocked")}</AppText>
                       ) : null}
                     </View>
                     {ok ? (
                       <View style={styles.usePill}>
-                        <AppText style={styles.useText}>Dùng</AppText>
+                        <AppText style={styles.useText}>{t("mobile:checkout.voucher.use")}</AppText>
                       </View>
                     ) : null}
                   </Pressable>

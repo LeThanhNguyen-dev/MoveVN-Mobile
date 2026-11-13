@@ -10,6 +10,15 @@ describe("vehicle search map HTML", () => {
       10,
       "#6B19FF",
       "#F1F5F9",
+      {
+        perDaySuffix: "/ngày",
+        totalRentalPrefix: "Tổng tiền thuê: ",
+        distancePrefix: "Cách điểm nhận ",
+        distanceSuffix: " km",
+        clusterSuffix: " xe",
+        viewVehicle: "Xem xe",
+        pickupPopup: "Điểm nhận xe bạn chọn",
+      },
     );
     const inlineScript = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 

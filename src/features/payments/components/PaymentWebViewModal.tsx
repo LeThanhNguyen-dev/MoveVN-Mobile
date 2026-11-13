@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Modal, Pressable, StyleSheet, View } from "react-native"
+import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { X } from "lucide-react-native";
 import { WebView } from "react-native-webview";
@@ -22,6 +23,7 @@ export default function PaymentWebViewModal({
 }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
@@ -30,7 +32,10 @@ export default function PaymentWebViewModal({
     try {
       await Linking.openURL(checkoutUrl);
     } catch {
-      Alert.alert("Lỗi", "Không mở được link thanh toán.");
+      Alert.alert(
+        t("accountWallet:toasts.errorTitle"),
+        t("mobile:wallet.payment.openFailed"),
+      );
     }
   }
 
@@ -43,13 +48,17 @@ export default function PaymentWebViewModal({
     >
       <View style={styles.screen}>
         <View style={styles.header}>
-          <AppText display style={styles.headerTitle}>Thanh toán PayOS</AppText>
-          <Pressable onPress={onClose} style={styles.closeButton} accessibilityLabel="Đóng thanh toán">
+          <AppText display style={styles.headerTitle}>{t("mobile:wallet.payment.title")}</AppText>
+          <Pressable
+            onPress={onClose}
+            style={styles.closeButton}
+            accessibilityLabel={t("mobile:wallet.a11y.closePayment")}
+          >
             <X color={theme.text} size={20} />
           </Pressable>
         </View>
         {checkoutUrl ? (
-          <WebView
+          <WebView<object>
             source={{ uri: checkoutUrl }}
             startInLoadingState
             onLoadStart={() => {
@@ -78,12 +87,12 @@ export default function PaymentWebViewModal({
         )}
         {failed && (
           <View style={styles.failed}>
-            <AppText style={styles.failedText}>Không tải được trang thanh toán.</AppText>
+            <AppText style={styles.failedText}>{t("mobile:wallet.payment.loadFailed")}</AppText>
             <Pressable onPress={openInBrowser} style={styles.browserButton}>
-              <AppText style={styles.browserText}>Mở bằng trình duyệt</AppText>
+              <AppText style={styles.browserText}>{t("mobile:wallet.payment.openInBrowser")}</AppText>
             </Pressable>
             <Pressable onPress={onClose} style={styles.ghostButton}>
-              <AppText style={styles.ghostText}>Đóng</AppText>
+              <AppText style={styles.ghostText}>{t("common:closeAction")}</AppText>
             </Pressable>
           </View>
         )}

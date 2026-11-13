@@ -1,5 +1,6 @@
 import { CircleCheck, CircleX, Info, X } from "lucide-react-native";
 import { memo, useMemo, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Animated, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,6 +18,7 @@ function DropCard({ children, style }: { children: React.ReactNode; style: Style
   return <Animated.View accessibilityLiveRegion="polite" style={[style, { transform: [{ translateY: offset }] }]}>{children}</Animated.View>;
 }
 function ToastHost() {
+  const { t } = useTranslation();
   const toasts = useToastStore((state) => state.toasts);
   const dismissToast = useToastStore((state) => state.dismissToast);
   const { theme } = useTheme();
@@ -41,7 +43,7 @@ function ToastHost() {
               onPress={() => dismissToast(toast.id)}
               style={styles.closeButton}
               accessibilityRole="button"
-              accessibilityLabel="Đóng thông báo"
+              accessibilityLabel={t("common:notifications.closeAria")}
               hitSlop={8}
             >
               <X color={theme.muted} size={15} />

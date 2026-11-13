@@ -1,0 +1,17 @@
+{
+  "reviewReply": {
+    "saveFailed": "Couldn't save the reply. Please try again.",
+    "button": "Reply to review",
+    "sectionAria": "Review reply",
+    "heading": "Reply from the reviewed party",
+    "contentLabel": "Reply content",
+    "placeholder": "Share a polite, clear reply…",
+    "hint": "Replies are public. Don't share phone numbers or payment information.",
+    "charCount": "{{current}}/1000 characters",
+    "cancel": "Cancel",
+    "saveEdit": "Save changes",
+    "send": "Send reply",
+    "edited": " · Edited",
+    "editReply": "Edit reply"
+  }
+}

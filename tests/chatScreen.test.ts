@@ -42,6 +42,7 @@ vi.mock("expo-secure-store", () => ({
   setItemAsync: vi.fn(),
   deleteItemAsync: vi.fn(),
 }));
+vi.mock("expo-image", () => ({ Image: "Image" }));
 vi.mock("@/features/notifications/components/NotificationBell", () => ({
   default: () => React.createElement("NotificationBell"),
 }));
@@ -75,6 +76,8 @@ vi.mock("react-native", () => ({
   RefreshControl: "RefreshControl",
   KeyboardAvoidingView: "KeyboardAvoidingView",
   Platform: { OS: "android" },
+  Keyboard: { dismiss: vi.fn(), addListener: () => ({ remove: () => {} }) },
+  useWindowDimensions: () => ({ width: 400, height: 800, scale: 2, fontScale: 1 }),
   StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 },
   TextInput: forwardRef((props: Record<string, unknown>, ref) => {
     useImperativeHandle(ref, () => ({ focus: vi.fn() }));
@@ -127,6 +130,7 @@ vi.mock("react-native", () => ({
 vi.mock("react-native-safe-area-context", () => ({
   SafeAreaView: "SafeAreaView",
   SafeAreaProvider: "SafeAreaProvider",
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 vi.mock("lucide-react-native", () =>
   Object.fromEntries(
@@ -278,7 +282,7 @@ it("opens the customer's booking room, reads it, replies and sends a scoped mess
   ]);
   expect(store.getState().drafts["room-a"]?.content).toBe("");
   expect(text()).toContain("Mình đến lúc 8h");
-  await press("Xem booking");
+  await press("Xem đơn thuê");
   expect(mocks.booking).toHaveBeenCalledWith(101);
 });
 
@@ -439,10 +443,10 @@ it("filters the list by Vietnamese names and booking code and opens the selected
     tree = create(React.createElement(ChatListScreen, { onOpen: mocks.open }));
   });
   expect(text()).toContain("Chủ Đặng");
-  await type("Tìm booking hoặc người trò chuyện", "chu dang");
-  await press("Chủ Đặng, MV-101, 2 chưa đọc");
+  await type("Tìm người trò chuyện, mã đặt xe hoặc xe", "chu dang");
+  await press("Chủ Đặng, Hiện không hoạt động, MV-101, 2 chưa đọc");
   expect(mocks.open).toHaveBeenCalledWith("room-a");
-  await type("Tìm booking hoặc người trò chuyện", "no match");
+  await type("Tìm người trò chuyện, mã đặt xe hoặc xe", "no match");
   expect(text()).toContain("Không tìm thấy booking");
 });
 

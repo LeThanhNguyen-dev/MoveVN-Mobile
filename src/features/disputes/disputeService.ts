@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { apiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
 import type { ApiResponse } from "@/features/auth/types";
@@ -52,7 +53,9 @@ export async function uploadDisputeEvidenceImages(files: UploadFileInput[]) {
     endpoints.disputes.uploadEvidenceImages,
     formData,
   );
-  if (!res.data.data || res.data.data.urls.length !== files.length) throw new Error("Không thể tải đầy đủ ảnh bằng chứng.");
+  if (!res.data.data || res.data.data.urls.length !== files.length) {
+    throw new Error(i18n.t("disputes:errors.uploadEvidenceIncomplete"));
+  }
   return res.data.data;
 }
 

@@ -1,0 +1,128 @@
+{
+  "chat": {
+    "list": {
+      "title": "Messages",
+      "subtitle": "Chat about each trip",
+      "refresh": "Refresh chat list",
+      "searchLabel": "Search people, booking code or vehicle",
+      "searchPlaceholder": "Search name, booking code or vehicle…",
+      "emptySearch": "No bookings found",
+      "emptyTitle": "No conversations yet",
+      "emptyBody": "Open a trip or rental detail and choose Message to start."
+    },
+    "room": {
+      "back": "Back",
+      "viewProfile": "View {{name}}'s profile",
+      "viewProfileFallback": "View chat partner's profile",
+      "counterpartFallback": "Chat partner",
+      "titleFallback": "Booking chat",
+      "opening": "Opening conversation…",
+      "search": "Search this booking chat",
+      "gallery": "Booking photo library",
+      "viewBooking": "View rental",
+      "bookingFallback": "Vehicle rental",
+      "bookingLink": "View booking →",
+      "connecting": "Connecting messages…",
+      "offline": "No live connection · Refreshes every 30 seconds",
+      "retryOpen": "Try opening chat again",
+      "retry": "Try again",
+      "emptyTitle": "Start the conversation",
+      "emptyBody": "Discuss pickup times, locations or your trip.",
+      "retryHistory": "Try loading messages again",
+      "loadOlder": "Load older messages",
+      "latest": "Go to latest message",
+      "latestLabel": "Latest message",
+      "retryRead": "Try marking chat as read",
+      "replyTo": "Reply to {{name}}",
+      "imageCount": "📷 {{n}} photos",
+      "removeImage": "Remove photo {{name}}",
+      "cancelReply": "Cancel reply",
+      "processingImages": "Processing photos…",
+      "uploadingImages": "Uploading photos {{progress}}%",
+      "pickImage": "Choose photo",
+      "takePhoto": "Take photo",
+      "inputLabel": "Message content",
+      "inputPlaceholder": "Type a message…",
+      "send": "Send message",
+      "closed": "This conversation is closed. You can still view the history.",
+      "closePhoto": "Close photo",
+      "closeQuote": "Close quoted message",
+      "quoteTitle": "Original message",
+      "openError": "Could not open the booking chat. Please try again.",
+      "quoteError": "The message is no longer available or could not be loaded.",
+      "pickError": "Could not choose a photo."
+    },
+    "tools": {
+      "close": "Close chat tools",
+      "searchTitle": "Search in booking",
+      "galleryTitle": "Booking photos",
+      "keywordLabel": "Message search keyword",
+      "keywordPlaceholder": "Content or photo name…",
+      "search": "Search messages",
+      "retry": "Retry chat tools",
+      "errorWithRetry": "{{error}} Tap to try again.",
+      "summary": "{{total}} messages · Page {{page}}/{{pages}}",
+      "prompt": "Enter a keyword to search the whole booking history.",
+      "emptySearch": "No matching messages.",
+      "emptyGallery": "This booking has no photos yet.",
+      "prev": "Previous page",
+      "next": "Next page",
+      "loadError": "Could not load data. Check that the backend is updated, then try again.",
+      "keywordTooLong": "Keyword must be at most 120 characters."
+    },
+    "message": {
+      "viewQuoted": "View replied message",
+      "unavailable": "Message is no longer available",
+      "imageCount": "📷 {{n}} photos",
+      "imageOnly": "Photo message",
+      "read": " · Read",
+      "sent": " · Sent",
+      "reply": "Reply",
+      "replyLabel": "Reply to message {{id}}"
+    },
+    "row": {
+      "ownPrefix": "You: ",
+      "photoOnly": "Sent a photo",
+      "start": "Start a conversation",
+      "a11y": "{{name}}, {{presence}}, {{code}}, {{n}} unread",
+      "bookingFallback": "Vehicle rental"
+    },
+    "image": {
+      "reload": "Reload photo {{name}}",
+      "open": "View photo {{name}}",
+      "error": "Could not load the photo. Tap to try again."
+    },
+    "avatar": {
+      "a11y": "{{name}}'s profile photo"
+    },
+    "presence": {
+      "online": "Active now",
+      "offline": "Currently offline",
+      "justNow": "Active just now",
+      "minutes": "Active {{n}} minutes ago",
+      "hours": "Active {{n}} hours ago",
+      "days": "Active {{n}} days ago"
+    },
+    "counterpart": {
+      "customer": "Renter #{{id}}",
+      "owner": "Owner #{{id}}"
+    },
+    "picker": {
+      "cameraPermission": "Allow MoveVN to use the camera in Settings to take photos."
+    },
+    "validation": {
+      "maxImages": "Each message can include at most 4 photos.",
+      "unsupportedType": "Only JPG, PNG or WebP photos are supported.",
+      "invalidSize": "Each photo must have data and be at most 5 MB.",
+      "emptyDraft": "Enter a message or choose a photo before sending.",
+      "tooLong": "Messages cannot exceed 2,000 characters."
+    },
+    "errors": {
+      "loadRooms": "Could not load the message list. Please try again.",
+      "loadMessages": "Could not load messages. Please try again.",
+      "readFailed": "Could not mark as read. Tap to try again.",
+      "sentImages": "Sent {{n}} photos",
+      "sendFailed": "Could not send the message. Your draft is kept; tap Send to try again."
+    }
+  }
+}

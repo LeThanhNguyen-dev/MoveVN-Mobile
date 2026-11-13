@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { BellRing } from "lucide-react-native";
 import AppText from "@/components/AppText";
@@ -13,6 +14,7 @@ import { openAvailabilityAlerts } from "./alertNavigation";
 export default function AvailabilityAlertPanel({ vehicleId, ownerId, startDate, endDate }: {
   vehicleId: number; ownerId: number; startDate: string; endDate: string;
 }) {
+  const { t } = useTranslation();
   const { theme } = useTheme(); const user = useAuthStore(s => s.user);
   const [open, setOpen] = useState(false), [picker, setPicker] = useState(false);
   const [start, setStart] = useState(startDate), [end, setEnd] = useState(endDate);
@@ -24,21 +26,21 @@ export default function AvailabilityAlertPanel({ vehicleId, ownerId, startDate, 
   const button = { minHeight: 44, justifyContent: "center" as const, padding: 12, borderRadius: 12, backgroundColor: theme.surface };
   return <View style={{ marginVertical: 12, padding: 14, borderRadius: 16, gap: 12, backgroundColor: theme.brandSoft, borderColor: theme.brandBorder, borderWidth: 1 }}>
     <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 36 }}>
-      <BellRing size={20} color={theme.brand} /><AppText style={{ color: theme.brand, fontWeight: "700", flex: 1 }}>Nhận thông báo khi xe trống</AppText>
+      <BellRing size={20} color={theme.brand} /><AppText style={{ color: theme.brand, fontWeight: "700", flex: 1 }}>{t("mobile:availabilityAlerts.panel.toggle")}</AppText>
     </Pressable>
     {open && <>
-      <AppText style={{ color: theme.text, fontSize: 13 }}>Chọn ngày giờ mong muốn, kể cả khi xe bận. MoveVN báo trong app một lần khi cả khoảng thuê trống. Thông báo không giữ chỗ.</AppText>
-      <Pressable accessibilityRole="button" onPress={() => setPicker(true)} style={button}><AppText style={{ color: theme.text }}>{formatPeriodSummary(start, end)}</AppText><AppText style={{ color: theme.brand, fontSize: 12 }}>Chạm để chọn lịch · Giờ Việt Nam</AppText></Pressable>
+      <AppText style={{ color: theme.text, fontSize: 13 }}>{t("mobile:availabilityAlerts.panel.intro")}</AppText>
+      <Pressable accessibilityRole="button" onPress={() => setPicker(true)} style={button}><AppText style={{ color: theme.text }}>{formatPeriodSummary(start, end)}</AppText><AppText style={{ color: theme.brand, fontSize: 12 }}>{t("mobile:availabilityAlerts.panel.periodHint")}</AppText></Pressable>
       {error ? <AppText accessibilityRole="alert" style={{ color: theme.danger }}>{error}</AppText> : null}
-      {saved ? <AppText accessibilityRole="alert" style={{ color: theme.success }}>Đã đăng ký theo dõi khoảng thuê này.</AppText> : <Pressable accessibilityRole="button" disabled={busy || !start || !end} style={[button, { backgroundColor: theme.brand, opacity: busy || !start || !end ? 0.5 : 1 }]} onPress={async () => {
+      {saved ? <AppText accessibilityRole="alert" style={{ color: theme.success }}>{t("mobile:availabilityAlerts.panel.saved")}</AppText> : <Pressable accessibilityRole="button" disabled={busy || !start || !end} style={[button, { backgroundColor: theme.brand, opacity: busy || !start || !end ? 0.5 : 1 }]} onPress={async () => {
         const validation = alertPeriodError(start, end);
         if (validation) { setError(validation); return; }
         const expectedVersion = version.current;
         setBusy(true); setError("");
         try { const item = await registerAvailabilityAlert(vehicleId, start, end); if (expectedVersion === version.current) setSaved(item.status === "Active"); }
-        catch (e) { if (expectedVersion === version.current) setError(getApiErrorMessage(e, "Không đăng ký được thông báo.")); } finally { setBusy(false); }
-      }}>{busy ? <ActivityIndicator color={theme.onBrand} /> : <AppText style={{ color: theme.onBrand, fontWeight: "700", textAlign: "center" }}>Đăng ký theo dõi</AppText>}</Pressable>}
-      <Pressable accessibilityRole="button" onPress={() => openAvailabilityAlerts()} style={button}><AppText style={{ color: theme.brand, fontWeight: "600" }}>Xem và hủy đăng ký của tôi →</AppText></Pressable>
+        catch (e) { if (expectedVersion === version.current) setError(getApiErrorMessage(e, t("mobile:availabilityAlerts.panel.registerError"))); } finally { setBusy(false); }
+      }}>{busy ? <ActivityIndicator color={theme.onBrand} /> : <AppText style={{ color: theme.onBrand, fontWeight: "700", textAlign: "center" }}>{t("mobile:availabilityAlerts.panel.subscribe")}</AppText>}</Pressable>}
+      <Pressable accessibilityRole="button" onPress={() => openAvailabilityAlerts()} style={button}><AppText style={{ color: theme.brand, fontWeight: "600" }}>{t("mobile:availabilityAlerts.panel.manage")}</AppText></Pressable>
     </>}
     <RentalPeriodSheet visible={picker} startDate={start} endDate={end} onStartDateChange={v => { setStart(v); setSaved(false); setError(""); }} onEndDateChange={v => { setEnd(v); setSaved(false); setError(""); }} onClose={() => setPicker(false)} />
   </View>;

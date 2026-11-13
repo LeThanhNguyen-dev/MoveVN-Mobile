@@ -1,0 +1,28 @@
+{
+  "bookings": {
+    "status": {
+      "all": "Tất cả"
+    },
+    "list": {
+      "eyebrow": "Yêu cầu thuê xe",
+      "title": "Yêu cầu thuê xe",
+      "description": "Quản lý yêu cầu thuê từ khách hàng, kiểm tra rủi ro và mở chi tiết để phản hồi booking.",
+      "count": "{{count}} yêu cầu",
+      "searchPlaceholder": "Mã booking, khách hàng, địa chỉ...",
+      "sectionTitle": "Danh sách yêu cầu",
+      "sectionDescription": "Ưu tiên xử lý các yêu cầu đã đặt cọc hoặc có rủi ro cao.",
+      "emptyTitle": "Chưa có yêu cầu nào",
+      "emptyDescription": "Các booking từ khách hàng sẽ xuất hiện tại đây.",
+      "colBookingCode": "Mã booking",
+      "colCustomer": "Khách hàng",
+      "colStartDate": "Ngày thuê",
+      "colEndDate": "Ngày trả",
+      "colTotal": "Tổng tiền",
+      "colRisk": "Rủi ro",
+      "colStatus": "Trạng thái",
+      "colActions": "Thao tác",
+      "customerFallback": "Khách hàng #{{id}}",
+      "viewDetail": "Chi tiết"
+    }
+  }
+}

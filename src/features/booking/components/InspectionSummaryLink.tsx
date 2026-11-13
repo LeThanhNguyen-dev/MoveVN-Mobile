@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { ChevronRight, KeyRound, PackageCheck } from "lucide-react-native";
 import { detailFont as font, useDetailTheme } from "@/features/vehicles/components/detail/detailTheme";
 import type { BookingResponse, InspectionReportResponse } from "../types";
@@ -12,8 +13,9 @@ export default function InspectionSummaryLink({ booking, type, report, onPress, 
   onPress: () => void;
   divider?: boolean;
 }) {
+  const { t } = useTranslation();
   const { p } = useDetailTheme();
-  const title = type === "CheckIn" ? "Nhận xe · Check-in" : "Trả xe · Check-out";
+  const title = t(type === "CheckIn" ? "booking:detail.handoverCheckIn" : "booking:detail.handoverCheckOut");
   const progress = handoverProgress(booking, type, report);
   const tone = progress.tone === "done" ? "mint" : progress.tone === "action" ? "brand" : "neutral";
   const Icon = type === "CheckIn" ? KeyRound : PackageCheck;
@@ -23,7 +25,7 @@ export default function InspectionSummaryLink({ booking, type, report, onPress, 
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`Mở ${title}`}
+      accessibilityLabel={t("mobile:inspection.summaryLink.open", { title })}
       onPress={onPress}
       style={({ pressed }) => ({
         flexDirection: "row",
@@ -69,7 +71,7 @@ export default function InspectionSummaryLink({ booking, type, report, onPress, 
           {progress.guidance}
         </Text>
         <Text style={{ color: p.brand, fontFamily: font.semibold, fontSize: 10.5 }}>
-          {report ? `Biên bản · Phiên bản ${report.version ?? 1} · Xem chi tiết` : "Xem biên bản và thao tác"}
+          {report ? t("mobile:inspection.summaryLink.version", { version: report.version ?? 1 }) : t("booking:detail.viewReport")}
         </Text>
       </View>
 

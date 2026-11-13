@@ -1,0 +1,23 @@
+{
+  "seo": {
+    "title": "Hỏi và trả lời",
+    "description": "Giải đáp cách MoveVN hoạt động và hướng dẫn sử dụng cho khách thuê và chủ xe."
+  },
+  "eyebrow": "Trung tâm trợ giúp",
+  "title": "Hỏi và trả lời",
+  "description": "Giải đáp cách MoveVN hoạt động và hướng dẫn sử dụng cho khách thuê và chủ xe.",
+  "tabs": {
+    "customer": "Khách thuê",
+    "owner": "Chủ xe"
+  },
+  "error": "Không thể tải danh mục hỏi đáp. Vui lòng thử lại.",
+  "empty": {
+    "title": "Chưa có nội dung hỏi đáp",
+    "description": "Danh mục này đang được cập nhật. Vui lòng quay lại sau."
+  },
+  "viewQuestions": "Xem các câu hỏi →",
+  "detail": {
+    "loadError": "Không thể tải nội dung. Vui lòng thử lại.",
+    "heroTitle": "Hỏi và trả lời"
+  }
+}

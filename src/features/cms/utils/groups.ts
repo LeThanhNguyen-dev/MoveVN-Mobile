@@ -1,4 +1,5 @@
 import type { CmsPageNavigationItem } from "@/features/cms/types";
+import { translatedLabels } from "@/i18n/liveLabels";
 
 export type PolicyGroupKey = "POLICY" | "GUIDE";
 
@@ -9,10 +10,11 @@ export type PolicyGroup = {
   items: CmsPageNavigationItem[];
 };
 
-const GROUP_TITLES: Record<PolicyGroupKey, string> = {
-  POLICY: "Chính sách & Quy định",
-  GUIDE: "Hướng dẫn & Quy chế",
-};
+// Nhãn resolve mỗi lần đọc (getter) để không đóng băng tiếng Việt lúc import module.
+const GROUP_TITLES: Record<PolicyGroupKey, string> = translatedLabels<PolicyGroupKey>("policy", {
+  POLICY: "heroTitle",
+  GUIDE: "guideHeroTitle",
+});
 
 const GROUP_ORDER: PolicyGroupKey[] = ["POLICY", "GUIDE"];
 

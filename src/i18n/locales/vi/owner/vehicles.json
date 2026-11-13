@@ -1,0 +1,462 @@
+{
+  "vehicles": {
+    "common": {
+      "all": "Tất cả",
+      "car": "Ô tô",
+      "motorbike": "Xe máy",
+      "back": "Quay lại",
+      "next": "Tiếp theo",
+      "cancel": "Hủy",
+      "delete": "Xóa",
+      "deleting": "Đang xóa...",
+      "saving": "Đang lưu...",
+      "notRequired": "Không yêu cầu",
+      "percentOfRental": "{{percent}}% tổng tiền thuê",
+      "suggestedPrice": "Giá đề xuất: {{price}}",
+      "currencyCode": "VNĐ"
+    },
+    "status": {
+      "pending": "Chờ duyệt",
+      "approved": "Đã duyệt",
+      "rejected": "Từ chối",
+      "hidden": "Đã ẩn"
+    },
+    "cavetErrors": {
+      "pendingReview": "Cà vẹt đang chờ nhân viên duyệt. Bạn chưa thể tải ảnh khác lên lúc này.",
+      "tooManyAttemptsDate": "Bạn đã gửi ảnh không đạt quá nhiều lần. Vui lòng thử lại sau {{date}}.",
+      "tooManyAttempts": "Bạn đã gửi ảnh không đạt quá nhiều lần. Vui lòng thử lại sau.",
+      "ocrUnavailable": "Hệ thống xác thực cà vẹt đang gián đoạn. Vui lòng thử lại sau.",
+      "needMoreInfo": "Ảnh cà vẹt thiếu thông tin hoặc chưa đủ rõ. Vui lòng chụp lại và xác thực lại.",
+      "mismatch": "Thông tin cà vẹt không khớp với xe. Vui lòng kiểm tra và chọn lại ảnh.",
+      "sessionExpired": "Phiên xác thực cà vẹt đã hết hạn hoặc thông tin đã thay đổi. Vui lòng xác thực lại.",
+      "generic": "Không thể xử lý cà vẹt xe. Vui lòng thử lại."
+    },
+    "steps": {
+      "type": "Loại xe",
+      "brandModel": "Hãng & dòng xe",
+      "info": "Thông tin",
+      "pricingAddress": "Giá & địa chỉ",
+      "features": "Tính năng",
+      "images": "Hình ảnh",
+      "confirm": "Xác nhận"
+    },
+    "features": {
+      "heading": "Tính năng",
+      "subtitle": "Chọn các tính năng mà xe của bạn có.",
+      "empty": "Không có tính năng nào."
+    },
+    "fields": {
+      "brand": "Hãng xe",
+      "brandPlaceholder": "Chọn hãng xe",
+      "model": "Dòng xe",
+      "modelPlaceholder": "Chọn dòng xe",
+      "variant": "Phiên bản",
+      "variantPlaceholder": "Chọn phiên bản (không bắt buộc)",
+      "year": "Năm sản xuất",
+      "licensePlate": "Biển số xe",
+      "licensePlatePlaceholder": "VD: 51A-12345",
+      "odometer": "Số km đã đi",
+      "odometerPlaceholder": "VD: 15000",
+      "province": "Tỉnh/Thành phố",
+      "provincePlaceholder": "Chọn tỉnh/thành phố",
+      "ward": "Phường/Xã",
+      "wardPlaceholder": "Chọn phường/xã",
+      "addressPlaceholder": "VD: Số 123, Đường ABC, Phường XYZ"
+    },
+    "pricing": {
+      "modeLabel": "Hình thức định giá",
+      "fixedMode": "Tự nhập giá",
+      "autoMode": "Giá tự động",
+      "autoUnavailable": "Chưa có khung giá gợi ý để sử dụng chế độ tự động.",
+      "priceLabel": "Giá cho thuê",
+      "pricePlaceholder": "VD: 500000",
+      "currencyPerDay": "VNĐ/ngày",
+      "minPrice": "Giá tối thiểu",
+      "maxPrice": "Giá tối đa",
+      "invalid": "Giá phải hợp lệ và nằm trong khung min/max nếu có gợi ý.",
+      "suggestedRangeLabel": "Giá gợi ý dành cho dòng xe này tại khu vực của bạn:",
+      "suggestedRangeSuffix": "/ngày (giá cơ sở: {{base}}).",
+      "suggestedShortLabel": "Giá gợi ý:",
+      "perDaySuffix": "/ngày",
+      "noSuggestionForArea": "Chưa có khung giá gợi ý cho dòng xe và khu vực này.",
+      "noSuggestionShort": "Chưa có khung giá gợi ý."
+    },
+    "deposit": {
+      "label": "Tiền cọc (%)",
+      "inlineNote": "(= {{percent}}% tổng tiền thuê, khách trả trước khi nhận xe)",
+      "hint": "Phần trăm tiền thuê khách phải trả trước. Tối thiểu 20%, tối đa 50%.",
+      "invalid": "Phần trăm tiền cọc phải từ 20 đến 50%."
+    },
+    "delivery": {
+      "title": "Giao xe tận nơi",
+      "hint": "Tự đặt bán kính và phí giao xe cho xe này. Để trống một ô để dùng cấu hình chung của sàn.",
+      "freeKm": "Miễn phí trong (km)",
+      "freeKmPlaceholder": "VD: 5",
+      "feePerKm": "Phí mỗi km vượt (VNĐ)",
+      "feePlaceholder": "VD: 10000",
+      "maxKm": "Tối đa (km)",
+      "maxPlaceholder": "VD: 50",
+      "invalid": "Bán kính miễn phí 0–1000 km, phí/km 0–1.000.000đ, tối đa 1–10000 km và phải ≥ bán kính miễn phí."
+    },
+    "collateral": {
+      "label": "Yêu cầu thế chấp",
+      "hint": "Khách đặt một khoản tiền cọc giữ lại làm bảo hiểm. Hoàn lại khi trả xe đúng tình trạng.",
+      "amount": "Số tiền thế chấp (VNĐ)",
+      "amountPlaceholder": "VD: 2000000",
+      "invalid": "Số tiền thế chấp phải lớn hơn 0."
+    },
+    "surchargeInvalid": "Phụ phí cần có tên, cách tính và đơn giá lớn hơn 0.",
+    "description": {
+      "addLabel": "Mô tả thêm",
+      "addPlaceholder": "Mô tả thêm về xe của bạn...",
+      "editPlaceholder": "Mô tả thêm về xe..."
+    },
+    "form": {
+      "description": {
+        "label": "Mô tả",
+        "placeholder": "Mô tả thêm về xe...",
+        "aiEmpty": "AI chưa tạo được mô tả. Vui lòng thử lại.",
+        "aiFailed": "Không thể tạo gợi ý lúc này. Vui lòng thử lại.",
+        "rewrite": "Viết lại bằng AI",
+        "suggest": "Gợi ý bằng AI",
+        "chooseFirst": "Chọn hãng, dòng xe, loại xe và năm sản xuất trước",
+        "generating": "Đang tạo..."
+      },
+      "descriptionEn": {
+        "label": "Mô tả tiếng Anh",
+        "optional": "(không bắt buộc)",
+        "placeholder": "Mô tả chiếc xe bằng tiếng Anh cho khách quốc tế...",
+        "fallbackHint": "Để trống → khách xem bằng tiếng Anh vẫn thấy bản tiếng Việt.",
+        "translateTitle": "Dịch mô tả tiếng Việt sang tiếng Anh (Azure Translator)",
+        "translateDisabledTitle": "Nhập mô tả tiếng Việt trước",
+        "translating": "Đang dịch...",
+        "translateFromVi": "Dịch từ bản VI",
+        "emptyResult": "Không nhận được kết quả dịch. Vui lòng thử lại.",
+        "translateFailed": "Chưa thể dịch lúc này. Vui lòng thử lại hoặc tự viết bản tiếng Anh."
+      },
+      "pricingHelp": {
+        "aria": "Giải thích hình thức định giá",
+        "fixedTitle": "Tự nhập giá",
+        "fixedText": "Giá cố định do chủ xe đặt và không bị hệ thống tăng/giảm theo nhu cầu, ngày cuối tuần hay ngày lễ.",
+        "autoTitle": "Giá tự động",
+        "autoText": "Chủ xe đặt giá tối thiểu và tối đa. MoveVN tính giá từng ngày trong khung này dựa trên giá cơ sở theo dòng xe/khu vực, quy tắc ngày lễ hoặc cuối tuần, tỷ lệ xe đã được đặt trong khu vực và số ngày xe đang rảnh."
+      },
+      "surcharge": {
+        "title": "Phụ phí có thể phát sinh",
+        "hint": "Các khoản này chỉ là quy định trước cho xe, chưa tính vào booking ở bước hiện tại. Thời gian tính theo giờ.",
+        "add": "Thêm phí",
+        "empty": "Chưa cấu hình phụ phí.",
+        "active": "Đang áp dụng",
+        "removeAria": "Xóa phụ phí {{name}}",
+        "name": "Tên phí *",
+        "method": "Cách tính *",
+        "price": "Đơn giá *",
+        "pricePlaceholder": "VD: 5000",
+        "maxAmount": "Giới hạn tối đa",
+        "optional": "Không bắt buộc",
+        "includedKm": "Km bao gồm",
+        "includedKmPlaceholder": "VD: 300",
+        "scope": "Phạm vi",
+        "scopePerBooking": "Theo chuyến",
+        "scopePerDay": "Theo ngày",
+        "graceHours": "Miễn trễ (giờ)",
+        "gracePlaceholder": "VD: 1",
+        "thresholdHours": "Ngưỡng tính 1 ngày (giờ)",
+        "thresholdPlaceholder": "VD: 6",
+        "dailyRate": "Giá/ngày trễ",
+        "description": "Mô tả",
+        "feeType": {
+          "excessMileage": "Phí vượt km",
+          "lateReturn": "Phí quá giờ",
+          "cleaning": "Phí vệ sinh",
+          "deodorization": "Phí khử mùi",
+          "custom": "Phí khác"
+        },
+        "calc": {
+          "perKm": "Theo km",
+          "perHour": "Theo giờ",
+          "perDay": "Theo ngày",
+          "fixed": "Cố định"
+        },
+        "preset": {
+          "excessMileage": {
+            "name": "Phí vượt giới hạn",
+            "description": "Phụ phí phát sinh nếu di chuyển quá số km được bao gồm khi thuê xe."
+          },
+          "lateReturn": {
+            "name": "Phí quá giờ",
+            "description": "Phụ phí phát sinh nếu hoàn trả xe trễ giờ."
+          },
+          "cleaning": {
+            "name": "Phí vệ sinh",
+            "description": "Áp dụng khi xe hoàn trả không đảm bảo vệ sinh."
+          },
+          "deodorization": {
+            "name": "Phí khử mùi",
+            "description": "Áp dụng khi xe có mùi thuốc lá hoặc thực phẩm nặng mùi."
+          },
+          "custom": {
+            "name": "Phí khác",
+            "description": ""
+          }
+        }
+      }
+    },
+    "list": {
+      "title": "Quản lý xe",
+      "titleCar": "Xe ô tô",
+      "titleMotorbike": "Xe máy",
+      "addVehicle": "Thêm xe",
+      "searchPlaceholder": "Tìm biển số, mô tả...",
+      "search": "Tìm",
+      "filters": "Bộ lọc",
+      "sortBy": "Sắp xếp",
+      "sort": {
+        "newest": "Mới nhất",
+        "priceAsc": "Giá tăng dần",
+        "priceDesc": "Giá giảm dần"
+      },
+      "vehicleType": "Loại xe",
+      "brand": "Hãng xe",
+      "model": "Dòng xe",
+      "seatCount": "Số chỗ",
+      "seatCountOption": "{{seats}} chỗ",
+      "transmission": "Truyền động",
+      "transmissionOptions": {
+        "automatic": "Tự động",
+        "manual": "Số sàn",
+        "cvt": "CVT",
+        "dct": "DCT"
+      },
+      "bodyType": "Kiểu thân",
+      "bikeType": "Loại xe máy",
+      "engineCapacityPlaceholder": "Dung tích, VD: 125cc",
+      "fuel": "Nhiên liệu",
+      "status": "Trạng thái",
+      "clearFilters": "Xóa bộ lọc",
+      "totalCount": "{{total}} xe",
+      "empty": "Chưa có xe nào",
+      "pricePerDay": "{{price}}đ/ngày",
+      "pageOf": "Trang {{page}} / {{totalPages}}",
+      "loadError": "Không thể tải danh sách xe.",
+      "retry": "Thử lại"
+    },
+    "add": {
+      "title": "Thêm xe mới",
+      "stepAria": "Bước {{current}} trên {{total}}: {{label}}",
+      "submit": "Hoàn tất đăng ký",
+      "typeStep": {
+        "heading": "Chọn loại xe",
+        "subtitle": "Bạn muốn cho thuê loại xe nào?",
+        "carDescription": "4-7 chỗ, sedan, SUV, hatchback...",
+        "motorbikeDescription": "Tay ga, số, phân khối lớn..."
+      },
+      "brandStep": {
+        "heading": "Hãng & dòng xe",
+        "subtitle": "Chọn thông tin cơ bản của xe."
+      },
+      "infoStep": {
+        "heading": "Thông tin xe",
+        "subtitle": "Nhập các thông số cơ bản của xe."
+      },
+      "pricingStep": {
+        "heading": "Giá & địa chỉ",
+        "subtitle": "Thiết lập giá cho thuê và thông tin vị trí xe."
+      },
+      "imageStep": {
+        "heading": "Hình ảnh",
+        "subtitle": "Thêm ảnh thực tế của xe. Nhấn vào ảnh để đặt làm ảnh đại diện.",
+        "addImages": "Thêm hình ảnh",
+        "empty": "Chưa có ảnh nào được chọn",
+        "removeAria": "Xóa ảnh {{index}}",
+        "setFeaturedAria": "Đặt ảnh {{index}} làm ảnh đại diện",
+        "featured": "Ảnh đại diện"
+      },
+      "confirmStep": {
+        "heading": "Xác nhận & Cavet",
+        "subtitle": "Tải lên ảnh cavet để xác thực và kiểm tra lại thông tin trước khi hoàn tất.",
+        "summaryHeading": "Thông tin xe",
+        "type": "Loại xe:",
+        "brand": "Hãng:",
+        "model": "Dòng xe:",
+        "licensePlate": "Biển số:",
+        "rentalPrice": "Giá thuê:",
+        "deposit": "Tiền cọc:",
+        "surcharge": "Phụ phí:",
+        "collateral": "Thế chấp:",
+        "surchargeCount": "{{total}} khoản",
+        "perDaySuffix": "đ/ngày",
+        "chooseDocument": "Chọn ảnh cavet",
+        "verify": "Xác thực",
+        "documentAlt": "Cavet",
+        "verified": "Cà vẹt hợp lệ",
+        "needsReview": "Cà vẹt cần nhân viên kiểm tra"
+      },
+      "errors": {
+        "verificationExpired": "Phiên xác thực cà vẹt đã hết hạn. Vui lòng xác thực lại.",
+        "invalidImageType": "Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.",
+        "imageTooLarge": "Ảnh cà vẹt không được vượt quá 10 MB.",
+        "ocrUnavailable": "Hệ thống xác thực cà vẹt đang gián đoạn. Vui lòng thử lại sau.",
+        "needMoreInfo": "Ảnh cà vẹt thiếu thông tin hoặc chưa đủ rõ. Vui lòng chụp lại và xác thực lại.",
+        "mismatch": "Thông tin cà vẹt không khớp với xe. Vui lòng kiểm tra và chọn lại ảnh.",
+        "notEligible": "Cà vẹt chưa đạt yêu cầu. Vui lòng kiểm tra và thử lại."
+      }
+    },
+    "edit": {
+      "title": "Sửa thông tin xe",
+      "loadError": "Không thể tải thông tin xe.",
+      "typeStep": {
+        "subtitle": "Loại xe không thể thay đổi sau khi đã tạo."
+      },
+      "brandStep": {
+        "subtitle": "Thông tin hãng và dòng xe không thể thay đổi.",
+        "brand": "Hãng xe",
+        "model": "Dòng xe",
+        "variant": "Phiên bản"
+      },
+      "infoStep": {
+        "heading": "Thông tin xe",
+        "subtitle": "Cập nhật các thông số cơ bản của xe."
+      },
+      "pricingStep": {
+        "heading": "Giá & địa chỉ",
+        "subtitle": "Cập nhật giá cho thuê và thông tin vị trí xe."
+      },
+      "saveInfo": "Lưu thông tin",
+      "savePricing": "Lưu giá & địa chỉ",
+      "saveFeatures": "Lưu tính năng",
+      "errors": {
+        "info": "Cập nhật thông tin xe thất bại.",
+        "features": "Cập nhật tính năng thất bại.",
+        "pricing": "Cập nhật giá xe thất bại."
+      }
+    },
+    "detail": {
+      "loadError": "Không thể tải thông tin xe.",
+      "notFound": "Không tìm thấy xe.",
+      "editAction": "Sửa xe",
+      "deleteAction": "Xóa xe",
+      "deleteTitle": "Xóa xe",
+      "deleteWarning": "Hành động này không thể hoàn tác.",
+      "moderationRestricted": "Xe đang bị hạn chế đăng do vi phạm",
+      "moderationNotice": "Thông báo kiểm duyệt",
+      "info": {
+        "title": "Thông tin xe",
+        "licensePlate": "Biển số",
+        "model": "Dòng xe",
+        "year": "Năm sản xuất",
+        "odometer": "Số km đã đi",
+        "description": "Mô tả",
+        "descriptionEn": "Mô tả tiếng Anh",
+        "features": "Tính năng ({{total}})"
+      },
+      "address": {
+        "title": "Địa chỉ",
+        "regionCode": "Mã vùng: {{code}}",
+        "openMaps": "Mở Google Maps"
+      },
+      "blockedDates": {
+        "addTitle": "Chặn ngày mới",
+        "from": "Từ",
+        "to": "Đến",
+        "reason": "Lý do (không bắt buộc)",
+        "reasonPlaceholder": "VD: Bảo dưỡng, đi chơi...",
+        "confirm": "Xác nhận chặn",
+        "title": "Các ngày đã chặn",
+        "add": "Thêm ngày",
+        "legendBlocked": "Đã chặn",
+        "legendBooked": "Đã đặt",
+        "legendAvailable": "Còn trống",
+        "bufferNote": "Mỗi chuyến có 60 phút chuẩn bị xe trước khi giao chuyến tiếp theo. Khoảng đệm không tính tiền thuê.",
+        "preparation": "Chuẩn bị xe: {{from}} – {{to}}",
+        "empty": "Chưa có ngày chặn nào.",
+        "unblock": "Bỏ chặn",
+        "added": "Ngày đã được chặn thành công.",
+        "addFailed": "Không thể chặn ngày.",
+        "removed": "Đã bỏ chặn ngày này.",
+        "removeFailed": "Không thể xóa ngày chặn."
+      },
+      "months": {
+        "m1": "Thg 1",
+        "m2": "Thg 2",
+        "m3": "Thg 3",
+        "m4": "Thg 4",
+        "m5": "Thg 5",
+        "m6": "Thg 6",
+        "m7": "Thg 7",
+        "m8": "Thg 8",
+        "m9": "Thg 9",
+        "m10": "Thg 10",
+        "m11": "Thg 11",
+        "m12": "Thg 12"
+      },
+      "weekdays": {
+        "sun": "CN",
+        "mon": "T2",
+        "tue": "T3",
+        "wed": "T4",
+        "thu": "T5",
+        "fri": "T6",
+        "sat": "T7"
+      },
+      "images": {
+        "title": "Hình ảnh ({{total}})",
+        "primary": "Ảnh chính",
+        "label": "Ảnh xe {{index}}"
+      },
+      "pricing": {
+        "title": "Giá thuê",
+        "perDay": "/ngày",
+        "deposit": "Tiền cọc",
+        "delivery": "Giao xe tận nơi",
+        "deliveryDetail": "Miễn phí {{free}} km · {{fee}}đ/km · tối đa {{max}} km",
+        "deliveryDefault": "Theo cấu hình sàn",
+        "collateral": "Thế chấp",
+        "vehicleType": "Loại xe",
+        "year": "Năm sản xuất",
+        "autoTitle": "Giá tự động",
+        "autoRange": "Khung owner đặt: {{min}} - {{max}}/ngày",
+        "autoSuggestion": "Base gợi ý: {{base}} | Gợi ý: {{min}} - {{max}}",
+        "fixedPrice": "Giá cố định: {{price}}/ngày"
+      },
+      "documents": {
+        "title": "Giấy tờ xe",
+        "view": "Xem cavet",
+        "ocrLicensePlate": "Biển số OCR",
+        "brand": "Hãng",
+        "model": "Dòng xe",
+        "confidence": "Độ tin cậy",
+        "reuploadTitle": "Bổ sung lại giấy tờ xe",
+        "reuploadHint": "Hồ sơ hiện tại cần bổ sung hoặc đã bị từ chối. Chọn ảnh cà vẹt mới để hệ thống xác thực lại.",
+        "chooseImage": "Chọn ảnh",
+        "uploading": "Đang gửi...",
+        "resubmit": "Gửi xác thực lại",
+        "selected": "Đã chọn: {{name}}",
+        "historyTitle": "Lịch sử giấy tờ",
+        "attempt": "Lần {{index}}",
+        "currentLabel": "Cavet hiện tại",
+        "historyLabel": "Cavet {{index}}",
+        "status": {
+          "pending": "Chờ xử lý",
+          "verified": "Đã xác thực",
+          "needMoreInfo": "Cần bổ sung",
+          "manualReview": "Chờ nhân viên xem",
+          "rejected": "Từ chối",
+          "failed": "Lỗi xử lý"
+        }
+      },
+      "verificationErrors": {
+        "connection": "Không kết nối được tới dịch vụ AI xác thực giấy tờ xe. Vui lòng thử lại sau.",
+        "timeout": "Dịch vụ AI xác thực giấy tờ xe phản hồi quá lâu. Vui lòng thử lại sau.",
+        "http": "Dịch vụ AI xác thực giấy tờ xe trả về lỗi. Vui lòng thử lại sau."
+      },
+      "toast": {
+        "error": "Lỗi",
+        "blockedTitle": "Đã chặn",
+        "deletedTitle": "Đã xóa",
+        "vehicleDeleted": "Xe đã được xóa thành công.",
+        "vehicleDeleteFailed": "Không thể xóa xe."
+      }
+    }
+  }
+}

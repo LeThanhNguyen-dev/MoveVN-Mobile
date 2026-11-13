@@ -1,0 +1,7 @@
+{
+  "pdf": {
+    "invalidFile": "The server did not return a valid PDF file. Please download the report again.",
+    "sharingUnsupported": "This device does not support sharing PDF files.",
+    "dialogTitle": "Save or share PDF"
+  }
+}

@@ -2,6 +2,7 @@ import CheckoutConfirmation from "../components/CheckoutConfirmation";
 import CheckoutEditor from "../components/CheckoutEditor";
 import { OutstandingSurcharge } from "../components/CheckoutSummary";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Alert, AppState, BackHandler, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CalendarDays, CircleCheck, ClipboardCheck, Clock3, CreditCard, KeyRound, MapPin, PackageCheck, ReceiptText, RefreshCw, RotateCcw, Send, ShieldCheck, TriangleAlert, Wallet, XCircle } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
@@ -15,6 +16,8 @@ import { BOOKING_STATUS_LABELS, isDepositExpired, formatMoney, formatVietnamDate
 import { BookingField } from "../components/BookingControls";
 import InspectionReportCard from "../components/InspectionReportCard";
 import InspectionFormScreen from "./InspectionFormScreen";
+import LatePickupWaitCard from "../components/LatePickupWaitCard";
+import ExtensionRequestPanel from "@/features/contracts/components/ExtensionRequestPanel";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import {
   DetailButton,
@@ -30,6 +33,7 @@ import {
 
 export default function BookingDetailScreen({ bookingId, role, onBack }: { bookingId: number; role: BookingRole; onBack: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
   const userId = useAuthStore((state) => state.user?.userId);
   const [booking, setBooking] = useState<BookingResponse | null>(null);
@@ -57,11 +61,11 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
       const [data, inspectionReports] = await Promise.all([getBookingById(bookingId), getInspectionReports(bookingId)]);
       if (mounted.current && request === requestId.current) { setBooking(data); setReports(inspectionReports); setNow(Date.now()); }
     } catch (err) {
-      if (mounted.current && request === requestId.current) setError(getApiErrorMessage(err, "Không tải được đơn thuê và biên bản. Vui lòng thử lại."));
+      if (mounted.current && request === requestId.current) setError(getApiErrorMessage(err, t("mobile:bookingDetail.errors.loadBooking")));
     } finally {
       if (mounted.current && request === requestId.current) setLoading(false);
     }
-  }, [bookingId]);
+  }, [bookingId, t]);
 
   useEffect(() => {
     mounted.current = true; void load();
@@ -85,7 +89,7 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
       const updated = await operation();
       if (mounted.current) { setBooking(updated); setMessage(success); setRejecting(false); await load(); }
     } catch (err) {
-      if (mounted.current) { await load(); setError(getApiErrorMessage(err, "Không thể thực hiện thao tác. Vui lòng thử lại.")); }
+      if (mounted.current) { await load(); setError(getApiErrorMessage(err, t("mobile:bookingDetail.errors.actionFailed"))); }
     } finally { lock.current = false; if (mounted.current) setBusy(false); }
   }
 
@@ -93,10 +97,10 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
     if (type === "CheckOut") { setCheckoutToConfirm(reports.find(r => r.type === "CheckOut") ?? null); return; }
     const report = reports.find(r => r.type === "CheckIn");
     if (!report || report.requiresRevision) return;
-    Alert.alert("Xác nhận nhận xe?",
-      "Chỉ xác nhận khi bạn đã xem toàn bộ ảnh và đồng ý với số km, nhiên liệu, hư hại trong biên bản.", [
-        { text: "Xem lại", style: "cancel" },
-        { text: "Đồng ý và xác nhận", onPress: () => void action(() => confirmCheckIn(bookingId, report.version ?? 1), "Đã xác nhận nhận xe.") },
+    Alert.alert(t("mobile:bookingDetail.alerts.confirmPickupTitle"),
+      t("mobile:bookingDetail.alerts.confirmPickupBody"), [
+        { text: t("mobile:bookingDetail.alerts.reviewAgain"), style: "cancel" },
+        { text: t("mobile:bookingDetail.alerts.agreeAndConfirm"), onPress: () => void action(() => confirmCheckIn(bookingId, report.version ?? 1), t("mobile:bookingDetail.alerts.pickupConfirmed")) },
       ]);
   }
 
@@ -105,9 +109,9 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
     lock.current = true; requestId.current++; setBusy(true); setError(""); setMessage("");
     try {
       await requestCheckInRevision(bookingId, revisionReport.version ?? 1, revisionReason.trim());
-      if (mounted.current) { setRevisionReport(null); setMessage("Đã yêu cầu lập lại biên bản. Chờ chủ xe gửi bản mới."); await load(); }
+      if (mounted.current) { setRevisionReport(null); setMessage(t("mobile:bookingDetail.alerts.revisionRequested")); await load(); }
     } catch (err) {
-      if (mounted.current) { await load(); setError(getApiErrorMessage(err, "Không thể gửi yêu cầu lập lại biên bản.")); }
+      if (mounted.current) { await load(); setError(getApiErrorMessage(err, t("mobile:bookingDetail.errors.revisionFailed"))); }
     } finally { lock.current = false; if (mounted.current) setBusy(false); }
   }
 
@@ -119,9 +123,9 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
       if (!/^https:\/\//i.test(payment.checkoutUrl)) throw new Error("Invalid payment URL");
       if (mounted.current) setPaymentOrder(payment.orderCode);
       await Linking.openURL(payment.checkoutUrl);
-      if (mounted.current) setMessage("Sau khi thanh toán, quay lại app và bấm kiểm tra thanh toán hoặc tải lại đơn thuê.");
+      if (mounted.current) setMessage(t("mobile:bookingDetail.alerts.paymentReturn"));
     } catch (err) {
-      if (mounted.current) setError(getApiErrorMessage(err, "Không thể mở trang thanh toán."));
+      if (mounted.current) setError(getApiErrorMessage(err, t("mobile:bookingDetail.errors.openPayment")));
     } finally { lock.current = false; if (mounted.current) setBusy(false); }
   }
 
@@ -130,9 +134,9 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
     lock.current = true; setBusy(true); setError("");
     try {
       const result = await checkPaymentStatus(paymentOrder);
-      if (mounted.current) { setMessage(result.isConfirmed ? "Đã xác nhận thanh toán." : "Thanh toán chưa hoàn tất. Bạn có thể kiểm tra lại sau."); await load(); }
+      if (mounted.current) { setMessage(result.isConfirmed ? t("mobile:bookingDetail.alerts.paymentConfirmed") : t("mobile:bookingDetail.alerts.paymentIncomplete")); await load(); }
     } catch (err) {
-      if (mounted.current) setError(getApiErrorMessage(err, "Không kiểm tra được thanh toán."));
+      if (mounted.current) setError(getApiErrorMessage(err, t("mobile:bookingDetail.errors.checkPayment")));
     } finally { lock.current = false; if (mounted.current) setBusy(false); }
   }
 
@@ -142,17 +146,22 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
     try {
       const quote = await getBookingCancellationQuote(bookingId);
       if (!mounted.current) return;
-      if (!quote.canCancel) { setError(quote.policyMessage || "Đơn này không thể hủy."); return; }
-      Alert.alert("Hủy đơn thuê?", `${quote.policyMessage}\nHoàn lại: ${formatMoney(quote.refundAmount)}\nKhông hoàn lại: ${formatMoney(quote.forfeitedAmount)}`, [
-        { text: "Giữ đơn", style: "cancel" }, { text: "Xác nhận hủy", style: "destructive", onPress: () => void action(() => cancelBooking(bookingId), "Đã hủy đơn thuê.") },
+      if (!quote.canCancel) { setError(quote.policyMessage || t("mobile:bookingDetail.errors.cancelUnavailable")); return; }
+      Alert.alert(t("mobile:bookingDetail.alerts.cancelTitle"), t("mobile:bookingDetail.alerts.cancelBody", {
+        policy: quote.policyMessage,
+        refund: formatMoney(quote.refundAmount),
+        forfeited: formatMoney(quote.forfeitedAmount),
+      }), [
+        { text: t("mobile:bookingDetail.alerts.keepBooking"), style: "cancel" },
+        { text: t("mobile:bookingDetail.alerts.confirmCancel"), style: "destructive", onPress: () => void action(() => cancelBooking(bookingId), t("mobile:bookingDetail.alerts.cancelled")) },
       ]);
-    } catch (err) { if (mounted.current) setError(getApiErrorMessage(err, "Không tải được chính sách hủy đơn.")); }
+    } catch (err) { if (mounted.current) setError(getApiErrorMessage(err, t("mobile:bookingDetail.errors.cancelPolicy"))); }
     finally { lock.current = false; if (mounted.current) setBusy(false); }
   }
 
   if (form && booking) return <InspectionFormScreen booking={booking} reports={reports} type={form} onBack={() => setForm(null)} onSaved={(report) => {
     setReports((items) => [...items.filter((item) => item.type !== report.type), report]); setForm(null);
-    setMessage("Đã gửi biên bản. Đang chờ khách xác nhận."); void load();
+    setMessage(t("mobile:bookingDetail.alerts.reportSent")); void load();
   }} />;
 
   // Phân quyền theo quyền sở hữu thực tế của đơn, không theo role đang chọn trên app:
@@ -168,83 +177,88 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
 
   return <View style={{ flex: 1, backgroundColor: theme.background }}>
     <DetailHeader
-      kicker={booking?.bookingCode || "Đơn thuê"}
-      title="Chi tiết đơn thuê"
+      kicker={booking?.bookingCode || t("mobile:bookingDetail.header.kicker")}
+      title={t("mobile:bookingDetail.header.title")}
       onBack={() => { if (!lock.current) onBack(); }}
     />
-    {!booking && loading ? <View style={styles.center}><ActivityIndicator color={theme.brand} /><Text style={styles.muted}>Đang tải đơn thuê…</Text></View> :
+    {!booking && loading ? <View style={styles.center}><ActivityIndicator color={theme.brand} /><Text style={styles.muted}>{t("mobile:bookingDetail.header.loading")}</Text></View> :
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { if (!lock.current) void load(); }} tintColor={theme.brand} />}>
-        {error ? <DetailNotice icon={TriangleAlert} title="Không tải được đơn thuê" tone="danger">
+        {error ? <DetailNotice icon={TriangleAlert} title={t("mobile:bookingDetail.header.loadErrorTitle")} tone="danger">
           {error}
         </DetailNotice> : null}
-        {error ? <DetailButton variant="ghost" icon={RotateCcw} label="Tải lại đơn thuê" disabled={busy} onPress={() => void load()} /> : null}
-        {message ? <DetailNotice icon={CircleCheck} title="Đã cập nhật" tone="mint">{message}</DetailNotice> : null}
+        {error ? <DetailButton variant="ghost" icon={RotateCcw} label={t("mobile:bookingDetail.header.reload")} disabled={busy} onPress={() => void load()} /> : null}
+        {message ? <DetailNotice icon={CircleCheck} title={t("mobile:bookingDetail.header.updated")} tone="mint">{message}</DetailNotice> : null}
 
         {booking ? <>
           <DetailCard>
             {booking.vehicleImage ? <Image source={{ uri: booking.vehicleImage }} style={styles.vehicleImage} resizeMode="cover" /> : null}
             <View style={styles.heroHead}>
               <View style={styles.heroBody}>
-                <Text style={styles.kicker}>Đơn thuê xe</Text>
-                <Text style={styles.heroTitle} numberOfLines={2}>{booking.vehicleName || `Xe #${booking.vehicleId}`}</Text>
+                <Text style={styles.kicker}>{t("mobile:bookingDetail.hero.kicker")}</Text>
+                <Text style={styles.heroTitle} numberOfLines={2}>{booking.vehicleName || t("mobile:bookingDetail.hero.vehicleFallback", { id: booking.vehicleId })}</Text>
                 <Text style={styles.heroCode} numberOfLines={1}>{booking.bookingCode}</Text>
               </View>
               <DetailPill label={BOOKING_STATUS_LABELS[booking.status] || booking.status} tone={statusTone} />
             </View>
             <View style={styles.stats}>
-              <DetailStat icon={CalendarDays} label="Nhận xe" value={formatVietnamDateTime(booking.startDate)} />
-              <DetailStat icon={CalendarDays} label="Trả xe" value={formatVietnamDateTime(booking.endDate)} />
-              <DetailStat icon={Clock3} label="Thời lượng" value={`${booking.totalDays} ngày`} tone="brand" />
-              <DetailStat icon={Wallet} label="Đặt cọc" value={formatMoney(booking.depositAmount)} />
+              <DetailStat icon={CalendarDays} label={t("mobile:bookingDetail.hero.pickup")} value={formatVietnamDateTime(booking.startDate)} />
+              <DetailStat icon={CalendarDays} label={t("mobile:bookingDetail.hero.return")} value={formatVietnamDateTime(booking.endDate)} />
+              <DetailStat icon={Clock3} label={t("mobile:bookingDetail.hero.duration")} value={t("mobile:bookingDetail.hero.days", { days: booking.totalDays })} tone="brand" />
+              <DetailStat icon={Wallet} label={t("mobile:bookingDetail.hero.deposit")} value={formatMoney(booking.depositAmount)} />
             </View>
             <DetailDivider />
-            <DetailRow icon={MapPin} label="Nơi nhận" value={booking.pickupAddress} />
-            <DetailRow icon={MapPin} label="Nơi trả" value={booking.returnAddress || booking.pickupAddress} />
+            <DetailRow icon={MapPin} label={t("mobile:bookingDetail.hero.pickupPlace")} value={booking.pickupAddress} />
+            <DetailRow icon={MapPin} label={t("mobile:bookingDetail.hero.returnPlace")} value={booking.returnAddress || booking.pickupAddress} />
             {booking.customerNote ? (
-              <DetailNotice icon={ClipboardCheck} title="Ghi chú của khách" tone="brand">{booking.customerNote}</DetailNotice>
+              <DetailNotice icon={ClipboardCheck} title={t("mobile:bookingDetail.hero.customerNote")} tone="brand">{booking.customerNote}</DetailNotice>
             ) : null}
-            <Text style={styles.hint}>Thời gian hiển thị theo giờ Việt Nam (UTC+07:00).</Text>
+            <Text style={styles.hint}>{t("mobile:bookingDetail.hero.timezoneHint")}</Text>
           </DetailCard>
+
+          {viewerRole === "Customer" ? (
+            <LatePickupWaitCard booking={booking} hasCheckIn={!!reports.find(r => r.type === "CheckIn")} onUpdated={setBooking} />
+          ) : null}
 
           {viewerRole === "Owner" && booking.status === "Pending" ? <DetailCard>
             <DetailSectionHeader
               icon={ClipboardCheck}
-              title="Yêu cầu thuê đang chờ duyệt"
-              subtitle="Phản hồi sớm để khách kịp đặt cọc"
+              title={t("mobile:bookingDetail.approve.title")}
+              subtitle={t("mobile:bookingDetail.approve.subtitle")}
               right={<DetailPill label={formatMoney(booking.totalAmount)} tone="brand" />}
             />
             <View style={styles.actionsRow}>
-              <DetailButton icon={CircleCheck} label="Duyệt đơn thuê" disabled={loading || !!error} busy={busy} onPress={() => void action(() => approveBooking(bookingId), "Đã duyệt đơn. Chờ khách đặt cọc.")} style={styles.actionsCell} />
-              <DetailButton variant="secondary" icon={XCircle} label="Từ chối yêu cầu" disabled={busy || loading || !!error} onPress={() => setRejecting(!rejecting)} style={styles.actionsCell} />
+              <DetailButton icon={CircleCheck} label={t("mobile:bookingDetail.approve.approve")} disabled={loading || !!error} busy={busy} onPress={() => void action(() => approveBooking(bookingId), t("mobile:bookingDetail.approve.approved"))} style={styles.actionsCell} />
+              <DetailButton variant="secondary" icon={XCircle} label={t("mobile:bookingDetail.approve.reject")} disabled={busy || loading || !!error} onPress={() => setRejecting(!rejecting)} style={styles.actionsCell} />
             </View>
             {rejecting ? <>
-              <BookingField label="Lý do từ chối" value={rejectReason} onChangeText={setRejectReason} multiline editable={!busy} />
-              <DetailButton variant="danger" icon={XCircle} label="Xác nhận từ chối" disabled={!rejectReason.trim() || loading || !!error} busy={busy} onPress={() => void action(() => rejectBooking(bookingId, { reason: rejectReason.trim() }), "Đã từ chối đơn thuê.")} />
+              <BookingField label={t("mobile:bookingDetail.approve.rejectReason")} value={rejectReason} onChangeText={setRejectReason} multiline editable={!busy} />
+              <DetailButton variant="danger" icon={XCircle} label={t("mobile:bookingDetail.approve.rejectConfirm")} disabled={!rejectReason.trim() || loading || !!error} busy={busy} onPress={() => void action(() => rejectBooking(bookingId, { reason: rejectReason.trim() }), t("mobile:bookingDetail.approve.rejected"))} />
             </> : null}
           </DetailCard> : null}
 
           {viewerRole === "Customer" && booking.status === "Approved" ? <DetailCard>
-            <DetailSectionHeader icon={Wallet} title="Thanh toán đặt cọc" subtitle="Chủ xe đã duyệt yêu cầu thuê" />
-            <DetailNotice icon={ShieldCheck} title="Cần đặt cọc trước khi nhận xe" tone="warn">
-              Chủ xe đã duyệt. Vui lòng thanh toán đặt cọc trước khi nhận xe.
+            <DetailSectionHeader icon={Wallet} title={t("mobile:bookingDetail.deposit.title")} subtitle={t("mobile:bookingDetail.deposit.subtitle")} />
+            <DetailNotice icon={ShieldCheck} title={t("mobile:bookingDetail.deposit.noticeTitle")} tone="warn">
+              {t("mobile:bookingDetail.deposit.noticeBody")}
             </DetailNotice>
-            <DetailButton icon={CreditCard} label="Thanh toán đặt cọc" busy={busy} disabled={loading || !!error || isDepositExpired(booking, now)} onPress={() => void payDeposit()} />
-            {paymentOrder ? <DetailButton variant="secondary" icon={RefreshCw} label="Kiểm tra thanh toán" busy={busy} onPress={() => void verifyPayment()} /> : null}
+            <DetailButton icon={CreditCard} label={t("mobile:bookingDetail.deposit.pay")} busy={busy} disabled={loading || !!error || isDepositExpired(booking, now)} onPress={() => void payDeposit()} />
+            {paymentOrder ? <DetailButton variant="secondary" icon={RefreshCw} label={t("mobile:bookingDetail.deposit.check")} busy={busy} onPress={() => void verifyPayment()} /> : null}
           </DetailCard> : null}
 
           <DetailCard>
             <DetailSectionHeader
               icon={ReceiptText}
-              title="Chi phí đơn thuê"
-              subtitle="Đã gồm phí nền tảng"
+              title={t("mobile:bookingDetail.cost.title")}
+              subtitle={t("mobile:bookingDetail.cost.subtitle")}
               right={<DetailPill label={formatMoney(booking.totalAmount)} tone="brand" />}
             />
-            <DetailRow label="Tổng tiền" value={formatMoney(booking.totalAmount)} strong />
-            <DetailRow label="Đặt cọc thuê xe" value={formatMoney(booking.depositAmount)} />
-            {booking.securityDepositAmount > 0 ? <DetailRow label="Cọc đảm bảo" value={formatMoney(booking.securityDepositAmount)} /> : null}
-            {booking.paymentDueAt && booking.status === "Approved" ? <DetailRow label="Hạn đặt cọc" value={formatVietnamDateTime(booking.paymentDueAt)} tone="muted" /> : null}
+            <DetailRow label={t("mobile:bookingDetail.cost.total")} value={formatMoney(booking.totalAmount)} strong />
+            <DetailRow label={t("mobile:bookingDetail.cost.rentalDeposit")} value={formatMoney(booking.depositAmount)} />
+            {booking.securityDepositAmount > 0 ? <DetailRow label={t("mobile:bookingDetail.cost.securityDeposit")} value={formatMoney(booking.securityDepositAmount)} /> : null}
+            {booking.paymentDueAt && booking.status === "Approved" ? <DetailRow label={t("mobile:bookingDetail.cost.dueAt")} value={formatVietnamDateTime(booking.paymentDueAt)} tone="muted" /> : null}
           </DetailCard>
 
+          <ExtensionRequestPanel booking={booking} onBookingChanged={() => void load()} />
           <OutstandingSurcharge booking={booking} report={reports.find(r => r.type === "CheckOut")} role={role} onUpdated={load} />
 
           {(["CheckIn", "CheckOut"] as const).map((type) => {
@@ -261,55 +275,55 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
                 <DetailSectionHeader
                   icon={type === "CheckIn" ? KeyRound : PackageCheck}
                   title={inspectionLabel(type)}
-                  subtitle={type === "CheckIn" ? "Biên bản nhận xe" : "Biên bản trả xe"}
+                  subtitle={type === "CheckIn" ? t("mobile:bookingDetail.inspection.checkInTitle") : t("mobile:bookingDetail.inspection.checkOutTitle")}
                 />
-                <Text style={styles.muted}>Chưa có biên bản {type === "CheckIn" ? "nhận xe" : "trả xe"}.</Text>
-                {state.canCreate ? <DetailButton icon={ClipboardCheck} label={`Lập biên bản ${type === "CheckIn" ? "check-in" : "check-out"}`} disabled={busy || loading || !!error} onPress={() => setForm(type)} /> : null}
+                <Text style={styles.muted}>{type === "CheckIn" ? t("mobile:bookingDetail.inspection.emptyCheckIn") : t("mobile:bookingDetail.inspection.emptyCheckOut")}</Text>
+                {state.canCreate ? <DetailButton icon={ClipboardCheck} label={type === "CheckIn" ? t("mobile:bookingDetail.inspection.createCheckIn") : t("mobile:bookingDetail.inspection.createCheckOut")} disabled={busy || loading || !!error} onPress={() => setForm(type)} /> : null}
               </DetailCard>}
 
               {hasActions ? <DetailCard>
                 <DetailSectionHeader
                   icon={type === "CheckIn" ? KeyRound : PackageCheck}
-                  title={state.canCreate || state.canConfirm ? (type === "CheckIn" ? "Xác nhận nhận xe" : "Xác nhận trả xe") : "Thao tác"}
-                  subtitle="Kiểm tra biên bản, ảnh xe và thanh toán trước khi xác nhận"
+                  title={state.canCreate || state.canConfirm ? (type === "CheckIn" ? t("mobile:bookingDetail.inspection.confirmCheckIn") : t("mobile:bookingDetail.inspection.confirmCheckOut")) : t("mobile:bookingDetail.inspection.actionsTitle")}
+                  subtitle={t("mobile:bookingDetail.inspection.actionsSubtitle")}
                 />
                 {editorCase && state.report ? <CheckoutEditor booking={booking} report={state.report} initialKm={reports.find(r => r.type === "CheckIn")?.odometerKm} onSaved={load} /> : null}
-                {state.canCreate && state.report ? <DetailButton icon={ClipboardCheck} label={`Lập biên bản ${type === "CheckIn" ? "check-in" : "check-out"}`} disabled={busy || loading || !!error} onPress={() => setForm(type)} /> : null}
+                {state.canCreate && state.report ? <DetailButton icon={ClipboardCheck} label={type === "CheckIn" ? t("mobile:bookingDetail.inspection.createCheckIn") : t("mobile:bookingDetail.inspection.createCheckOut")} disabled={busy || loading || !!error} onPress={() => setForm(type)} /> : null}
                 {state.canConfirm ? <>
-                  {type === "CheckIn" ? <Text style={styles.muted}>Cả chủ xe và khách cần ký hợp đồng để hợp đồng có hiệu lực trước khi xác nhận nhận xe. Bạn có thể ký trên web nếu chưa hoàn tất.</Text> : null}
-                  <DetailButton icon={type === "CheckIn" ? KeyRound : PackageCheck} label={type === "CheckIn" ? "Đồng ý biên bản và nhận xe" : "Đồng ý biên bản và trả xe"} busy={busy} disabled={loading || !!error} onPress={() => confirmReport(type)} />
-                  {type === "CheckOut" ? <Text style={styles.muted}>Nếu không đồng ý, hãy trao đổi với chủ xe hoặc liên hệ hỗ trợ trước khi xác nhận.</Text> : null}
+                  {type === "CheckIn" ? <Text style={styles.muted}>{t("mobile:bookingDetail.inspection.contractNote")}</Text> : null}
+                  <DetailButton icon={type === "CheckIn" ? KeyRound : PackageCheck} label={type === "CheckIn" ? t("mobile:bookingDetail.inspection.acceptCheckIn") : t("mobile:bookingDetail.inspection.acceptCheckOut")} busy={busy} disabled={loading || !!error} onPress={() => confirmReport(type)} />
+                  {type === "CheckOut" ? <Text style={styles.muted}>{t("mobile:bookingDetail.inspection.checkoutDisagreeHint")}</Text> : null}
                 </> : null}
                 {revisionCase ? <>
-                  <DetailButton variant="secondary" icon={RotateCcw} label="Không đồng ý biên bản / Yêu cầu lập lại" disabled={busy || loading || !!error} onPress={() => { setRevisionReport(state.report!); setRevisionReason(""); }} />
+                  <DetailButton variant="secondary" icon={RotateCcw} label={t("mobile:bookingDetail.inspection.revisionAction")} disabled={busy || loading || !!error} onPress={() => { setRevisionReport(state.report!); setRevisionReason(""); }} />
                   {revisionReport ? <>
-                    <Text style={styles.muted}>Ghi rõ nội dung cần sửa. Chuyến chỉ bắt đầu khi bạn đồng ý biên bản mới.</Text>
-                    <BookingField label="Lý do không đồng ý" value={revisionReason} onChangeText={value => setRevisionReason(value.slice(0, 1000))} multiline editable={!busy} />
-                    <DetailButton icon={Send} label="Gửi yêu cầu lập lại" busy={busy} disabled={!revisionReason.trim() || loading || !!error} onPress={() => void requestRevision()} />
-                    <DetailButton variant="ghost" label="Đóng" disabled={busy} onPress={() => setRevisionReport(null)} />
+                    <Text style={styles.muted}>{t("mobile:bookingDetail.inspection.revisionHint")}</Text>
+                    <BookingField label={t("mobile:bookingDetail.inspection.revisionReason")} value={revisionReason} onChangeText={value => setRevisionReason(value.slice(0, 1000))} multiline editable={!busy} />
+                    <DetailButton icon={Send} label={t("mobile:bookingDetail.inspection.revisionSend")} busy={busy} disabled={!revisionReason.trim() || loading || !!error} onPress={() => void requestRevision()} />
+                    <DetailButton variant="ghost" label={t("mobile:bookingDetail.inspection.close")} disabled={busy} onPress={() => setRevisionReport(null)} />
                   </> : null}
                 </> : null}
                 {noteCase ? <Text style={styles.muted}>
-                  {booking.canCheckInNow ? "Xe trống: có thể check-in sớm tối đa 2 giờ. Giờ trả và giá thuê theo đơn đã đặt." : booking.checkInUnavailableReason || "Có thể check-in sớm tối đa 2 giờ nếu xe trống. Tải lại đơn để kiểm tra."}
+                  {booking.canCheckInNow ? t("mobile:bookingDetail.inspection.earlyPickupAvailable") : booking.checkInUnavailableReason || t("mobile:bookingDetail.inspection.earlyPickupFallback")}
                 </Text> : null}
-                {type === "CheckIn" && viewerRole === "Customer" && !state.report && booking.status === "DepositPaid" ? <Text style={styles.muted}>Chờ chủ xe chụp ảnh và lập biên bản nhận xe.</Text> : null}
-                {type === "CheckOut" && viewerRole === "Customer" && !state.report && booking.status === "InProgress" ? <Text style={styles.muted}>Khi trả xe, chủ xe sẽ chụp ảnh và lập biên bản để bạn đối chiếu.</Text> : null}
+                {type === "CheckIn" && viewerRole === "Customer" && !state.report && booking.status === "DepositPaid" ? <Text style={styles.muted}>{t("mobile:bookingDetail.inspection.waitingPickupReport")}</Text> : null}
+                {type === "CheckOut" && viewerRole === "Customer" && !state.report && booking.status === "InProgress" ? <Text style={styles.muted}>{t("mobile:bookingDetail.inspection.waitingReturnReport")}</Text> : null}
               </DetailCard> : null}
             </View>;
           })}
 
           {viewerRole === "Customer" && ["Pending", "Approved", "DepositPaid"].includes(booking.status) ? <DetailCard>
-            <DetailSectionHeader icon={TriangleAlert} title="Hủy đơn thuê" subtitle="Xem chính sách hoàn cọc trước khi hủy" />
-            <DetailButton variant="danger" icon={TriangleAlert} label="Xem chính sách và hủy đơn" disabled={busy || loading || !!error} onPress={() => void requestCancel()} />
+            <DetailSectionHeader icon={TriangleAlert} title={t("mobile:bookingDetail.cancel.title")} subtitle={t("mobile:bookingDetail.cancel.subtitle")} />
+            <DetailButton variant="danger" icon={TriangleAlert} label={t("mobile:bookingDetail.cancel.action")} disabled={busy || loading || !!error} onPress={() => void requestCancel()} />
           </DetailCard> : null}
 
           {booking.cancelReason ? <DetailCard>
-            <DetailSectionHeader icon={TriangleAlert} title="Lý do hủy đơn" subtitle="Ghi nhận từ hệ thống" />
+            <DetailSectionHeader icon={TriangleAlert} title={t("mobile:bookingDetail.cancel.reasonTitle")} subtitle={t("mobile:bookingDetail.cancel.reasonSubtitle")} />
             <Text style={styles.muted}>{booking.cancelReason}</Text>
           </DetailCard> : null}
 
           {booking.statusHistory.length ? <DetailCard>
-            <DetailSectionHeader icon={Clock3} title="Lịch sử đơn thuê" subtitle={`${booking.statusHistory.length} cập nhật`} />
+            <DetailSectionHeader icon={Clock3} title={t("mobile:bookingDetail.history.title")} subtitle={t("mobile:bookingDetail.history.count", { count: booking.statusHistory.length })} />
             {booking.statusHistory.map((entry, index) => <View key={`${entry.createdAt}-${index}`} style={styles.historyRow}>
               <Text style={styles.historyTitle}>{BOOKING_STATUS_LABELS[entry.toStatus] || entry.toStatus} · {formatVietnamDateTime(entry.createdAt)}</Text>
               {entry.note ? <Text style={styles.muted}>{entry.note}</Text> : null}
@@ -318,7 +332,7 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
         </> : null}
       </ScrollView>}
     <CheckoutConfirmation booking={booking} report={checkoutToConfirm} busy={busy} onClose={() => setCheckoutToConfirm(null)} onConfirm={(report, paymentMethod) => {
-      void action(() => confirmCheckOut(bookingId, report.version ?? 1, paymentMethod), "Đã xác nhận trả xe. Chờ chủ xe xác nhận nhận lại xe.").then(() => setCheckoutToConfirm(null));
+      void action(() => confirmCheckOut(bookingId, report.version ?? 1, paymentMethod), t("mobile:bookingDetail.alerts.checkoutConfirmed")).then(() => setCheckoutToConfirm(null));
     }} />
   </View>;
 }

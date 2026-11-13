@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as ImagePicker from "expo-image-picker";
 import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Clock, ImagePlus, RefreshCw } from "lucide-react-native";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View } from "react-native"
@@ -19,16 +20,23 @@ import type {
   DriverLicenseVehicleType,
 } from "@/features/driverLicenses/types";
 import type { UploadFileInput } from "@/types/upload";
+import i18n from "@/i18n";
+import { translatedLabels } from "@/i18n/liveLabels";
 import { prepareDocumentImage } from "@/utils/documentImage";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
 const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
 
-const vehicleTypeLabels: Record<DriverLicenseVehicleType, string> = {
-  Car: "Ô tô",
-  Motorbike: "Xe máy",
-};
+const NS = "mobile";
+
+// Nhãn resolve mỗi lần đọc (getter) để không đóng băng tiếng Việt lúc import module.
+const vehicleTypeLabels: Record<DriverLicenseVehicleType, string> = translatedLabels<
+  DriverLicenseVehicleType
+>("accountVerification", {
+  Car: "driverLicense.vehicleCar",
+  Motorbike: "driverLicense.vehicleMotorbike",
+});
 
 function getExtension(fileName?: string | null, mimeType?: string | null) {
   const fromName = fileName?.split(".").pop()?.toLowerCase();
@@ -56,19 +64,27 @@ function formatCooldown(entry?: CustomerDriverLicense | null) {
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.ceil((seconds % 3600) / 60);
     const parts = [
-      days > 0 ? `${days} ngày` : null,
-      hours > 0 ? `${hours} giờ` : null,
-      days === 0 && minutes > 0 ? `${minutes} phút` : null,
+      days > 0 ? i18n.t("driverLicense.cooldown.days", { ns: NS, count: days }) : null,
+      hours > 0 ? i18n.t("driverLicense.cooldown.hours", { ns: NS, count: hours }) : null,
+      days === 0 && minutes > 0
+        ? i18n.t("driverLicense.cooldown.minutes", { ns: NS, count: minutes })
+        : null,
     ].filter(Boolean);
-    return `Bạn có thể nộp lại sau ${parts.join(" ") || "ít phút nữa"}.`;
+    return i18n.t("driverLicense.cooldown.retryAfter", {
+      ns: NS,
+      duration: parts.join(" ") || i18n.t("driverLicense.cooldown.shortly", { ns: NS }),
+    });
   }
   const nextAt = entry.nextAllowedSubmitAt ?? entry.canUpdateAfter;
-  if (nextAt) return `Bạn có thể nộp lại sau ${formatDateTime(nextAt)}.`;
-  return "GPLX cho loại xe này đang trong thời gian chờ cập nhật lại.";
+  if (nextAt) {
+    return i18n.t("driverLicense.cooldown.retryAfterAt", { ns: NS, time: formatDateTime(nextAt) });
+  }
+  return i18n.t("driverMessages.updateCooldown", { ns: "accountVerification" });
 }
 
 export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [status, setStatus] = useState<DriverLicenseStatusResponse | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
@@ -88,7 +104,11 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
     try {
       setStatus(await getMyDriverLicense());
     } catch (failure) {
-      setStatusError(failure instanceof Error ? failure.message : "Không tải được trạng thái GPLX.");
+      setStatusError(
+        failure instanceof Error
+          ? failure.message
+          : t("mobile:driverLicense.statusError"),
+      );
     } finally {
       setLoadingStatus(false);
     }
@@ -136,8 +156,8 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       setError(source === "camera"
-        ? "Cần quyền camera để chụp ảnh GPLX."
-        : "Cần quyền truy cập thư viện ảnh để chọn ảnh GPLX.");
+        ? t("mobile:driverLicense.cameraPermission")
+        : t("mobile:driverLicense.libraryPermission"));
       return;
     }
     const result = source === "camera"
@@ -148,7 +168,7 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
     if (!asset?.uri) return;
     const extension = getExtension(asset.fileName, asset.mimeType);
     if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
-      setError("Chỉ chấp nhận file JPG, PNG hoặc WebP.");
+      setError(t("mobile:driverLicense.invalidFileType"));
       return;
     }
     // Hiện ảnh gốc ngay để user thấy phản hồi, nén ở nền rồi đổi sang bản đã xử lý.
@@ -164,7 +184,7 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
       setImageFile(prepared.file);
       setLastResult(null);
     } catch {
-      setError("Không xử lý được ảnh. Vui lòng thử ảnh khác.");
+      setError(t("mobile:driverLicense.processImageError"));
       setImageUri(null);
     } finally {
       setProcessing(false);
@@ -173,7 +193,7 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
 
   async function handleSubmit() {
     if (!imageFile) {
-      setError("Vui lòng chọn ảnh GPLX trước khi gửi.");
+      setError(t("mobile:driverLicense.photoRequired"));
       return;
     }
     if (cooldownMessage) {
@@ -187,15 +207,17 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
       const result = await submitDriverLicenseVerification(imageFile, vehicleType);
       setLastResult(result);
       if (result.status === "Verified") {
-        setNotice("AI đã xác minh GPLX thành công.");
+        setNotice(t("accountVerification:driverMessages.passed"));
       } else if (result.status === "Pending" || result.status === "Processing") {
-        setNotice("Hồ sơ của bạn đang chờ nhân viên kiểm tra.");
+        setNotice(t("mobile:driverLicense.pendingReviewNotice"));
       } else {
-        setError(result.message || "Xác thực GPLX chưa đạt. Vui lòng chụp lại ảnh rõ hơn.");
+        setError(result.message || t("mobile:driverLicense.verifyFailed"));
       }
       await loadStatus();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Gửi ảnh GPLX thất bại. Vui lòng thử lại.");
+      setError(
+        failure instanceof Error ? failure.message : t("mobile:driverLicense.submitError"),
+      );
     } finally {
       setBusy(false);
     }
@@ -206,12 +228,12 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("accountVerification:bank.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <AppText display style={styles.topBarTitle}>Giấy phép lái xe</AppText>
+        <AppText display style={styles.topBarTitle}>{t("accountVerification:driverLicense.title")}</AppText>
         <Pressable
-          accessibilityLabel="Tải lại trạng thái"
+          accessibilityLabel={t("mobile:driverLicense.reloadAria")}
           accessibilityRole="button"
           disabled={loadingStatus}
           onPress={() => { void loadStatus(); }}
@@ -223,37 +245,47 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
-          <AppText display style={styles.cardTitle}>Trạng thái xác minh</AppText>
+          <AppText display style={styles.cardTitle}>{t("mobile:driverLicense.statusTitle")}</AppText>
           {loadingStatus ? (
-            <AppText style={styles.muted}>Đang tải trạng thái...</AppText>
+            <AppText style={styles.muted}>{t("mobile:driverLicense.loadingStatus")}</AppText>
           ) : statusError ? (
             <AppText style={styles.error}>{statusError}</AppText>
           ) : status ? (
             <View style={styles.statusBox}>
               <StatusBadge status={tabVerified ? "Verified" : (tabRequest?.status ?? "None")} />
               <View style={styles.detailLine}>
-                <AppText style={styles.detailLabel}>Số GPLX ({vehicleTypeLabels[vehicleType]})</AppText>
+                <AppText style={styles.detailLabel}>
+                  {t("mobile:driverLicense.licenseNumberWithType", {
+                    type: vehicleTypeLabels[vehicleType],
+                  })}
+                </AppText>
                 <MaskedDocumentValue
                   canReveal={tabVerified}
                   documentType="GPLX"
                   maskedValue={tabLicense?.driverLicenseNumber ?? null}
-                  revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                  revealDisabledHint={t("mobile:driverLicense.revealDisabledHint")}
                   vehicleType={vehicleType}
                 />
               </View>
-              <DetailLine label="Hạng GPLX" value={tabLicense?.licenseClass || "-"} />
               <DetailLine
-                label="Loại xe đã xác minh"
+                label={t("accountVerification:driverLicense.statClass")}
+                value={tabLicense?.licenseClass || "-"}
+              />
+              <DetailLine
+                label={t("mobile:driverLicense.verifiedVehicleTypes")}
                 value={status.verifiedVehicleTypes.length > 0 ? status.verifiedVehicleTypes.join(", ") : "-"}
               />
-              <DetailLine label="Xác minh lúc" value={formatDateTime(tabLicense?.verifiedAt)} />
+              <DetailLine
+                label={t("accountVerification:driverLicense.verifiedAt")}
+                value={formatDateTime(tabLicense?.verifiedAt)}
+              />
             </View>
           ) : null}
 
           {showPendingNotice ? (
             <View style={styles.infoBox}>
               <Clock color={theme.brand} size={18} strokeWidth={2.3} />
-              <AppText style={styles.infoText}>Hồ sơ của bạn đang chờ nhân viên kiểm tra. Vui lòng quay lại sau.</AppText>
+              <AppText style={styles.infoText}>{t("mobile:driverLicense.pendingNotice")}</AppText>
             </View>
           ) : null}
 
@@ -266,8 +298,8 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
         </View>
 
         <View style={styles.card}>
-          <AppText display style={styles.cardTitle}>Nộp ảnh GPLX mới</AppText>
-          <AppText style={styles.hint}>Chụp mặt trước GPLX rõ nét, dung lượng tối đa 5MB (JPG/PNG/WebP).</AppText>
+          <AppText display style={styles.cardTitle}>{t("mobile:driverLicense.uploadTitle")}</AppText>
+          <AppText style={styles.hint}>{t("mobile:driverLicense.uploadHint")}</AppText>
 
           <View style={styles.tabs}>
             {(Object.keys(vehicleTypeLabels) as DriverLicenseVehicleType[]).map((type) => (
@@ -296,14 +328,14 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
           ) : (
             <View style={styles.previewPlaceholder}>
               <ImagePlus color={theme.faint} size={30} strokeWidth={2} />
-              <AppText style={styles.muted}>Chưa có ảnh nào được chọn</AppText>
+              <AppText style={styles.muted}>{t("mobile:driverLicense.noImageSelected")}</AppText>
             </View>
           )}
 
           {processing ? (
             <View style={styles.processingRow}>
               <ActivityIndicator color={theme.brand} size="small" />
-              <AppText style={styles.muted}>Đang xử lý ảnh...</AppText>
+              <AppText style={styles.muted}>{t("mobile:driverLicense.processingImage")}</AppText>
             </View>
           ) : null}
 
@@ -315,7 +347,7 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
               style={[styles.pickButton, (busy || processing) && styles.disabled]}
             >
               <Camera color={theme.brand} size={18} strokeWidth={2.3} />
-              <AppText style={styles.pickText}>Chụp ảnh</AppText>
+              <AppText style={styles.pickText}>{t("mobile:driverLicense.capture")}</AppText>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -324,7 +356,7 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
               style={[styles.pickButton, (busy || processing) && styles.disabled]}
             >
               <ImagePlus color={theme.brand} size={18} strokeWidth={2.3} />
-              <AppText style={styles.pickText}>Thư viện</AppText>
+              <AppText style={styles.pickText}>{t("mobile:driverLicense.library")}</AppText>
             </Pressable>
           </View>
 
@@ -350,7 +382,11 @@ export default function DriverLicenseScreen({ onBack }: { onBack: () => void }) 
             onPress={() => { void handleSubmit(); }}
             style={[styles.submitButton, submitDisabled && styles.disabled]}
           >
-            <AppText style={styles.submitText}>{busy ? "Đang gửi..." : "Gửi xác minh"}</AppText>
+            <AppText style={styles.submitText}>
+              {busy
+                ? t("mobile:driverLicense.submitting")
+                : t("accountVerification:driverLicense.submit")}
+            </AppText>
           </Pressable>
         </View>
       </ScrollView>

@@ -1,0 +1,462 @@
+{
+  "vehicles": {
+    "common": {
+      "all": "All",
+      "car": "Car",
+      "motorbike": "Motorbike",
+      "back": "Back",
+      "next": "Next",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "saving": "Saving...",
+      "notRequired": "Not required",
+      "percentOfRental": "{{percent}}% of total rental",
+      "suggestedPrice": "Suggested price: {{price}}",
+      "currencyCode": "VND"
+    },
+    "status": {
+      "pending": "Pending review",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "hidden": "Hidden"
+    },
+    "cavetErrors": {
+      "pendingReview": "The registration paper is awaiting staff review. You can't upload another image right now.",
+      "tooManyAttemptsDate": "You've submitted too many rejected images. Please try again after {{date}}.",
+      "tooManyAttempts": "You've submitted too many rejected images. Please try again later.",
+      "ocrUnavailable": "The registration verification service is unavailable. Please try again later.",
+      "needMoreInfo": "The registration photo is missing information or is not clear enough. Please retake it and verify again.",
+      "mismatch": "The registration details don't match the vehicle. Please check and choose another photo.",
+      "sessionExpired": "The registration verification session has expired or the details changed. Please verify again.",
+      "generic": "Couldn't process the vehicle registration. Please try again."
+    },
+    "steps": {
+      "type": "Vehicle type",
+      "brandModel": "Brand & model",
+      "info": "Details",
+      "pricingAddress": "Pricing & address",
+      "features": "Features",
+      "images": "Photos",
+      "confirm": "Confirm"
+    },
+    "features": {
+      "heading": "Features",
+      "subtitle": "Select the features your vehicle has.",
+      "empty": "No features available."
+    },
+    "fields": {
+      "brand": "Brand",
+      "brandPlaceholder": "Select a brand",
+      "model": "Model",
+      "modelPlaceholder": "Select a model",
+      "variant": "Variant",
+      "variantPlaceholder": "Select a variant (optional)",
+      "year": "Year",
+      "licensePlate": "License plate",
+      "licensePlatePlaceholder": "e.g. 51A-12345",
+      "odometer": "Odometer (km)",
+      "odometerPlaceholder": "e.g. 15000",
+      "province": "Province/City",
+      "provincePlaceholder": "Select a province/city",
+      "ward": "Ward/Commune",
+      "wardPlaceholder": "Select a ward/commune",
+      "addressPlaceholder": "e.g. 123 ABC Street, XYZ Ward"
+    },
+    "pricing": {
+      "modeLabel": "Pricing method",
+      "fixedMode": "Set my own price",
+      "autoMode": "Automatic pricing",
+      "autoUnavailable": "No suggested price range is available for automatic pricing.",
+      "priceLabel": "Rental price",
+      "pricePlaceholder": "e.g. 500000",
+      "currencyPerDay": "VND/day",
+      "minPrice": "Minimum price",
+      "maxPrice": "Maximum price",
+      "invalid": "The price must be valid and within the suggested min/max range.",
+      "suggestedRangeLabel": "Suggested price for this model in your area:",
+      "suggestedRangeSuffix": "/day (base price: {{base}}).",
+      "suggestedShortLabel": "Suggested price:",
+      "perDaySuffix": "/day",
+      "noSuggestionForArea": "No suggested price range for this model and area yet.",
+      "noSuggestionShort": "No suggested price range yet."
+    },
+    "deposit": {
+      "label": "Deposit (%)",
+      "inlineNote": "(= {{percent}}% of the total rental, paid before pick-up)",
+      "hint": "Percentage of the rental the renter pays upfront. Minimum 20%, maximum 50%.",
+      "invalid": "The deposit percentage must be between 20% and 50%."
+    },
+    "delivery": {
+      "title": "Doorstep delivery",
+      "hint": "Set the delivery radius and fee for this vehicle. Leave a field blank to use the platform default.",
+      "freeKm": "Free within (km)",
+      "freeKmPlaceholder": "e.g. 5",
+      "feePerKm": "Fee per extra km (VND)",
+      "feePlaceholder": "e.g. 10000",
+      "maxKm": "Maximum (km)",
+      "maxPlaceholder": "e.g. 50",
+      "invalid": "Free radius 0–1000 km, fee/km 0–1,000,000đ, maximum 1–10,000 km and it must be ≥ the free radius."
+    },
+    "collateral": {
+      "label": "Require collateral",
+      "hint": "The renter leaves a refundable deposit as security. It is returned when the vehicle comes back in the agreed condition.",
+      "amount": "Collateral amount (VND)",
+      "amountPlaceholder": "e.g. 2000000",
+      "invalid": "The collateral amount must be greater than 0."
+    },
+    "surchargeInvalid": "Each surcharge needs a name, a calculation method and a unit price greater than 0.",
+    "description": {
+      "addLabel": "Additional description",
+      "addPlaceholder": "Describe your vehicle...",
+      "editPlaceholder": "Describe your vehicle..."
+    },
+    "form": {
+      "description": {
+        "label": "Description",
+        "placeholder": "Tell us more about the vehicle...",
+        "aiEmpty": "AI couldn't generate a description. Please try again.",
+        "aiFailed": "Couldn't create a suggestion right now. Please try again.",
+        "rewrite": "Rewrite with AI",
+        "suggest": "Suggest with AI",
+        "chooseFirst": "Select brand, model, vehicle type and year first",
+        "generating": "Generating..."
+      },
+      "descriptionEn": {
+        "label": "English description",
+        "optional": "(optional)",
+        "placeholder": "Describe the vehicle in English for international customers...",
+        "fallbackHint": "Leave blank → English visitors will still see the Vietnamese version.",
+        "translateTitle": "Translate the Vietnamese description into English (Azure Translator)",
+        "translateDisabledTitle": "Enter a Vietnamese description first",
+        "translating": "Translating...",
+        "translateFromVi": "Translate from VI",
+        "emptyResult": "No translation returned. Please try again.",
+        "translateFailed": "Couldn't translate right now. Please try again or write the English version yourself."
+      },
+      "pricingHelp": {
+        "aria": "Pricing mode help",
+        "fixedTitle": "Manual price",
+        "fixedText": "A fixed price set by the owner; the system won't raise or lower it for demand, weekends or holidays.",
+        "autoTitle": "Automatic price",
+        "autoText": "The owner sets a minimum and maximum price. MoveVN calculates a daily price within that range based on the model/area base price, holiday or weekend rules, the share of booked vehicles in the area, and how many days the vehicle is available."
+      },
+      "surcharge": {
+        "title": "Possible surcharges",
+        "hint": "These are pre-defined rules for the vehicle only; they are not added to a booking at this step. Time is measured in hours.",
+        "add": "Add fee",
+        "empty": "No surcharges configured.",
+        "active": "Active",
+        "removeAria": "Remove {{name}} fee",
+        "name": "Fee name *",
+        "method": "Calculation *",
+        "price": "Unit price *",
+        "pricePlaceholder": "e.g. 5000",
+        "maxAmount": "Maximum cap",
+        "optional": "Optional",
+        "includedKm": "Included km",
+        "includedKmPlaceholder": "e.g. 300",
+        "scope": "Scope",
+        "scopePerBooking": "Per booking",
+        "scopePerDay": "Per day",
+        "graceHours": "Grace period (hours)",
+        "gracePlaceholder": "e.g. 1",
+        "thresholdHours": "One-day threshold (hours)",
+        "thresholdPlaceholder": "e.g. 6",
+        "dailyRate": "Late daily rate",
+        "description": "Description",
+        "feeType": {
+          "excessMileage": "Excess mileage fee",
+          "lateReturn": "Late return fee",
+          "cleaning": "Cleaning fee",
+          "deodorization": "Deodorizing fee",
+          "custom": "Other fee"
+        },
+        "calc": {
+          "perKm": "Per km",
+          "perHour": "Per hour",
+          "perDay": "Per day",
+          "fixed": "Fixed"
+        },
+        "preset": {
+          "excessMileage": {
+            "name": "Excess mileage fee",
+            "description": "Extra fee if the vehicle is driven beyond the included km for the rental."
+          },
+          "lateReturn": {
+            "name": "Late return fee",
+            "description": "Extra fee if the vehicle is returned late."
+          },
+          "cleaning": {
+            "name": "Cleaning fee",
+            "description": "Applies when the vehicle is returned in an unclean condition."
+          },
+          "deodorization": {
+            "name": "Deodorizing fee",
+            "description": "Applies when the vehicle retains cigarette or strong food odors."
+          },
+          "custom": {
+            "name": "Other fee",
+            "description": ""
+          }
+        }
+      }
+    },
+    "list": {
+      "title": "Vehicle management",
+      "titleCar": "Cars",
+      "titleMotorbike": "Motorbikes",
+      "addVehicle": "Add vehicle",
+      "searchPlaceholder": "Search by license plate, description...",
+      "search": "Search",
+      "filters": "Filters",
+      "sortBy": "Sort by",
+      "sort": {
+        "newest": "Newest",
+        "priceAsc": "Price: low to high",
+        "priceDesc": "Price: high to low"
+      },
+      "vehicleType": "Vehicle type",
+      "brand": "Brand",
+      "model": "Model",
+      "seatCount": "Seats",
+      "seatCountOption": "{{seats}} seats",
+      "transmission": "Transmission",
+      "transmissionOptions": {
+        "automatic": "Automatic",
+        "manual": "Manual",
+        "cvt": "CVT",
+        "dct": "DCT"
+      },
+      "bodyType": "Body type",
+      "bikeType": "Motorbike type",
+      "engineCapacityPlaceholder": "Engine capacity, e.g. 125cc",
+      "fuel": "Fuel",
+      "status": "Status",
+      "clearFilters": "Clear filters",
+      "totalCount": "{{total}} vehicles",
+      "empty": "No vehicles yet",
+      "pricePerDay": "{{price}}/day",
+      "pageOf": "Page {{page}} / {{totalPages}}",
+      "loadError": "Couldn't load the vehicle list.",
+      "retry": "Try again"
+    },
+    "add": {
+      "title": "Add a new vehicle",
+      "stepAria": "Step {{current}} of {{total}}: {{label}}",
+      "submit": "Finish registration",
+      "typeStep": {
+        "heading": "Choose a vehicle type",
+        "subtitle": "Which type of vehicle do you want to rent out?",
+        "carDescription": "4-7 seats, sedan, SUV, hatchback...",
+        "motorbikeDescription": "Scooters, manual bikes, big-bore..."
+      },
+      "brandStep": {
+        "heading": "Brand & model",
+        "subtitle": "Choose the basic details of the vehicle."
+      },
+      "infoStep": {
+        "heading": "Vehicle details",
+        "subtitle": "Enter the basic specifications of the vehicle."
+      },
+      "pricingStep": {
+        "heading": "Pricing & address",
+        "subtitle": "Set the rental price and the vehicle's location."
+      },
+      "imageStep": {
+        "heading": "Photos",
+        "subtitle": "Add real photos of your vehicle. Click a photo to use it as the cover image.",
+        "addImages": "Add photos",
+        "empty": "No photos selected yet",
+        "removeAria": "Remove photo {{index}}",
+        "setFeaturedAria": "Set photo {{index}} as the cover image",
+        "featured": "Cover photo"
+      },
+      "confirmStep": {
+        "heading": "Confirm & registration paper",
+        "subtitle": "Upload a photo of the registration paper to verify it and review the details before finishing.",
+        "summaryHeading": "Vehicle details",
+        "type": "Vehicle type:",
+        "brand": "Brand:",
+        "model": "Model:",
+        "licensePlate": "License plate:",
+        "rentalPrice": "Rental price:",
+        "deposit": "Deposit:",
+        "surcharge": "Surcharges:",
+        "collateral": "Collateral:",
+        "surchargeCount": "{{total}} items",
+        "perDaySuffix": "/day",
+        "chooseDocument": "Choose registration photo",
+        "verify": "Verify",
+        "documentAlt": "Registration paper",
+        "verified": "Registration paper is valid",
+        "needsReview": "Registration paper needs staff review"
+      },
+      "errors": {
+        "verificationExpired": "The registration verification session has expired. Please verify again.",
+        "invalidImageType": "Only JPG, PNG or WebP images are accepted.",
+        "imageTooLarge": "The registration photo must not exceed 10 MB.",
+        "ocrUnavailable": "The registration verification service is unavailable. Please try again later.",
+        "needMoreInfo": "The registration photo is missing information or is not clear enough. Please retake it and verify again.",
+        "mismatch": "The registration details do not match the vehicle. Please check and choose another photo.",
+        "notEligible": "The registration paper did not pass the check. Please review and try again."
+      }
+    },
+    "edit": {
+      "title": "Edit vehicle details",
+      "loadError": "Couldn't load the vehicle details.",
+      "typeStep": {
+        "subtitle": "The vehicle type can't be changed after creation."
+      },
+      "brandStep": {
+        "subtitle": "Brand and model can't be changed.",
+        "brand": "Brand",
+        "model": "Model",
+        "variant": "Variant"
+      },
+      "infoStep": {
+        "heading": "Vehicle details",
+        "subtitle": "Update the basic specifications of the vehicle."
+      },
+      "pricingStep": {
+        "heading": "Pricing & address",
+        "subtitle": "Update the rental price and the vehicle's location."
+      },
+      "saveInfo": "Save details",
+      "savePricing": "Save pricing & address",
+      "saveFeatures": "Save features",
+      "errors": {
+        "info": "Failed to update the vehicle details.",
+        "features": "Failed to update the features.",
+        "pricing": "Failed to update the pricing."
+      }
+    },
+    "detail": {
+      "loadError": "Couldn't load the vehicle details.",
+      "notFound": "Vehicle not found.",
+      "editAction": "Edit vehicle",
+      "deleteAction": "Delete vehicle",
+      "deleteTitle": "Delete vehicle",
+      "deleteWarning": "This action can't be undone.",
+      "moderationRestricted": "This listing is restricted due to a violation",
+      "moderationNotice": "Moderation notice",
+      "info": {
+        "title": "Vehicle details",
+        "licensePlate": "License plate",
+        "model": "Model",
+        "year": "Year",
+        "odometer": "Odometer",
+        "description": "Description",
+        "descriptionEn": "English description",
+        "features": "Features ({{total}})"
+      },
+      "address": {
+        "title": "Address",
+        "regionCode": "Region code: {{code}}",
+        "openMaps": "Open Google Maps"
+      },
+      "blockedDates": {
+        "addTitle": "Block new dates",
+        "from": "From",
+        "to": "To",
+        "reason": "Reason (optional)",
+        "reasonPlaceholder": "e.g. Maintenance, trip...",
+        "confirm": "Confirm block",
+        "title": "Blocked dates",
+        "add": "Add dates",
+        "legendBlocked": "Blocked",
+        "legendBooked": "Booked",
+        "legendAvailable": "Available",
+        "bufferNote": "Each trip includes 60 minutes of vehicle preparation before the next handover. This buffer is not charged as rental time.",
+        "preparation": "Vehicle preparation: {{from}} – {{to}}",
+        "empty": "No blocked dates yet.",
+        "unblock": "Unblock",
+        "added": "The dates were blocked successfully.",
+        "addFailed": "Couldn't block these dates.",
+        "removed": "These dates are no longer blocked.",
+        "removeFailed": "Couldn't remove the blocked dates."
+      },
+      "months": {
+        "m1": "Jan",
+        "m2": "Feb",
+        "m3": "Mar",
+        "m4": "Apr",
+        "m5": "May",
+        "m6": "Jun",
+        "m7": "Jul",
+        "m8": "Aug",
+        "m9": "Sep",
+        "m10": "Oct",
+        "m11": "Nov",
+        "m12": "Dec"
+      },
+      "weekdays": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "images": {
+        "title": "Photos ({{total}})",
+        "primary": "Cover photo",
+        "label": "Vehicle photo {{index}}"
+      },
+      "pricing": {
+        "title": "Rental price",
+        "perDay": "/day",
+        "deposit": "Deposit",
+        "delivery": "Doorstep delivery",
+        "deliveryDetail": "Free within {{free}} km · {{fee}}đ/km · up to {{max}} km",
+        "deliveryDefault": "Platform default",
+        "collateral": "Collateral",
+        "vehicleType": "Vehicle type",
+        "year": "Year",
+        "autoTitle": "Automatic pricing",
+        "autoRange": "Owner range: {{min}} - {{max}}/day",
+        "autoSuggestion": "Suggested base: {{base}} | Suggestion: {{min}} - {{max}}",
+        "fixedPrice": "Fixed price: {{price}}/day"
+      },
+      "documents": {
+        "title": "Vehicle documents",
+        "view": "View registration",
+        "ocrLicensePlate": "OCR license plate",
+        "brand": "Brand",
+        "model": "Model",
+        "confidence": "Confidence",
+        "reuploadTitle": "Re-upload vehicle documents",
+        "reuploadHint": "The current document needs more information or was rejected. Choose a new registration photo so the system can verify it again.",
+        "chooseImage": "Choose photo",
+        "uploading": "Uploading...",
+        "resubmit": "Resubmit for verification",
+        "selected": "Selected: {{name}}",
+        "historyTitle": "Document history",
+        "attempt": "Attempt {{index}}",
+        "currentLabel": "Current registration",
+        "historyLabel": "Registration {{index}}",
+        "status": {
+          "pending": "Processing",
+          "verified": "Verified",
+          "needMoreInfo": "More info needed",
+          "manualReview": "Awaiting staff review",
+          "rejected": "Rejected",
+          "failed": "Processing failed"
+        }
+      },
+      "verificationErrors": {
+        "connection": "Couldn't connect to the vehicle document AI verification service. Please try again later.",
+        "timeout": "The vehicle document AI verification service took too long to respond. Please try again later.",
+        "http": "The vehicle document AI verification service returned an error. Please try again later."
+      },
+      "toast": {
+        "error": "Error",
+        "blockedTitle": "Blocked",
+        "deletedTitle": "Deleted",
+        "vehicleDeleted": "The vehicle was deleted successfully.",
+        "vehicleDeleteFailed": "Couldn't delete the vehicle."
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { Bike, Car, MapPin } from "lucide-react-native";
 import { memo, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Switch, View } from "react-native"
 import AppText from "@/components/AppText";
 import type { VehicleListItemResponse } from "@/features/vehicles/types";
@@ -35,6 +36,7 @@ function statusStyle(status: string, theme: Theme): { bg: string; text: string; 
 }
 
 function MyVehicleCard({ vehicle, onOpen, toggling = false, onToggleStatus }: MyVehicleCardProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [imageFailed, setImageFailed] = useState(false);
@@ -59,7 +61,7 @@ function MyVehicleCard({ vehicle, onOpen, toggling = false, onToggleStatus }: My
         ) : (
           <View style={styles.imageFallback}>
             <VehicleIcon color={theme.faint} size={42} />
-            <AppText style={styles.fallbackText}>Chưa có hình ảnh</AppText>
+            <AppText style={styles.fallbackText}>{t("common:noImage")}</AppText>
           </View>
         )}
         <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
@@ -104,15 +106,15 @@ function MyVehicleCard({ vehicle, onOpen, toggling = false, onToggleStatus }: My
         ) : null}
         <View style={styles.priceRow}>
           <AppText style={styles.price}>
-            {price == null ? "Liên hệ" : <>
-              {vehicle.pricingMode === "Auto" ? <AppText style={styles.priceUnit}>từ </AppText> : null}
+            {price == null ? t("mobile:ownerVehicle.price.contact") : <>
+              {vehicle.pricingMode === "Auto" ? <AppText style={styles.priceUnit}>{t("mobile:ownerVehicle.price.fromPrefix")}</AppText> : null}
               {formatVnd(price)}
-              <AppText style={styles.priceUnit}> /ngày</AppText>
+              <AppText style={styles.priceUnit}>{t("mobile:ownerVehicle.price.perDaySuffix")}</AppText>
             </>}
           </AppText>
           {vehicle.pricingMode === "Auto" ? (
             <View style={styles.autoTag}>
-              <AppText style={styles.autoTagText}>Giá tự động</AppText>
+              <AppText style={styles.autoTagText}>{t("mobile:ownerVehicle.pricing.auto")}</AppText>
             </View>
           ) : null}
         </View>

@@ -1,0 +1,35 @@
+{
+  "results": {
+    "eyebrowMap": "Vehicle map",
+    "eyebrowList": "Vehicle list",
+    "title": "Vehicles available in {{area}}",
+    "allCountry": "all of Vietnam",
+    "countFound": "{{total}} vehicles available",
+    "countFoundDays": "{{total}} vehicles available for a {{days}}-day rental",
+    "viewModeAria": "Vehicle view mode",
+    "list": "List",
+    "map": "Map",
+    "sort": "Sort",
+    "newest": "Newest",
+    "missingPeriod": "Please choose a rental location and rental period.",
+    "emptyTitle": "No matching vehicles",
+    "emptyDescription": "Adjust your filters or widen the price range or rental dates.",
+    "emptyAction": "Reset filters",
+    "page": "Page {{page}} / {{total}}"
+  },
+  "vehicleCard": {
+    "bookNow": "Book now",
+    "rentNow": "Rent now"
+  },
+  "ai": {
+    "placeholderLong": "AI search: 7-seat car under 1.5m, spacious...",
+    "placeholderShort": "AI search: 7-seat car under 1.5m...",
+    "clearAria": "Clear AI search",
+    "submitAria": "Search with AI",
+    "submit": "AI Search",
+    "searching": "AI is searching... {{seconds}}s",
+    "noMatch": "No AI matches — showing results for your current filters.",
+    "needsPeriod": "Choose a location and rental period before using AI.",
+    "error": "AI search failed. Try a different prompt or use the standard filters."
+  }
+}

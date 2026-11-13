@@ -1,0 +1,40 @@
+{
+  "back": "Quay lại",
+  "backToListAria": "Quay lại danh sách xe",
+  "loadError": "Không thể tải thông tin xe.",
+  "verified": "Đã xác minh",
+  "infoTitle": "Thông tin xe",
+  "info": {
+    "licensePlate": "Biển số",
+    "model": "Dòng xe",
+    "year": "Năm sản xuất",
+    "odometer": "Số km đã đi",
+    "owner": "Chủ xe",
+    "ownerFallback": "Chủ xe #{{id}}",
+    "type": "Loại xe",
+    "location": "Địa điểm",
+    "description": "Mô tả",
+    "features": "Tính năng ({{total}})",
+    "originalInVietnamese": "Nội dung mô tả gốc bằng tiếng Việt"
+  },
+  "locationTitle": "Vị trí",
+  "openGoogleMaps": "Mở Google Maps",
+  "alerts": {
+    "toggle": "Nhận thông báo khi xe trống",
+    "description": "Chọn cả ngày và giờ bạn muốn thuê, kể cả ngày xe đang bận. MoveVN sẽ báo trong app một lần khi toàn bộ khoảng này trống. Thông báo không giữ chỗ xe.",
+    "loginToRegister": "Đăng nhập để đăng ký →",
+    "startLabel": "Ngày giờ nhận (Việt Nam)",
+    "endLabel": "Ngày giờ trả (Việt Nam)",
+    "saved": "Đã đăng ký theo dõi khoảng thuê này.",
+    "submit": "Đăng ký theo dõi",
+    "manage": "Xem và hủy đăng ký của tôi →",
+    "periodError": "Chọn ngày nhận ở tương lai và ngày trả sau ngày nhận.",
+    "registerFailed": "Chưa thể đăng ký. Vui lòng thử lại."
+  },
+  "calendar": {
+    "title": "Lịch khả dụng",
+    "selectedDay": "Ngày đã chọn",
+    "inRange": "Trong khoảng",
+    "busy": "Đã đặt/Chặn"
+  }
+}

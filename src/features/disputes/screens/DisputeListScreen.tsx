@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   FlatList,
@@ -44,6 +45,7 @@ export default function DisputeListScreen({
   onCreate: () => void;
 }) {
   const { theme, mode } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [items, setItems] = useState<DisputeListItem[]>([]);
@@ -88,12 +90,12 @@ export default function DisputeListScreen({
         setPage(result.page);
       } catch (err) {
         setItems([]);
-        setError(getApiErrorMessage(err, "Không thể tải danh sách tranh chấp."));
+        setError(getApiErrorMessage(err, t("disputes:errors.loadListFailed")));
       } finally {
         setLoading(false);
       }
     },
-    [statusFilter, typeFilter, fineStatusFilter, keyword],
+    [statusFilter, typeFilter, fineStatusFilter, keyword, t],
   );
 
   useEffect(() => {
@@ -121,7 +123,7 @@ export default function DisputeListScreen({
               setPage(1);
             }}
             returnKeyType="search"
-            placeholder="Tìm booking, khách, chủ xe"
+            placeholder={t("disputes:list.searchPlaceholder")}
             placeholderTextColor={theme.placeholder}
             style={[styles.input, styles.searchInput]}
           />
@@ -134,17 +136,17 @@ export default function DisputeListScreen({
               }}
               style={styles.clearButton}
             >
-              <Text style={styles.clearText}>Xóa</Text>
+              <Text style={styles.clearText}>{t("mobile:dispute.list.clearKeyword")}</Text>
             </Pressable>
           ) : null}
         </View>
       </View>
 
       <View style={[styles.filterHeadRow, styles.padded]}>
-        <Text style={styles.sectionLabel}>Trạng thái</Text>
+        <Text style={styles.sectionLabel}>{t("disputes:list.colStatus")}</Text>
         {activeFilterCount > 0 ? (
           <Pressable onPress={resetFilters}>
-            <Text style={styles.resetText}>Xóa lọc ({activeFilterCount})</Text>
+            <Text style={styles.resetText}>{t("mobile:dispute.list.resetCount", { count: activeFilterCount })}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -171,7 +173,7 @@ export default function DisputeListScreen({
         })}
       </ScrollView>
 
-      <Text style={[styles.sectionLabel, styles.padded]}>Loại vấn đề</Text>
+      <Text style={[styles.sectionLabel, styles.padded]}>{t("disputes:create.typeLabel")}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -199,7 +201,7 @@ export default function DisputeListScreen({
 
       {typeFilter === "TrafficFine" ? (
         <>
-          <Text style={[styles.sectionLabel, styles.padded]}>Trạng thái hồ sơ phạt nguội</Text>
+          <Text style={[styles.sectionLabel, styles.padded]}>{t("mobile:dispute.list.sectionFine")}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -228,8 +230,8 @@ export default function DisputeListScreen({
       ) : null}
 
       <View style={[styles.countRow, styles.padded]}>
-        <Text style={styles.countBadge}>{totalCount} tranh chấp</Text>
-        {keyword ? <Text style={styles.muted}>Lọc: “{keyword}”</Text> : null}
+        <Text style={styles.countBadge}>{t("disputes:list.count", { count: totalCount })}</Text>
+        {keyword ? <Text style={styles.muted}>{t("mobile:dispute.list.activeKeyword", { keyword })}</Text> : null}
       </View>
     </View>
   );
@@ -239,14 +241,14 @@ export default function DisputeListScreen({
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Quay lại Tài khoản"
+          accessibilityLabel={t("mobile:dispute.a11y.backToAccount")}
           onPress={onBack}
           hitSlop={8}
           style={styles.backButton}
         >
           <Text style={styles.backText}>‹</Text>
         </Pressable>
-        <Text style={styles.screenTitle}>Tranh chấp của tôi</Text>
+        <Text style={styles.screenTitle}>{t("disputes:title.mine")}</Text>
         <View style={styles.backButtonPlaceholder} />
       </View>
 
@@ -261,7 +263,7 @@ export default function DisputeListScreen({
           <View style={styles.center}>
             <Text style={styles.error}>{error}</Text>
             <Pressable onPress={() => void load(page)} style={styles.retryButton}>
-              <Text style={styles.retryText}>Thử lại</Text>
+              <Text style={styles.retryText}>{t("common:retry")}</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -269,11 +271,11 @@ export default function DisputeListScreen({
         <ScrollView contentContainerStyle={styles.scrollGrow}>
           {header}
           <View style={styles.center}>
-            <Text style={styles.title}>Chưa có tranh chấp</Text>
-            <Text style={styles.mutedCenter}>Các hồ sơ phù hợp bộ lọc sẽ xuất hiện tại đây.</Text>
+            <Text style={styles.title}>{t("disputes:list.emptyTitle")}</Text>
+            <Text style={styles.mutedCenter}>{t("disputes:list.emptyDescription")}</Text>
             {activeFilterCount > 0 ? (
               <Pressable onPress={resetFilters} style={styles.retryButton}>
-                <Text style={styles.retryText}>Xóa bộ lọc</Text>
+                <Text style={styles.retryText}>{t("booking:list.clearFilters")}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -308,7 +310,7 @@ export default function DisputeListScreen({
                   </View>
                   {item.adminManaged ? (
                     <View style={styles.adminChip}>
-                      <Text style={styles.adminChipText}>Admin xử lý</Text>
+                      <Text style={styles.adminChipText}>{t("mobile:dispute.list.adminManaged")}</Text>
                     </View>
                   ) : null}
                 </View>
@@ -321,7 +323,7 @@ export default function DisputeListScreen({
                     {item.trafficFineStatus ? (
                       <FineBadge status={item.trafficFineStatus} />
                     ) : null}
-                    <Text style={styles.muted}>Hạn {formatDisputeDateTime(item.trafficFineDueAt)}</Text>
+                    <Text style={styles.muted}>{t("disputes:list.dueAt", { date: formatDisputeDateTime(item.trafficFineDueAt) })}</Text>
                   </View>
                 ) : null}
               </Pressable>
@@ -344,13 +346,13 @@ export default function DisputeListScreen({
                   <Text style={styles.pageText}>›</Text>
                 </Pressable>
               </View>
-            ) : null
+            ) : undefined
           }
         />
       )}
 
       <Pressable onPress={onCreate} style={styles.createButton}>
-        <Text style={styles.createText}>+ Tạo tranh chấp</Text>
+        <Text style={styles.createText}>{`+ ${t("disputes:hero.create")}`}</Text>
       </Pressable>
     </View>
   );
@@ -358,22 +360,23 @@ export default function DisputeListScreen({
 
 function FineBadge({ status }: { status: string }) {
   const { theme, mode } = useTheme();
+  const { t } = useTranslation();
   const st = getFineStatusStyle(status, mode);
   const label =
     status === "Submitted"
-      ? "Chờ xác minh"
+      ? t("mobile:dispute.list.fineSubmitted")
       : status === "AwaitingCustomerResponse"
-        ? "Chờ khách xác nhận"
+        ? t("mobile:dispute.list.fineAwaitingCustomer")
         : status === "ResponsibilityDisputed"
-          ? "Khách phản đối"
+          ? t("mobile:dispute.list.fineDisputed")
           : status === "AwaitingPayment"
-            ? "Chờ chứng từ"
+            ? t("mobile:dispute.list.fineAwaitingPayment")
             : status === "PaymentProofSubmitted"
-              ? "Chờ duyệt chứng từ"
+              ? t("mobile:dispute.list.fineAwaitingProof")
               : status === "Resolved"
-                ? "Hoàn tất"
+                ? t("mobile:dispute.list.fineResolved")
                 : status === "Rejected"
-                  ? "Bị từ chối"
+                  ? t("mobile:dispute.list.fineRejected")
                   : status;
   return (
     <View style={[fineStyles(theme).badge, { backgroundColor: st.bg, borderColor: st.border }]}>

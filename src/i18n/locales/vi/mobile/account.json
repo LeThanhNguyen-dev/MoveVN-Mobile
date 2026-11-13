@@ -1,0 +1,73 @@
+{
+  "account": {
+    "roles": {
+      "renter": "Khách thuê"
+    },
+    "sections": {
+      "manage": "Quản lý",
+      "security": "Bảo mật",
+      "appearance": "Giao diện"
+    },
+    "status": {
+      "unreadCount": "{{total}} chưa đọc"
+    },
+    "profile": {
+      "title": "Thông tin tài khoản",
+      "openA11y": "Xem thông tin tài khoản",
+      "fallbackName": "Tài khoản MoveVN",
+      "edit": "Chỉnh sửa thông tin",
+      "closeSheet": "Đóng chỉnh sửa",
+      "changeAvatar": "Đổi ảnh đại diện",
+      "phoneEmpty": "Chưa cập nhật",
+      "cccdName": "Họ tên trên CCCD",
+      "cccdNotVerified": "Bạn chưa xác minh CCCD.",
+      "documentLocked": "Giấy tờ chưa được xác thực để hiển thị.",
+      "licenseEmpty": "Chưa có thông tin GPLX.",
+      "bankEmpty": "Chưa cập nhật thông tin ngân hàng.",
+      "avatarPermission": "Cần quyền truy cập thư viện ảnh để đổi ảnh đại diện.",
+      "nameRequired": "Vui lòng nhập họ và tên."
+    },
+    "menu": {
+      "favorites": "Yêu thích",
+      "deals": "Ưu đãi",
+      "disputes": "Tranh chấp",
+      "stats": "Thống kê",
+      "availabilityAlerts": "Thông báo xe trống",
+      "supportTickets": "Yêu cầu hỗ trợ của tôi",
+      "chatbot": "Chatbot MoveVN",
+      "chatbotReopen": "Mở lại",
+      "policy": "Điều khoản & chính sách"
+    },
+    "theme": {
+      "title": "Chế độ tối",
+      "activeDark": "Đang dùng giao diện tối",
+      "activeLight": "Đang dùng giao diện sáng",
+      "toggleA11y": "Chuyển chế độ sáng tối"
+    },
+    "roleAction": {
+      "switchToCustomer": "Chuyển sang Khách hàng",
+      "switchToCustomerDescription": "Thuê xe và quản lý nhu cầu di chuyển của bạn",
+      "switchToOwner": "Chuyển sang Chủ xe",
+      "switchToOwnerDescription": "Quản lý xe, đơn thuê và doanh thu",
+      "becomeOwnerDescription": "Tạo hồ sơ cho thuê xe trên MoveVN"
+    },
+    "verification": {
+      "title": "Xác minh",
+      "overview": "Tổng quan xác minh"
+    },
+    "verificationHub": {
+      "title": "Xác minh tài khoản",
+      "subtitle": "Kiểm tra trạng thái xác minh giấy tờ của bạn"
+    },
+    "verify": {
+      "cccd": "Xác minh CCCD",
+      "gplx": "Xác minh GPLX"
+    },
+    "cccdInfo": {
+      "title": "Thông tin CCCD",
+      "verifiedDescription": "Thông tin định danh đã được xác minh",
+      "storedNote": "Thông tin được lưu trữ an toàn.",
+      "unverifiedDescription": "Bạn chưa xác minh CCCD. Xác minh ngay để mở khóa đầy đủ tính năng của MoveVN."
+    }
+  }
+}

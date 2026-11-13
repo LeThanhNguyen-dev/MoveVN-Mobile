@@ -1,0 +1,39 @@
+{
+  "login": {
+    "title": "Sign in",
+    "description": "Welcome back to MoveVN!",
+    "passwordRequired": "Please enter your password.",
+    "expiredSession": "Your session has expired. Please sign in again.",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "submit": "Sign in",
+    "orContinueWith": "Or continue with",
+    "googleFailed": "Google sign-in failed. Please try again.",
+    "googleNotConfigured": "Google (not configured)",
+    "googleDisabledTitle": "Google sign-in is disabled because VITE_GOOGLE_CLIENT_ID is missing",
+    "noAccount": "Don't have an account?",
+    "registerNow": "Sign up now",
+    "successTitle": "Signed in successfully",
+    "successMessage": "Welcome, {{name}}."
+  },
+  "register": {
+    "title": "Sign up",
+    "description": "Welcome to MoveVN!",
+    "passwordHelper": "At least 8 characters.",
+    "roleInvalid": "You can only register as a Customer or Owner.",
+    "termsRequiredTitle": "Terms not accepted",
+    "termsRequiredMessage": "Please read and agree to the privacy policy and terms of service.",
+    "terms": "I have read and agree to the <privacy>Privacy Policy</privacy> and <terms>Terms of Service</terms> of MoveVN.",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "submit": "Sign up",
+    "hasAccount": "Already have an account?",
+    "loginNow": "Sign in now",
+    "successTitle": "Registration successful",
+    "successMessage": "MoveVN has sent an OTP to your email."
+  },
+  "ownerRegister": {
+    "title": "Become a vehicle owner",
+    "description": "Create an account and register as a vehicle owner on MoveVN!"
+  }
+}

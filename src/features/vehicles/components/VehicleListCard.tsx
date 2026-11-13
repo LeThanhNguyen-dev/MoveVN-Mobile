@@ -3,7 +3,10 @@ import { Bike, Car, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react-nat
 import FavoriteVehicleButton from "@/features/favorites/components/FavoriteVehicleButton";
 import { memo, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native"
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import AppText from "@/components/AppText";
+import i18n from "@/i18n";
 import type { VehicleListItemResponse } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -17,7 +20,9 @@ type VehicleListCardProps = {
 const currencyFormatter = new Intl.NumberFormat("vi-VN");
 
 export function formatVehicleCurrency(price: number): string {
-  return Number.isFinite(price) && price > 0 ? `${currencyFormatter.format(price)}đ` : "Liên hệ";
+  return Number.isFinite(price) && price > 0
+    ? `${currencyFormatter.format(price)}đ`
+    : i18n.t("common:contact");
 }
 
 function getVehicleTitle(vehicle: VehicleListItemResponse): string {
@@ -30,12 +35,12 @@ function formatDistance(distanceKm: number | null | undefined): string | null {
   return `${distanceKm.toFixed(distanceKm < 10 ? 1 : 0)} km`;
 }
 
-function getStatusLabel(vehicle: VehicleListItemResponse): string | null {  const createdAt = new Date(vehicle.createdAt);
+function getStatusLabel(vehicle: VehicleListItemResponse, t: TFunction): string | null {  const createdAt = new Date(vehicle.createdAt);
   const ageInDays = Number.isNaN(createdAt.getTime())
     ? Number.POSITIVE_INFINITY
     : (Date.now() - createdAt.getTime()) / 86_400_000;
-  if (ageInDays >= 0 && ageInDays <= 30) return "Mới";
-  if (vehicle.averageRating >= 4.5 && vehicle.reviewCount > 0) return "Nổi bật";
+  if (ageInDays >= 0 && ageInDays <= 30) return t("common:new");
+  if (vehicle.averageRating >= 4.5 && vehicle.reviewCount > 0) return t("common:featuredBadge");
   return null;
 }
 
@@ -44,12 +49,13 @@ function VehicleListCard({
   onOpen,
   onBook,
 }: VehicleListCardProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [imageFailed, setImageFailed] = useState(false);
 
   const title = getVehicleTitle(vehicle);
-  const statusLabel = getStatusLabel(vehicle);
+  const statusLabel = getStatusLabel(vehicle, t);
   const distanceLabel = formatDistance(vehicle.distanceKm);
   const hasRating = vehicle.averageRating > 0 && vehicle.reviewCount > 0;
   const totalPrice = vehicle.totalDynamicPrice || vehicle.pricePerDay;
@@ -59,7 +65,7 @@ function VehicleListCard({
   const showImage = vehicle.featuredImage && !imageFailed;
 
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`Xem xe ${title}`} onPress={() => onOpen(vehicle.id)} style={styles.card}>
+    <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:vehicleList.viewVehicleAria", { title })} onPress={() => onOpen(vehicle.id)} style={styles.card}>
       <View style={styles.imageWrap}>
         {showImage ? (
           <Image
@@ -73,7 +79,7 @@ function VehicleListCard({
         ) : (
           <View style={styles.imageFallback}>
             <VehicleIcon color={theme.faint} size={44} />
-            <AppText style={styles.fallbackText}>Chưa có hình ảnh</AppText>
+            <AppText style={styles.fallbackText}>{t("common:noImage")}</AppText>
           </View>
         )}
         {statusLabel ? (
@@ -89,7 +95,7 @@ function VehicleListCard({
         {!vehicle.securityRequiresDeposit ? (
           <View style={styles.freePill}>
             <ShieldCheck color={theme.success} size={13} />
-            <AppText style={styles.freePillText}>Miễn thế chấp</AppText>
+            <AppText style={styles.freePillText}>{t("common:noDeposit")}</AppText>
           </View>
         ) : null}
 
@@ -100,7 +106,9 @@ function VehicleListCard({
         <View style={styles.metaRow}>
           <VehicleIcon color={theme.brand} size={14} />
           <AppText numberOfLines={1} style={styles.metaText}>
-            {vehicle.variantName || (vehicle.vehicleType === "Car" ? "Ô tô" : "Xe máy")}
+            {vehicle.variantName || (vehicle.vehicleType === "Car"
+              ? t("common:car")
+              : t("common:motorbike"))}
           </AppText>
         </View>
 
@@ -108,7 +116,7 @@ function VehicleListCard({
           <MapPin color={theme.muted} size={14} />
           <AppText numberOfLines={1} style={styles.area}>
             {distanceLabel ? `${distanceLabel} · ` : ""}
-            {vehicle.areaName || "Chưa cập nhật khu vực"}
+            {vehicle.areaName || t("common:areaUpdating")}
           </AppText>
         </View>
 
@@ -123,12 +131,12 @@ function VehicleListCard({
                   {vehicle.averageRating.toFixed(1)}
                 </AppText>
                 <AppText style={styles.ratingCount} numberOfLines={1}>
-                  ({vehicle.reviewCount} đánh giá)
+                  ({t("common:reviewsCount", { count: vehicle.reviewCount })})
                 </AppText>
               </View>
             ) : (
               <AppText style={styles.noRating} numberOfLines={1}>
-                Chưa có đánh giá
+                {t("common:noReviews")}
               </AppText>
             )}
           </View>
@@ -138,14 +146,17 @@ function VehicleListCard({
             </AppText>
             {totalPrice > 0 ? (
               <AppText style={styles.perDay} numberOfLines={1}>
-                {days} ngày · TB {formatVehicleCurrency(avgPrice)}/ngày
+                {t("common:rentalDaysSummary", {
+                  days,
+                  price: formatVehicleCurrency(avgPrice),
+                })}
               </AppText>
             ) : null}
           </View>
         </View>
 
-        <Pressable accessibilityRole="button" accessibilityLabel={`Đặt xe ${title}`} onPress={() => onBook(vehicle.id)} style={styles.bookButton}>
-          <AppText style={styles.bookText}>Đặt ngay</AppText>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:vehicleList.bookVehicleAria", { title })} onPress={() => onBook(vehicle.id)} style={styles.bookButton}>
+          <AppText style={styles.bookText}>{t("vehicleList:vehicleCard.bookNow")}</AppText>
         </Pressable>
       </View>
     </Pressable>

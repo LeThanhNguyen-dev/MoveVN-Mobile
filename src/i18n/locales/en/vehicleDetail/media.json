@@ -1,0 +1,7 @@
+{
+  "photos": {
+    "allTitle": "All photos ({{total}})",
+    "primary": "Primary photo",
+    "numbered": "Photo {{index}}"
+  }
+}

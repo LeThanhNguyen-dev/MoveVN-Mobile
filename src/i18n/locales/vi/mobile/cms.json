@@ -1,0 +1,63 @@
+{
+  "cms": {
+    "a11y": {
+      "back": "Quay lại"
+    },
+    "hero": {
+      "openHint": "Mở xem ảnh toàn màn hình",
+      "viewImageAria": "Xem ảnh: {{title}}"
+    },
+    "viewer": {
+      "closeAria": "Đóng xem ảnh",
+      "loadError": "Không tải được ảnh."
+    },
+    "loadingContent": "Đang tải nội dung...",
+    "resultCount": "{{count}} kết quả",
+    "docCount": "{{count}} văn bản",
+    "searchClearAria": "Xóa tìm kiếm",
+    "searchEmptyHint": "Thử từ khóa khác.",
+    "unsupportedType": "Nội dung tạm thời chưa được hỗ trợ hiển thị (loại: {{type}}).",
+    "faq": {
+      "loadError": "Không tải được nội dung.",
+      "questionFallback": "Câu hỏi {{index}}"
+    },
+    "policy": {
+      "title": "Điều khoản & Chính sách",
+      "itemFallback": "Mục {{index}}"
+    },
+    "list": {
+      "description": "Tài liệu điều khoản, chính sách và hướng dẫn sử dụng MoveVN.",
+      "searchAria": "Tìm kiếm tài liệu",
+      "searchPlaceholder": "Tìm tài liệu",
+      "loading": "Đang tải danh sách...",
+      "loadError": "Không tải được danh sách.",
+      "sectionTitle": "Nhóm tài liệu",
+      "groupCount": "{{count}} nhóm",
+      "emptySearchTitle": "Không tìm thấy tài liệu phù hợp",
+      "emptyTitle": "Chưa có nội dung điều khoản"
+    },
+    "docs": {
+      "searchAria": "Tìm kiếm trong {{title}}",
+      "searchPlaceholder": "Tìm văn bản",
+      "sectionTitle": "Danh sách văn bản",
+      "emptySearchTitle": "Không tìm thấy văn bản phù hợp",
+      "emptyTitle": "Chưa có văn bản",
+      "emptyDescription": "Nhóm tài liệu này đang được cập nhật. Vui lòng quay lại sau."
+    },
+    "support": {
+      "heroTitle": "Xin chào, MoveVN có thể giúp gì?",
+      "createRequest": "Gửi yêu cầu cho nhân viên hỗ trợ",
+      "viewRequests": "Xem yêu cầu hỗ trợ của tôi",
+      "searchAria": "Tìm kiếm chủ đề trợ giúp",
+      "searchPlaceholder": "Tìm chủ đề trợ giúp",
+      "sectionTitle": "Danh mục trợ giúp",
+      "topicCount": "{{count}} chủ đề",
+      "loading": "Đang tải danh mục...",
+      "emptySearchTitle": "Không tìm thấy chủ đề phù hợp",
+      "emptySearchHint": "Thử từ khóa khác hoặc chuyển vai trò.",
+      "contact": "Liên hệ đội ngũ hỗ trợ qua hotline {{hotline}} hoặc email {{email}}.",
+      "call": "Gọi {{hotline}}",
+      "email": "Gửi email"
+    }
+  }
+}

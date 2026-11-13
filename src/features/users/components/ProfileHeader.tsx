@@ -1,5 +1,6 @@
 import { ArrowLeft, EllipsisVertical, Search, X } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
@@ -22,6 +23,7 @@ type ProfileHeaderProps = {
 /** Thanh điều hướng gọn 48px dùng chung cho các màn hồ sơ công khai. */
 export default function ProfileHeader({ onBack, title, search, onMenuPress }: ProfileHeaderProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
@@ -30,7 +32,7 @@ export default function ProfileHeader({ onBack, title, search, onMenuPress }: Pr
         onPress={onBack}
         style={styles.iconButton}
         accessibilityRole="button"
-        accessibilityLabel="Quay lại"
+        accessibilityLabel={t("users:page.back")}
         hitSlop={8}
       >
         <ArrowLeft color={theme.text} size={20} />
@@ -53,7 +55,7 @@ export default function ProfileHeader({ onBack, title, search, onMenuPress }: Pr
             <Pressable
               onPress={() => search.onChangeText("")}
               accessibilityRole="button"
-              accessibilityLabel="Xoá tìm kiếm"
+              accessibilityLabel={t("users:vehicles.clearSearch")}
               hitSlop={8}
             >
               <X color={theme.faint} size={14} />
@@ -71,7 +73,7 @@ export default function ProfileHeader({ onBack, title, search, onMenuPress }: Pr
           onPress={onMenuPress}
           style={styles.iconButton}
           accessibilityRole="button"
-          accessibilityLabel="Tuỳ chọn khác"
+          accessibilityLabel={t("mobile:user.header.moreOptions")}
           hitSlop={8}
         >
           <EllipsisVertical color={theme.text} size={18} />

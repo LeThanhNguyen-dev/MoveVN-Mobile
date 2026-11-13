@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import AppText from "@/components/AppText";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@/theme/useTheme";
 import { chatCounterpart, chatTime } from "../chatPresentation";
 import { useChatPresence } from "../useChatPresence";
@@ -12,16 +13,22 @@ export default function ChatConversationRow({ room, userId, onOpen }: {
   onOpen: (roomId: string) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const person = chatCounterpart(room, userId);
   const presence = useChatPresence(person);
   const unread = room.unreadCount > 0;
   const preview = room.lastMessage
-    ? `${Number(room.lastMessage.senderId) === Number(userId) ? "Bạn: " : ""}${room.lastMessage.text || "Đã gửi ảnh"}`
-    : "Bắt đầu trò chuyện";
+    ? `${Number(room.lastMessage.senderId) === Number(userId) ? t("mobile:chat.row.ownPrefix") : ""}${room.lastMessage.text || t("mobile:chat.row.photoOnly")}`
+    : t("mobile:chat.row.start");
 
   return (
     <Pressable accessibilityRole="button"
-      accessibilityLabel={`${person.name}, ${presence.label}, ${room.bookingCode}, ${room.unreadCount} chưa đọc`}
+      accessibilityLabel={t("mobile:chat.row.a11y", {
+        name: person.name,
+        presence: presence.label,
+        code: room.bookingCode,
+        n: room.unreadCount,
+      })}
       onPress={() => onOpen(room.id)}
       style={({ pressed }) => [styles.container, {
         backgroundColor: pressed ? theme.brandSoft : theme.surface,
@@ -49,7 +56,7 @@ export default function ChatConversationRow({ room, userId, onOpen }: {
           </View> : null}
         </View>
         <AppText numberOfLines={1} style={{ color: theme.brand, fontSize: 10, marginTop: 2 }}>
-          {room.bookingCode} · {room.vehicleName || "Đơn thuê xe"}
+          {room.bookingCode} · {room.vehicleName || t("mobile:chat.row.bookingFallback")}
         </AppText>
       </View>
     </Pressable>

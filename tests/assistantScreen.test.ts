@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { themes } from "@/theme/tokens";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
-const mocks = vi.hoisted(() => ({ list: vi.fn(), history: vi.fn(), send: vi.fn(), getDraft: vi.fn(), patch: vi.fn(), stored: vi.fn(), handoff: vi.fn(), getMessage: vi.fn(), event: null as null | ((event: { conversationId: string; status: string }) => void) }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), history: vi.fn(), send: vi.fn(), getDraft: vi.fn(), patch: vi.fn(), stored: vi.fn(), handoff: vi.fn(), feedback: vi.fn(), getMessage: vi.fn(), event: null as null | ((event: { conversationId: string; status: string }) => void) }));
 vi.mock("react-native", () => ({
   View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable", ScrollView: "ScrollView", ActivityIndicator: "ActivityIndicator", KeyboardAvoidingView: "KeyboardAvoidingView",
   Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 },
@@ -25,7 +25,7 @@ vi.mock("@/features/assistant/components/BookingFunnel", () => ({ default: "Book
 vi.mock("@/features/cms/screens/PolicyDetailScreen", () => ({ default: "PolicyDetailScreen" }));
 vi.mock("@/features/assistant/assistantService", () => ({
   listConversations: mocks.list, getHistory: mocks.history, sendQuestion: mocks.send, getDraft: mocks.getDraft, patchDraft: mocks.patch,
-  createConversation: vi.fn(), getMessage: mocks.getMessage, handoff: mocks.handoff, sendFeedback: vi.fn(), assistantError: () => "Error",
+  createConversation: vi.fn(), getMessage: mocks.getMessage, handoff: mocks.handoff, sendFeedback: mocks.feedback, assistantError: () => "Error", assistantFailure: (_error: unknown, fallback: string) => fallback,
 }));
 import AssistantScreen from "@/features/assistant/screens/AssistantScreen";
 import { getAssistantReplies } from "@/features/assistant/assistantPresentation";
@@ -53,7 +53,17 @@ beforeEach(() => {
   mocks.handoff.mockResolvedValue({ ...current, status: "WaitingForStaff", ticketId: 45 });
   mocks.getMessage.mockResolvedValue({ status: "Failed", errorCode: "AI_UNAVAILABLE" });
 });
-afterEach(async () => { if (tree) await act(async () => tree.unmount()); });
+afterEach(async () => { if (tree) await act(async () => tree.unmount()); vi.useRealTimers(); });
+
+it("does not turn failed resource lookups into empty catalog or promotion messages", async () => {
+  mocks.history.mockResolvedValue({ items: [{ ...message, answer: { ...answer, cards: ["promotions.list", "vehicles.reviews", "vehicles.search"].map(name => ({ name, data: { items: [], lookupStatus: "unavailable", availabilityChecked: false } })) } }], totalCount: 1 });
+  await render();
+  const output = JSON.stringify(tree.toJSON());
+  expect(output).toContain("Tra cứu đang gián đoạn");
+  expect(output).not.toContain("Hiện chưa có mã giảm giá nào");
+  expect(output).not.toContain("Xe này chưa có đánh giá công khai");
+  expect(output).not.toContain("cần ngày nhận và trả để kiểm tra lịch trống");
+});
 
 it("opens a policy source and returns to the conversation", async () => {
   await render(); await press("Chính sách thuê xe");
@@ -81,6 +91,66 @@ it("reuses the same request id after a lost send response", async () => {
   await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
   await press("Thử lại");
   expect(mocks.send.mock.calls[1]).toEqual(mocks.send.mock.calls[0]);
+});
+
+it("retains the draft and request id while schema readiness is temporarily unavailable", async () => {
+  mocks.send.mockRejectedValueOnce({ response: { status: 503, data: { code: "AI_SCHEMA_NOT_READY" } } });
+  await render();
+  await act(async () => tree.root.findAllByType("TextInput" as never)[0]!.props.onChangeText("Xin chào"));
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
+  expect(tree.root.findAllByType("TextInput" as never)[0]!.props.value).toBe("Xin chào");
+  await press("Thử lại");
+  expect(mocks.send.mock.calls[1]).toEqual(mocks.send.mock.calls[0]);
+});
+
+it.each([400, 403, 404])("preserves the draft without offering a blind resend after HTTP %i", async status => {
+  mocks.send.mockRejectedValueOnce({ response: { status, data: { message: "private server detail" } } });
+  await render();
+  await act(async () => tree.root.findAllByType("TextInput" as never)[0]!.props.onChangeText("Xin chào"));
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
+  expect(tree.root.findAllByType("TextInput" as never)[0]!.props.value).toBe("Xin chào");
+  expect(tree.root.findAllByType("Pressable" as never).filter(node => JSON.stringify(node.findAllByType("Text" as never).map(text => text.props.children)).includes("Thử lại"))).toHaveLength(0);
+  expect(JSON.stringify(tree.toJSON())).not.toContain("private server detail");
+});
+
+it("accepts the next composed turn while an earlier accepted turn is queued", async () => {
+  mocks.history.mockResolvedValue({ items: [{ id: "user:q1", role: "user", status: "Queued", content: "Tìm xe", requestId: "q1", createdAt: "2026-10-27T00:00:00Z" }], totalCount: 1 });
+  mocks.send.mockResolvedValue({ id: "q2", status: "Queued", answer: null });
+  await render();
+  await act(async () => tree.root.findAllByType("TextInput" as never)[0]!.props.onChangeText("Xe ở Đà Nẵng"));
+  expect(tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.disabled).toBe(false);
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
+  expect(mocks.send).toHaveBeenCalledWith("c1", "Xe ở Đà Nẵng", expect.any(String));
+});
+
+it("polls each accepted request through repeated Processing responses without realtime", async () => {
+  vi.useFakeTimers();
+  mocks.history.mockResolvedValue({ items: [{ id: "user:q1", role: "user", status: "Queued", content: "Tìm xe", requestId: "q1", createdAt: "2026-10-27T00:00:00Z" }], totalCount: 1 });
+  mocks.getMessage.mockResolvedValueOnce({ id: "q1", status: "Processing" }).mockResolvedValueOnce({ id: "q1", status: "Processing" }).mockResolvedValue({ id: "q1", status: "Completed", projectionStatus: "Pending", answer: { content: "Kết quả đã được ghi nhận", sources: [], cards: [], actions: [] } });
+  await render();
+  for (let index = 0; index < 3; index++) await act(async () => { await vi.advanceTimersByTimeAsync(3001); });
+  expect(mocks.getMessage).toHaveBeenCalledTimes(3);
+  expect(mocks.getMessage).toHaveBeenCalledWith("c1", "q1", expect.anything());
+  expect(JSON.stringify(tree.toJSON())).toContain("Kết quả đã được ghi nhận");
+});
+
+it("retries feedback without resending the last question", async () => {
+  mocks.history.mockResolvedValue({ items: [{ ...message, requestId: "r1" }], totalCount: 1 });
+  mocks.feedback.mockRejectedValueOnce(new Error("offline")).mockResolvedValue(undefined);
+  await render();
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Câu trả lời hữu ích" }).props.onPress());
+  await press("Thử lại");
+  expect(mocks.feedback).toHaveBeenCalledTimes(2);
+  expect(mocks.send).not.toHaveBeenCalled();
+});
+
+it("retries only history after an accepted send whose refresh was interrupted", async () => {
+  await render();
+  mocks.history.mockRejectedValueOnce(new Error("offline"));
+  await act(async () => tree.root.findAllByType("TextInput" as never)[0]!.props.onChangeText("Tin đã nhận"));
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
+  await press("Thử lại");
+  expect(mocks.send).toHaveBeenCalledTimes(1);
 });
 
 it("refreshes conversation status after a realtime completion", async () => {

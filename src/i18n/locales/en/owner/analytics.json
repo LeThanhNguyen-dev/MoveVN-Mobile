@@ -1,0 +1,281 @@
+{
+  "analytics": {
+    "header": {
+      "titleOwner": "Fleet performance analytics",
+      "titleSystem": "Detailed analytics by vehicle",
+      "description": "Track rentals, income, ratings and disputes for each vehicle. Select a vehicle to open its detailed profile."
+    },
+    "actions": {
+      "overview": "Overview report",
+      "addVehicle": "Add vehicle",
+      "bookings": "Rentals",
+      "refresh": "Refresh",
+      "refreshAria": "Refresh analytics",
+      "export": "Export Excel",
+      "apply": "Apply",
+      "retry": "Try again",
+      "clearFilters": "Clear filters"
+    },
+    "errors": {
+      "network": "Unable to reach the server. Please try again.",
+      "action": "The action could not be completed.",
+      "loadFailed": "Could not load analytics.",
+      "invalidExport": "The server did not return a valid Excel file."
+    },
+    "comparison": {
+      "unchanged": "No change vs the previous period",
+      "newInPeriod": "New in this period",
+      "negativeAdjustment": "Adjusted downward in this period",
+      "change": "{{change}}% vs the previous period"
+    },
+    "validation": {
+      "invalidFormat": "Enter valid dates in YYYY-MM-DD format.",
+      "range": "Start date cannot be after the end date, and must be from 2000 onward.",
+      "future": "End date cannot be in the future.",
+      "maxRange": "The statistics period cannot exceed 366 days."
+    },
+    "period": {
+      "title": "Reporting period",
+      "descriptionOwner": "Your fleet · Vietnam time (UTC+7).",
+      "descriptionSystem": "Entire system · Vietnam time (UTC+7).",
+      "fromDate": "From date",
+      "toDate": "To date",
+      "granularity": "Chart grouping",
+      "granularityDay": "By day",
+      "granularityWeek": "By week",
+      "granularityMonth": "By month",
+      "vehicle": "Vehicle",
+      "allVehicles": "Entire fleet",
+      "loading": "Compiling analytics…"
+    },
+    "presets": {
+      "days7": "7 days",
+      "days30": "30 days",
+      "days90": "90 days",
+      "month": "This month",
+      "previousMonth": "Last month"
+    },
+    "scope": {
+      "aria": "Analytics scope",
+      "viewingVehicle": "Viewing vehicle-specific analytics",
+      "viewingAll": "Viewing aggregated analytics",
+      "allVehicles": "Entire fleet",
+      "backToFleet": "Back to entire fleet",
+      "currentPeriod": "Current period",
+      "comparisonPeriod": "Compared with previous period"
+    },
+    "metrics": {
+      "walletIncomeOwner": "Owner income via wallet",
+      "walletIncome": "Income via wallet",
+      "walletIncomeDetail": "Recorded transactions, not profit",
+      "confirmedBookings": "Valid bookings",
+      "newRequests": "{{count}} new requests in the period",
+      "completedTrips": "Completed trips",
+      "completedTripsDetail": "Based on trip completion time",
+      "bookedDays": "Days with bookings",
+      "bookedDaysComparison": "{{booked}} / {{fleet}} fleet days",
+      "bookedDaysDetail": "Each vehicle is counted once per day",
+      "cancellationRate": "Cancellation rate",
+      "cancellationComparison": "{{cancelled}} cancelled · {{rejected}} rejected",
+      "cancellationDetail": "Across requests created in the period",
+      "rating": "Vehicle rating",
+      "noRating": "Not yet rated",
+      "ratingComparison": "{{count}} public reviews in the period",
+      "ratingDetail": "Only reviews from the corresponding renters"
+    },
+    "breakdown": {
+      "completedTripValue": "Completed trip value",
+      "bookingEarnings": "Booking income",
+      "sponsorIncome": "Voucher sponsorship received",
+      "incomeReversals": "Income adjustments"
+    },
+    "disputes": {
+      "title": "Vehicle-related disputes",
+      "description": "Records created in the period; open and resolved reflect the current state of this group.",
+      "created": "Created in period",
+      "open": "Open",
+      "resolved": "Resolved",
+      "lifetime": "Cumulative to period end",
+      "pickVehicle": "Select a vehicle in the filters or the table below to view individual records."
+    },
+    "platformRevenue": {
+      "title": "Recorded platform fees",
+      "detail": "Separate from vehicle owner income"
+    },
+    "ranking": {
+      "topBooked": "Most booked vehicles",
+      "topBookedDescription": "Ranked by valid bookings among requests created in the period.",
+      "topIncome": "Highest income vehicles",
+      "topIncomeDescription": "Ranked by income actually recorded via wallet in the period.",
+      "empty": "No data to rank yet.",
+      "bookingCount": "{{count}} bookings",
+      "hint": "Select a vehicle to view its own analytics."
+    },
+    "vehicles": {
+      "title": "Per-vehicle performance",
+      "description": "{{count}} vehicles · Includes vehicles without bookings.",
+      "sortAria": "Sort vehicles",
+      "sortIncome": "Highest income",
+      "sortBookings": "Most booked",
+      "sortDisputes": "Most disputes",
+      "sortPlatformRevenue": "Highest platform fees",
+      "sortUtilization": "Highest rental occupancy",
+      "empty": "No vehicles on this page or in this period.",
+      "addVehicle": "Add your vehicle"
+    },
+    "insight": {
+      "title": "Insights from the data",
+      "noVehicles": "You have no vehicles in the selected period. Add a vehicle and complete listing approval to start receiving bookings.",
+      "missingBookings": "{{without}}/{{total}} vehicles had no valid bookings created in the period. Review their availability calendar, rental price and listing content.",
+      "allHaveBookings": "All vehicles had valid bookings created in the period. Keep tracking wallet income and cancellation rate to assess each vehicle's performance.",
+      "cancelWarning": "The cancellation rate is 30% or higher across at least 5 requests. Check the reasons for cancellations before changing prices or rental schedules."
+    },
+    "completedWithoutDate": "{{count}} completed trips for the selected vehicle are missing their completion time in legacy data. These trips are not included in the daily analytics.",
+    "definitions": {
+      "title": "How metrics are calculated & notes"
+    },
+    "footer": "Updated {{time}} · Read-only data",
+    "trend": {
+      "title": "Activity trend",
+      "description": "Tap or hover to inspect each period. Tab and arrow keys are supported.",
+      "metricAria": "Chart metric",
+      "allPeriod": "Total for period",
+      "chartAria": "{{metric}} chart",
+      "viewTable": "View data table",
+      "caption": "{{metric}} by period",
+      "period": "Period",
+      "empty": "No {{metric}} in this period.",
+      "metrics": {
+        "walletIncome": "Income via wallet",
+        "confirmedBookings": "Valid bookings",
+        "completedTrips": "Completed trips",
+        "completedTripValue": "Completed trip value"
+      }
+    },
+    "table": {
+      "vehicle": "Vehicle",
+      "confirmedBookings": "Valid bookings",
+      "completed": "Completed",
+      "walletIncome": "Owner income",
+      "platformFee": "Platform fee",
+      "disputes": "Disputes",
+      "rentalCalendar": "Rental days",
+      "rating": "Rating",
+      "actions": "Actions",
+      "requests": "{{count}} requests",
+      "records": "{{count}} records",
+      "open": "{{count}} open",
+      "days": "{{booked}}/{{fleet}} days",
+      "reviews": "{{count}} reviews",
+      "details": "Details →",
+      "mobileRequests": "{{confirmed}}/{{created}} requests",
+      "mobileDisputes": "{{created}} records · {{open}} open",
+      "disputesInPeriod": "Disputes in period",
+      "noRating": "Not yet rated",
+      "viewDetails": "View detailed analytics →"
+    },
+    "details": {
+      "backendRequired": "A backend update is needed to view per-vehicle records.",
+      "disputes": {
+        "title": "Vehicle disputes",
+        "description": "Records created in the selected period. Statuses shown are current; the record count may exceed the number of disputed trips.",
+        "recordsTrips": "{{records}} records · {{trips}} trips",
+        "open": "{{count}} open",
+        "resolved": "{{count}} resolved",
+        "columns": {
+          "record": "Record",
+          "bookingCode": "Booking code",
+          "createdAt": "Created at",
+          "type": "Record type",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "trafficFine": "Traffic fine",
+        "bookingDispute": "Rental trip dispute",
+        "statusResolved": "Resolved",
+        "statusOpen": "Open",
+        "viewRecord": "View record →",
+        "empty": "No dispute records created in the period."
+      },
+      "history": {
+        "title": "Booking history",
+        "description": "Requests created in the period, including cancelled and rejected bookings. Totals are booking value, not owner income.",
+        "columns": {
+          "bookingCode": "Booking code",
+          "createdAt": "Created at",
+          "rentalTime": "Rental time",
+          "status": "Status",
+          "total": "Total"
+        },
+        "empty": "No booking requests created in the period."
+      }
+    },
+    "reportLabels": {
+      "Pending": "Awaiting response",
+      "Approved": "Approved",
+      "DepositPaid": "Deposit paid",
+      "Confirmed": "Confirmed",
+      "InProgress": "In progress",
+      "Completed": "Completed",
+      "Cancelled": "Cancelled",
+      "Rejected": "Rejected",
+      "Car": "Car",
+      "Motorbike": "Motorbike",
+      "Unknown": "Unknown",
+      "Open": "Open",
+      "Resolved": "Resolved",
+      "Closed": "Closed",
+      "Low": "Low",
+      "Normal": "Normal",
+      "High": "High",
+      "Urgent": "Urgent",
+      "Booking": "Booking",
+      "Payment": "Payment",
+      "Vehicle": "Vehicle / Owner",
+      "Account": "Account",
+      "Other": "Other",
+      "AwaitingEvidence": "Awaiting evidence",
+      "UnderReview": "Under review",
+      "Escalated": "Escalated",
+      "AwaitingAcceptance": "Awaiting acceptance",
+      "AwaitingExternalSettlement": "Awaiting external settlement"
+    },
+    "vehicleReportLabels": {
+      "Pending": "Pending",
+      "Approved": "Approved",
+      "Rejected": "Rejected",
+      "Hidden": "Hidden"
+    }
+  },
+  "availabilityAlerts": {
+    "header": {
+      "eyebrow": "Rental schedule tracking",
+      "title": "Availability notifications",
+      "description": "Track the rental windows you want. MoveVN notifies you in the app when the vehicle has an available schedule; you still need to check and book the vehicle."
+    },
+    "refresh": "Refresh",
+    "myRegistrations": "My subscriptions",
+    "loading": "Loading…",
+    "empty": "No subscriptions yet. Open vehicle details and choose “Notify me when the vehicle is available”.",
+    "vietnamTime": "Vietnam time",
+    "cancel": "Stop tracking",
+    "pagination": "Page {{page}} / {{total}}",
+    "prev": "Previous",
+    "next": "Next",
+    "loadFailed": "Could not load the list.",
+    "cancelFailed": "Could not cancel the subscription.",
+    "status": {
+      "Active": "Tracking",
+      "Notified": "Notified",
+      "Cancelled": "Cancelled",
+      "Expired": "Expired",
+      "Booked": "Booked"
+    },
+    "invalidPageOrVehicle": "Invalid page or vehicle ID.",
+    "invalidList": "Could not load a valid tracking list. Please try again.",
+    "invalidVehicleId": "Invalid vehicle ID.",
+    "unconfirmedRegistration": "The server did not confirm the subscription. Please refresh the tracking list.",
+    "invalidRegistrationId": "Invalid subscription ID.",
+    "unconfirmedCancellation": "The server did not confirm the cancellation. Please try again."
+  }
+}

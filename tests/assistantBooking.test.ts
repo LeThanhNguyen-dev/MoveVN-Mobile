@@ -14,12 +14,13 @@ vi.mock("react-native-qrcode-svg", () => ({ default: "QRCode" }));
 vi.mock("@/theme/useTheme", () => ({ useTheme: () => ({ theme: themes.light }) }));
 vi.mock("@/services/apiClient", () => ({ getApiErrorMessage: (_err: unknown, fallback: string) => fallback }));
 vi.mock("@/features/vehicles/components/RentalPeriodSheet", () => ({ default: "RentalPeriodSheet" }));
+vi.mock("@/features/locations/components/AddressAutocomplete", () => ({ default: "AddressAutocomplete" }));
 vi.mock("@/features/assistant/assistantService", () => ({
   getDraft: mocks.get, getConversationState: mocks.state, patchDraft: mocks.patch, prepareDraft: mocks.prepare,
   confirmAction: mocks.confirm, getDraftPaymentLink: mocks.payment, getAssistantPaymentStatus: mocks.status,
 }));
 import BookingFunnel from "@/features/assistant/components/BookingFunnel";
-import { BookingPaymentCard, ConfirmationCard } from "@/features/assistant/components/AssistantBooking";
+import { BookingPaymentCard, ConfirmationCard, QuoteCard } from "@/features/assistant/components/AssistantBooking";
 
 let tree: ReactTestRenderer;
 const quote = { quoteId: "quote", vehicleId: 7, startAt: "2099-01-01T03:00:00Z", endAt: "2099-01-03T03:00:00Z", rental: 1000000, rentalDiscount: 0, promotionDiscount: 0, total: 1000000, deposit: 300000, securityDeposit: 1000000, deliveryFee: null, expiresAt: "2099-01-01" };
@@ -36,6 +37,31 @@ async function press(label: string) { await act(async () => { await button(label
 beforeEach(() => { vi.clearAllMocks(); mocks.get.mockResolvedValue(draft()); mocks.patch.mockImplementation(async (_id, version, patch) => draft({ version: version + 1, slots: { ...draft().slots, ...patch } })); mocks.prepare.mockResolvedValue(draft({ version: 3 })); });
 afterEach(async () => { if (tree) await act(async () => tree.unmount()); });
 
+it("requires selected coordinates and saves delivery and its verified fee in quick booking", async () => {
+  const deliverySlots = { ...draft().slots, pickupMode: "delivery" as const, pickupAddress: "Điểm giao", pickupLatitude: 16.1, pickupLongitude: 108 };
+  mocks.prepare.mockResolvedValue(draft({ slots: deliverySlots, quote: { ...quote, deliveryFee: 61000, deliveryDistanceKm: 11.1, total: 1061000, deposit: 212200 } }));
+  await render(React.createElement(BookingFunnel, { conversationId: "c", vehicles: [{ id: 7, brandName: "Honda" }], revision: 0, onClose: vi.fn() }));
+  await press("Tiếp tục"); await press("Tiếp tục"); await press("Tiếp tục");
+  await press("Giao xe tận nơi");
+  const address = () => tree.root.findAllByType("AddressAutocomplete" as never).find(node => node.props.label === "Địa chỉ giao xe")!;
+  await act(async () => address().props.onChange("Điểm giao"));
+  await press("Tiếp tục");
+  expect(mocks.prepare).not.toHaveBeenCalled();
+  await act(async () => address().props.onSelect({ address: "Điểm giao", latitude: 16.1, longitude: 108 }));
+  await press("Giao xe tận nơi"); // Reselecting the active mode must preserve the place.
+  await press("Tiếp tục");
+  expect(mocks.patch).toHaveBeenLastCalledWith("c", expect.any(Number), expect.objectContaining({ pickupLatitude: 16.1, pickupLongitude: 108, pickupMode: "delivery" }));
+  expect(JSON.stringify(tree.toJSON())).toContain("61.000");
+  expect(JSON.stringify(tree.toJSON())).not.toContain("Nhận xe tại địa chỉ của chủ xe");
+});
+
+it("shows free delivery as verified delivery rather than pickup at the owner", async () => {
+  await render(React.createElement(QuoteCard, { quote: { ...quote, deliveryFee: 0, deliveryDistanceKm: 1.1 }, slots: { pickupMode: "delivery", pickupAddress: "Điểm giao" } }));
+  const output = JSON.stringify(tree.toJSON());
+  expect(output).toContain("Miễn phí");
+  expect(output).not.toContain("Nhận xe tại địa chỉ của chủ xe");
+});
+
 it("requires separate consent before confirming an increased price", async () => {
   mocks.confirm.mockResolvedValue({ status: "PaymentPending", bookingId: 9 });
   await render(React.createElement(ConfirmationCard, { conversationId: "c", proposal: draft({ previousTotal: 900000 }) }));
@@ -48,13 +74,46 @@ it("requires separate consent before confirming an increased price", async () =>
   expect(button("Lấy đường dẫn thanh toán")).toBeDefined();
 });
 
+it("keeps expired or superseded confirmations inert", async () => {
+  await render(React.createElement(ConfirmationCard, { conversationId: "c", proposal: draft({ expiresAt: "2000-01-01T00:00:00Z" }) }));
+  expect(button("Xác nhận đặt xe").props.disabled).toBe(true);
+  await press("Xác nhận đặt xe");
+  expect(mocks.confirm).not.toHaveBeenCalled();
+});
+
 it("keeps cancellation confirmation separate from booking payment", async () => {
   const booked = vi.fn();
+  const view = vi.fn();
   mocks.confirm.mockResolvedValue({ status: "Cancelled", bookingId: 9 });
-  await render(React.createElement(ConfirmationCard, { conversationId: "c", proposal: { kind: "cancel", bookingId: 9, quote: { refundAmount: 100, forfeitedAmount: 0, policyMessage: "Hoàn tiền" }, confirmToken: "cancel", expiresAt: "2099-01-01" }, onBooked: booked }));
+  await render(React.createElement(ConfirmationCard, { conversationId: "c", proposal: { kind: "cancel", bookingId: 9, quote: { refundAmount: 100, forfeitedAmount: 0, policyMessage: "Hoàn tiền" }, confirmToken: "cancel", expiresAt: "2099-01-01" }, onBooked: booked, onViewBooking: view }));
   await press("Xác nhận hủy đơn");
   expect(mocks.confirm).toHaveBeenCalledWith("cancel", false);
   expect(booked).not.toHaveBeenCalled();
+  expect(view).not.toHaveBeenCalled();
+});
+
+it("opens confirmed booking details once, after the server responds", async () => {
+  const view = vi.fn();
+  let finish!: (value: unknown) => void;
+  mocks.confirm.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  await render(React.createElement(ConfirmationCard, { conversationId: "c", proposal: draft(), onViewBooking: view }));
+  const onPress = button("Xác nhận đặt xe").props.onPress;
+  await act(async () => { onPress(); onPress(); });
+  expect(view).not.toHaveBeenCalled();
+  await act(async () => finish({ status: "PaymentPending", bookingId: 9 }));
+  expect(view).toHaveBeenCalledExactlyOnceWith(9);
+  expect(mocks.confirm).toHaveBeenCalledTimes(1);
+});
+
+it("closes quick booking and opens details after confirmation", async () => {
+  const close = vi.fn(), view = vi.fn();
+  mocks.confirm.mockResolvedValue({ status: "PaymentPending", bookingId: 9 });
+  await render(React.createElement(BookingFunnel, { conversationId: "c", vehicles: [{ id: 7, brandName: "Honda" }], revision: 0, onClose: close, onViewBooking: view }));
+  for (let step = 0; step < 4; step++) await press("Tiếp tục");
+  expect(view).not.toHaveBeenCalled();
+  await press("Xác nhận đặt xe");
+  expect(close).toHaveBeenCalledTimes(1);
+  expect(view).toHaveBeenCalledExactlyOnceWith(9);
 });
 
 it("uses the confirmed payment link and renders its QR without requesting another draft payment", async () => {
@@ -97,14 +156,17 @@ it("rejects expired confirmations without showing a created booking or payment",
 });
 
 it("requires renewed consent and uses the new token when confirmation reprices the booking", async () => {
+  const view = vi.fn();
   mocks.confirm.mockResolvedValueOnce({ status: "PriceChanged", draft: draft({ confirmToken: "new-token", previousTotal: 900000 }), message: "Giá đã tăng" })
     .mockResolvedValueOnce({ status: "PaymentPending", bookingId: 9 });
-  await render(React.createElement(ConfirmationCard, { conversationId: "c", proposal: draft() }));
+  await render(React.createElement(ConfirmationCard, { conversationId: "c", proposal: draft(), onViewBooking: view }));
   await press("Xác nhận đặt xe");
+  expect(view).not.toHaveBeenCalled();
   expect(button("Xác nhận đặt xe").props.disabled).toBe(true);
   await act(async () => tree.root.findByProps({ accessibilityRole: "checkbox" }).props.onPress());
   await press("Xác nhận đặt xe");
   expect(mocks.confirm.mock.calls.map(call => call[0])).toEqual(["token", "new-token"]);
+  expect(view).toHaveBeenCalledExactlyOnceWith(9);
 });
 
 it("only sends one confirmation if two taps arrive before React renders busy state", async () => {

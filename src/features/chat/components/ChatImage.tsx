@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, useWindowDimensions, View } from "react-native"
 import AppText from "@/components/AppText";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@/theme/useTheme";
 import { getChatImageData } from "../chatService";
 import type { ChatAttachment } from "../types";
@@ -21,6 +22,7 @@ export default function ChatImage({
   full?: boolean;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { width: screenWidth } = useWindowDimensions();
   const ratio = Number.isFinite(attachment.width) && Number.isFinite(attachment.height)
     && attachment.width > 0 && attachment.height > 0
@@ -47,7 +49,9 @@ export default function ChatImage({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={
-        error ? `Tải lại ảnh ${attachment.name}` : `Xem ảnh ${attachment.name}`
+        error
+          ? t("mobile:chat.image.reload", { name: attachment.name })
+          : t("mobile:chat.image.open", { name: attachment.name })
       }
       onPress={() => {
         if (error) setRetry((value) => value + 1);
@@ -72,7 +76,7 @@ export default function ChatImage({
         />
       ) : error ? (
         <AppText style={{ color: theme.danger, textAlign: "center", padding: 12 }}>
-          Chưa tải được ảnh. Nhấn thử lại.
+          {t("mobile:chat.image.error")}
         </AppText>
       ) : (
         <View>

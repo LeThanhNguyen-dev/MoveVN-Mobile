@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ImageSource } from "expo-image";
 import { ArrowLeft, ChevronDown } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import { getCmsPageBySlug } from "@/features/cms/services/cmsService";
@@ -21,6 +22,7 @@ function formatDate(value?: string | null) {
 
 export default function FaqDetailScreen({ onBack, slug }: { onBack: () => void; slug: string }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [page, setPage] = useState<CmsPageResponse | null | undefined>(undefined);
   const [error, setError] = useState("");
@@ -34,10 +36,10 @@ export default function FaqDetailScreen({ onBack, slug }: { onBack: () => void; 
       // Mirror web FaqDetailPage: only render pages actually typed as FAQ.
       setPage(data && data.contentType === "FAQ" ? data : null);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Không tải được nội dung.");
+      setError(failure instanceof Error ? failure.message : t("mobile:cms.faq.loadError"));
       setPage(null);
     }
-  }, [slug]);
+  }, [slug, t]);
 
   useEffect(() => {
     void load();
@@ -57,11 +59,11 @@ export default function FaqDetailScreen({ onBack, slug }: { onBack: () => void; 
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("mobile:cms.a11y.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
         <AppText display numberOfLines={1} style={styles.topBarTitle}>
-          {page?.title || "Hỏi và trả lời"}
+          {page?.title || t("faq:title")}
         </AppText>
         <View style={styles.topBarSpacer} />
       </View>
@@ -69,23 +71,23 @@ export default function FaqDetailScreen({ onBack, slug }: { onBack: () => void; 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {page === undefined ? (
           <View style={styles.card}>
-            <AppText style={styles.muted}>Đang tải nội dung...</AppText>
+            <AppText style={styles.muted}>{t("mobile:cms.loadingContent")}</AppText>
           </View>
         ) : error ? (
           <View style={styles.card}>
             <AppText style={styles.error}>{error}</AppText>
             <Pressable accessibilityRole="button" onPress={() => { void load(); }} style={styles.retryButton}>
-              <AppText style={styles.retryText}>Thử lại</AppText>
+              <AppText style={styles.retryText}>{t("common:retry")}</AppText>
             </Pressable>
           </View>
         ) : page === null ? (
           <View style={styles.card}>
-            <AppText style={styles.muted}>Không tìm thấy nội dung.</AppText>
+            <AppText style={styles.muted}>{t("common:contentNotFound")}</AppText>
           </View>
         ) : (
           <>
             <CmsHero
-              meta={updatedLabel ? `Cập nhật ${updatedLabel}` : undefined}
+              meta={updatedLabel ? t("support:list.updatedAt", { date: updatedLabel }) : undefined}
               onPress={() => setViewerSource(bannerSource)}
               source={bannerSource}
               title={page.title}
@@ -93,7 +95,7 @@ export default function FaqDetailScreen({ onBack, slug }: { onBack: () => void; 
             {page.description ? <AppText style={styles.description}>{page.description}</AppText> : null}
             {sections.length === 0 ? (
               <View style={styles.card}>
-                <AppText style={styles.muted}>Nội dung đang được cập nhật.</AppText>
+                <AppText style={styles.muted}>{t("common:contentUpdating")}</AppText>
               </View>
             ) : (
               sections.map((section) => (
@@ -125,6 +127,7 @@ function FaqSectionBlock({
   onImagePress: (url: string) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [expandedId, setExpandedId] = useState<string | null>(
     section.kind === "accordion" && section.items.length > 0 ? section.items[0]?.id ?? null : null,
@@ -143,7 +146,7 @@ function FaqSectionBlock({
                 onPress={() => setExpandedId(expanded ? null : item.id)}
                 style={styles.faqRow}
               >
-                <AppText style={styles.faqQuestion}>{item.title || `Câu hỏi ${index + 1}`}</AppText>
+                <AppText style={styles.faqQuestion}>{item.title || t("mobile:cms.faq.questionFallback", { index: index + 1 })}</AppText>
                 <ChevronDown
                   color={theme.muted}
                   size={18}

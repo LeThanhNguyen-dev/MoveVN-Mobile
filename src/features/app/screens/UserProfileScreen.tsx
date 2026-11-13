@@ -1,4 +1,6 @@
+import type { ComponentRef } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as ImagePicker from "expo-image-picker";
 import {
   ArrowLeft,
@@ -28,13 +30,6 @@ import MaskedDocumentValue from "@/features/pin/components/MaskedDocumentValue";
 import type { UploadFileInput } from "@/types/upload";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
-
-const roleLabels: Record<UserRole, string> = {
-  Admin: "Quản trị",
-  Staff: "Nhân viên",
-  Owner: "Chủ xe",
-  Customer: "Khách thuê",
-};
 
 const roleBadgeStyles: Record<UserRole, { backgroundColor: string; color: string }> = {
   Admin: { backgroundColor: "#FFE4E6", color: "#BE123C" },
@@ -74,10 +69,20 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
   const [expandedKey, setExpandedKey] = useState<ExpandedKey>(null);
   const [driverLicense, setDriverLicense] = useState<DriverLicenseStatusResponse | null>(null);
   const [ownerApp, setOwnerApp] = useState<OwnerApplicationDto | null>(null);
-  const sheetScrollRef = useRef<ScrollView>(null);
-  const phoneInputRef = useRef<TextInput>(null);
+  const sheetScrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const phoneInputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const roleLabels = useMemo<Record<UserRole, string>>(
+    () => ({
+      Admin: t("account:roles.Admin"),
+      Staff: t("account:roles.Staff"),
+      Owner: t("account:roles.Owner"),
+      Customer: t("mobile:account.roles.renter"),
+    }),
+    [t],
+  );
 
   useEffect(() => {
     let ignore = false;
@@ -117,7 +122,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
   async function handlePickAvatar() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      setEditError("Cần quyền truy cập thư viện ảnh để đổi ảnh đại diện.");
+      setEditError(t("mobile:account.profile.avatarPermission"));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -139,7 +144,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 
   async function handleSave() {
     if (!fullName.trim()) {
-      setEditError("Vui lòng nhập họ và tên.");
+      setEditError(t("mobile:account.profile.nameRequired"));
       return;
     }
     setIsSaving(true);
@@ -176,17 +181,17 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("users:page.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <AppText display style={styles.topBarTitle}>Thông tin tài khoản</AppText>
+        <AppText display style={styles.topBarTitle}>{t("mobile:account.profile.title")}</AppText>
         <View style={styles.topBarSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.profileCard}>
           <Pressable
-            accessibilityLabel="Chỉnh sửa thông tin"
+            accessibilityLabel={t("mobile:account.profile.edit")}
             accessibilityRole="button"
             onPress={handleOpenSheet}
             style={styles.pencilButton}
@@ -218,14 +223,14 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
         </View>
 
         <View style={styles.infoCard}>
-          <AppText display style={styles.cardTitle}>Thông tin tài khoản</AppText>
+          <AppText display style={styles.cardTitle}>{t("mobile:account.profile.title")}</AppText>
 
           <View style={styles.row}>
             <View style={[styles.rowIcon, styles.rowIconStatic]}>
               <Mail color={theme.brand} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <AppText style={styles.rowLabel}>Email</AppText>
+              <AppText style={styles.rowLabel}>{t("accountProfile:email.label")}</AppText>
               <AppText numberOfLines={1} style={styles.rowValue}>
                 {user.email}
               </AppText>
@@ -239,8 +244,8 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <Phone color={theme.brand} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <AppText style={styles.rowLabel}>Số điện thoại</AppText>
-              <AppText style={styles.rowValue}>{user.phone || "Chưa cập nhật"}</AppText>
+              <AppText style={styles.rowLabel}>{t("accountProfile:phone.label")}</AppText>
+              <AppText style={styles.rowValue}>{user.phone || t("mobile:account.profile.phoneEmpty")}</AppText>
             </View>
           </View>
 
@@ -251,7 +256,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <IdCard color={cccdVerified ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <AppText style={styles.rowLabel}>CCCD</AppText>
+              <AppText style={styles.rowLabel}>{t("account:items.cccd")}</AppText>
               <VerifyBadge verified={cccdVerified} />
             </View>
             <ChevronDown
@@ -266,22 +271,22 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               {ownerApp ? (
                 <>
                   <View style={styles.detailLine}>
-                    <AppText style={styles.detailLabel}>Số CCCD</AppText>
+                    <AppText style={styles.detailLabel}>{t("accountVerification:cccd.idNumber")}</AppText>
                     <MaskedDocumentValue
                       canReveal={cccdVerified}
                       documentType="CCCD"
                       maskedValue={ownerApp.nationalIdNumber ?? null}
-                      revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                      revealDisabledHint={t("mobile:account.profile.documentLocked")}
                     />
                   </View>
-                  <DetailLine label="Họ tên trên CCCD" value={ownerApp.fullName || "-"} />
+                  <DetailLine label={t("mobile:account.profile.cccdName")} value={ownerApp.fullName || "-"} />
                   <DetailLine
-                    label="Trạng thái"
-                    value={cccdVerified ? "Đã xác minh" : driverLicenseStatusLabel[ownerApp.nationalIdRequestStatus ?? ""] ?? "Chưa xác minh"}
+                    label={t("booking:list.statusLabel")}
+                    value={cccdVerified ? t("account:verified") : driverLicenseStatusLabel[ownerApp.nationalIdRequestStatus ?? ""] ?? t("account:unverified")}
                   />
                 </>
               ) : (
-                <AppText style={styles.detailEmpty}>Bạn chưa xác minh CCCD.</AppText>
+                <AppText style={styles.detailEmpty}>{t("mobile:account.profile.cccdNotVerified")}</AppText>
               )}
             </View>
           ) : null}
@@ -293,7 +298,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <FileBadge color={gplxVerified ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <AppText style={styles.rowLabel}>GPLX</AppText>
+              <AppText style={styles.rowLabel}>{t("account:items.license")}</AppText>
               <VerifyBadge verified={gplxVerified} />
             </View>
             <ChevronDown
@@ -307,27 +312,27 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
             <View style={styles.detailBox}>
               {driverLicense ? (
                 <>
-                  <DetailLine label="Hạng GPLX" value={driverLicense.licenseClass || "-"} />
+                  <DetailLine label={t("accountVerification:driverLicense.statClass")} value={driverLicense.licenseClass || "-"} />
                   <View style={styles.detailLine}>
-                    <AppText style={styles.detailLabel}>Số GPLX</AppText>
+                    <AppText style={styles.detailLabel}>{t("accountVerification:driverLicense.number")}</AppText>
                     <MaskedDocumentValue
                       canReveal={gplxVerified}
                       documentType="GPLX"
                       maskedValue={driverLicense.driverLicenseNumber ?? null}
-                      revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                      revealDisabledHint={t("mobile:account.profile.documentLocked")}
                     />
                   </View>
-                  <DetailLine label="Xác minh lúc" value={formatDate(driverLicense.verifiedAt)} />
+                  <DetailLine label={t("accountVerification:driverLicense.verifiedAt")} value={formatDate(driverLicense.verifiedAt)} />
                   <DetailLine
-                    label="Loại xe"
+                    label={t("vehicleDetail:info.type")}
                     value={driverLicense.verifiedVehicleTypes.length > 0 ? driverLicense.verifiedVehicleTypes.join(", ") : "-"}
                   />
                   {!gplxVerified && driverLicense.status ? (
-                    <DetailLine label="Trạng thái" value={driverLicenseStatusLabel[driverLicense.status] ?? driverLicense.status} />
+                    <DetailLine label={t("booking:list.statusLabel")} value={driverLicenseStatusLabel[driverLicense.status] ?? driverLicense.status} />
                   ) : null}
                 </>
               ) : (
-                <AppText style={styles.detailEmpty}>Chưa có thông tin GPLX.</AppText>
+                <AppText style={styles.detailEmpty}>{t("mobile:account.profile.licenseEmpty")}</AppText>
               )}
             </View>
           ) : null}
@@ -339,7 +344,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               <Landmark color={bankCompleted ? theme.success : theme.faint} size={18} strokeWidth={2.3} />
             </View>
             <View style={styles.rowBody}>
-              <AppText style={styles.rowLabel}>Ngân hàng</AppText>
+              <AppText style={styles.rowLabel}>{t("account:items.bank")}</AppText>
               <VerifyBadge completed={bankCompleted} verified={bankCompleted} />
             </View>
             <ChevronDown
@@ -353,12 +358,12 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
             <View style={styles.detailBox}>
               {ownerApp && bankCompleted ? (
                 <>
-                  <DetailLine label="Ngân hàng" value={ownerApp.bankName || "-"} />
-                  <DetailLine label="Số tài khoản" value={maskAccountNumber(ownerApp.bankAccountNumber)} />
-                  <DetailLine label="Chủ tài khoản" value={ownerApp.bankAccountHolderName || "-"} />
+                  <DetailLine label={t("account:items.bank")} value={ownerApp.bankName || "-"} />
+                  <DetailLine label={t("accountVerification:bank.stepAccountLabel")} value={maskAccountNumber(ownerApp.bankAccountNumber)} />
+                  <DetailLine label={t("accountVerification:bank.stepHolderLabel")} value={ownerApp.bankAccountHolderName || "-"} />
                 </>
               ) : (
-                <AppText style={styles.detailEmpty}>Chưa cập nhật thông tin ngân hàng.</AppText>
+                <AppText style={styles.detailEmpty}>{t("mobile:account.profile.bankEmpty")}</AppText>
               )}
             </View>
           ) : null}
@@ -380,7 +385,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
         >
           <View style={styles.sheetOverlay}>
             <Pressable
-              accessibilityLabel="Đóng"
+              accessibilityLabel={t("common:closeAction")}
               accessibilityRole="button"
               disabled={isSaving}
               onPress={handleCloseSheet}
@@ -389,7 +394,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
             <View style={styles.sheet}>
               <View style={styles.sheetHeader}>
                 <Pressable
-                  accessibilityLabel="Đóng chỉnh sửa"
+                  accessibilityLabel={t("mobile:account.profile.closeSheet")}
                   accessibilityRole="button"
                   disabled={isSaving}
                   onPress={handleCloseSheet}
@@ -397,7 +402,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                 >
                   <X color={theme.text} size={22} strokeWidth={2.3} />
                 </Pressable>
-                <AppText display style={styles.sheetTitle}>Chỉnh sửa thông tin</AppText>
+                <AppText display style={styles.sheetTitle}>{t("mobile:account.profile.edit")}</AppText>
                 <View style={styles.sheetHeaderSpacer} />
               </View>
 
@@ -415,7 +420,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               >
               <View style={styles.sheetAvatarWrap}>
                 <Pressable
-                  accessibilityLabel="Đổi ảnh đại diện"
+                  accessibilityLabel={t("mobile:account.profile.changeAvatar")}
                   accessibilityRole="button"
                   disabled={isSaving}
                   onPress={() => {
@@ -435,11 +440,11 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               </View>
 
               <View style={styles.field}>
-                <AppText style={styles.fieldLabel}>Họ và tên</AppText>
+                <AppText style={styles.fieldLabel}>{t("accountProfile:fullName.label")}</AppText>
                 <TextInput
                   autoCapitalize="words"
                   editable={!isSaving}
-                  placeholder="Nhập họ và tên"
+                  placeholder={t("accountProfile:fullName.placeholder")}
                   placeholderTextColor={theme.placeholder}
                   style={styles.fieldInput}
                   value={fullName}
@@ -451,12 +456,12 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               </View>
 
               <View style={styles.field}>
-                <AppText style={styles.fieldLabel}>Số điện thoại</AppText>
+                <AppText style={styles.fieldLabel}>{t("accountProfile:phone.label")}</AppText>
                 <TextInput
                   ref={phoneInputRef}
                   editable={!isSaving}
                   keyboardType="phone-pad"
-                  placeholder="Nhập số điện thoại"
+                  placeholder={t("accountProfile:phone.placeholder")}
                   placeholderTextColor={theme.placeholder}
                   style={styles.fieldInput}
                   value={phone}
@@ -466,7 +471,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
               </View>
 
               <View style={styles.field}>
-                <AppText style={styles.fieldLabel}>Email</AppText>
+                <AppText style={styles.fieldLabel}>{t("accountProfile:email.label")}</AppText>
                 <AppText style={styles.fieldReadonly}>{user.email}</AppText>
               </View>
 
@@ -480,7 +485,7 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
                 }}
                 style={[styles.sheetSaveButton, isSaving ? styles.saveButtonDisabled : null]}
               >
-                <AppText style={styles.saveText}>{isSaving ? "Đang lưu..." : "Lưu thay đổi"}</AppText>
+                <AppText style={styles.saveText}>{isSaving ? t("accountProfile:saving") : t("accountProfile:save")}</AppText>
               </Pressable>
             </ScrollView>
             </View>
@@ -493,17 +498,18 @@ export default function UserProfileScreen({ onBack, user }: { onBack: () => void
 
 function VerifyBadge({ completed, verified }: { completed?: boolean; verified: boolean }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   if (verified) {
     return (
       <View style={[styles.badge, styles.badgeVerified]}>
-        <AppText style={[styles.badgeText, styles.badgeTextVerified]}>{completed ? "Đã hoàn thành" : "Đã xác minh"}</AppText>
+        <AppText style={[styles.badgeText, styles.badgeTextVerified]}>{completed ? t("account:customerHome.completion.completedLabel") : t("account:verified")}</AppText>
       </View>
     );
   }
   return (
     <View style={[styles.badge, styles.badgeUnverified]}>
-      <AppText style={[styles.badgeText, styles.badgeTextUnverified]}>Chưa xác minh</AppText>
+      <AppText style={[styles.badgeText, styles.badgeTextUnverified]}>{t("account:unverified")}</AppText>
     </View>
   );
 }

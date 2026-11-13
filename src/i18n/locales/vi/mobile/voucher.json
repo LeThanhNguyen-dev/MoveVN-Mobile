@@ -1,0 +1,53 @@
+{
+  "voucher": {
+    "nav": {
+      "promotions": "Khuyến mãi",
+      "hunt": "Săn mã"
+    },
+    "card": {
+      "maxDiscount": "Tối đa {{amount}}",
+      "offerFallback": "Ưu đãi MoveVN",
+      "copy": "Copy",
+      "copied": "Đã copy",
+      "detailAria": "Xem chi tiết"
+    },
+    "detail": {
+      "eyebrow": "CHI TIẾT ƯU ĐÃI",
+      "fallbackTitle": "Chi tiết khuyến mãi",
+      "closeAria": "Đóng chi tiết khuyến mãi",
+      "fallbackDescription": "Ưu đãi MoveVN đang diễn ra.",
+      "applicableTo": "Áp dụng cho {{vehicle}}.",
+      "allVehicles": "Tất cả xe",
+      "allVehiclesLower": "tất cả xe",
+      "codeLabel": "MÃ ƯU ĐÃI",
+      "copyCodeAria": "Sao chép mã ưu đãi",
+      "copy": "Sao chép",
+      "copied": "Đã sao chép",
+      "usedPercent": "Đã dùng {{percent}}%",
+      "usageCount": "{{used}}/{{maxUsage}} lượt",
+      "validityLabel": "Thời hạn",
+      "untilDate": "Đến {{date}}",
+      "fromDate": "Từ {{date}}",
+      "unlimited": "Không giới hạn",
+      "vehicleFieldLabel": "Phương tiện",
+      "conditionsTitle": "ĐIỀU KIỆN ÁP DỤNG",
+      "conditionDiscount": "{{discount}} trên mỗi chuyến đi hợp lệ.",
+      "conditionDiscountMax": "{{discount}} trên mỗi chuyến đi hợp lệ, tối đa {{maxDiscountAmount}}.",
+      "conditionMinOrder": "Chỉ áp dụng cho đơn chuyến đi có giá trị tối thiểu {{minOrderAmount}}.",
+      "conditionNoMinOrder": "Không yêu cầu giá trị đơn chuyến đi tối thiểu.",
+      "conditionVehicle": "Áp dụng cho {{vehicle}} của MoveVN.",
+      "conditionUsageLimit": "Số lượt phát hành giới hạn {{maxUsage}} lượt, hiện đã dùng {{usage}} lượt.",
+      "conditionOncePerAccount": "Mỗi tài khoản chỉ được dùng tối đa 1 lần cho mỗi mã ưu đãi.",
+      "conditionNoStacking": "Không áp dụng đồng thời với chương trình ưu đãi khác và không quy đổi được thành tiền mặt.",
+      "openingClaim": "Đang mở săn voucher... ✓"
+    },
+    "hunt": {
+      "expiresIn": "Hết hạn sau {{days}} ngày",
+      "noOthers": "Hiện không có voucher nào khác để nhận."
+    },
+    "wallet": {
+      "bookNowTitle": "Đặt xe ngay",
+      "bookNowMessage": "Mở tab Khám phá để chọn xe và dùng voucher khi đặt."
+    }
+  }
+}

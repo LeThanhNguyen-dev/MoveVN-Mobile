@@ -1,0 +1,33 @@
+{
+  "surcharge": {
+    "title": "Phụ phí có thể phát sinh",
+    "inactive": "Tắt",
+    "unit": {
+      "km": "/km",
+      "hour": "/giờ",
+      "day": "/ngày"
+    },
+    "excessMileageBooking": "Phụ phí phát sinh nếu di chuyển quá {{included}} km trong toàn bộ chuyến thuê.",
+    "excessMileageDay": "Phụ phí phát sinh nếu di chuyển quá {{included}} km khi thuê xe 1 ngày.",
+    "maxSuffix": " Tối đa {{amount}}.",
+    "lateBase": "Phụ phí phát sinh nếu hoàn trả xe trễ giờ",
+    "lateGrace": ", miễn trễ {{hours}} giờ đầu",
+    "lateThreshold": ". Trường hợp trễ quá {{hours}} giờ phụ phí thêm 1 ngày",
+    "lateDailyRate": " ({{price}}/ngày)",
+    "defaultDescription": "Phụ phí có thể phát sinh theo tình trạng xe khi hoàn trả.",
+    "feeType": {
+      "excessMileage": "Phí vượt giới hạn",
+      "lateReturn": "Phí quá giờ",
+      "cleaning": "Phí vệ sinh",
+      "deodorization": "Phí khử mùi",
+      "custom": "Phí khác"
+    },
+    "feeTypeAlt": {
+      "excessMileage": "Phí vượt km"
+    },
+    "feeTypeDescription": {
+      "cleaning": "Áp dụng khi xe hoàn trả không đảm bảo vệ sinh.",
+      "deodorization": "Áp dụng khi xe có mùi thuốc lá hoặc thực phẩm nặng mùi."
+    }
+  }
+}

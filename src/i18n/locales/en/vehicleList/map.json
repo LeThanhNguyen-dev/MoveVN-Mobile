@@ -1,0 +1,20 @@
+{
+  "map": {
+    "perDay": "{{price}}/day",
+    "clusterCount": "{{total}} vehicles",
+    "vehiclesAtLocation": "{{total}} vehicles at this location",
+    "totalRental": "Total rental: {{amount}}",
+    "distanceFromPickup": "{{distance}} km from your pick-up point",
+    "mapTitle": "Vehicle map",
+    "mapCount": "{{located}} vehicles on map / {{total}} matching",
+    "loadError": "Couldn't load vehicles on the map. Try adjusting the filters.",
+    "choosePickupForRadius": "Choose a pick-up address in the filters to see the search radius.",
+    "pickupPoint": "Your selected pick-up point",
+    "listTitle": "Vehicles on the map",
+    "listHint": "Select a vehicle to see its location on the map",
+    "viewLocationAria": "View {{title}} on the map",
+    "viewDetails": "View details",
+    "empty": "No matching vehicles have a location on the map.",
+    "limitNotice": "Showing the first {{max}} vehicles. Narrow your filters to see more."
+  }
+}

@@ -1,5 +1,6 @@
 import { useMemo, useRef } from "react";
 import { Animated, Dimensions, Modal, PanResponder, Pressable, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Bot, X } from "lucide-react-native";
 
@@ -47,6 +48,7 @@ export default function AssistantFab({
   onBookingConfirmed?: (bookingId: number) => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const chatOpen = useAssistantUi((state) => state.chatOpen);
   const setChatOpen = useAssistantUi((state) => state.setChatOpen);
@@ -94,7 +96,7 @@ export default function AssistantFab({
           {...responder.panHandlers}
         >
           <Pressable
-            accessibilityLabel="Mở trợ lý MoveVN"
+            accessibilityLabel={t("mobile:assistant.fab.open")}
             accessibilityRole="button"
             onPress={() => setChatOpen(true)}
             style={styles.fab}
@@ -102,7 +104,7 @@ export default function AssistantFab({
             <Bot color="#fff" size={26} />
           </Pressable>
           <Pressable
-            accessibilityLabel="Ẩn trợ lý MoveVN"
+            accessibilityLabel={t("mobile:assistant.fab.hide")}
             accessibilityRole="button"
             onPress={() => setFabHidden(true)}
             style={styles.dismiss}
@@ -124,7 +126,7 @@ export default function AssistantFab({
           <View style={styles.modal}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Đóng trợ lý MoveVN"
+              accessibilityLabel={t("mobile:assistant.fab.close")}
               onPress={() => setChatOpen(false)}
               style={StyleSheet.absoluteFill}
             />

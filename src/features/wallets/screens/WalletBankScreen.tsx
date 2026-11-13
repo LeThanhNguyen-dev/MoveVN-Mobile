@@ -1,3 +1,4 @@
+import type { ComponentRef } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Clipboard from "expo-clipboard";
 import {
@@ -11,6 +12,7 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   BadgeCheck,
@@ -35,15 +37,16 @@ const RESEND_COUNTDOWN_SECONDS = 60;
 export default function WalletBankScreen({ state }: { state: WalletState }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [editing, setEditing] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
   const [bankListOpen, setBankListOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
-  const scrollRef = useRef<ScrollView | null>(null);
-  const accountRef = useRef<TextInput | null>(null);
-  const holderRef = useRef<TextInput | null>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView> | null>(null);
+  const accountRef = useRef<ComponentRef<typeof TextInput> | null>(null);
+  const holderRef = useRef<ComponentRef<typeof TextInput> | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
@@ -150,17 +153,19 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
               </View>
               <View style={styles.verifiedChip}>
                 <BadgeCheck color={theme.success} size={14} />
-                <AppText style={styles.verifiedText}>Đã xác thực</AppText>
+                <AppText style={styles.verifiedText}>{t("mobile:wallet.bank.verified")}</AppText>
               </View>
             </View>
             <View style={styles.accountBox}>
               <View style={styles.flexOne}>
-                <AppText style={styles.accountLabel}>Số tài khoản</AppText>
+                <AppText style={styles.accountLabel}>
+                  {t("accountWallet:bankModal.accountNumber")}
+                </AppText>
                 <AppText style={styles.accountNumber}>{bank.bankAccountNumber}</AppText>
               </View>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Sao chép số tài khoản"
+                accessibilityLabel={t("mobile:wallet.a11y.copyAccountNumber")}
                 onPress={() => void copyAccountNumber()}
                 style={styles.copyButton}
               >
@@ -171,33 +176,37 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
                 )}
               </Pressable>
             </View>
-            {copied ? <AppText style={styles.copiedHint}>Đã sao chép số tài khoản.</AppText> : null}
+            {copied ? <AppText style={styles.copiedHint}>{t("mobile:wallet.bank.copied")}</AppText> : null}
             <Pressable onPress={startEdit} style={styles.secondaryButton}>
               <Pencil color={theme.brand} size={15} strokeWidth={2.3} />
-              <AppText style={styles.secondaryText}>Đổi tài khoản khác</AppText>
+              <AppText style={styles.secondaryText}>{t("mobile:wallet.bank.changeAccount")}</AppText>
             </Pressable>
           </View>
-          <AppText style={styles.hint}>
-            Đổi tài khoản cần xác thực lại OTP qua email để bảo vệ tiền rút của bạn.
-          </AppText>
+          <AppText style={styles.hint}>{t("mobile:wallet.bank.changeHint")}</AppText>
         </>
       ) : (
         <>
           <View style={styles.card}>
             <View style={styles.headRow}>
               <Landmark color={theme.brand} size={20} />
-              <AppText display style={styles.cardTitle}>Tài khoản nhận tiền</AppText>
+              <AppText display style={styles.cardTitle}>
+                {t("accountVerification:bank.panelTitle")}
+              </AppText>
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={bankListOpen ? "Đóng danh sách ngân hàng" : "Mở danh sách ngân hàng"}
+              accessibilityLabel={bankListOpen
+                ? t("mobile:wallet.a11y.closeBankList")
+                : t("mobile:wallet.a11y.openBankList")}
               onPress={() => setBankListOpen((v) => !v)}
               style={[styles.dropdownField, bankListOpen && styles.dropdownFieldOpen]}
             >
               {bankName ? (
                 <AppText style={styles.dropdownValue}>{bankName}</AppText>
               ) : (
-                <AppText style={styles.dropdownPlaceholder}>Chọn ngân hàng nhận tiền</AppText>
+                <AppText style={styles.dropdownPlaceholder}>
+                  {t("mobile:wallet.bank.selectBank")}
+                </AppText>
               )}
                 {bankListOpen ? (
                   <ChevronUp color={theme.brand} size={19} />
@@ -212,7 +221,7 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
                     <TextInput
                       value={bankSearch}
                       onChangeText={setBankSearch}
-                      placeholder="Tìm Vietcombank, BIDV, MB..."
+                      placeholder={t("mobile:wallet.bank.searchPlaceholder")}
                       placeholderTextColor={theme.placeholder}
                       style={styles.searchInput}
                       returnKeyType="search"
@@ -238,19 +247,21 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
                       </Pressable>
                     ))}
                     {filteredBanks.length === 0 && (
-                      <AppText style={styles.muted}>Không tìm thấy ngân hàng phù hợp.</AppText>
+                      <AppText style={styles.muted}>{t("mobile:wallet.bank.noBank")}</AppText>
                     )}
                   </ScrollView>
                 </>
               ) : null}
               <View style={styles.field}>
-                <AppText style={styles.fieldLabel}>Số tài khoản</AppText>
+                <AppText style={styles.fieldLabel}>
+                  {t("accountWallet:bankModal.accountNumber")}
+                </AppText>
                 <TextInput
                   ref={accountRef}
                   value={accountNumber}
                   onChangeText={(v) => setAccountNumber(v.replace(/[^0-9]/g, ""))}
                   onFocus={scrollToEndSoon}
-                  placeholder="VD: 0123456789"
+                  placeholder={t("mobile:wallet.bank.accountPlaceholder")}
                   placeholderTextColor={theme.placeholder}
                   keyboardType="number-pad"
                   maxLength={19}
@@ -259,17 +270,19 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
                   onSubmitEditing={() => holderRef.current?.focus()}
                   style={styles.input}
                 />
-                <AppText style={styles.fieldHint}>Từ 6–19 chữ số, không dấu cách.</AppText>
+                <AppText style={styles.fieldHint}>{t("mobile:wallet.bank.accountHint")}</AppText>
               </View>
 
               <View style={styles.field}>
-                <AppText style={styles.fieldLabel}>Chủ tài khoản</AppText>
+                <AppText style={styles.fieldLabel}>
+                  {t("accountVerification:bank.form.holder")}
+                </AppText>
                 <TextInput
                   ref={holderRef}
                   value={holderName}
                   onChangeText={setHolderName}
                   onFocus={scrollToEndSoon}
-                  placeholder="NGUYEN VAN A (viết hoa)"
+                  placeholder={t("mobile:wallet.bank.holderPlaceholder")}
                   placeholderTextColor={theme.placeholder}
                   autoCapitalize="characters"
                   autoCorrect={false}
@@ -279,7 +292,7 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
                   }}
                   style={styles.input}
                 />
-                <AppText style={styles.fieldHint}>Nhập đúng tên in trên thẻ/tài khoản.</AppText>
+                <AppText style={styles.fieldHint}>{t("mobile:wallet.bank.holderHint")}</AppText>
               </View>
 
               <Pressable
@@ -290,12 +303,14 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
                 {busy === "bankOtp" ? (
                   <ActivityIndicator color={theme.onBrand} />
                 ) : (
-                  <AppText style={styles.primaryText}>Gửi mã OTP</AppText>
+                  <AppText style={styles.primaryText}>
+                    {t("accountVerification:bank.otp.send")}
+                  </AppText>
                 )}
               </Pressable>
               {bank?.bankAccountNumber ? (
                 <Pressable onPress={cancelEdit} style={styles.ghostButton}>
-                  <AppText style={styles.ghostText}>Hủy thay đổi</AppText>
+                  <AppText style={styles.ghostText}>{t("mobile:wallet.bank.cancelChanges")}</AppText>
                 </Pressable>
               ) : null}
             </View>
@@ -304,19 +319,19 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
             <View style={styles.card}>
               <View style={styles.headRow}>
                 <ShieldCheck color={theme.brand} size={20} />
-                <AppText display style={styles.cardTitle}>Xác thực OTP</AppText>
+                <AppText display style={styles.cardTitle}>{t("mobile:wallet.bank.otpTitle")}</AppText>
               </View>
               <AppText style={styles.muted}>
-                Mã gồm 6 chữ số đã gửi đến email của bạn cho tài khoản{" "}
+                {t("mobile:wallet.bank.otpDescPrefix")}{" "}
                 <AppText style={styles.bold}>
                   {bankName} · ****{stkDigits.slice(-4)}
                 </AppText>
-                .
+                {t("mobile:wallet.bank.otpDescSuffix")}
               </AppText>
               <PinDigitInputs
                 autoFocus
                 disabled={busy !== null}
-                label="Mã OTP"
+                label={t("common:otp.label")}
                 value={bankOtp}
                 onChange={setBankOtp}
                 onComplete={() => void save()}
@@ -329,16 +344,18 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
                 {busy === "bankSave" ? (
                   <ActivityIndicator color={theme.onBrand} />
                 ) : (
-                  <AppText style={styles.primaryText}>Xác nhận</AppText>
+                  <AppText style={styles.primaryText}>{t("common:confirm")}</AppText>
                 )}
               </Pressable>
               <View style={styles.otpFooter}>
                 <Pressable onPress={() => setBankStep("info")} style={styles.linkButton}>
-                  <AppText style={styles.linkText}>Sửa lại thông tin</AppText>
+                  <AppText style={styles.linkText}>{t("mobile:wallet.bank.editInfo")}</AppText>
                 </Pressable>
                 <Pressable onPress={() => void resendOtp()} disabled={resendSeconds > 0 || busy !== null}>
                   <AppText style={[styles.linkText, (resendSeconds > 0 || busy !== null) && styles.linkDisabled]}>
-                    {resendSeconds > 0 ? `Gửi lại sau ${resendSeconds}s` : "Gửi lại mã"}
+                    {resendSeconds > 0
+                      ? t("mobile:wallet.bank.resendIn", { seconds: resendSeconds })
+                      : t("mobile:wallet.bank.resend")}
                   </AppText>
                 </Pressable>
               </View>

@@ -1,0 +1,92 @@
+{
+  "loader": "Loading account information...",
+  "roles": {
+    "Admin": "Administrator",
+    "Staff": "Staff",
+    "Owner": "Vehicle owner",
+    "Customer": "Renter"
+  },
+  "verified": "Verified",
+  "unverified": "Not verified",
+  "viewProfile": "View profile",
+  "identityTitle": "Identity verification",
+  "details": "Details",
+  "items": {
+    "email": "Email",
+    "cccd": "ID card",
+    "license": "Driver's license",
+    "bank": "Bank"
+  },
+  "quickLinks": {
+    "wallet": {
+      "title": "My wallet",
+      "description": "Manage your balance and transactions"
+    },
+    "password": {
+      "title": "Change password",
+      "description": "Update your account password"
+    },
+    "pin": {
+      "title": "Change PIN",
+      "description": "Update your security PIN",
+      "notSet": "Not set up"
+    },
+    "sessions": {
+      "title": "Login sessions",
+      "description": "Manage signed-in devices"
+    },
+    "cccd": {
+      "title": "ID verification",
+      "description": "Citizen identity card"
+    },
+    "bank": {
+      "title": "Bank information",
+      "description": "Manage your payout account"
+    }
+  },
+  "customerHome": {
+    "title": "Customer area",
+    "description": "Track your rentals, costs and the status of every trip on one compact screen so you always know where your next trip stands.",
+    "homeButton": "Home",
+    "findVehicle": "Find a vehicle",
+    "stats": {
+      "totalSpend": "Total spend",
+      "totalSpendHint": "Service costs recorded",
+      "tripsBooked": "Trips booked",
+      "tripsCount": "{{count}} trips",
+      "completedTrips": "{{count}} trips completed",
+      "active": "Active",
+      "activeHint": "Confirmed, deposit paid or on the road",
+      "pending": "Awaiting response",
+      "requestCount": "{{count}} requests",
+      "pendingHint": "Waiting for the vehicle owner to confirm"
+    },
+    "spending": {
+      "title": "Spending flow",
+      "description": "Total cost per month, based on bookings that have a transaction value.",
+      "last6Months": "Last 6 months",
+      "chartAria": "Monthly spending chart"
+    },
+    "completion": {
+      "title": "Completion rate",
+      "description": "Completion status of your trips.",
+      "rateLabel": "Completed",
+      "completedLabel": "Completed",
+      "remainingLabel": "Remaining",
+      "noData": "No trip data yet."
+    },
+    "recent": {
+      "title": "Recent bookings",
+      "description": "Quickly track your latest bookings and open details when you need to act.",
+      "viewAll": "View all",
+      "empty": "No trips have been booked yet.",
+      "colCode": "Booking code",
+      "colStart": "Pickup date",
+      "colEnd": "Return date",
+      "colTotal": "Total cost",
+      "colStatus": "Status",
+      "colActions": "Actions",
+      "details": "Details"
+    }
+  }
+}

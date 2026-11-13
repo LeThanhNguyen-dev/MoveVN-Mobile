@@ -1,0 +1,94 @@
+{
+  "calendar": {
+    "header": {
+      "eyebrow": "Điều phối cho thuê",
+      "title": "Lịch đội xe",
+      "description": "Xem lịch thuê và ngày chặn của toàn bộ xe; theo dõi các chuyến sắp giao và nhận lại."
+    },
+    "actions": {
+      "manageBookings": "Quản lý đơn thuê",
+      "refresh": "Làm mới",
+      "retry": "Thử lại"
+    },
+    "errors": {
+      "load": "Không thể tải lịch đội xe. Vui lòng thử lại.",
+      "fetch": "Chưa tải được lịch đội xe.",
+      "invalidDates": "Chọn khoảng ngày hợp lệ, tối đa 62 ngày, từ năm 2000 đến 2100.",
+      "loading": "Đang tải lịch đội xe"
+    },
+    "filter": {
+      "aria": "Bộ lọc lịch đội xe",
+      "fromDate": "Từ ngày",
+      "toDate": "Đến ngày",
+      "search": "Tìm xe",
+      "searchPlaceholder": "Biển số, hãng hoặc tên xe",
+      "vehicleType": "Loại xe",
+      "all": "Tất cả",
+      "car": "Ô tô",
+      "motorbike": "Xe máy",
+      "apply": "Áp dụng"
+    },
+    "period": {
+      "week": "Tuần",
+      "month": "Tháng",
+      "previous": "Kỳ trước",
+      "next": "Kỳ sau",
+      "today": "Hôm nay"
+    },
+    "summary": {
+      "available": "Xe đang trống",
+      "rented": "Đang thuê đúng giờ",
+      "pickups": "Giao trong 24 giờ",
+      "returns": "Nhận lại trong 24 giờ",
+      "overdue": "Xe quá giờ trả",
+      "blocked": "Xe đang bị chặn",
+      "filterGroup": "Lọc nhóm xe",
+      "statusFilter": "Hiện trạng xe",
+      "vehicles": "{{count}} xe theo bộ lọc tên/loại · Hiện trạng lúc {{time}} · Giờ Việt Nam UTC+7"
+    },
+    "grid": {
+      "heading": "Lịch {{from}} – {{to}}",
+      "description": "Chạm vào ô ngày để xem giờ giao/trả và mở booking. Lịch thuê dùng giờ trả dự kiến khi chuyến chưa kết thúc; xe chỉ được coi là đã bàn giao khi có trạng thái nhận xe.",
+      "emptyTitle": "Không có xe phù hợp",
+      "emptyDescription": "Thử thay đổi bộ lọc hoặc thêm xe vào đội xe của bạn.",
+      "addVehicle": "Thêm xe →",
+      "regionAria": "Bảng lịch đội xe, cuộn ngang để xem thêm ngày",
+      "vehicleColumn": "Phương tiện",
+      "cellAria": "{{plate}}, {{day}}, {{count}} mục lịch",
+      "blockedByOwner": "Chủ xe chặn",
+      "moreItems": "+{{count}} mục khác",
+      "noEvents": "Không có lịch"
+    },
+    "states": {
+      "Available": "Đang trống",
+      "Rented": "Đã bàn giao",
+      "Reserved": "Đến giờ giao",
+      "Pending": "Chờ duyệt",
+      "Preparing": "Đang chuẩn bị",
+      "Blocked": "Đã chặn",
+      "Unavailable": "Chưa mở cho thuê",
+      "Overdue": "Quá giờ trả"
+    },
+    "events": {
+      "Pending": "Chờ duyệt",
+      "Booking": "Lịch thuê",
+      "Finished": "Đã kết thúc chuyến",
+      "Preparation": "Chuẩn bị xe",
+      "Blocked": "Ngày chặn",
+      "Overdue": "Quá giờ trả"
+    },
+    "detail": {
+      "aria": "Chi tiết ô lịch",
+      "close": "Đóng chi tiết lịch",
+      "empty": "Không có booking hoặc ngày chặn giao với ngày này. Khả năng nhận đơn vẫn được kiểm tra lại khi đặt xe.",
+      "endTimeNote": "Giờ kết thúc không chiếm thêm ngày nếu đúng 00:00.",
+      "status": "Trạng thái: {{status}}",
+      "estimatedReturn": " · Giờ trả dự kiến",
+      "noActualReturn": " · Chưa có giờ trả thực tế, dùng lịch hẹn",
+      "openBooking": "Mở booking {{code}}",
+      "manageBlockedDates": "Xem xe và quản lý ngày chặn"
+    },
+    "footer": "{{minutes}} phút chuẩn bị trước và sau lịch thuê. “Quá giờ trả” là cảnh báo điều phối, không tự kết luận vi phạm hoặc thu phụ phí. Thẻ tổng quan là hiện trạng lúc tải, độc lập với khoảng ngày trên lịch. Bấm Làm mới để lấy dữ liệu mới nhất.",
+    "backToOverview": "Về tổng quan chủ xe"
+  }
+}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as ImagePicker from "expo-image-picker";
 import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Clock, ImagePlus, RefreshCw } from "lucide-react-native";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View } from "react-native"
@@ -30,6 +31,7 @@ function getExtension(fileName?: string | null, mimeType?: string | null) {
 }
 
 export default function OwnerVerificationScreen({ onBack }: { onBack: () => void }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [application, setApplication] = useState<OwnerApplicationDto | null>(null);
@@ -58,11 +60,11 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
       }
       setApplication(app);
     } catch (failure) {
-      setStatusError(failure instanceof Error ? failure.message : "Không tải được trạng thái CCCD.");
+      setStatusError(failure instanceof Error ? failure.message : t("mobile:ownerHome.verification.loadStatusError"));
     } finally {
       setLoadingStatus(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void loadStatus();
@@ -79,8 +81,8 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       setError(source === "camera"
-        ? "Cần quyền camera để chụp ảnh CCCD."
-        : "Cần quyền truy cập thư viện ảnh để chọn ảnh CCCD.");
+        ? t("mobile:ownerHome.verification.cameraPermission")
+        : t("mobile:ownerHome.verification.libraryPermission"));
       return;
     }
     const result = source === "camera"
@@ -91,7 +93,7 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
     if (!asset?.uri) return;
     const extension = getExtension(asset.fileName, asset.mimeType);
     if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
-      setError("Chỉ chấp nhận file JPG, PNG hoặc WebP.");
+      setError(t("mobile:driverLicense.invalidFileType"));
       return;
     }
     // Hiện ảnh gốc ngay để user thấy phản hồi, nén ở nền rồi đổi sang bản đã xử lý.
@@ -106,7 +108,7 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
       setImageUri(prepared.uri);
       setImageFile(prepared.file);
     } catch {
-      setError("Không xử lý được ảnh. Vui lòng thử ảnh khác.");
+      setError(t("mobile:driverLicense.processImageError"));
       setImageUri(null);
     } finally {
       setProcessing(false);
@@ -115,7 +117,7 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
 
   async function handleSubmit() {
     if (!imageFile) {
-      setError("Vui lòng chọn ảnh mặt trước CCCD trước khi gửi.");
+      setError(t("mobile:ownerHome.verification.photoRequired"));
       return;
     }
     setBusy(true);
@@ -126,15 +128,15 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
       appendUploadFile(formData, "frontImage", imageFile);
       const result = await uploadNationalId(formData);
       if (result.status === "Verified") {
-        setNotice("AI đã xác thực CCCD thành công.");
+        setNotice(t("mobile:ownerHome.verification.aiVerified"));
       } else if (result.status === "Pending" || result.status === "Processing") {
-        setNotice("Ảnh CCCD của bạn đang chờ nhân viên kiểm tra.");
+        setNotice(t("mobile:ownerHome.verification.pendingNoticeShort"));
       } else {
-        setError(result.message || "Xác thực CCCD chưa đạt. Vui lòng chụp lại ảnh rõ hơn.");
+        setError(result.message || t("mobile:ownerHome.verification.verifyFailed"));
       }
       await loadStatus();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Gửi ảnh CCCD thất bại. Vui lòng thử lại.");
+      setError(failure instanceof Error ? failure.message : t("mobile:ownerHome.verification.submitError"));
     } finally {
       setBusy(false);
     }
@@ -145,12 +147,12 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Quay lại" accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityLabel={t("accountVerification:bank.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <AppText display style={styles.topBarTitle}>Xác minh CCCD</AppText>
+        <AppText display style={styles.topBarTitle}>{t("mobile:ownerHome.verification.title")}</AppText>
         <Pressable
-          accessibilityLabel="Tải lại trạng thái"
+          accessibilityLabel={t("mobile:driverLicense.reloadAria")}
           accessibilityRole="button"
           disabled={loadingStatus}
           onPress={() => { void loadStatus(); }}
@@ -162,40 +164,40 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
-          <AppText display style={styles.cardTitle}>Trạng thái xác minh</AppText>
+          <AppText display style={styles.cardTitle}>{t("mobile:driverLicense.statusTitle")}</AppText>
           {loadingStatus ? (
             <View style={styles.center}>
               <ActivityIndicator color={theme.brand} size="large" />
-              <AppText style={styles.muted}>Đang tải trạng thái...</AppText>
+              <AppText style={styles.muted}>{t("mobile:driverLicense.loadingStatus")}</AppText>
             </View>
           ) : statusError || !application ? (
             <View style={styles.stack}>
               {statusError ? <AppText style={styles.error}>{statusError}</AppText> : null}
               <Pressable accessibilityRole="button" onPress={() => { void loadStatus(); }} style={styles.outlineButton}>
                 <RefreshCw color={theme.brand} size={18} strokeWidth={2.3} />
-                <AppText style={styles.pickText}>Thử lại</AppText>
+                <AppText style={styles.pickText}>{t("common:retry")}</AppText>
               </Pressable>
             </View>
           ) : (
             <View style={styles.statusBox}>
               <StatusBadge status={verified ? "Verified" : requestStatus} />
               <View style={styles.detailLine}>
-                <AppText style={styles.detailLabel}>Số CCCD</AppText>
+                <AppText style={styles.detailLabel}>{t("accountVerification:cccd.idNumber")}</AppText>
                 <MaskedDocumentValue
                   canReveal={verified}
                   documentType="CCCD"
                   maskedValue={application.nationalIdNumber ?? null}
-                  revealDisabledHint="Giấy tờ chưa được xác thực để hiển thị."
+                  revealDisabledHint={t("mobile:driverLicense.revealDisabledHint")}
                 />
               </View>
-              <DetailLine label="Họ tên" value={application.fullName || "-"} />
+              <DetailLine label={t("mobile:ownerHome.verification.fullName")} value={application.fullName || "-"} />
             </View>
           )}
 
           {showPendingNotice ? (
             <View style={styles.infoBox}>
               <Clock color={theme.brand} size={18} strokeWidth={2.3} />
-              <AppText style={styles.infoText}>Ảnh CCCD của bạn đang chờ nhân viên kiểm tra. Vui lòng quay lại sau.</AppText>
+              <AppText style={styles.infoText}>{t("mobile:ownerHome.verification.pendingNotice")}</AppText>
             </View>
           ) : null}
 
@@ -204,29 +206,29 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
             <View style={styles.warnBox}>
               <AlertTriangle color={theme.danger} size={18} strokeWidth={2.3} />
               <AppText style={styles.warnText}>
-                {driverLicenseStatusLabel[requestStatus] ?? requestStatus}: vui lòng chụp lại ảnh rõ hơn.
+                {t("mobile:ownerHome.verification.retryHint", { status: driverLicenseStatusLabel[requestStatus] ?? requestStatus })}
               </AppText>
             </View>
           ) : null}
         </View>
 
         <View style={styles.card}>
-          <AppText display style={styles.cardTitle}>Nộp ảnh CCCD mới</AppText>
-          <AppText style={styles.hint}>Chụp mặt trước CCCD rõ nét, dung lượng tối đa 5MB (JPG/PNG/WebP).</AppText>
+          <AppText display style={styles.cardTitle}>{t("mobile:ownerHome.verification.uploadTitle")}</AppText>
+          <AppText style={styles.hint}>{t("mobile:ownerHome.verification.uploadHint")}</AppText>
 
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.preview} />
           ) : (
             <View style={styles.previewPlaceholder}>
               <ImagePlus color={theme.faint} size={30} strokeWidth={2} />
-              <AppText style={styles.muted}>Chưa có ảnh nào được chọn</AppText>
+              <AppText style={styles.muted}>{t("mobile:driverLicense.noImageSelected")}</AppText>
             </View>
           )}
 
           {processing ? (
             <View style={styles.processingRow}>
               <ActivityIndicator color={theme.brand} size="small" />
-              <AppText style={styles.muted}>Đang xử lý ảnh...</AppText>
+              <AppText style={styles.muted}>{t("mobile:driverLicense.processingImage")}</AppText>
             </View>
           ) : null}
 
@@ -238,7 +240,7 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
               style={[styles.pickButton, (busy || processing) && styles.disabled]}
             >
               <Camera color={theme.brand} size={18} strokeWidth={2.3} />
-              <AppText style={styles.pickText}>Chụp ảnh</AppText>
+              <AppText style={styles.pickText}>{t("mobile:driverLicense.capture")}</AppText>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -247,7 +249,7 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
               style={[styles.pickButton, (busy || processing) && styles.disabled]}
             >
               <ImagePlus color={theme.brand} size={18} strokeWidth={2.3} />
-              <AppText style={styles.pickText}>Thư viện</AppText>
+              <AppText style={styles.pickText}>{t("mobile:driverLicense.library")}</AppText>
             </Pressable>
           </View>
 
@@ -265,7 +267,7 @@ export default function OwnerVerificationScreen({ onBack }: { onBack: () => void
             onPress={() => { void handleSubmit(); }}
             style={[styles.submitButton, submitDisabled && styles.disabled]}
           >
-            <AppText style={styles.submitText}>{busy ? "Đang gửi..." : "Gửi xác minh"}</AppText>
+            <AppText style={styles.submitText}>{busy ? t("mobile:driverLicense.submitting") : t("accountVerification:driverLicense.submit")}</AppText>
           </Pressable>
         </View>
       </ScrollView>

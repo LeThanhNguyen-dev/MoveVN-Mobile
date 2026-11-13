@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import type { Theme } from "@/theme/tokens";
@@ -30,6 +31,7 @@ export default function SelectDisputeBookingScreen({
   onBack: () => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [query, setQuery] = useState("");
 
@@ -52,13 +54,13 @@ export default function SelectDisputeBookingScreen({
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Quay lại form tạo"
+          accessibilityLabel={t("mobile:dispute.a11y.backToForm")}
           onPress={onBack}
           style={styles.backButton}
         >
           <Text style={styles.backText}>‹</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Chọn booking</Text>
+        <Text style={styles.headerTitle}>{t("mobile:dispute.selectBooking.title")}</Text>
         <View style={styles.backButtonPlaceholder} />
       </View>
 
@@ -66,15 +68,15 @@ export default function SelectDisputeBookingScreen({
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Tìm theo mã booking..."
+          placeholder={t("mobile:dispute.selectBooking.searchPlaceholder")}
           placeholderTextColor={theme.placeholder}
           style={styles.input}
         />
         <Text style={styles.muted}>
           {reportType === "TrafficFine"
-            ? "Booking đã/đang thuê đều được chấp nhận cho phạt nguội."
-            : "Chỉ booking đã hoàn tất / đã trả xe."}{" "}
-          {eligible.length} booking
+            ? t("mobile:dispute.selectBooking.hintTrafficFine")
+            : t("mobile:dispute.selectBooking.hintCompleted")}{" "}
+          {t("mobile:dispute.selectBooking.count", { count: eligible.length })}
         </Text>
       </View>
 
@@ -85,7 +87,7 @@ export default function SelectDisputeBookingScreen({
           data={eligible}
           keyExtractor={(b) => String(b.id)}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.muted}>Không có booking phù hợp.</Text>}
+          ListEmptyComponent={<Text style={styles.muted}>{t("mobile:dispute.selectBooking.empty")}</Text>}
           renderItem={({ item }) => {
             const active = selectedId === String(item.id);
             const counterpart = role === "Owner" ? item.customerName : item.ownerName;
@@ -111,7 +113,7 @@ export default function SelectDisputeBookingScreen({
                   {counterpart ? (
                     <Text numberOfLines={1} style={styles.counterpart}>{counterpart}</Text>
                   ) : null}
-                  {active ? <Text style={styles.picked}>✓ Đang chọn</Text> : null}
+                  {active ? <Text style={styles.picked}>{t("mobile:dispute.selectBooking.picked")}</Text> : null}
                 </View>
               </Pressable>
             );

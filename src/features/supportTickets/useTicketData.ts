@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
+import i18n from "@/i18n";
 import { ticketError } from "./ticketModel";
 
 export function useTicketData<T>(load: (signal: AbortSignal) => Promise<T>, poll = false, options?: { message?: string; formatError?: (error: unknown, fallback: string) => string }) {
-  const errorMessage = options?.message ?? "Không tải được yêu cầu hỗ trợ. Vui lòng thử lại.";
+  const errorMessage = options?.message ?? i18n.t("mobile:supportTicket.errors.load");
   const formatError = options?.formatError ?? ticketError;
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState("");

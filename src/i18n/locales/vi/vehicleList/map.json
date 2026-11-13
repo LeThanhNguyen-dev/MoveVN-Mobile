@@ -1,0 +1,20 @@
+{
+  "map": {
+    "perDay": "{{price}}/ngày",
+    "clusterCount": "{{total}} xe",
+    "vehiclesAtLocation": "{{total}} xe tại vị trí này",
+    "totalRental": "Tổng tiền thuê: {{amount}}",
+    "distanceFromPickup": "Cách điểm chọn {{distance}} km",
+    "mapTitle": "Bản đồ xe",
+    "mapCount": "{{located}} xe có vị trí / {{total}} xe phù hợp",
+    "loadError": "Không tải được xe trên bản đồ. Hãy thử lại bộ lọc.",
+    "choosePickupForRadius": "Chọn địa chỉ nhận xe trong bộ lọc để xem vòng tròn bán kính.",
+    "pickupPoint": "Điểm nhận xe bạn chọn",
+    "listTitle": "Danh sách xe trên bản đồ",
+    "listHint": "Chọn xe để xem vị trí trên bản đồ",
+    "viewLocationAria": "Xem vị trí {{title}} trên bản đồ",
+    "viewDetails": "Xem chi tiết",
+    "empty": "Chưa có xe phù hợp có vị trí trên bản đồ.",
+    "limitNotice": "Đang hiển thị tối đa {{max}} xe đầu tiên. Thu hẹp bộ lọc để xem thêm xe."
+  }
+}

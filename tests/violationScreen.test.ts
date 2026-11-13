@@ -16,7 +16,7 @@ vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "View" }));
 vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: mocks.pick, launchCameraAsync: mocks.camera, requestCameraPermissionsAsync: mocks.permission }));
 vi.mock("expo-image-manipulator", () => ({ manipulateAsync: mocks.convert, SaveFormat: { JPEG: "jpeg" } }));
 vi.mock("expo-file-system", () => ({ File: class { get size() { return mocks.size; } } }));
-vi.mock("lucide-react-native", () => Object.fromEntries(["ChevronLeft", "ChevronRight", "Flag", "CheckCircle2", "Search", "Send", "ShieldCheck", "ArrowLeft", "RefreshCw", "Camera", "ImagePlus", "X"].map(n => [n, n])));
+vi.mock("lucide-react-native", () => Object.fromEntries(["ChevronDown", "ChevronLeft", "ChevronRight", "Flag", "CheckCircle2", "Search", "Send", "ShieldCheck", "ArrowLeft", "RefreshCw", "Camera", "ImagePlus", "X"].map(n => [n, n])));
 import ViolationsScreen from "@/features/violations/ViolationsScreen";
 let tree: ReactTestRenderer | undefined;
 const textOf = (node: ReactTestInstance) => node.findAll(n => n.type as unknown === "Text").map(n => n.children.filter(c => typeof c === "string" || typeof c === "number").join("")).join("\n");
@@ -36,7 +36,7 @@ afterEach(async () => { if (tree) await act(async () => tree!.unmount()); tree =
 it("lists own reports with server filtering, paging and filter reset", async () => {
   await mount(); expect(text()).toContain(report.targetLabel); await press("Trang báo cáo sau"); expect(mocks.list.mock.calls.at(-1)?.[0].page).toBe(2);
   await press("Đang xác minh"); expect(mocks.list.mock.calls.at(-1)?.[0]).toMatchObject({ status: "InReview", page: 1 });
-  await fill("Tìm báo cáo theo tên đối tượng", " 43A "); await press("Tìm báo cáo"); expect(mocks.list.mock.calls.at(-1)?.[0].keyword).toBe("43A");
+  await fill("Tìm báo cáo theo tên, biển số hoặc mã đặt xe", " 43A "); await press("Tìm kiếm"); expect(mocks.list.mock.calls.at(-1)?.[0].keyword).toBe("43A");
   await press("Xóa bộ lọc báo cáo"); expect(mocks.list.mock.calls.at(-1)?.[0]).toEqual({ page: 1, pageSize: 10 });
 });
 it("shows load failure honestly and supports retry", async () => {

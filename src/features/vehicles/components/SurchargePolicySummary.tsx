@@ -1,7 +1,9 @@
 import { BadgeInfo } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
+import i18n from "@/i18n";
 import type { VehicleSurchargePolicy } from "@/features/vehicles/types";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -16,9 +18,15 @@ function formatCurrency(value: number) {
 }
 
 function calculationLabel(policy: VehicleSurchargePolicy) {
-  if (policy.calculationMethod === "PerKm") return `${formatCurrency(policy.unitPrice)}/km`;
-  if (policy.calculationMethod === "PerHour") return `${formatCurrency(policy.unitPrice)}/giờ`;
-  if (policy.calculationMethod === "PerDay") return `${formatCurrency(policy.unitPrice)}/ngày`;
+  if (policy.calculationMethod === "PerKm") {
+    return `${formatCurrency(policy.unitPrice)}${i18n.t("mobile:ownerVehicle.surcharge.unit.km")}`;
+  }
+  if (policy.calculationMethod === "PerHour") {
+    return `${formatCurrency(policy.unitPrice)}${i18n.t("mobile:ownerVehicle.surcharge.unit.hour")}`;
+  }
+  if (policy.calculationMethod === "PerDay") {
+    return `${formatCurrency(policy.unitPrice)}${i18n.t("mobile:ownerVehicle.surcharge.unit.day")}`;
+  }
   return formatCurrency(policy.unitPrice);
 }
 
@@ -40,14 +48,20 @@ function formatHours(hours: number) {
 }
 
 function SurchargeDescription({ policy, styles }: { policy: VehicleSurchargePolicy; styles: ReturnType<typeof createStyles> }) {
+  const { t } = useTranslation();
+
   if (policy.feeType === "ExcessMileage" && policy.includedKm != null) {
     return (
       <AppText style={styles.desc}>
-        Phụ phí phát sinh nếu di chuyển quá <AppText style={styles.bold}>{policy.includedKm.toLocaleString("vi-VN")} km</AppText>{" "}
-        {policy.allowanceScope === "PerBooking" ? "trong toàn bộ chuyến thuê" : "khi thuê xe 1 ngày"}
+        {t("mobile:ownerVehicle.surcharge.summary.excessPrefix")}
+        <AppText style={styles.bold}>{policy.includedKm.toLocaleString("vi-VN")} km</AppText>
+        {policy.allowanceScope === "PerBooking"
+          ? t("mobile:ownerVehicle.surcharge.summary.excessScopeBooking")
+          : t("mobile:ownerVehicle.surcharge.summary.excessScopeDay")}
         {policy.maxAmount != null ? (
           <>
-            . Tối đa <AppText style={styles.bold}>{formatCurrency(policy.maxAmount)}</AppText>
+            {t("mobile:ownerVehicle.surcharge.summary.maxPrefix")}
+            <AppText style={styles.bold}>{formatCurrency(policy.maxAmount)}</AppText>
           </>
         ) : null}
       </AppText>
@@ -59,22 +73,29 @@ function SurchargeDescription({ policy, styles }: { policy: VehicleSurchargePoli
     const dayThresholdHours = resolveDayThresholdHours(policy);
     return (
       <AppText style={styles.desc}>
-        Phụ phí phát sinh nếu hoàn trả xe trễ giờ
+        {t("mobile:ownerVehicle.surcharge.summary.lateBase")}
         {graceHours != null && graceHours > 0 ? (
           <>
-            , miễn trễ <AppText style={styles.bold}>{formatHours(graceHours)} giờ</AppText> đầu
+            {t("mobile:ownerVehicle.surcharge.summary.lateGracePrefix")}
+            <AppText style={styles.bold}>{formatHours(graceHours)}</AppText>
+            {t("mobile:ownerVehicle.surcharge.summary.lateGraceSuffix")}
           </>
         ) : null}
         {dayThresholdHours != null && dayThresholdHours > 0 ? (
           <>
-            . Trường hợp trễ quá <AppText style={styles.bold}>{formatHours(dayThresholdHours)} giờ</AppText> phụ phí thêm{" "}
-            <AppText style={styles.bold}>1 ngày</AppText>
+            {t("mobile:ownerVehicle.surcharge.summary.lateThresholdPrefix")}
+            <AppText style={styles.bold}>{formatHours(dayThresholdHours)}</AppText>
+            {t("mobile:ownerVehicle.surcharge.summary.lateThresholdSuffix")}
+            <AppText style={styles.bold}>{t("mobile:ownerVehicle.surcharge.summary.lateDayUnit")}</AppText>
           </>
         ) : null}
-        {policy.lateDailyRate != null ? <> ({formatCurrency(policy.lateDailyRate)}/ngày)</> : null}
+        {policy.lateDailyRate != null
+          ? t("mobile:ownerVehicle.surcharge.summary.lateDailyRate", { price: formatCurrency(policy.lateDailyRate) })
+          : null}
         {policy.maxAmount != null ? (
           <>
-            . Tối đa <AppText style={styles.bold}>{formatCurrency(policy.maxAmount)}</AppText>
+            {t("mobile:ownerVehicle.surcharge.summary.maxPrefix")}
+            <AppText style={styles.bold}>{formatCurrency(policy.maxAmount)}</AppText>
           </>
         ) : null}
       </AppText>
@@ -83,11 +104,12 @@ function SurchargeDescription({ policy, styles }: { policy: VehicleSurchargePoli
 
   return (
     <AppText style={styles.desc}>
-      {policy.description || "Phụ phí có thể phát sinh theo tình trạng xe khi hoàn trả."}
+      {policy.description || t("mobile:ownerVehicle.surcharge.summary.defaultDescription")}
       {policy.maxAmount != null ? (
         <>
-          {" "}
-          Tối đa <AppText style={styles.bold}>{formatCurrency(policy.maxAmount)}</AppText>.
+          {t("mobile:ownerVehicle.surcharge.summary.maxInlinePrefix")}
+          <AppText style={styles.bold}>{formatCurrency(policy.maxAmount)}</AppText>
+          {t("mobile:ownerVehicle.surcharge.summary.sentenceEnd")}
         </>
       ) : null}
     </AppText>
@@ -95,6 +117,7 @@ function SurchargeDescription({ policy, styles }: { policy: VehicleSurchargePoli
 }
 
 export default function SurchargePolicySummary({ policies = [], showInactive = false }: Props) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const items = policies.filter((policy) => showInactive || policy.isActive);
@@ -107,7 +130,7 @@ export default function SurchargePolicySummary({ policies = [], showInactive = f
         <View style={styles.iconTile}>
           <BadgeInfo color={theme.brand} size={15} />
         </View>
-        <AppText display style={styles.title}>Phụ phí có thể phát sinh</AppText>
+        <AppText display style={styles.title}>{t("mobile:ownerVehicle.surcharge.title")}</AppText>
       </View>
       <View style={styles.list}>
         {items.map((policy) => (
@@ -115,7 +138,7 @@ export default function SurchargePolicySummary({ policies = [], showInactive = f
             <View style={styles.itemHead}>
               <View style={styles.nameWrap}>
                 <AppText display style={styles.itemTitle}>{policy.name}</AppText>
-                {!policy.isActive ? <AppText style={styles.inactive}>Tắt</AppText> : null}
+                {!policy.isActive ? <AppText style={styles.inactive}>{t("mobile:ownerVehicle.surcharge.summary.inactive")}</AppText> : null}
               </View>
               <AppText style={styles.price}>{calculationLabel(policy)}</AppText>
             </View>

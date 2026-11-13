@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { usePushNavigation } from "@/features/notifications/pushNavigation";
 import { CalendarCheck, Gift, LayoutGrid, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
@@ -24,15 +25,19 @@ import { useTheme } from "@/theme/useTheme";
 
 type CustomerTabKey = "trips" | "deals" | "explore" | "messages" | "account";
 
-const customerTabs: MobileTabItem<CustomerTabKey>[] = [
-  { key: "trips", label: "Chuyến đi", icon: CalendarCheck },
-  { key: "deals", label: "Ưu đãi", icon: Gift },
-  { key: "explore", label: "Khám phá", icon: LayoutGrid, prominent: true },
-  { key: "messages", label: "Tin nhắn", icon: MessageSquare },
-  { key: "account", label: "Tài khoản", icon: UserRound },
-];
-
 export default function CustomerNavigator({ user }: { user: AuthUser }) {
+  const { t, i18n } = useTranslation();
+  // Nhãn tab phải dựng trong component để đổi theo ngôn ngữ đang chọn.
+  const customerTabs = useMemo<MobileTabItem<CustomerTabKey>[]>(
+    () => [
+      { key: "trips", label: t("mobile:navigation.trips"), icon: CalendarCheck },
+      { key: "deals", label: t("mobile:navigation.deals"), icon: Gift },
+      { key: "explore", label: t("mobile:navigation.explore"), icon: LayoutGrid, prominent: true },
+      { key: "messages", label: t("mobile:navigation.messages"), icon: MessageSquare },
+      { key: "account", label: t("mobile:navigation.account"), icon: UserRound },
+    ],
+    [t, i18n.language],
+  );
   // Publish GPS khi khách có chuyến InProgress/Returning (đăng ký từ TripDetail).
   useGpsPublisher();
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
