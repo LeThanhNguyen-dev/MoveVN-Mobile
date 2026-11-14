@@ -7,8 +7,10 @@ import type {
   GpsPointsAcceptedResponse,
   GpsRoadPathResponse,
   GpsRoutePointResponse,
+  GpsSharingConsentResponse,
   GpsTrackingSessionResponse,
   GpsTripSummaryResponse,
+  OwnerTrackingOverviewResponse,
   RequestGpsEnableResponse,
 } from "./types";
 
@@ -39,6 +41,18 @@ export async function getGpsSession(bookingId: number): Promise<GpsTrackingSessi
 export async function requestGpsEnable(bookingId: number): Promise<RequestGpsEnableResponse> {
   const res = await apiClient.post<ApiResponse<RequestGpsEnableResponse>>(endpoints.tracking.requestGps(bookingId), {});
   return res.data.data!;
+}
+
+/** Khách thuê bật/tắt chia sẻ vị trí cho chuyến (máy chủ ghi nhận sự đồng ý). */
+export async function setGpsSharingConsent(bookingId: number, granted: boolean): Promise<GpsSharingConsentResponse> {
+  const res = await apiClient.post<ApiResponse<GpsSharingConsentResponse>>(endpoints.tracking.consent(bookingId), { granted });
+  return res.data.data!;
+}
+
+/** Bản đồ tổng hợp của chủ xe: các xe đang cho thuê + vị trí mới nhất trong một lần gọi. */
+export async function getOwnerTrackingVehicles(): Promise<OwnerTrackingOverviewResponse> {
+  const res = await apiClient.get<ApiResponse<OwnerTrackingOverviewResponse>>(endpoints.tracking.ownerVehicles);
+  return res.data.data ?? { items: [], serverTimestamp: new Date().toISOString() };
 }
 
 /** Địa chỉ chi tiết tại một tọa độ của chuyến (Goong reverse geocode, có cache phía server). */

@@ -13,22 +13,11 @@ import { OutstandingSurcharge } from "../components/CheckoutSummary";import Chec
 import { isDepositExpired, parseServerDate } from "../bookingDisplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  AppState,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+  ActivityIndicator, AppState, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import {
   Banknote,
   Camera,
-  CircleCheck,
   CircleDollarSign,
   Clock3,
   CreditCard,
@@ -37,6 +26,8 @@ import {
   MapPin,
   MessageSquare,
   PackageCheck,
+  PauseCircle,
+  PlayCircle,
   ReceiptText,
   RotateCcw,
   ShieldCheck,
@@ -95,6 +86,8 @@ import DisputeDetailScreen from "@/features/disputes/screens/DisputeDetailScreen
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { useGpsStore } from "@/features/gps/gpsStore";
+import { setGpsSharingConsent } from "@/features/gps/gpsService";
+import { clearStoredConsent, setStoredConsent } from "@/features/gps/gpsConsentStorage";
 import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
 
 type DetailRoute = RouteProp<TripsStackParamList, "TripDetail" | "TripHandover">;
@@ -194,7 +187,7 @@ export default function TripDetailScreen({
     } catch (err) {
       if (request !== loadId.current) return;
       setDataReady(false);
-      Alert.alert(t("booking:detail.toast.errorTitle"), getApiErrorMessage(err, t("mobile:trip.detail.loadError")));
+      showAppAlert(t("booking:detail.toast.errorTitle"), getApiErrorMessage(err, t("mobile:trip.detail.loadError")));
     } finally {
       if (request === loadId.current) setLoading(false);
     }
@@ -211,6 +204,9 @@ export default function TripDetailScreen({
   const gpsPublishError = useGpsStore((state) => state.publishError);
   const gpsSharingHere = useGpsStore((state) => state.activePublishBookingId === bookingId);
   const gpsLastPublishedAt = useGpsStore((state) => state.lastPublishedAt);
+  const gpsSharingState = useGpsStore((state) => state.publishSharingState);
+  const gpsEnableRequestedAt = useGpsStore((state) => state.gpsEnableRequestedAt);
+  const [gpsConsentBusy, setGpsConsentBusy] = useState(false);
   useEffect(() => {
     // Đăng ký GPS CHỈ khi booking đang thuê; khi rời màn KHÔNG gỡ — publisher
     // (mount ở CustomerNavigator) gửi tiếp chừng nào app còn mở, tránh "mất tín hiệu" oan.
@@ -218,10 +214,41 @@ export default function TripDetailScreen({
     if (!booking) return;
     if (booking.status === "InProgress" || booking.status === "Returning") {
       setActivePublishBooking(booking.id);
-    } else if (useGpsStore.getState().activePublishBookingId === booking.id) {
-      setActivePublishBooking(null);
+    } else {
+      // Chuyến đã kết thúc: dọn lựa chọn đã lưu để lần thuê sau hỏi lại từ đầu.
+      if (useGpsStore.getState().activePublishBookingId === booking.id) {
+        setActivePublishBooking(null);
+      }
+      void clearStoredConsent(booking.id);
     }
   }, [booking?.id, booking?.status, setActivePublishBooking]);
+
+  // Khách bật/tắt chia sẻ vị trí: ghi nhận phía máy chủ + lưu lựa chọn trên thiết bị.
+  const updateGpsConsent = useCallback(async (granted: boolean) => {
+    if (gpsConsentBusy) return;
+    setGpsConsentBusy(true);
+    const nextState = granted ? "sharing" : gpsSharingState === "idle" ? "declined" : "paused";
+    try {
+      await setGpsSharingConsent(bookingId, granted);
+      await setStoredConsent(bookingId, granted ? "granted" : "declined");
+      useGpsStore.getState().setPublishSharingState(nextState);
+    } catch (error) {
+      const code = (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
+      if (code === "GPS_13001" || code === "GPS_13003") {
+        // Chuyến đã kết thúc: dọn lựa chọn, không hỏi lại.
+        await clearStoredConsent(bookingId);
+        useGpsStore.getState().setActivePublishBooking(null);
+        useGpsStore.getState().setPublishSharingState("ended");
+        return;
+      }
+      // Mất mạng: vẫn ghi nhận lựa chọn trên máy; publisher sẽ gửi lại khi có mạng.
+      await setStoredConsent(bookingId, granted ? "granted" : "declined");
+      useGpsStore.getState().setPublishSharingState(nextState);
+      showAppAlert(t("mobile:trip.detail.gpsConsentErrorTitle"), t("mobile:trip.detail.gpsConsentErrorMessage"));
+    } finally {
+      setGpsConsentBusy(false);
+    }
+  }, [bookingId, gpsConsentBusy, gpsSharingState, t]);
 
   useEffect(() => {
     const timer = setInterval(() => { setNow(Date.now()); if (!actionLock.current) void load(); }, 30000);
@@ -242,13 +269,13 @@ export default function TripDetailScreen({
         const res = await checkPaymentStatus(orderCode);
         if (res.isConfirmed) {
           setPendingOrderCode(null);
-          Alert.alert(t("booking:detail.toast.successTitle"), res.message || t("mobile:trip.dialogs.depositConfirmed"));
+          showAppAlert(t("booking:detail.toast.successTitle"), res.message || t("mobile:trip.dialogs.depositConfirmed"));
           await load();
           return;
         }
         if (res.status === "Cancelled" || res.status === "Expired" || res.status === "Failed") {
           setPendingOrderCode(null);
-          Alert.alert(t("payments:toast.noticeTitle"), res.message || t("mobile:trip.dialogs.transactionEnded"));
+          showAppAlert(t("payments:toast.noticeTitle"), res.message || t("mobile:trip.dialogs.transactionEnded"));
           await load();
           return;
         }
@@ -259,7 +286,7 @@ export default function TripDetailScreen({
         pollPayment(orderCode, attempt + 1);
       } else {
         setPendingOrderCode(null);
-        Alert.alert(t("mobile:trip.dialogs.pollTimeoutTitle"), t("mobile:trip.dialogs.pollTimeoutBody"));
+        showAppAlert(t("mobile:trip.dialogs.pollTimeoutTitle"), t("mobile:trip.dialogs.pollTimeoutBody"));
         await load();
       }
     }, POLL_MS);
@@ -283,12 +310,12 @@ export default function TripDetailScreen({
     try {
       await fn();
       await load();
-      if (successMessage) Alert.alert(t("booking:detail.toast.successTitle"), successMessage);
+      if (successMessage) showAppAlert(t("booking:detail.toast.successTitle"), successMessage);
       return true;
     } catch (err) {
       const message = getApiErrorMessage(err, t("mobile:trip.dialogs.tryAgain"));
       setActionError(key === "checkout" ? t("mobile:trip.dialogs.checkoutErrorSuffix", { message }) : message);
-      Alert.alert(t("mobile:trip.dialogs.failedTitle"), message);
+      showAppAlert(t("mobile:trip.dialogs.failedTitle"), message);
       if (key === "checkout") { setCheckoutToConfirm(null); await load(); }
       return false;
     } finally {
@@ -318,7 +345,7 @@ export default function TripDetailScreen({
       setPendingOrderCode(link.orderCode);
       pollPayment(link.orderCode);
     } catch (err) {
-      Alert.alert(t("mobile:trip.dialogs.failedTitle"), getApiErrorMessage(err, t("mobile:trip.dialogs.paymentLinkError")));
+      showAppAlert(t("mobile:trip.dialogs.failedTitle"), getApiErrorMessage(err, t("mobile:trip.dialogs.paymentLinkError")));
     } finally {
       actionLock.current = false;
       setActionBusy(null);
@@ -337,34 +364,34 @@ export default function TripDetailScreen({
     try {
       const quote = await getBookingCancellationQuote(bookingId);
       if (!quote.canCancel) {
-        Alert.alert(t("booking:cancel.loadPolicyErrorTitle"), quote.policyMessage);
+        showAppAlert(t("booking:cancel.loadPolicyErrorTitle"), quote.policyMessage);
         return;
       }
       setCancelQuote(quote);
       setCancelReason("");
     } catch (err) {
-      Alert.alert(t("mobile:trip.dialogs.failedTitle"), getApiErrorMessage(err, t("mobile:trip.dialogs.cancelPolicyError")));
+      showAppAlert(t("mobile:trip.dialogs.failedTitle"), getApiErrorMessage(err, t("mobile:trip.dialogs.cancelPolicyError")));
     }
   }
 
   async function submitCancel() {
     if (!cancelQuote) return;
     if (!cancelReason.trim()) {
-      Alert.alert(t("mobile:trip.dialogs.cancelReasonRequiredTitle"), t("mobile:trip.dialogs.cancelReasonRequiredBody"));
+      showAppAlert(t("mobile:trip.dialogs.cancelReasonRequiredTitle"), t("mobile:trip.dialogs.cancelReasonRequiredBody"));
       return;
     }
     const ok = await runAction("cancel", () => cancelBooking(bookingId, cancelReason.trim()).then(() => undefined));
     if (ok) {
       setCancelQuote(null);
       setCancelReason("");
-      Alert.alert(t("booking:detail.toast.successTitle"), t("mobile:trip.dialogs.cancelledMessage"), [
+      showAppAlert(t("booking:detail.toast.successTitle"), t("mobile:trip.dialogs.cancelledMessage"), [
         { text: t("mobile:trip.dialogs.backToList"), onPress: handleBack },
       ]);
     }
   }
 
   async function handleNoShow() {
-    Alert.alert(
+    showAppAlert(
       t("mobile:trip.dialogs.noShowTitle"),
       t("mobile:trip.dialogs.noShowBody"),
       [
@@ -375,7 +402,7 @@ export default function TripDetailScreen({
           onPress: () => {
             void runAction("noshow", () => reportNoShow(bookingId).then(() => undefined)).then((ok) => {
               if (ok) {
-                Alert.alert(t("booking:detail.toast.successTitle"), t("mobile:trip.dialogs.noShowRecorded"), [
+                showAppAlert(t("booking:detail.toast.successTitle"), t("mobile:trip.dialogs.noShowRecorded"), [
                   { text: t("mobile:trip.dialogs.backToList"), onPress: handleBack },
                 ]);
               }
@@ -388,7 +415,7 @@ export default function TripDetailScreen({
 
   async function handleReview() {
     if (rating < 1 || rating > 5) {
-      Alert.alert(t("mobile:trip.dialogs.ratingMissingTitle"), t("mobile:trip.dialogs.ratingMissingBody"));
+      showAppAlert(t("mobile:trip.dialogs.ratingMissingTitle"), t("mobile:trip.dialogs.ratingMissingBody"));
       return;
     }
     const ok = await runAction(
@@ -651,15 +678,69 @@ export default function TripDetailScreen({
               </DetailCard>
             ) : null}
 
-            {(status === "InProgress" || status === "Returning") && gpsSharingHere && gpsPermissionStatus === "granted" && !gpsPublishError ? (
-              <DetailNotice icon={CircleCheck} title={t("mobile:trip.detail.gpsSharingTitle")} tone="mint">
-                {t("mobile:trip.detail.gpsSharingBody")}
-                {gpsLastPublishedAt ? t("mobile:trip.detail.gpsUpdatedAt", { time: new Date(gpsLastPublishedAt).toLocaleTimeString("vi-VN") }) : ""}.
-              </DetailNotice>
+            {(status === "InProgress" || status === "Returning") && gpsSharingHere && gpsSharingState !== "idle" && gpsSharingState !== "ended" ? (
+              gpsSharingState === "sharing" ? (
+                gpsPermissionStatus === "denied" || gpsPublishError ? (
+                  <DetailCard>
+                    <DetailSectionHeader
+                      icon={TriangleAlert}
+                      tone="amber"
+                      title={t("mobile:trip.detail.gpsOffTitle")}
+                      subtitle={gpsPublishError || t("mobile:trip.detail.gpsOffBody")}
+                    />
+                    <DetailButton
+                      label={t("mobile:trip.detail.gpsStop")}
+                      icon={PauseCircle}
+                      variant="secondary"
+                      onPress={() => void updateGpsConsent(false)}
+                      busy={gpsConsentBusy}
+                    />
+                  </DetailCard>
+                ) : (
+                  <DetailCard>
+                    <DetailSectionHeader
+                      icon={MapPin}
+                      tone="mint"
+                      title={t("mobile:trip.detail.gpsSharingTitle")}
+                      subtitle={`${t("mobile:trip.detail.gpsSharingBody")}${gpsLastPublishedAt ? t("mobile:trip.detail.gpsUpdatedAt", { time: new Date(gpsLastPublishedAt).toLocaleTimeString("vi-VN") }) : ""}.`}
+                    />
+                    <DetailButton
+                      label={t("mobile:trip.detail.gpsStop")}
+                      icon={PauseCircle}
+                      variant="secondary"
+                      onPress={() => void updateGpsConsent(false)}
+                      busy={gpsConsentBusy}
+                    />
+                  </DetailCard>
+                )
+              ) : (
+                <DetailCard>
+                  <DetailSectionHeader
+                    icon={MapPin}
+                    tone="amber"
+                    title={gpsSharingState === "paused"
+                      ? t("mobile:trip.detail.gpsPausedTitle")
+                      : gpsSharingState === "declined"
+                        ? t("mobile:trip.detail.gpsDeclinedTitle")
+                        : t("mobile:trip.detail.gpsNotSharedTitle")}
+                    subtitle={gpsSharingState === "paused"
+                      ? t("mobile:trip.detail.gpsPausedBody")
+                      : gpsSharingState === "declined"
+                        ? t("mobile:trip.detail.gpsDeclinedBody")
+                        : t("mobile:trip.detail.gpsNotSharedBody")}
+                  />
+                  <DetailButton
+                    label={gpsSharingState === "paused" ? t("mobile:trip.detail.gpsResume") : t("mobile:trip.detail.gpsEnable")}
+                    icon={PlayCircle}
+                    onPress={() => void updateGpsConsent(true)}
+                    busy={gpsConsentBusy}
+                  />
+                </DetailCard>
+              )
             ) : null}
-            {(status === "InProgress" || status === "Returning") && (gpsPermissionStatus === "denied" || gpsPublishError) ? (
-              <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.gpsOffTitle")} tone="warn">
-                {gpsPublishError || t("mobile:trip.detail.gpsOffBody")}
+            {(status === "InProgress" || status === "Returning") && gpsSharingHere && gpsEnableRequestedAt && gpsSharingState !== "sharing" ? (
+              <DetailNotice icon={MapPin} title={t("mobile:trip.detail.gpsRequestedTitle")} tone="brand">
+                {t("mobile:trip.detail.gpsRequestedBody")}
               </DetailNotice>
             ) : null}
 
@@ -905,6 +986,41 @@ export default function TripDetailScreen({
       <CheckoutConfirmation booking={booking} report={checkoutToConfirm} busy={actionBusy !== null} onClose={() => setCheckoutToConfirm(null)} onConfirm={(report, paymentMethod) => {
         void runAction("checkout", () => confirmCheckOut(bookingId, report.version ?? 1, paymentMethod).then(() => undefined), t("mobile:trip.dialogs.checkoutConfirmed")).then(ok => { if (ok) setCheckoutToConfirm(null); });
       }} />
+
+      <Modal
+        visible={gpsSharingHere && gpsSharingState === "idle" && (status === "InProgress" || status === "Returning")}
+        transparent
+        animationType="fade"
+        onRequestClose={() => useGpsStore.getState().setPublishSharingState("notShared")}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modal}>
+            <View style={styles.modalHead}>
+              <View style={styles.modalIcon}><MapPin color={p.brand} size={18} strokeWidth={2.1} /></View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.modalTitle}>{t("mobile:trip.detail.gpsConsentTitle")}</Text>
+                <Text style={styles.modalHint}>{t("mobile:trip.detail.gpsConsentPrivacy")}</Text>
+              </View>
+            </View>
+            <Text style={styles.progressText}>{t("mobile:trip.detail.gpsConsentBody")}</Text>
+            <View style={styles.modalActions}>
+              <DetailButton
+                style={styles.modalButton}
+                variant="ghost"
+                label={t("mobile:trip.detail.gpsConsentDecline")}
+                onPress={() => void updateGpsConsent(false)}
+                disabled={gpsConsentBusy}
+              />
+              <DetailButton
+                style={styles.modalButton}
+                label={t("mobile:trip.detail.gpsConsentAgree")}
+                onPress={() => void updateGpsConsent(true)}
+                busy={gpsConsentBusy}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={reviewOpen} transparent animationType="fade" onRequestClose={() => { if (actionBusy === null) setReviewOpen(false); }}>
         <View style={styles.modalBackdrop}>

@@ -34,18 +34,65 @@
         "live": "Đang cập nhật",
         "stale": "Mất tín hiệu",
         "ended": "Đã kết thúc",
-        "none": "Chưa có dữ liệu"
+        "none": "Chưa có dữ liệu",
+        "sharingPaused": "Khách đã dừng chia sẻ",
+        "sharingDeclined": "Khách không chia sẻ",
+        "notShared": "Chưa chia sẻ"
       },
       "updatedAt": "· cập nhật {{time}}",
       "speed": "Tốc độ: {{speed}} km/h",
       "coordinates": "Tọa độ: {{lat}}, {{lng}}",
       "staleHint": "Không nhận được vị trí mới trong một thời gian. Khách thuê có thể đã tắt GPS hoặc mất kết nối — vị trí hiển thị là điểm cuối cùng.",
+      "sharingPausedHint": "Khách đã dừng chia sẻ vị trí. Bản đồ đang hiển thị điểm cuối cùng nhận được.",
+      "sharingDeclinedHint": "Khách đã chọn không chia sẻ vị trí trong chuyến này.",
+      "sharingNotSharedHint": "Khách chưa chia sẻ vị trí trong chuyến này.",
+      "noDataHint": "Chưa nhận được điểm vị trí nào từ khách thuê trong chuyến này.",
+      "mockWarning": "Vị trí có thể không chính xác: thiết bị của khách báo vị trí giả lập.",
       "requestGps": "Yêu cầu khách bật GPS",
-      "requesting": "Đang gửi..."
+      "requesting": "Đang gửi...",
+      "log": {
+        "title": "Nhật ký toạ độ",
+        "count": "{{count}} điểm đã nhận",
+        "empty": "Chưa có toạ độ nào được gửi về trong chuyến này.",
+        "mock": "Giả lập",
+        "speed": "{{speed}} km/h",
+        "toggleAria": "Mở hoặc thu gọn nhật ký toạ độ",
+        "selectHint": "Chạm vào một dòng để tua bản đồ về đúng thời điểm đó.",
+        "viewing": "Đang xem lại lúc {{time}}",
+        "backToLive": "Về trực tiếp"
+      }
     },
     "publisher": {
       "sendFailed": "Không gửi được vị trí. Sẽ thử lại.",
       "permissionDenied": "Bạn chưa bật chia sẻ vị trí. Chủ xe không thể theo dõi chuyến đi."
+    },
+    "fleet": {
+      "title": "Bản đồ đội xe đang cho thuê",
+      "subtitle": "{{count}} xe đang cho thuê",
+      "loading": "Đang tải đội xe...",
+      "empty": "Hiện không có xe nào đang cho thuê.",
+      "error": "Không tải được bản đồ đội xe.",
+      "retry": "Thử lại",
+      "refreshAria": "Làm mới đội xe",
+      "updatedAt": "Cập nhật {{time}}",
+      "licensePlateUnknown": "Chưa rõ biển số",
+      "vehicleFallback": "Xe #{{id}}",
+      "bookingCode": "Đơn {{code}}",
+      "viewTracking": "Xem vị trí",
+      "mockWarning": "Vị trí có thể không chính xác",
+      "sharing": {
+        "sharing": "Đang chia sẻ",
+        "paused": "Khách đã dừng chia sẻ",
+        "declined": "Khách không chia sẻ",
+        "notShared": "Chưa chia sẻ",
+        "ended": "Đã kết thúc"
+      },
+      "state": {
+        "live": "Đang cập nhật",
+        "stale": "Mất tín hiệu",
+        "none": "Chưa có dữ liệu",
+        "ended": "Đã kết thúc"
+      }
     }
   }
 }

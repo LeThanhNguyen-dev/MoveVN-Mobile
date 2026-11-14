@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Linking, Modal, Pressable, StyleSheet, View } from "react-native"
+import { ActivityIndicator, Linking, Modal, Pressable, StyleSheet, View } from "react-native"
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { X } from "lucide-react-native";
@@ -32,7 +33,7 @@ export default function PaymentWebViewModal({
     try {
       await Linking.openURL(checkoutUrl);
     } catch {
-      Alert.alert(
+      showAppAlert(
         t("accountWallet:toasts.errorTitle"),
         t("mobile:wallet.payment.openFailed"),
       );

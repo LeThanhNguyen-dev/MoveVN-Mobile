@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, PanResponder, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, PanResponder, Pressable, StyleSheet, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import WebView from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
 import type { RouteProp } from "@react-navigation/native";
@@ -74,10 +75,10 @@ export default function GpsPlaybackScreen({
         setRoad(roadPath);
         setSummary(tripSummary);
         if (!roadPath || roadPath.path.length < 2) {
-          Alert.alert(t("mobile:gps.playback.emptyTitle"), t("mobile:gps.playback.emptyBody"));
+          showAppAlert(t("mobile:gps.playback.emptyTitle"), t("mobile:gps.playback.emptyBody"));
         }
       } catch (error) {
-        Alert.alert(t("mobile:gps.errorTitle"), getApiErrorMessage(error, t("mobile:gps.playback.loadError")));
+        showAppAlert(t("mobile:gps.errorTitle"), getApiErrorMessage(error, t("mobile:gps.playback.loadError")));
       } finally {
         if (active) setLoading(false);
       }

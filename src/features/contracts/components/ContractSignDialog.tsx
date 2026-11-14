@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { useTranslation } from "react-i18next";
+import CodeDigitInput from "@/components/CodeDigitInput";
 import type { ContractSummary } from "@/features/contracts/types";
 import { requestSignOtp, sendForSigning, verifySignOtp } from "@/features/contracts/contractService";
 import { clearSignOtp, hasUnexpiredSignOtp, rememberSignOtp } from "@/features/contracts/signOtp";
@@ -41,7 +43,7 @@ export default function ContractSignDialog({
           await rememberSignOtp(userId, contract.id);
         }
       } catch (err) {
-        Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.signDialog.otpFailed")));
+        showAppAlert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.signDialog.otpFailed")));
         if (active) closeRef.current();
       } finally {
         if (active) setPreparing(false);
@@ -55,17 +57,17 @@ export default function ContractSignDialog({
   async function confirm() {
     if (!contract) return;
     if (otp.trim().length < 6) {
-      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("contract:otp.errorLength"));
+      showAppAlert(t("mobile:contract.alerts.missingCodeTitle"), t("contract:otp.errorLength"));
       return;
     }
     setBusy(true);
     try {
       await verifySignOtp(contract.id, otp.trim());
       await clearSignOtp(userId, contract.id);
-      Alert.alert(t("contract:toast.successTitle"), t("mobile:contract.signDialog.signed"));
+      showAppAlert(t("contract:toast.successTitle"), t("mobile:contract.signDialog.signed"));
       onSigned(contract);
     } catch (err) {
-      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.signDialog.otpInvalid")));
+      showAppAlert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.signDialog.otpInvalid")));
     } finally {
       setBusy(false);
     }
@@ -88,15 +90,11 @@ export default function ContractSignDialog({
             </>
           ) : (
             <>
-              <TextInput
+              <CodeDigitInput
+                label={t("mobile:contract.signDialog.otpPlaceholder")}
                 value={otp}
-                onChangeText={setOtp}
-                placeholder={t("mobile:contract.signDialog.otpPlaceholder")}
-                placeholderTextColor={p.faint}
-                keyboardType="number-pad"
-                maxLength={6}
+                onChange={setOtp}
                 autoFocus
-                style={styles.input}
               />
               <View style={styles.actions}>
                 <Pressable onPress={onClose} accessibilityRole="button" style={styles.ghostButton}>
@@ -143,19 +141,6 @@ const createStyles = (p: DetailPalette) =>
     },
     title: { color: p.ink, fontFamily: font.display, fontSize: 17, lineHeight: 22, letterSpacing: -0.25 },
     muted: { color: p.muted, fontFamily: font.regular, fontSize: 11.5, lineHeight: 16 },
-    input: {
-      backgroundColor: p.surfaceSoft,
-      borderWidth: 1,
-      borderColor: p.line,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      color: p.ink,
-      fontFamily: font.semibold,
-      fontSize: 16,
-      letterSpacing: 6,
-      textAlign: "center",
-    },
     actions: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 8, marginTop: 2 },
     ghostButton: { alignSelf: "center", paddingHorizontal: 14, paddingVertical: 10 },
     ghostText: { color: p.muted, fontFamily: font.bold, fontSize: 12.5 },

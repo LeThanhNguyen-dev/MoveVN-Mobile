@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, TextInput, View } from "react-native"
+import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from "react-native"
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
+import CodeDigitInput from "@/components/CodeDigitInput";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { ContractContent, ContractSummary } from "@/features/contracts/types";
@@ -57,7 +59,7 @@ export default function ContractPinFlow({
         }
       } catch {
         if (!cancelled) {
-          Alert.alert(t("mobile:contract.alerts.failureTitle"), t("mobile:contract.pin.checkFailed"));
+          showAppAlert(t("mobile:contract.alerts.failureTitle"), t("mobile:contract.pin.checkFailed"));
           onClose();
         }
       }
@@ -70,7 +72,7 @@ export default function ContractPinFlow({
 
   async function handleVerify() {
     if (!isValidPinCode(pin)) {
-      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.incomplete"));
+      showAppAlert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.incomplete"));
       return;
     }
     setBusy(true);
@@ -86,7 +88,7 @@ export default function ContractPinFlow({
       } catch {
         // Bỏ qua lỗi phụ.
       }
-      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.wrong")));
+      showAppAlert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.wrong")));
     } finally {
       setBusy(false);
     }
@@ -94,11 +96,11 @@ export default function ContractPinFlow({
 
   async function handleSetup() {
     if (otp.trim().length < 6) {
-      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.otpMissing"));
+      showAppAlert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.otpMissing"));
       return;
     }
     if (!isValidPinCode(newPin)) {
-      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.invalidNew"));
+      showAppAlert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.invalidNew"));
       return;
     }
     setBusy(true);
@@ -107,7 +109,7 @@ export default function ContractPinFlow({
       const content = await verifyViewPin(contract.id, newPin.trim());
       onVerified(content);
     } catch (err) {
-      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.setupFailed")));
+      showAppAlert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.setupFailed")));
     } finally {
       setBusy(false);
     }
@@ -115,11 +117,11 @@ export default function ContractPinFlow({
 
   async function handleForgot() {
     if (otp.trim().length < 6) {
-      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.otpMissing"));
+      showAppAlert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.otpMissing"));
       return;
     }
     if (!isValidPinCode(newPin)) {
-      Alert.alert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.invalidNew"));
+      showAppAlert(t("mobile:contract.alerts.missingCodeTitle"), t("mobile:contract.pin.invalidNew"));
       return;
     }
     setBusy(true);
@@ -128,7 +130,7 @@ export default function ContractPinFlow({
       const content = await verifyViewPin(contract.id, newPin.trim());
       onVerified(content);
     } catch (err) {
-      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.resetFailed")));
+      showAppAlert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.resetFailed")));
     } finally {
       setBusy(false);
     }
@@ -138,9 +140,9 @@ export default function ContractPinFlow({
     setBusy(true);
     try {
       await requestForgotPinOtp(userEmail);
-      Alert.alert(t("mobile:contract.alerts.sentTitle"), t("mobile:contract.pin.resetOtpSent"));
+      showAppAlert(t("mobile:contract.alerts.sentTitle"), t("mobile:contract.pin.resetOtpSent"));
     } catch (err) {
-      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.otpSendFailed")));
+      showAppAlert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.pin.otpSendFailed")));
     } finally {
       setBusy(false);
     }
@@ -159,7 +161,7 @@ export default function ContractPinFlow({
               {lockSeconds != null && lockSeconds > 0 && (
                 <AppText style={styles.warn}>{t("mobile:contract.pin.locked", { seconds: lockSeconds })}</AppText>
               )}
-              <PinInput value={pin} onChange={setPin} />
+              <CodeDigitInput label={t("mobile:contract.pin.pinPlaceholder")} value={pin} onChange={setPin} secure />
               <RowButtons
                 busy={busy}
                 onClose={onClose}
@@ -179,10 +181,8 @@ export default function ContractPinFlow({
               <AppText style={styles.muted}>
                 {t("mobile:contract.pin.setupHint")}
               </AppText>
-              <AppText style={styles.fieldLabel}>{t("mobile:contract.pin.emailOtpLabel")}</AppText>
-              <OtpInput value={otp} onChange={setOtp} />
-              <AppText style={styles.fieldLabel}>{t("mobile:contract.pin.newPinLabel")}</AppText>
-              <PinInput value={newPin} onChange={setNewPin} />
+              <CodeDigitInput label={t("mobile:contract.pin.emailOtpLabel")} value={otp} onChange={setOtp} />
+              <CodeDigitInput label={t("mobile:contract.pin.newPinLabel")} value={newPin} onChange={setNewPin} secure />
               <RowButtons busy={busy} onClose={onClose} onSubmit={handleSetup} submitLabel={t("mobile:contract.pin.createAndOpen")} />
             </>
           )}
@@ -193,51 +193,14 @@ export default function ContractPinFlow({
               <Pressable onPress={sendForgotOtp} disabled={busy} style={styles.otpButton}>
                 <AppText style={styles.otpButtonText}>{t("mobile:contract.pin.sendOtp")}</AppText>
               </Pressable>
-              <AppText style={styles.fieldLabel}>{t("mobile:contract.pin.emailOtpLabel")}</AppText>
-              <OtpInput value={otp} onChange={setOtp} />
-              <AppText style={styles.fieldLabel}>{t("mobile:contract.pin.newPinLabel")}</AppText>
-              <PinInput value={newPin} onChange={setNewPin} />
+              <CodeDigitInput label={t("mobile:contract.pin.emailOtpLabel")} value={otp} onChange={setOtp} />
+              <CodeDigitInput label={t("mobile:contract.pin.newPinLabel")} value={newPin} onChange={setNewPin} secure />
               <RowButtons busy={busy} onClose={onClose} onSubmit={handleForgot} submitLabel={t("mobile:contract.pin.resetAndOpen")} />
             </>
           )}
         </View>
       </View>
     </Modal>
-  );
-}
-
-function OtpInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { theme } = useTheme();
-  const { t } = useTranslation();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  return (
-    <TextInput
-      value={value}
-      onChangeText={onChange}
-      placeholder={t("mobile:contract.pin.otpPlaceholder")}
-      placeholderTextColor={theme.placeholder}
-      keyboardType="number-pad"
-      maxLength={6}
-      style={styles.input}
-    />
-  );
-}
-
-function PinInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { theme } = useTheme();
-  const { t } = useTranslation();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  return (
-    <TextInput
-      value={value}
-      onChangeText={onChange}
-      placeholder={t("mobile:contract.pin.pinPlaceholder")}
-      placeholderTextColor={theme.placeholder}
-      keyboardType="number-pad"
-      maxLength={6}
-      secureTextEntry
-      style={styles.input}
-    />
   );
 }
 
@@ -289,20 +252,7 @@ const createStyles = (theme: Theme) =>
     title: { color: theme.text, fontSize: 16, fontWeight: "800" },
     muted: { color: theme.muted, fontSize: 13, lineHeight: 18 },
     warn: { color: theme.danger, fontSize: 13, fontWeight: "600" },
-    fieldLabel: { color: theme.text, fontSize: 13, fontWeight: "700" },
     link: { color: theme.brand, fontSize: 13, fontWeight: "700" },
-    input: {
-      backgroundColor: theme.input,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      color: theme.text,
-      fontSize: 15,
-      letterSpacing: 4,
-      textAlign: "center",
-    },
     row: { gap: 8 },
     actions: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 },
     ghostButton: { paddingHorizontal: 14, paddingVertical: 10 },

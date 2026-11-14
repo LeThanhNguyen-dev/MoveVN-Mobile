@@ -10,13 +10,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
   View,
-  type AlertButton,
 } from "react-native";
+import { showAppAlert, type AppDialogButton } from "@/components/appDialog/dialogStore";
 import AppText from "@/components/AppText";
 import ProfileAvatar from "@/features/users/components/ProfileAvatar";
 import ProfileStars from "@/features/users/components/ProfileStars";
@@ -143,7 +142,7 @@ export default function OwnerReviewsPanel({
       targetId: review.reviewerId,
       label: review.reviewerName,
     };
-    const buttons: AlertButton[] = [];
+    const buttons: AppDialogButton[] = [];
     if (onOpenProfile) {
       buttons.push({
         text: t("account:viewProfile"),
@@ -159,7 +158,7 @@ export default function OwnerReviewsPanel({
     }
     if (buttons.length === 0) return;
     buttons.push({ text: t("common:closeAction"), style: "cancel" });
-    Alert.alert(t("mobile:user.reviews.actionsTitle"), review.reviewerName, buttons);
+    showAppAlert(t("mobile:user.reviews.actionsTitle"), review.reviewerName, buttons);
   }
 
   return (

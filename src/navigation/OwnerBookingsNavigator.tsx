@@ -29,11 +29,13 @@ const Stack = createNativeStackNavigator<OwnerBookingsStackParamList>();
 
 export default function OwnerBookingsNavigator({
   pendingBookingId,
+  pendingTracking,
   onRouteChange,
   onOpenDisputes,
   onOpenUserProfile,
 }: {
   pendingBookingId?: number;
+  pendingTracking?: { bookingId: number; vehicleName?: string };
   onRouteChange?: (route: string) => void;
   onOpenDisputes?: (prefill: DisputeCreatePrefill) => void;
   onOpenUserProfile?: (userId: number) => void;
@@ -41,7 +43,7 @@ export default function OwnerBookingsNavigator({
   const { theme } = useTheme();
   return (
     <Stack.Navigator
-      initialRouteName={pendingBookingId != null ? "OwnerBookingDetail" : "OwnerBookingList"}
+      initialRouteName={pendingTracking ? "OwnerTracking" : pendingBookingId != null ? "OwnerBookingDetail" : "OwnerBookingList"}
       screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}
       screenListeners={({ route }) => ({ focus: () => onRouteChange?.(route.name) })}
     >
@@ -57,7 +59,11 @@ export default function OwnerBookingsNavigator({
         )}
       </Stack.Screen>
       <Stack.Screen name="OwnerBookingHandover">{(props) => <OwnerBookingDetailScreen {...props} onOpenDisputes={onOpenDisputes} onOpenUserProfile={onOpenUserProfile} />}</Stack.Screen>
-      <Stack.Screen name="OwnerTracking" component={GpsTrackingScreen} />
+      <Stack.Screen
+        name="OwnerTracking"
+        initialParams={pendingTracking ? { bookingId: pendingTracking.bookingId, vehicleName: pendingTracking.vehicleName } : undefined}
+        component={GpsTrackingScreen}
+      />
       <Stack.Screen name="OwnerPlayback" component={GpsPlaybackScreen} />
       <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} />
       <Stack.Screen name="BookingUserProfile">{({ route, navigation }) => <PublicUserProfileScreen userId={route.params.userId} onBack={() => navigation.goBack()} onOpenProfile={userId => navigation.push("BookingUserProfile", { userId })} onViewVehicle={vehicleId => navigation.navigate("VehicleDetail", { vehicleId })} onOpenBooking={bookingId => navigation.navigate("OwnerBookingDetail", { bookingId })} />}</Stack.Screen>
