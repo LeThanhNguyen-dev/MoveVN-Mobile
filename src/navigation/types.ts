@@ -38,9 +38,9 @@ export type ExploreStackParamList = {
 };
 
 export type DealsStackParamList = {
-  Promotions: undefined;
   VoucherHunt: { promotionId?: number } | undefined;
   VoucherWallet: undefined;
+  VoucherHistory: undefined;
 };
 
 export type TripsStackParamList = {

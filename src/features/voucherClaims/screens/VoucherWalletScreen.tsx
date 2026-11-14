@@ -1,9 +1,9 @@
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import * as Clipboard from "expo-clipboard";
-import { Clock, Wallet } from "lucide-react-native";
+import { TicketPercent, Wallet } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
   ActivityIndicator,
   Pressable,
@@ -25,12 +25,15 @@ import PromotionDetailSheet, {
 import VoucherTicketCard, {
   type VoucherCardData,
 } from "@/features/vouchers/components/VoucherTicketCard";
-import { getDaysLeft, isExpiringSoon } from "@/features/vouchers/voucherFormat";
+import { formatVoucherDateTime, isExpiringSoon, isUpcomingStart } from "@/features/vouchers/voucherFormat";
 import { getVoucherWallet } from "@/features/voucherClaims/services/voucherClaimService";
-import type { VoucherClaimResponse } from "@/features/voucherClaims/types";
+import type {
+  VoucherAvailabilityReasonCode,
+  VoucherClaimResponse,
+} from "@/features/voucherClaims/types";
 
 type DealsNav = NativeStackNavigationProp<DealsStackParamList>;
-type WalletFilter = "all" | "available" | "used" | "expiring";
+type WalletFilter = "all" | "available" | "expiring";
 type WalletSort = "newest" | "ending" | "value";
 
 const SORT_OPTIONS: { value: WalletSort; labelKey: string }[] = [
@@ -38,6 +41,21 @@ const SORT_OPTIONS: { value: WalletSort; labelKey: string }[] = [
   { value: "ending", labelKey: "promo:wallet.sortEnding" },
   { value: "value", labelKey: "promo:wallet.sortValue" },
 ];
+
+/** Mã lý do campaign-level -> khoá i18n (mirror web wallet). */
+const REASON_MESSAGE_KEYS: Record<string, string> = {
+  CampaignPaused: "promo:wallet.reasonCampaignPaused",
+  CampaignNotApproved: "promo:wallet.reasonCampaignNotApproved",
+  NoParticipatingOwner: "promo:wallet.reasonNoParticipatingOwner",
+};
+
+/** Lý do campaign-level đã localize; null khi voucher không có vấn đề toàn chiến dịch. */
+function resolveReason(t: TFunction, voucher: VoucherClaimResponse): string | null {
+  const code = (voucher.availabilityReasonCode ?? null) as VoucherAvailabilityReasonCode | null;
+  if (!code) return null;
+  const key = REASON_MESSAGE_KEYS[code];
+  return key ? t(key) : voucher.availabilityReason ?? t("promo:wallet.reasonUnavailable");
+}
 
 function isUsed(voucher: VoucherClaimResponse) {
   return Boolean(voucher.usedAt);
@@ -48,8 +66,16 @@ function isEnded(voucher: VoucherClaimResponse) {
   return new Date(voucher.endAt).getTime() < Date.now();
 }
 
+function isExhausted(voucher: VoucherClaimResponse) {
+  return voucher.maxUsageCount > 0 && voucher.usageCount >= voucher.maxUsageCount;
+}
+
+/** Voucher hết hạn hoặc hết lượt (chưa dùng) → đưa về Lịch sử, không nằm trong ví chính. */
+function isInvalid(voucher: VoucherClaimResponse) {
+  return !isUsed(voucher) && (isEnded(voucher) || isExhausted(voucher));
+}
+
 function toCardData(voucher: VoucherClaimResponse): VoucherCardData {
-  const usedVoucher = isUsed(voucher);
   return {
     key: String(voucher.id),
     code: voucher.code,
@@ -60,15 +86,23 @@ function toCardData(voucher: VoucherClaimResponse): VoucherCardData {
     maxDiscountAmount: voucher.maxDiscountAmount,
     minOrderAmount: voucher.minOrderAmount,
     vehicleType: voucher.vehicleType,
+    startAt: voucher.startAt,
     endAt: voucher.endAt,
     usageCount: voucher.usageCount,
     maxUsageCount: voucher.maxUsageCount,
-    status: usedVoucher ? "used" : isEnded(voucher) ? "ended" : "active",
+    status: isEnded(voucher)
+      ? "ended"
+      : isUpcomingStart(voucher.startAt)
+        ? "upcoming"
+        : "active",
     usedAt: voucher.usedAt,
   };
 }
 
-function toDetailSlide(voucher: VoucherClaimResponse): PromotionDetailSlide {
+function toDetailSlide(
+  voucher: VoucherClaimResponse,
+  extra?: { scopeNote?: string | null; warning?: string | null },
+): PromotionDetailSlide {
   return {
     id: voucher.id,
     promotionId: voucher.promotionId,
@@ -82,64 +116,45 @@ function toDetailSlide(voucher: VoucherClaimResponse): PromotionDetailSlide {
     discountType: voucher.discountType,
     discountValue: voucher.discountValue,
     vehicleType: voucher.vehicleType,
+    startAt: voucher.startAt,
     endAt: voucher.endAt,
     minOrderAmount: voucher.minOrderAmount,
     maxDiscountAmount: voucher.maxDiscountAmount,
     usageCount: voucher.usageCount,
     maxUsageCount: voucher.maxUsageCount,
+    ...extra,
   };
 }
 
 type WalletCardProps = {
   voucher: VoucherClaimResponse;
-  copied: boolean;
-  onCopy: () => void;
   onUseNow: () => void;
   onOpenDetail: () => void;
 };
 
-function WalletCard({ voucher, copied, onCopy, onUseNow, onOpenDetail }: WalletCardProps) {
-  const { theme } = useTheme();
+function WalletCard({ voucher, onUseNow, onOpenDetail }: WalletCardProps) {
   const { t } = useTranslation();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  const days = getDaysLeft(voucher.endAt);
-  const usedVoucher = isUsed(voucher);
-  const showDaysBadge = !usedVoucher && days !== null && days <= 7;
+  const noticeMessage = resolveReason(t, voucher);
+  const upcoming = isUpcomingStart(voucher.startAt);
+  // Voucher đã nhận nhưng chưa tới ngày hiệu lực: khoá "Dùng ngay" và giải thích.
+  const timingReason = upcoming
+    ? t("promo:voucherCard.reasonNotStarted", {
+        datetime: formatVoucherDateTime(voucher.startAt) ?? "",
+      })
+    : null;
+  const lockReason = timingReason ?? noticeMessage;
 
   return (
     <VoucherTicketCard
       data={toCardData(voucher)}
-      showCode
-      copied={copied}
-      onCopyCode={onCopy}
       onOpenDetail={onOpenDetail}
-      badge={
-        showDaysBadge ? (
-          <View
-            style={[
-              styles.daysBadge,
-              {
-                backgroundColor: theme.mode === "dark" ? "rgba(245,158,11,0.15)" : "#FFFBEB",
-                borderColor: theme.mode === "dark" ? "rgba(245,158,11,0.35)" : "#FDE68A",
-              },
-            ]}
-          >
-            <Clock color={theme.mode === "dark" ? "#FBBF24" : "#B45309"} size={11} />
-            <AppText style={[styles.daysBadgeText, { color: theme.mode === "dark" ? "#FBBF24" : "#B45309" }]}>
-              {t("promo:wallet.daysLeft", { days })}
-            </AppText>
-          </View>
-        ) : null
-      }
-      action={
-        usedVoucher
-          ? undefined
-          : {
-              label: t("promo:wallet.useNow"),
-              icon: <Wallet color="#FFFFFF" size={14} />,
-              onClick: onUseNow,
-            }
-      }
+      action={{
+        label: t("promo:wallet.useNow"),
+        icon: <TicketPercent color="#FFFFFF" size={13} />,
+        onClick: onUseNow,
+        disabled: lockReason !== null,
+        disabledReason: lockReason ?? undefined,
+      }}
     />
   );
 }
@@ -157,7 +172,6 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
   const [filter, setFilter] = useState<WalletFilter>("all");
   const [sort, setSort] = useState<WalletSort>("newest");
   const [search, setSearch] = useState("");
-  const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selected, setSelected] = useState<PromotionDetailSlide | null>(null);
 
   const fetchWallet = useCallback(async () => {
@@ -180,18 +194,21 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
     void fetchWallet();
   }, [fetchWallet]);
 
-  const available = useMemo(
-    () => vouchers.filter((v) => !isUsed(v) && !isEnded(v)),
+  /** Ví chỉ chứa voucher còn dùng được: chưa dùng, chưa hết hạn, chưa hết lượt. */
+  const usable = useMemo(
+    () => vouchers.filter((v) => !isUsed(v) && !isInvalid(v)),
     [vouchers],
   );
-  const used = useMemo(() => vouchers.filter(isUsed), [vouchers]);
+  const available = useMemo(
+    () => usable.filter((v) => !isUpcomingStart(v.startAt)),
+    [usable],
+  );
   const expiring = useMemo(() => available.filter((v) => isExpiringSoon(v.endAt)), [available]);
 
   const filters = useMemo(
     () => [
-      { value: "all", label: t("promo:wallet.filterAll"), count: vouchers.length },
+      { value: "all", label: t("promo:wallet.filterAll"), count: usable.length },
       { value: "available", label: t("promo:wallet.filterAvailable"), count: available.length },
-      { value: "used", label: t("promo:wallet.filterUsed"), count: used.length },
       {
         value: "expiring",
         label: t("promo:wallet.filterExpiring"),
@@ -199,7 +216,7 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
         tone: "amber" as const,
       },
     ],
-    [vouchers.length, available.length, used.length, expiring.length, t],
+    [usable.length, available.length, expiring.length, t],
   );
 
   const sortOptions = useMemo(
@@ -209,10 +226,9 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
 
   const displayed = useMemo(() => {
     const query = search.trim().toLowerCase();
-    const result = vouchers.filter((voucher) => {
-      if (filter === "available" && (isUsed(voucher) || isEnded(voucher))) return false;
-      if (filter === "used" && !isUsed(voucher)) return false;
-      if (filter === "expiring" && !isExpiringSoon(voucher.endAt)) return false;
+    const result = usable.filter((voucher) => {
+      if (filter === "available" && isUpcomingStart(voucher.startAt)) return false;
+      if (filter === "expiring" && (!isExpiringSoon(voucher.endAt) || isUpcomingStart(voucher.startAt))) return false;
       if (!query) return true;
       return (
         voucher.name.toLowerCase().includes(query) ||
@@ -230,29 +246,13 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
       }
       return new Date(second.claimedAt).getTime() - new Date(first.claimedAt).getTime();
     });
-  }, [vouchers, filter, sort, search]);
+  }, [usable, filter, sort, search]);
 
   const filterDesc = useMemo(() => {
     if (filter === "available") return t("promo:wallet.hintAvailable");
-    if (filter === "used") return t("promo:wallet.hintUsed");
     if (filter === "expiring") return t("promo:wallet.hintExpiring");
     return t("promo:wallet.hintAll");
   }, [filter, t]);
-
-  async function handleCopy(voucher: VoucherClaimResponse) {
-    try {
-      await Clipboard.setStringAsync(voucher.code);
-      setCopiedId(voucher.id);
-      showToast({ type: "success", title: t("promo:wallet.copiedTitle"), message: voucher.code });
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch {
-      showToast({
-        type: "error",
-        title: t("promo:errorTitle"),
-        message: t("promo:wallet.copyError"),
-      });
-    }
-  }
 
   function handleUseNow() {
     if (onUseNow) {
@@ -284,6 +284,25 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
 
         <DealsSegmentedNav />
 
+        <View style={styles.actionRow}>
+          <Pressable
+            onPress={() => navigation.navigate("VoucherHistory")}
+            style={[styles.actionTouch, styles.actionOutline]}
+            accessibilityRole="button"
+            accessibilityLabel={t("promo:wallet.historyAction")}
+          >
+            <AppText style={styles.actionText}>{t("promo:wallet.historyAction")}</AppText>
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate("VoucherHunt")}
+            style={[styles.actionTouch, styles.actionPrimary]}
+            accessibilityRole="button"
+            accessibilityLabel={t("promo:wallet.huntMore")}
+          >
+            <AppText style={[styles.actionText, styles.actionPrimaryText]}>{t("promo:wallet.huntMore")}</AppText>
+          </Pressable>
+        </View>
+
         <DealsFilterBar
           search={search}
           onSearchChange={setSearch}
@@ -300,7 +319,7 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
           <View style={styles.centerBox}>
             <ActivityIndicator color={theme.brand} size="large" />
           </View>
-        ) : vouchers.length === 0 ? (
+        ) : usable.length === 0 ? (
           <View style={styles.emptyBox}>
             <View style={styles.emptyIcon}>
               <Wallet color={theme.brand} size={26} />
@@ -345,16 +364,44 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
               </View>
             ) : (
               <View style={styles.ticketList}>
-                {displayed.map((voucher) => (
-                  <MemoWalletCard
-                    key={voucher.id}
-                    voucher={voucher}
-                    copied={copiedId === voucher.id}
-                    onCopy={() => void handleCopy(voucher)}
-                    onUseNow={handleUseNow}
-                    onOpenDetail={() => setSelected(toDetailSlide(voucher))}
-                  />
-                ))}
+                {displayed.map((voucher) => {
+                  const timingWarning = isUpcomingStart(voucher.startAt)
+                    ? t("promo:voucherCard.reasonNotStarted", {
+                        datetime: formatVoucherDateTime(voucher.startAt) ?? "",
+                      })
+                    : null;
+                  const warning = timingWarning ?? resolveReason(t, voucher);
+                  const scopeLabel =
+                    voucher.ownerId != null
+                      ? t("promo:wallet.scopeOwner", {
+                          owner: voucher.ownerName ?? `#${voucher.ownerId}`,
+                        })
+                      : t("promo:wallet.scopeGlobal");
+                  const showOwnerCount =
+                    Boolean(voucher.requiresOwnerOptIn) && (voucher.totalOwnerCount ?? 0) > 0;
+                  const scopeNote = [
+                    scopeLabel,
+                    showOwnerCount
+                      ? t("promo:wallet.ownerJoined", {
+                          accepted: voucher.acceptedOwnerCount ?? 0,
+                          total: voucher.totalOwnerCount,
+                        })
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ");
+
+                  return (
+                    <MemoWalletCard
+                      key={voucher.id}
+                      voucher={voucher}
+                      onUseNow={handleUseNow}
+                      onOpenDetail={() =>
+                        setSelected(toDetailSlide(voucher, { scopeNote, warning }))
+                      }
+                    />
+                  );
+                })}
               </View>
             )}
           </>
@@ -387,17 +434,22 @@ const createStyles = (theme: Theme) =>
     },
     countBadgeText: { color: theme.brand, fontSize: 11, fontWeight: "900" },
     sectionDesc: { color: theme.muted, fontSize: 12 },
-    daysBadge: {
+    actionRow: { flexDirection: "row", gap: 8, marginTop: 8 },
+    actionTouch: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 4,
-      borderRadius: 999,
-      borderWidth: 1,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
+      justifyContent: "center",
+      gap: 6,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      flex: 1,
     },
-    daysBadgeText: { fontSize: 10, fontWeight: "800" },
-    ticketList: { gap: 14 },
+    actionOutline: { borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface },
+    actionPrimary: { backgroundColor: theme.brand },
+    actionText: { color: theme.text, fontSize: 12, fontWeight: "800" },
+    actionPrimaryText: { color: "#FFFFFF" },
+    ticketList: { gap: 12 },
     centerBox: { paddingVertical: 64, alignItems: "center" },
     emptyBox: {
       alignItems: "center",

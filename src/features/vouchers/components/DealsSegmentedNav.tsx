@@ -1,4 +1,3 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { memo, useMemo } from "react";
@@ -8,17 +7,16 @@ import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { DealsStackParamList } from "@/navigation/types";
-import { CTA_GRADIENT } from "@/features/vouchers/voucherFormat";
 
-const SEGMENTS: { route: keyof DealsStackParamList; emoji: string; labelKey: string }[] = [
-  { route: "Promotions", emoji: "🔥", labelKey: "mobile:voucher.nav.promotions" },
-  { route: "VoucherHunt", emoji: "✨", labelKey: "mobile:voucher.nav.hunt" },
-  { route: "VoucherWallet", emoji: "🧳", labelKey: "promo:wallet.pageTitle" },
+/** Các màn hình còn lại trong cụm Ưu đãi sau khi bỏ màn Khuyến mãi (Promotions). */
+const SEGMENTS: { route: keyof DealsStackParamList; labelKey: string }[] = [
+  { route: "VoucherHunt", labelKey: "mobile:voucher.nav.hunt" },
+  { route: "VoucherWallet", labelKey: "promo:wallet.pageTitle" },
 ];
 
 type DealsNav = NativeStackNavigationProp<DealsStackParamList>;
 
-/** Thanh chuyển nhanh 3 màn hình Ưu đãi — dùng chung đầu cả 3 trang. */
+/** Thanh chuyển nhanh giữa Săn mã và Ví voucher (không icon, không màn Khuyến mãi). */
 function DealsSegmentedNav() {
   const route = useRoute();
   const navigation = useNavigation<DealsNav>();
@@ -39,30 +37,16 @@ function DealsSegmentedNav() {
             accessibilityLabel={label}
             onPress={() => {
               if (active) return;
-              if (seg.route === "Promotions") navigation.navigate("Promotions");
-              else if (seg.route === "VoucherHunt") navigation.navigate("VoucherHunt");
+              if (seg.route === "VoucherHunt") navigation.navigate("VoucherHunt");
               else navigation.navigate("VoucherWallet");
             }}
             style={styles.segTouch}
           >
-            {active ? (
-              <LinearGradient
-                colors={[CTA_GRADIENT[0], CTA_GRADIENT[1], CTA_GRADIENT[2]]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.segActive}
-              >
-                <AppText style={styles.segActiveText}>
-                  {seg.emoji} {label}
-                </AppText>
-              </LinearGradient>
-            ) : (
-              <View style={styles.segIdle}>
-                <AppText style={styles.segIdleText}>
-                  {seg.emoji} {label}
-                </AppText>
-              </View>
-            )}
+            <View style={active ? styles.segActive : styles.segIdle}>
+              <AppText style={active ? styles.segActiveText : styles.segIdleText}>
+                {label}
+              </AppText>
+            </View>
           </Pressable>
         );
       })}
@@ -79,7 +63,7 @@ const createStyles = (theme: Theme) =>
       gap: 6,
       padding: 6,
       borderRadius: 16,
-      backgroundColor: theme.mode === "dark" ? "#16161D" : "rgba(237,233,254,0.8)",
+      backgroundColor: theme.surfaceAlt,
       marginBottom: 16,
     },
     segTouch: { flex: 1, borderRadius: 12 },
@@ -87,21 +71,20 @@ const createStyles = (theme: Theme) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 6,
       paddingVertical: 8,
       borderRadius: 12,
+      backgroundColor: theme.brand,
     },
     segActiveText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
     segIdle: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 6,
       paddingVertical: 8,
       borderRadius: 12,
     },
     segIdleText: {
-      color: theme.mode === "dark" ? "#A1A1AA" : "#4B5563",
+      color: theme.muted,
       fontSize: 12,
       fontWeight: "500",
     },

@@ -1,7 +1,6 @@
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Clipboard from "expo-clipboard";
-import { CalendarDays, Car, Check, Copy, Expand, TicketPercent, X } from "lucide-react-native";
+import { AlertTriangle, Check, Copy, Info, Lock, TicketPercent, X } from "lucide-react-native";
 import { memo, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native"
@@ -12,9 +11,9 @@ import { showToast } from "@/features/notifications/toastStore";
 import {
   CTA_GRADIENT,
   formatDiscountLong,
-  formatEndDate,
   formatVnd,
   formatVehicleLabelShort,
+  formatVoucherDateTime,
   voucherUsagePercent,
 } from "@/features/vouchers/voucherFormat";
 
@@ -38,6 +37,10 @@ export type PromotionDetailSlide = {
   maxDiscountAmount?: number | null;
   usageCount?: number | null;
   maxUsageCount?: number | null;
+  /** Cảnh báo campaign-level hiển thị trong sheet (không phải lý do từ chối của một chủ xe). */
+  warning?: string | null;
+  /** Phạm vi chiến dịch + số chủ xe đã tham gia. */
+  scopeNote?: string | null;
 };
 
 type PromotionDetailSheetProps = {
@@ -45,6 +48,8 @@ type PromotionDetailSheetProps = {
   onClose: () => void;
   /** Điều hướng sang màn Săn mã kèm promotionId (mirror web navigate ctaTo). */
   onCta: (promotionId: number) => void;
+  /** Ẩn CTA khi chỉ dùng sheet để xem thông tin (vd. trang Lịch sử). */
+  hideCta?: boolean;
 };
 
 /**
@@ -52,7 +57,7 @@ type PromotionDetailSheetProps = {
  * nền đen bấm đóng, nút X, drag handle, footer CTA sticky,
  * hiệu ứng 380ms "Đang mở săn voucher... ✓" trước khi điều hướng.
  */
-function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetProps) {
+function PromotionDetailSheet({ slide, onClose, onCta, hideCta = false }: PromotionDetailSheetProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -68,8 +73,10 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
 
   const discount = formatDiscountLong(slide.discountType, slide.discountValue);
   const vehicleLabel = slide.vehicleType ? formatVehicleLabelShort(slide.vehicleType) : null;
-  const endLabel = formatEndDate(slide.endAt);
-  const startLabel = formatEndDate(slide.startAt);
+  const endLabel = formatVoucherDateTime(slide.endAt);
+  const startLabel = formatVoucherDateTime(slide.startAt);
+  const vehicleValueLabel = vehicleLabel;
+  const vehicleText = vehicleValueLabel ?? t("mobile:voucher.detail.allVehicles");
   const code = slide.code ?? null;
   const effectiveTitle =
     slide.promotionName || slide.popupTitle || slide.title || t("mobile:voucher.detail.fallbackTitle");
@@ -116,8 +123,18 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
   conditions.push(t("mobile:voucher.detail.conditionOncePerAccount"));
   conditions.push(t("mobile:voucher.detail.conditionNoStacking"));
 
+  const ctaBlockedReason = slide.warning ?? null;
+
   function handleCta() {
     if (claimed || slide?.promotionId == null) return;
+    if (ctaBlockedReason) {
+      showToast({
+        type: "info",
+        title: slide.popupCtaLabel || t("promo:hunt.claim"),
+        message: ctaBlockedReason,
+      });
+      return;
+    }
     setClaimed(true);
     const promotionId = slide.promotionId;
     setTimeout(() => onCta(promotionId), 380);
@@ -160,34 +177,13 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
           </Pressable>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
-            {!!slide.image ? (
-              <View style={styles.imageWrap}>
-                <Image
-                  source={{ uri: slide.image }}
-                  style={styles.image}
-                  contentFit="cover"
-                  transition={250}
-                  accessibilityLabel={slide.title}
-                />
-                <View style={styles.imageBadge}>
-                  <Expand color="#FFFFFF" size={14} />
-                </View>
-              </View>
-            ) : null}
-
             <View style={styles.heroCard}>
-              <LinearGradient
-                colors={[CTA_GRADIENT[0], CTA_GRADIENT[1], "#4F46E5"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={StyleSheet.absoluteFill}
-              />
               <AppText style={styles.heroEyebrow}>{t("mobile:voucher.detail.eyebrow")}</AppText>
               <AppText display style={styles.heroTitle}>
                 {effectiveTitle}
               </AppText>
               {slide.popupDescription ? (
-                <AppText style={styles.heroDesc} numberOfLines={3}>
+                <AppText style={styles.heroDesc}>
                   {slide.popupDescription}
                 </AppText>
               ) : (
@@ -200,11 +196,21 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
               </AppText>
             </View>
 
+            {slide.warning ? (
+              <View style={[styles.notice, styles.noticeWarning]}>
+                <AlertTriangle
+                  color={theme.mode === "dark" ? "#FBBF24" : "#B45309"}
+                  size={13}
+                />
+                <AppText style={styles.noticeWarningText}>{slide.warning}</AppText>
+              </View>
+            ) : null}
+
             {code ? (
               <View style={styles.codeRow}>
                 <View style={styles.codeBox}>
                   <AppText style={styles.codeLabel}>{t("mobile:voucher.detail.codeLabel")}</AppText>
-                  <AppText style={styles.codeText} numberOfLines={1}>
+                  <AppText style={styles.codeText}>
                     {code}
                   </AppText>
                 </View>
@@ -250,30 +256,32 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
               </View>
             ) : null}
 
-            <View style={styles.metaGrid}>
-              <View style={styles.metaCell}>
-                <View style={styles.metaLabelRow}>
-                  <CalendarDays color={theme.faint} size={12} />
-                  <AppText style={styles.metaLabel}>{t("mobile:voucher.detail.validityLabel")}</AppText>
+            <View style={styles.metaList}>
+              <View style={styles.metaRow}>
+                <AppText style={styles.metaLabel}>{t("mobile:voucher.detail.validityLabel")}:</AppText>
+                <View style={styles.metaValueColumn}>
+                  {startLabel ? (
+                    <AppText style={styles.metaValue}>
+                      {t("mobile:voucher.detail.fromDate", { date: startLabel })}
+                    </AppText>
+                  ) : null}
+                  {endLabel ? (
+                    <AppText style={styles.metaValue}>
+                      {t("mobile:voucher.detail.untilDate", { date: endLabel })}
+                    </AppText>
+                  ) : null}
+                  {!startLabel && !endLabel ? (
+                    <AppText style={styles.metaValue}>
+                      {t("mobile:voucher.detail.unlimited")}
+                    </AppText>
+                  ) : null}
                 </View>
-                <AppText style={styles.metaValue}>
-                  {endLabel
-                    ? t("mobile:voucher.detail.untilDate", { date: endLabel })
-                    : startLabel
-                      ? t("mobile:voucher.detail.fromDate", { date: startLabel })
-                      : t("mobile:voucher.detail.unlimited")}
-                </AppText>
               </View>
-              <View style={styles.metaCell}>
-                <View style={styles.metaLabelRow}>
-                  <Car color={theme.faint} size={12} />
-                  <AppText style={styles.metaLabel}>
-                    {t("mobile:voucher.detail.vehicleFieldLabel")}
-                  </AppText>
-                </View>
-                <AppText style={styles.metaValue}>
-                  {vehicleLabel ?? t("mobile:voucher.detail.allVehicles")}
+              <View style={styles.metaRow}>
+                <AppText style={styles.metaLabel}>
+                  {t("mobile:voucher.detail.vehicleFieldLabel")}:
                 </AppText>
+                <AppText style={styles.metaValue}>{vehicleText}</AppText>
               </View>
             </View>
 
@@ -291,22 +299,32 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
                 </View>
               ))}
             </View>
+
+            {slide.scopeNote ? (
+              <View style={[styles.notice, styles.noticeInfo]}>
+                <Info color={theme.brand} size={13} />
+                <AppText style={styles.noticeInfoText}>{slide.scopeNote}</AppText>
+              </View>
+            ) : null}
           </ScrollView>
 
-          {hasPromotion ? (
+          {hasPromotion && !hideCta ? (
             <View style={styles.footer}>
               <Pressable
                 onPress={handleCta}
                 disabled={claimed}
                 style={styles.ctaTouch}
                 accessibilityRole="button"
+                accessibilityState={{ disabled: claimed || Boolean(ctaBlockedReason) }}
                 accessibilityLabel={slide.popupCtaLabel || t("promo:hunt.claim")}
               >
                 <LinearGradient
                   colors={
                     claimed
                       ? (["#10B981", "#14B8A6"] as const)
-                      : [CTA_GRADIENT[0], CTA_GRADIENT[1], CTA_GRADIENT[2]]
+                      : ctaBlockedReason
+                        ? (["#9CA3AF", "#6B7280"] as const)
+                        : [CTA_GRADIENT[0], CTA_GRADIENT[1], CTA_GRADIENT[2]]
                   }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
@@ -316,6 +334,13 @@ function PromotionDetailSheet({ slide, onClose, onCta }: PromotionDetailSheetPro
                     <AppText style={styles.ctaText}>
                       {t("mobile:voucher.detail.openingClaim")}
                     </AppText>
+                  ) : ctaBlockedReason ? (
+                    <>
+                      <Lock color="#FFFFFF" size={15} />
+                      <AppText style={styles.ctaText}>
+                        {slide.popupCtaLabel || t("promo:hunt.claim")}
+                      </AppText>
+                    </>
                   ) : (
                     <>
                       <TicketPercent color="#FFFFFF" size={15} />
@@ -373,37 +398,27 @@ const createStyles = (theme: Theme) =>
       justifyContent: "center",
     },
     body: { padding: 16, gap: 12 },
-    imageWrap: { borderRadius: 16, overflow: "hidden" },
-    image: { width: "100%", aspectRatio: 16 / 9, backgroundColor: theme.surfaceAlt },
-    imageBadge: {
-      position: "absolute",
-      right: 8,
-      bottom: 8,
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "rgba(15,23,42,0.55)",
-    },
     heroCard: {
-      borderRadius: 14,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: theme.brandBorder,
+      backgroundColor: theme.brandSoft,
       padding: 14,
       gap: 4,
-      overflow: "hidden",
     },
     heroEyebrow: {
-      color: "#FDE68A",
+      color: theme.brand,
       fontSize: 9,
       fontWeight: "800",
       letterSpacing: 1.4,
     },
-    heroTitle: { color: "#FFFFFF", fontSize: 17, fontWeight: "900", lineHeight: 22 },
-    heroDesc: { color: "rgba(255,255,255,0.85)", fontSize: 12, lineHeight: 17 },
-    heroVehicle: { color: "rgba(255,255,255,0.72)", fontSize: 11, fontWeight: "600" },
-    codeRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    heroTitle: { color: theme.text, fontSize: 17, fontWeight: "900", lineHeight: 22 },
+    heroDesc: { color: theme.muted, fontSize: 12, lineHeight: 18, flexShrink: 1 },
+    heroVehicle: { color: theme.muted, fontSize: 11, fontWeight: "600" },
+    codeRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
     codeBox: {
       flex: 1,
+      minWidth: 0,
       borderRadius: 12,
       borderWidth: 1,
       borderStyle: "dashed",
@@ -414,13 +429,13 @@ const createStyles = (theme: Theme) =>
       gap: 2,
     },
     codeLabel: { color: theme.brand, fontSize: 9, fontWeight: "800", letterSpacing: 1 },
-    codeText: { color: theme.text, fontSize: 14, fontWeight: "800", fontFamily: "monospace" },
+    codeText: { color: theme.text, fontSize: 14, fontWeight: "800", fontFamily: "monospace", flexShrink: 1 },
     copyButton: {
       flexDirection: "row",
       alignItems: "center",
       gap: 5,
       borderRadius: 10,
-      backgroundColor: "#7C3AED",
+      backgroundColor: theme.brand,
       paddingHorizontal: 12,
       paddingVertical: 10,
       flexShrink: 0,
@@ -437,19 +452,11 @@ const createStyles = (theme: Theme) =>
       overflow: "hidden",
     },
     usageFill: { height: "100%", borderRadius: 3 },
-    metaGrid: { flexDirection: "row", gap: 8 },
-    metaCell: {
-      flex: 1,
-      borderRadius: 12,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F8FAFC",
-      padding: 10,
-      gap: 4,
-    },
-    metaLabelRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-    metaLabel: { color: theme.faint, fontSize: 10, fontWeight: "600" },
-    metaValue: { color: theme.text, fontSize: 11, fontWeight: "800" },
+    metaList: { gap: 4 },
+    metaRow: { flexDirection: "row", alignItems: "flex-start", flexWrap: "wrap", gap: 4 },
+    metaLabel: { color: theme.faint, fontSize: 11, fontWeight: "600" },
+    metaValue: { color: theme.text, fontSize: 12, fontWeight: "700", flexShrink: 1 },
+    metaValueColumn: { flexShrink: 1, gap: 1 },
     conditionsBox: { gap: 6 },
     conditionsTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
     conditionsTitle: {
@@ -467,6 +474,30 @@ const createStyles = (theme: Theme) =>
     conditionRow: { flexDirection: "row", gap: 6 },
     conditionBullet: { color: theme.brand, fontSize: 11, fontWeight: "900", lineHeight: 16 },
     conditionText: { flex: 1, color: theme.muted, fontSize: 11, lineHeight: 16 },
+    notice: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 6,
+      borderRadius: 10,
+      borderWidth: 1,
+      paddingHorizontal: 11,
+      paddingVertical: 9,
+    },
+    noticeWarning: {
+      borderColor: theme.mode === "dark" ? "rgba(245,158,11,0.35)" : "#FDE68A",
+      backgroundColor: theme.mode === "dark" ? "rgba(245,158,11,0.12)" : "#FFFBEB",
+    },
+    noticeWarningText: {
+      flex: 1,
+      color: theme.mode === "dark" ? "#FCD34D" : "#92400E",
+      fontSize: 11.5,
+      lineHeight: 16,
+    },
+    noticeInfo: {
+      borderColor: theme.border,
+      backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F8FAFC",
+    },
+    noticeInfoText: { flex: 1, color: theme.muted, fontSize: 11.5, lineHeight: 16 },
     footer: {
       padding: 16,
       backgroundColor: theme.mode === "dark" ? "rgba(32,32,41,0.95)" : "rgba(255,255,255,0.95)",
