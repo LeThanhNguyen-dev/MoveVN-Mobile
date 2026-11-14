@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { useTranslation } from "react-i18next";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
@@ -62,7 +63,7 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
     setBusy("request"); setError("");
     try {
       await createExtensionRequest(booking.id, parsed, note.trim() || undefined);
-      Alert.alert(
+      showAppAlert(
         t("contract:extensionRequest.sentToastTitle"),
         t("contract:extensionRequest.sentToastMessage", { count: parsed }),
       );
@@ -80,14 +81,14 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
     setBusy("approve"); setError("");
     try {
       await approveExtensionRequest(request.id);
-      Alert.alert(
+      showAppAlert(
         t("contract:extensionRequest.approvedToastTitle"),
         t("contract:extensionRequest.approvedToastMessage", { count: request.additionalDays }),
       );
       await loadRequests();
       onBookingChanged?.();
     } catch (err) {
-      Alert.alert(
+      showAppAlert(
         t("contract:extensionRequest.approveFailedTitle"),
         getApiErrorMessage(err, t("contract:extensionRequest.approveFailedMessage")),
       );
@@ -102,7 +103,7 @@ export default function ExtensionRequestPanel({ booking, onBookingChanged }: {
     setBusy("reject"); setError("");
     try {
       await rejectExtensionRequest(rejectTarget.id, reason.trim());
-      Alert.alert(t("contract:extensionRequest.rejectedToastTitle"), t("contract:extensionRequest.rejectedToastMessage"));
+      showAppAlert(t("contract:extensionRequest.rejectedToastTitle"), t("contract:extensionRequest.rejectedToastMessage"));
       setRejectTarget(null);
       await loadRequests();
     } catch (err) {

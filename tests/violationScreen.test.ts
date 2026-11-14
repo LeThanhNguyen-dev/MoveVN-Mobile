@@ -10,6 +10,7 @@ vi.mock("@/features/violations/violationService", () => ({ getMyViolations: mock
 vi.mock("@/features/supportTickets/supportTicketService", () => ({ uploadSupportTicketAttachment: vi.fn() }));
 vi.mock("@/features/auth/hooks/useAuth", () => ({ getSessionGeneration: () => mocks.generation }));
 vi.mock("@/services/apiClient", () => ({ getApiErrorMessage: (_e: unknown, fallback: string) => fallback }));
+vi.mock("@/components/appDialog/dialogStore", () => ({ showAppAlert: mocks.alert }));
 vi.mock("@/theme/useTheme", async () => { const { themes } = await import("@/theme/tokens"); return { useTheme: () => ({ theme: themes.light }) }; });
 vi.mock("react-native", () => ({ View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable", ScrollView: "ScrollView", ActivityIndicator: "ActivityIndicator", RefreshControl: "RefreshControl", KeyboardAvoidingView: "KeyboardAvoidingView", Image: "Image", Platform: { OS: "android" }, Alert: { alert: mocks.alert }, AppState: { currentState: "active", addEventListener: (_type: string, listener: (state: string) => void) => { mocks.listeners.push(listener); return { remove: () => { mocks.listeners = mocks.listeners.filter(x => x !== listener); } }; } }, StyleSheet: { create: (x: unknown) => x }, Modal: ({ visible, children }: { visible: boolean; children: React.ReactNode }) => visible ? React.createElement("Modal", null, children) : null }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "View" }));

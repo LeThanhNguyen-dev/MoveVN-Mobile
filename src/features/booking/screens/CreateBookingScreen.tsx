@@ -2,7 +2,6 @@ import type { ComponentRef } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,6 +9,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { ChevronLeft, ShieldCheck } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import type { ScrollViewInstance } from "react-native";
@@ -344,7 +344,7 @@ export default function CreateBookingScreen({
         customerNote: note.trim() || undefined,
         promotionCode: promoResult ? promoCode.trim().toUpperCase() : undefined,
       });
-      Alert.alert(t("booking:create.submitSuccessTitle"), t("mobile:checkout.create.successMessage", { code: created.bookingCode }), [
+      showAppAlert(t("booking:create.submitSuccessTitle"), t("mobile:checkout.create.successMessage", { code: created.bookingCode }), [
         { text: t("mobile:checkout.create.viewTrip"), onPress: () => onCreated?.(created.id) },
       ]);
     } catch (err) {

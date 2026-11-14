@@ -226,6 +226,8 @@ export const endpoints = {
     summary: (bookingId: number) => `/api/tracking/${bookingId}/summary`,
     session: (bookingId: number) => `/api/tracking/${bookingId}/session`,
     requestGps: (bookingId: number) => `/api/tracking/${bookingId}/request-gps`,
+    consent: (bookingId: number) => `/api/tracking/${bookingId}/consent`,
+    ownerVehicles: "/api/tracking/owner/vehicles",
     address: (bookingId: number) => `/api/tracking/${bookingId}/address`,
   },
   publicCmsPages: {

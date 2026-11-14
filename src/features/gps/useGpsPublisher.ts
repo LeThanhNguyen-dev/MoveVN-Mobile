@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
 import { AppState } from "react-native";
 import * as Location from "expo-location";
-import { postGpsPoints } from "./gpsService";
+import { getGpsSession, postGpsPoints, setGpsSharingConsent } from "./gpsService";
 import { useGpsStore } from "./gpsStore";
 import { getApiErrorMessage } from "@/services/apiClient";
+import { useAuthStore } from "@/features/auth/hooks/useAuth";
+import { getMyBookings } from "@/features/booking/bookingService";
+import { clearStoredConsent, getStoredConsent, pruneStoredConsents, setStoredConsent } from "./gpsConsentStorage";
 import i18n from "@/i18n";
 import type { GpsPointRequest } from "./types";
 
@@ -18,19 +21,156 @@ const HEARTBEAT_INTERVAL_MS = 30_000;
 /** Khi mất mạng giữ tối đa số điểm này để gửi lại (theo thứ tự cũ → mới). */
 const OFFLINE_BUFFER_LIMIT = 20;
 
+function errorCode(error: unknown): string | undefined {
+  return (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
+}
+
 /**
- * Publish GPS cho khách thuê: mỗi khi store có activePublishBookingId (booking đang
- * InProgress/Returning được mở ở TripDetail), hook xin quyền location, theo dõi vị trí
- * và gửi NGAY từng điểm lên backend (độ trễ ~8s + mạng). Đặt 1 lần trong CustomerNavigator.
+ * Publish GPS cho khách thuê trên app:
+ * 1. Tự tìm chuyến đang thuê khi mở lại app và gửi tiếp nếu đã đồng ý trước đó.
+ * 2. Khôi phục lựa chọn chia sẻ (SecureStore + session phía máy chủ) — không hỏi lại.
+ * 3. Khi publishSharingState = "sharing": xin quyền vị trí, lọc 8m rồi gửi điểm lên backend.
+ * Đặt 1 lần trong CustomerNavigator.
  *
  * MVP chỉ track khi app mở (foreground) — iOS/Android siết location nền chặt.
  */
 export function useGpsPublisher() {
   const activePublishBookingId = useGpsStore((state) => state.activePublishBookingId);
+  const publishSharingState = useGpsStore((state) => state.publishSharingState);
+  const userId = useAuthStore((state) => state.user?.userId ?? null);
+
   const bufferRef = useRef<GpsPointRequest[]>([]);
   const inFlightRef = useRef(false);
   const lastLocationRef = useRef<GpsPointRequest | null>(null);
   const flushRef = useRef<(() => Promise<void>) | undefined>(undefined);
+
+  // Reset khi đổi tài khoản: tránh gửi nhầm GPS của booking cũ dưới userId mới.
+  useEffect(() => {
+    useGpsStore.getState().activate(userId);
+  }, [userId]);
+
+  // Mở lại app (không vào lại đơn): tìm chuyến đang thuê và tự gửi tiếp nếu đã đồng ý.
+  useEffect(() => {
+    if (userId == null) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [inProgress, returning] = await Promise.all([
+          getMyBookings({ status: "InProgress", page: 1, pageSize: 10 }),
+          getMyBookings({ status: "Returning", page: 1, pageSize: 10 }),
+        ]);
+        if (cancelled) return;
+        const activeBookings = [...inProgress.items, ...returning.items];
+        // Chuyến đã kết thúc → dọn lựa chọn đã lưu.
+        await pruneStoredConsents(activeBookings.map((booking) => booking.id));
+        if (cancelled) return;
+
+        const store = useGpsStore.getState();
+        if (activeBookings.length === 0) {
+          if (store.activePublishBookingId != null) store.setActivePublishBooking(null);
+          return;
+        }
+        // Người dùng đang mở một đơn cụ thể — ưu tiên đơn đó.
+        if (store.activePublishBookingId != null) return;
+
+        const grantedBookingId = await findGrantedBooking(activeBookings.map((booking) => booking.id));
+        if (cancelled) return;
+        if (grantedBookingId != null) {
+          useGpsStore.getState().setActivePublishBooking(grantedBookingId);
+          return;
+        }
+
+        // Thiết bị chưa lưu gì (đổi máy/xóa dữ liệu): hỏi máy chủ phiên nào đang chia sẻ.
+        const hasDeclined = await hasDeclinedBooking(activeBookings.map((booking) => booking.id));
+        if (cancelled || hasDeclined) return;
+        const sessions = await Promise.all(
+          activeBookings.map((booking) => getGpsSession(booking.id).catch(() => null)),
+        );
+        if (cancelled) return;
+        const sharing = sessions.find((session) => session?.sharingState === "sharing");
+        if (sharing) {
+          await setStoredConsent(sharing.bookingId, "granted");
+          if (cancelled) return;
+          useGpsStore.getState().setActivePublishBooking(sharing.bookingId);
+        }
+      } catch {
+        // Mất mạng: bỏ qua, mở trang chi tiết đơn sẽ kích hoạt lại.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  // Khôi phục lựa chọn chia sẻ cho booking đang mở (máy chủ thắng bản lưu trên máy).
+  useEffect(() => {
+    if (activePublishBookingId == null) return;
+    const bookingId = activePublishBookingId;
+    let cancelled = false;
+    void (async () => {
+      // Người dùng vừa bấm Đồng ý/Dừng → không ghi đè.
+      if (useGpsStore.getState().publishSharingState !== "idle") return;
+
+      let serverSharing: string | null | undefined;
+      try {
+        const session = await getGpsSession(bookingId);
+        serverSharing = session.sharingState;
+      } catch (error) {
+        // GPS_13003 = chưa có phiên; lỗi khác (mất mạng) = chưa biết, dùng bản lưu trên máy.
+        serverSharing = errorCode(error) === "GPS_13003" ? null : undefined;
+      }
+      if (cancelled) return;
+
+      if (serverSharing === "ended") {
+        await clearStoredConsent(bookingId);
+        if (cancelled) return;
+        useGpsStore.getState().setActivePublishBooking(null);
+        useGpsStore.getState().setPublishSharingState("ended");
+        return;
+      }
+      if (serverSharing === "paused") {
+        await setStoredConsent(bookingId, "declined");
+        if (cancelled) return;
+        useGpsStore.getState().setPublishSharingState("paused");
+        return;
+      }
+      if (serverSharing === "declined") {
+        await setStoredConsent(bookingId, "declined");
+        if (cancelled) return;
+        useGpsStore.getState().setPublishSharingState("declined");
+        return;
+      }
+      if (serverSharing === "sharing") {
+        await setStoredConsent(bookingId, "granted");
+        if (cancelled) return;
+        useGpsStore.getState().setPublishSharingState("sharing");
+        return;
+      }
+
+      const stored = await getStoredConsent(bookingId);
+      if (cancelled) return;
+      if (stored === "granted") {
+        // Đánh dấu đồng ý phía máy chủ trước khi gửi điểm (nếu chưa có phiên).
+        try {
+          await setGpsSharingConsent(bookingId, true);
+        } catch {
+          // Mất mạng: cứ chạy, điểm đầu tiên sẽ tạo phiên khi mạng trở lại.
+        }
+        if (cancelled) return;
+        useGpsStore.getState().setPublishSharingState("sharing");
+        return;
+      }
+      if (stored === "declined") {
+        useGpsStore.getState().setPublishSharingState("declined");
+        return;
+      }
+      // Chưa từng chọn → để modal xác nhận hiện ra.
+      useGpsStore.getState().setPublishSharingState("idle");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activePublishBookingId]);
 
   const flush = useCallback(async () => {
     // Không chồng request: nếu request trước chưa xong thì bỏ lượt này,
@@ -47,10 +187,21 @@ export function useGpsPublisher() {
       store.setPublishError(null);
       store.markPublished();
     } catch (error) {
-      // Chuyến đã kết thúc/bị hủy (server từ chối) → ngừng gửi im lặng thay vì báo lỗi.
-      const code = (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
+      const code = errorCode(error);
+      // Chuyến đã kết thúc/bị hủy (server từ chối) → ngừng gửi im lặng.
       if (code === "GPS_13001" || code === "GPS_13003") {
+        bufferRef.current = [];
+        await clearStoredConsent(bookingId);
         useGpsStore.getState().setActivePublishBooking(null);
+        useGpsStore.getState().setPublishSharingState("ended");
+        useGpsStore.getState().setPublishError(null);
+        return;
+      }
+      // Khách đã dừng chia sẻ (server đã ghi nhận) → đồng bộ lại trạng thái.
+      if (code === "GPS_13005") {
+        bufferRef.current = [];
+        await setStoredConsent(bookingId, "declined");
+        useGpsStore.getState().setPublishSharingState("paused");
         useGpsStore.getState().setPublishError(null);
         return;
       }
@@ -64,12 +215,16 @@ export function useGpsPublisher() {
   flushRef.current = flush;
 
   useEffect(() => {
-    if (activePublishBookingId == null) return;
+    if (activePublishBookingId == null || publishSharingState !== "sharing") return;
     let cancelled = false;
     let subscription: Location.LocationSubscription | null = null;
 
+    // Mỗi lần bật chia sẻ gửi ngay điểm đầu tiên, sau đó mới lọc theo khoảng cách.
+    lastLocationRef.current = null;
+
     const handleLocation = (location: Location.LocationObject) => {
-      if (useGpsStore.getState().activePublishBookingId == null) return;
+      if (useGpsStore.getState().activePublishBookingId !== activePublishBookingId) return;
+      if (useGpsStore.getState().publishSharingState !== "sharing") return;
       const coords = location.coords;
       const point: GpsPointRequest = {
         latitude: coords.latitude,
@@ -88,7 +243,7 @@ export function useGpsPublisher() {
     };
 
     void (async () => {
-      // Khách nhận thông báo "bật GPS" từ chủ xe → activePublishBookingId vẫn giữ,
+      // Khách nhận thông báo "bật GPS" từ chủ xe → publishSharingState về sharing,
       // effect này được gắn lại nên requestForegroundPermissionsAsync sẽ mở lại prompt
       // nếu người dùng chưa chặn vĩnh viễn.
       const permission = await Location.requestForegroundPermissionsAsync();
@@ -112,7 +267,7 @@ export function useGpsPublisher() {
       // không phải chờ callback đầu của watchPosition (có thể 5–15s).
       try {
         const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        handleLocation(current);
+        if (!cancelled) handleLocation(current);
       } catch {
         // Không lấy được vị trí tức thời: watchPosition sẽ gửi điểm đầu sau vài giây.
       }
@@ -123,7 +278,8 @@ export function useGpsPublisher() {
       // Heartbeat khi đứng yên: nếu quá 30s chưa gửi được điểm nào mà vẫn có vị trí
       // cuối, gửi lại chính điểm đó với timestamp mới (iOS không callback khi đứng yên).
       const idleMs = Date.now() - (store.lastPublishedAt ?? 0);
-      if (store.activePublishBookingId != null
+      if (store.activePublishBookingId === activePublishBookingId
+        && store.publishSharingState === "sharing"
         && bufferRef.current.length === 0
         && !inFlightRef.current
         && lastLocationRef.current
@@ -144,9 +300,30 @@ export function useGpsPublisher() {
       subscription?.remove();
       clearInterval(retryTimer);
       appStateSub.remove();
-      void flushRef.current?.();
+      // Chỉ gửi nốt điểm còn lại khi vẫn đang chia sẻ đúng chuyến này; nếu khách vừa
+      // dừng thì server đã chuyển Paused và sẽ từ chối (GPS_13005) — bỏ buffer.
+      const store = useGpsStore.getState();
+      if (store.publishSharingState === "sharing" && store.activePublishBookingId === activePublishBookingId) {
+        void flushRef.current?.();
+      } else {
+        bufferRef.current = [];
+      }
     };
-  }, [activePublishBookingId]);
+  }, [activePublishBookingId, publishSharingState]);
 
-  return { activePublishBookingId };
+  return { activePublishBookingId, publishSharingState };
+}
+
+async function findGrantedBooking(bookingIds: number[]): Promise<number | null> {
+  for (const bookingId of bookingIds) {
+    if ((await getStoredConsent(bookingId)) === "granted") return bookingId;
+  }
+  return null;
+}
+
+async function hasDeclinedBooking(bookingIds: number[]): Promise<boolean> {
+  for (const bookingId of bookingIds) {
+    if ((await getStoredConsent(bookingId)) === "declined") return true;
+  }
+  return false;
 }

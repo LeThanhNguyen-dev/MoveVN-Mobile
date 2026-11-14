@@ -16,6 +16,7 @@ import { useNotificationConnection } from "@/features/notifications/useNotificat
 import { useChatConnection } from "@/features/chat/useChatConnection";
 import { useFavoriteSession } from "@/features/favorites/useFavoriteSession";
 import ToastHost from "@/features/notifications/components/ToastHost";
+import AppDialogHost from "@/components/appDialog/AppDialogHost";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
 import { usePushNotifications } from "@/features/notifications/usePushNotifications";
 import { usePushNavigation } from "@/features/notifications/pushNavigation";
@@ -98,6 +99,7 @@ export default function RootNavigator() {
     {token && user ? <AvailabilityAlertCenter key={`availability-${user.userId}`} userId={user.userId} /> : null}
     {token && user ? <ViolationCenter key={`violations-${user.userId}`} userId={user.userId} /> : null}
     <ToastHost />
+    <AppDialogHost />
   </NavigationContainer>;
 }
 

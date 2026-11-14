@@ -7,7 +7,8 @@ import MileageFeePreview from "../components/MileageFeePreview";
 import { returnTimeISO, validateCheckoutKm, vietnamInput } from "../checkoutRules";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { useTheme } from "@/theme/useTheme";
 import type { Theme } from "@/theme/tokens";
 import { getApiErrorMessage } from "@/services/apiClient";
@@ -52,7 +53,7 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
   function leave() {
     if (saveLock.current) return;
     if (photos.length || timeEdited || additionalSurcharges.length || odometer || fuelLevel || damageNoted || damageDescription) {
-      Alert.alert(t("mobile:inspection.form.discardTitle"), t("mobile:inspection.form.discardMessage"), [
+      showAppAlert(t("mobile:inspection.form.discardTitle"), t("mobile:inspection.form.discardMessage"), [
         { text: t("mobile:inspection.form.discardKeep"), style: "cancel" }, { text: t("mobile:inspection.form.discardConfirm"), style: "destructive", onPress: onBack },
       ]);
     } else onBack();

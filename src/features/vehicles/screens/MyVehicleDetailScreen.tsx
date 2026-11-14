@@ -23,7 +23,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Alert,
   Dimensions,
   FlatList,
   Modal,
@@ -33,6 +32,7 @@ import {
   Switch,
   View,
 } from "react-native"
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { BusyPeriod, VehicleResponse } from "@/features/vehicles/types";
@@ -168,7 +168,7 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
 
   function handleDelete() {
     if (!vehicle) return;
-    Alert.alert(
+    showAppAlert(
       t("mobile:ownerVehicle.detail.deleteTitle"),
       t("mobile:ownerVehicle.detail.deleteMessage", { plate: vehicle.licensePlate }),
       [

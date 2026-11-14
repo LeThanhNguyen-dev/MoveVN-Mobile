@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   StyleSheet,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { Heart, RefreshCw } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
@@ -79,7 +79,7 @@ export default function FavoriteVehicleButton({
             mounted.current &&
             !useFavoriteStore.getState().idsLoaded
           )
-            Alert.alert(
+            showAppAlert(
               t("mobile:favorites.alertTitle"),
               useFavoriteStore.getState().idsError ?? t("mobile:favorites.alertMessage"),
             );
@@ -87,7 +87,7 @@ export default function FavoriteVehicleButton({
         }
         const result = await toggleFavoriteVehicle(vehicleId);
         if (result.error && current() && mounted.current)
-          Alert.alert(t("mobile:favorites.errorTitle"), result.error);
+          showAppAlert(t("mobile:favorites.errorTitle"), result.error);
       }}
     >
       {busy ? (

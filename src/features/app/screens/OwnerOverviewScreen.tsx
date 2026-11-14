@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { Image } from "expo-image";
-import { ArrowRight, BarChart3, CalendarCheck, CarFront, CheckCheck, ChevronRight, ClipboardList, Plus, RefreshCw, RotateCcw, Wallet } from "lucide-react-native";
+import { ArrowRight, BarChart3, CalendarCheck, CarFront, CheckCheck, ChevronRight, ClipboardList, MapPinned, Plus, RefreshCw, RotateCcw, Wallet } from "lucide-react-native";
 import AppText from "@/components/AppText";
 import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
 import type { AuthUser } from "@/features/auth/types";
@@ -23,9 +23,10 @@ type Props = {
   onOpenBooking: (bookingId: number) => void;
   onOpenWallet: () => void;
   onOpenAnalytics: () => void;
+  onOpenFleet: () => void;
 };
 
-export default function OwnerOverviewScreen({ user, onAvatarPress, onOpenVehicles, onOpenVehicle, onOpenBookings, onOpenBooking, onOpenWallet, onOpenAnalytics }: Props) {
+export default function OwnerOverviewScreen({ user, onAvatarPress, onOpenVehicles, onOpenVehicle, onOpenBookings, onOpenBooking, onOpenWallet, onOpenAnalytics, onOpenFleet }: Props) {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createDashboardStyles(theme), [theme]);
@@ -36,6 +37,7 @@ export default function OwnerOverviewScreen({ user, onAvatarPress, onOpenVehicle
     { label: t("owner:analytics.actions.bookings"), icon: CalendarCheck, onPress: onOpenBookings, color: theme.info, background: theme.infoSoft },
     { label: t("accountWallet:title"), icon: Wallet, onPress: onOpenWallet, color: theme.success, background: theme.successSoft },
     { label: t("mobile:ownerHome.shortcuts.analytics"), icon: BarChart3, onPress: onOpenAnalytics, color: theme.brand, background: theme.brandSoft },
+    { label: t("mobile:ownerHome.shortcuts.fleet"), icon: MapPinned, onPress: onOpenFleet, color: theme.info, background: theme.infoSoft },
   ];
 
   return <View style={styles.root}>

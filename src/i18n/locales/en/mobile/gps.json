@@ -34,18 +34,65 @@
         "live": "Live updates",
         "stale": "Signal lost",
         "ended": "Ended",
-        "none": "No data yet"
+        "none": "No data yet",
+        "sharingPaused": "Sharing stopped",
+        "sharingDeclined": "Not sharing",
+        "notShared": "Not shared"
       },
       "updatedAt": "· updated {{time}}",
       "speed": "Speed: {{speed}} km/h",
       "coordinates": "Coordinates: {{lat}}, {{lng}}",
       "staleHint": "No new location received for a while. The renter may have turned GPS off or lost connection — the map is showing the last known point.",
+      "sharingPausedHint": "The renter stopped sharing their location. The map shows the last received point.",
+      "sharingDeclinedHint": "The renter chose not to share their location for this trip.",
+      "sharingNotSharedHint": "The renter hasn't shared their location for this trip yet.",
+      "noDataHint": "No location points received from the renter for this trip.",
+      "mockWarning": "Location may be inaccurate: the renter's device reported a mock location.",
       "requestGps": "Ask renter to enable GPS",
-      "requesting": "Sending..."
+      "requesting": "Sending...",
+      "log": {
+        "title": "Coordinate log",
+        "count": "{{count}} points received",
+        "empty": "No coordinates have been sent for this trip yet.",
+        "mock": "Mock",
+        "speed": "{{speed}} km/h",
+        "toggleAria": "Expand or collapse the coordinate log",
+        "selectHint": "Tap a row to rewind the map to that moment.",
+        "viewing": "Viewing {{time}}",
+        "backToLive": "Back to live"
+      }
     },
     "publisher": {
       "sendFailed": "Couldn't send your location. Will retry.",
       "permissionDenied": "You haven't turned on location sharing. The owner can't follow the trip."
+    },
+    "fleet": {
+      "title": "Active rental fleet map",
+      "subtitle": "{{count}} vehicles on rent",
+      "loading": "Loading fleet...",
+      "empty": "No vehicles are currently on rent.",
+      "error": "Couldn't load the fleet map.",
+      "retry": "Retry",
+      "refreshAria": "Refresh fleet",
+      "updatedAt": "Updated {{time}}",
+      "licensePlateUnknown": "Unknown plate",
+      "vehicleFallback": "Vehicle #{{id}}",
+      "bookingCode": "Booking {{code}}",
+      "viewTracking": "View location",
+      "mockWarning": "Location may be inaccurate",
+      "sharing": {
+        "sharing": "Sharing",
+        "paused": "Renter stopped sharing",
+        "declined": "Renter not sharing",
+        "notShared": "Not shared",
+        "ended": "Ended"
+      },
+      "state": {
+        "live": "Live",
+        "stale": "Signal lost",
+        "none": "No data",
+        "ended": "Ended"
+      }
     }
   }
 }
