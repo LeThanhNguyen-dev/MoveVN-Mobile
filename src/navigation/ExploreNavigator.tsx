@@ -5,9 +5,9 @@ import CustomerExploreScreen from "@/features/app/screens/CustomerExploreScreen"
 import VehicleDetailScreen from "@/features/vehicles/screens/VehicleDetailScreen";
 import VehicleListScreen from "@/features/vehicles/screens/VehicleListScreen";
 import CreateBookingScreen from "@/features/booking/screens/CreateBookingScreen";
-import BookingDetailScreen from "@/features/booking/screens/BookingDetailScreen";
 import type { QuickBookParams } from "@/features/assistant/screens/AssistantScreen";
 import type { AuthUser } from "@/features/auth/types";
+import { getDefaultRentalPeriod } from "@/features/vehicles/utils/rentalPeriod";
 import type { ExploreStackParamList } from "./types";
 
 import { useTheme } from "@/theme/useTheme";
@@ -19,10 +19,13 @@ export default function ExploreNavigator({
   onAvatarPress,
   onRouteChange,
   onBookingCreated,
-  quickBook,  onConsumedQuickBook,
+  quickBook,
+  onConsumedQuickBook,
   onGoDeals,
   pendingVehicleId,
   onConsumedVehicle,
+  openVehicleListRequest,
+  onConsumedVehicleListRequest,
   onOpenUserProfile,
 }: {
   user: AuthUser;
@@ -34,6 +37,9 @@ export default function ExploreNavigator({
   onGoDeals?: () => void;
   pendingVehicleId?: number | null;
   onConsumedVehicle?: () => void;
+  /** Tăng lên 1 mỗi lần ví voucher bấm "Dùng ngay" → mở thẳng danh sách xe. */
+  openVehicleListRequest?: number;
+  onConsumedVehicleListRequest?: () => void;
   onOpenUserProfile?: (userId: number) => void;
 }) {
   const { theme } = useTheme();
@@ -66,6 +72,22 @@ export default function ExploreNavigator({
     exploreNavRef.current.navigate("VehicleDetail", { vehicleId: pendingVehicleId });
     onConsumedVehicle?.();
   }, [pendingVehicleId, onConsumedVehicle]);
+
+  // Từ ví voucher: "Dùng ngay" → mở danh sách xe với khoảng thuê mặc định.
+  useEffect(() => {
+    if (!openVehicleListRequest) return;
+    const nav = exploreNavRef.current;
+    if (!nav) return;
+    const period = getDefaultRentalPeriod();
+    nav.navigate("VehicleList", {
+      type: "",
+      province: "",
+      district: "",
+      startDate: period.startDate,
+      endDate: period.endDate,
+    });
+    onConsumedVehicleListRequest?.();
+  }, [openVehicleListRequest, onConsumedVehicleListRequest]);
 
   return (
     <Stack.Navigator

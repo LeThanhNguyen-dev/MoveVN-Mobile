@@ -248,12 +248,6 @@ export default function CreateBookingScreen({
     );
   }, [vehicle, days, quote, promoResult, deliveryPreview, pricePerDay]);
 
-  // Base chưa trừ promo để validate mã (giống web).
-  const promoBase = useMemo(() => {
-    if (!pricePreview) return 0;
-    return pricePreview.base - pricePreview.discAmt;
-  }, [pricePreview]);
-
   async function validateCode(code: string) {
     const normalized = code.trim().toUpperCase();
     if (!normalized || !vehicleId || days <= 0) return;
@@ -261,7 +255,7 @@ export default function CreateBookingScreen({
     setPromoError(null);
     setPromoResult(null);
     try {
-      const result = await validatePromotion(normalized, vehicleId, promoBase);
+      const result = await validatePromotion(normalized, vehicleId, startDate ?? "", endDate ?? "");
       if (result?.success) {
         setPromoResult({ discountAmount: result.discountAmount, code: result.code });
       } else {

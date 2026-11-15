@@ -1,8 +1,6 @@
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { ArrowRight, Sparkles } from "lucide-react-native";
+import { Sparkles } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,15 +9,12 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  useWindowDimensions,
 } from "react-native"
 import i18n from "@/i18n";
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { DealsStackParamList } from "@/navigation/types";
-import type { HomepageBanner } from "@/features/banners/types";
-import { getHomepageBanners } from "@/features/banners/services/bannerService";
 import type { Promotion } from "@/features/promotions/types";
 import { getActivePromotions } from "@/features/promotions/services/promotionService";
 import DealsFilterBar from "@/features/vouchers/components/DealsFilterBar";
@@ -84,85 +79,6 @@ function toCardData(p: Promotion): VoucherCardData {
   };
 }
 
-function HeroCarousel({
-  slides,
-  onOpen,
-}: {
-  slides: PromotionDetailSlide[];
-  onOpen: (s: PromotionDetailSlide) => void;
-}) {
-  const { theme } = useTheme();
-  const { t } = useTranslation();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  const { width } = useWindowDimensions();
-  const cardWidth = width - 40;
-  const step = cardWidth + 12;
-  const [page, setPage] = useState(0);
-
-  if (slides.length === 0) return null;
-
-  return (
-    <View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        snapToInterval={step}
-        snapToAlignment="start"
-        disableIntervalMomentum
-        contentContainerStyle={{ gap: 12 }}
-        onMomentumScrollEnd={(e) => {
-          const index = Math.round(e.nativeEvent.contentOffset.x / step);
-          setPage(Math.max(0, Math.min(slides.length - 1, index)));
-        }}
-      >
-        {slides.map((s) => (
-          <Pressable
-            key={s.id}
-            onPress={() => onOpen(s)}
-            style={[styles.heroCard, { width: cardWidth }]}
-            accessibilityRole="button"
-            accessibilityLabel={s.title}
-          >
-            {!!s.image ? (
-              <Image
-                source={{ uri: s.image }}
-                style={StyleSheet.absoluteFill}
-                contentFit="cover"
-                transition={250}
-              />
-            ) : null}
-            <LinearGradient
-              colors={["transparent", "rgba(0,0,0,0.65)"]}
-              style={styles.heroShade}
-            />
-            <View style={styles.heroBadge}>
-              <Sparkles color="#FCD34D" size={11} />
-              <AppText style={styles.heroBadgeText}>
-                {t("promo:promotions.featuredBadge").toLocaleUpperCase()}
-              </AppText>
-            </View>
-            <AppText display style={styles.heroTitle} numberOfLines={1}>
-              {s.title}
-            </AppText>
-            <View style={styles.heroCta}>
-              <AppText style={styles.heroCtaText}>{t("promo:promotions.viewOffer")}</AppText>
-              <ArrowRight color="#6B21A8" size={14} />
-            </View>
-          </Pressable>
-        ))}
-      </ScrollView>
-      {slides.length > 1 ? (
-        <View style={styles.dotsRow}>
-          {slides.map((s, i) => (
-            <View key={String(s.id)} style={[styles.dot, i === page && styles.dotActive]} />
-          ))}
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
 export default function CustomerPromotionsScreen() {
   const navigation = useNavigation<DealsNav>();
   const { theme } = useTheme();
@@ -170,7 +86,6 @@ export default function CustomerPromotionsScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [items, setItems] = useState<Promotion[]>([]);
-  const [banners, setBanners] = useState<HomepageBanner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -183,14 +98,10 @@ export default function CustomerPromotionsScreen() {
     let cancelled = false;
     setLoading(true);
     setError("");
-    Promise.all([
-      getActivePromotions(),
-      getHomepageBanners().catch(() => [] as HomepageBanner[]),
-    ])
-      .then(([promos, bannerList]) => {
+    getActivePromotions()
+      .then((promos) => {
         if (cancelled) return;
         setItems(Array.isArray(promos) ? promos : []);
-        setBanners(Array.isArray(bannerList) ? bannerList : []);
       })
       .catch(() => {
         if (!cancelled) setError(i18n.t("promo:promotions.loadError"));
@@ -239,33 +150,6 @@ export default function CustomerPromotionsScreen() {
       return new Date(second.startAt).getTime() - new Date(first.startAt).getTime();
     });
   }, [items, search, vehicleFilter, expiringOnly, sortOrder]);
-
-  // Hero từ Banner API (ảnh campaign thật), join promotion để mở sheet (mirror web).
-  const heroSlides = useMemo<PromotionDetailSlide[]>(() => {
-    const byId = new Map(items.map((p) => [p.id, p]));
-    return banners.map((b) => {
-      const promo = b.promotionId != null ? byId.get(b.promotionId) : undefined;
-      return {
-        id: `banner-${b.id}`,
-        image: b.imageUrl,
-        title: b.title,
-        promotionId: promo?.id ?? null,
-        code: b.promotionCode ?? promo?.code ?? undefined,
-        popupTitle: b.popupTitle,
-        popupDescription: b.popupDescription,
-        popupCtaLabel: b.popupCtaLabel,
-        promotionName: b.promotionName ?? promo?.name ?? null,
-        discountType: b.discountType ?? promo?.discountType ?? null,
-        discountValue: b.discountValue ?? promo?.discountValue ?? null,
-        vehicleType: b.vehicleType ?? promo?.vehicleType ?? null,
-        endAt: b.endAt ?? promo?.endAt ?? null,
-        minOrderAmount: promo?.minOrderAmount,
-        maxDiscountAmount: promo?.maxDiscountAmount,
-        usageCount: promo?.usageCount,
-        maxUsageCount: promo?.maxUsageCount,
-      } as PromotionDetailSlide;
-    });
-  }, [banners, items]);
 
   const handleSheetCta = useCallback(
     (promotionId: number) => {
@@ -324,10 +208,6 @@ export default function CustomerPromotionsScreen() {
         </AppText>
 
         <DealsSegmentedNav />
-
-        {!loading && !error && heroSlides.length > 0 ? (
-          <HeroCarousel slides={heroSlides} onOpen={setSelected} />
-        ) : null}
 
         <DealsFilterBar
           search={search}
@@ -451,53 +331,7 @@ const createStyles = (theme: Theme) =>
     },
     countBadgeText: { color: theme.brand, fontSize: 11, fontWeight: "900" },
     sectionDesc: { color: theme.muted, fontSize: 12 },
-    heroCard: {
-      aspectRatio: 16 / 8,
-      borderRadius: 18,
-      overflow: "hidden",
-      backgroundColor: theme.surfaceAlt,
-      justifyContent: "flex-end",
-      padding: 12,
-    },
-    heroShade: { position: "absolute", left: 0, right: 0, bottom: 0, height: "70%" },
-    heroBadge: {
-      position: "absolute",
-      left: 12,
-      top: 12,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 5,
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: "rgba(255,255,255,0.25)",
-      backgroundColor: "rgba(255,255,255,0.18)",
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-    },
-    heroBadgeText: { color: "#FFFFFF", fontSize: 9, fontWeight: "900", letterSpacing: 1 },
-    heroTitle: { color: "#FFFFFF", fontSize: 15, fontWeight: "900", paddingRight: 90 },
-    heroCta: {
-      position: "absolute",
-      right: 12,
-      bottom: 12,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      borderRadius: 10,
-      backgroundColor: "#FFFFFF",
-      paddingHorizontal: 10,
-      paddingVertical: 7,
-    },
-    heroCtaText: { color: "#6B21A8", fontSize: 11, fontWeight: "900" },
-    dotsRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 10 },
-    dot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: theme.mode === "dark" ? theme.border : "#DDD6FE",
-    },
-    dotActive: { width: 24, height: 6, borderRadius: 3, backgroundColor: "#7C3AED" },
-    ticketList: { gap: 14 },
+    ticketList: { gap: 12 },
     centerBox: { paddingVertical: 64, alignItems: "center" },
     errorBox: {
       borderRadius: 14,

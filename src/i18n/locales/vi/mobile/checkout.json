@@ -94,6 +94,7 @@
       "discount": "Giảm {{off}}",
       "minOrder": " · đơn từ {{amount}}",
       "blocked": "Không áp dụng cho loại xe này",
+      "blockedUpcoming": "Chưa đến ngày sử dụng",
       "use": "Dùng"
     },
     "editor": {

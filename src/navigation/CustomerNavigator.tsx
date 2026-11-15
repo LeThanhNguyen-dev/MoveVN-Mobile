@@ -46,6 +46,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const showFavorites = useFavoriteStore((state) => state.open && state.userId === user.userId);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
+  const [vehicleListRequest, setVehicleListRequest] = useState(0);
   const [tripsRoute, setTripsRoute] = useState("TripList");
   const [pendingTripId, setPendingTripId] = useState<number | null>(null);
   const [tripRequest, setTripRequest] = useState(0);
@@ -61,6 +62,12 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
 
   const handleExploreRouteChange = useCallback((routeName: string) => {
     setExploreRoute(routeName);
+  }, []);
+
+  /** "Dùng ngay" trên voucher hợp lệ: sang tab Khám phá và mở danh sách xe. */
+  const openVehicleList = useCallback(() => {
+    setActiveTab("explore");
+    setVehicleListRequest((value) => value + 1);
   }, []);
 
   const goToTrip = useCallback((bookingId: number) => {
@@ -168,6 +175,8 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 quickBook={quickBook}
                 onConsumedQuickBook={consumeQuickBook}
                 onGoDeals={() => setActiveTab("deals")}
+                openVehicleListRequest={vehicleListRequest}
+                onConsumedVehicleListRequest={() => setVehicleListRequest(0)}
                 onOpenUserProfile={openUserProfile}
               />
             ) : activeTab === "trips" ? (
@@ -180,7 +189,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
                 onOpenUserProfile={openUserProfile}
               />
             ) : activeTab === "deals" ? (
-              <DealsNavigator onGoExplore={() => setActiveTab("explore")} />
+              <DealsNavigator onGoExplore={openVehicleList} />
             ) : activeTab === "messages" ? (
               <ChatNavigator onRouteChange={setChatRoute} onOpenUserProfile={openUserProfile} />
             ) : (

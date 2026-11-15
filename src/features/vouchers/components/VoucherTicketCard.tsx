@@ -1,19 +1,23 @@
-import { Check, Copy, TicketPercent } from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { Lock, TicketPercent } from "lucide-react-native";
 import { memo, useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  View,
+  type GestureResponderEvent,
+} from "react-native";
 import AppText from "@/components/AppText";
+import i18n from "@/i18n";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
+import { showToast } from "@/features/notifications/toastStore";
 import VoucherTicketStub from "@/features/vouchers/components/VoucherTicketStub";
 import {
-  CTA_GRADIENT,
-  formatEndDate,
-  formatVnd,
-  formatVehicleLabel,
+  formatVoucherAmount,
+  formatVoucherCardTiming,
   isExpiringSoon,
-  voucherUsagePercent,
 } from "@/features/vouchers/voucherFormat";
 
 export type VoucherCardStatus = "active" | "upcoming" | "ended" | "used";
@@ -29,6 +33,7 @@ export type VoucherCardData = {
   maxDiscountAmount?: number | null;
   minOrderAmount?: number | null;
   vehicleType: string;
+  startAt?: string | null;
   endAt?: string | null;
   usageCount: number;
   maxUsageCount: number;
@@ -41,256 +46,201 @@ type VoucherTicketCardAction = {
   label: string;
   onClick: () => void;
   pending?: boolean;
+  /** Chặn CTA khi bản thân chiến dịch không dùng được (campaign-level). */
+  disabled?: boolean;
+  /** Lý do hiển thị khi người dùng chạm vào nút bị chặn (thay cho tooltip trên web). */
+  disabledReason?: string;
   tone?: "primary" | "success" | "ghost";
 };
 
 type VoucherTicketCardProps = {
   action?: VoucherTicketCardAction;
   badge?: ReactNode;
-  copied?: boolean;
   data: VoucherCardData;
   highlight?: boolean;
-  onCopyCode?: () => void;
+  /** Mở bottom sheet chi tiết — chạm vào thân thẻ. */
   onOpenDetail?: () => void;
-  showCode?: boolean;
+  /** Ghi đè nhãn trạng thái khi thẻ không có CTA (dùng cho trang Lịch sử). */
+  statusLabel?: string | null;
 };
 
 type StatusMeta = {
   /** Khoá i18n cho nhãn trạng thái (namespace promo). */
   labelKey: string;
-  chipBg: string;
-  chipText: string;
-  chipBorder: string;
   dot: string;
 };
 
 const STATUS_META: Record<VoucherCardStatus, StatusMeta> = {
-  active: {
-    labelKey: "promo:voucherCard.status.active",
-    chipBg: "#ECFDF5",
-    chipText: "#047857",
-    chipBorder: "#A7F3D0",
-    dot: "#10B981",
-  },
-  upcoming: {
-    labelKey: "promo:voucherCard.status.upcoming",
-    chipBg: "#EFF6FF",
-    chipText: "#1D4ED8",
-    chipBorder: "#BFDBFE",
-    dot: "#3B82F6",
-  },
-  ended: {
-    labelKey: "promo:voucherCard.status.ended",
-    chipBg: "#F1F5F9",
-    chipText: "#475569",
-    chipBorder: "#E2E8F0",
-    dot: "#94A3B8",
-  },
-  used: {
-    labelKey: "promo:voucherCard.status.used",
-    chipBg: "#F1F5F9",
-    chipText: "#475569",
-    chipBorder: "#E2E8F0",
-    dot: "#94A3B8",
-  },
+  active: { labelKey: "promo:voucherCard.status.active", dot: "#10B981" },
+  upcoming: { labelKey: "promo:voucherCard.status.upcoming", dot: "#3B82F6" },
+  ended: { labelKey: "promo:voucherCard.status.ended", dot: "#94A3B8" },
+  used: { labelKey: "promo:voucherCard.status.used", dot: "#94A3B8" },
 };
 
 /**
- * Thẻ voucher dùng chung cho cả 3 màn ưu đãi (mirror web VoucherTicketCard):
- * cuống vé gradient + nhãn trạng thái + mã ưu đãi (copy) + thanh lượt dùng + nút hành động.
+ * Thẻ voucher gọn kiểu ticket (mirror web VoucherTicketCard, phong cách Shopee):
+ * cuống vé gradient + tên + chip trạng thái + 4 dòng thông tin sát giữa
+ * (mã / giảm / đơn tối thiểu / thời gian) + CTA góc phải.
+ * Chạm vào thân thẻ để mở chi tiết; mã voucher, phạm vi và cảnh báo nằm trong sheet.
  */
 function VoucherTicketCard({
   action,
   badge,
-  copied = false,
   data,
   highlight = false,
-  onCopyCode,
   onOpenDetail,
-  showCode = false,
+  statusLabel = null,
 }: VoucherTicketCardProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const endLabel = formatEndDate(data.endAt);
-  const usagePercent = voucherUsagePercent(data.usageCount, data.maxUsageCount);
-  const expiringSoon = data.status === "active" && isExpiringSoon(data.endAt);
-  const status = STATUS_META[data.status];
   const muted = data.status === "used" || data.status === "ended";
+  const status = STATUS_META[data.status];
+  const expiringSoon = data.status === "active" && isExpiringSoon(data.endAt);
+  const urgentColor = theme.mode === "dark" ? "#FBBF24" : "#B45309";
 
-  const capLabel = data.maxDiscountAmount
-    ? t("mobile:voucher.card.maxDiscount", { amount: formatVnd(data.maxDiscountAmount) })
-    : data.minOrderAmount
-      ? t("promo:voucherCard.minOrder", { amount: formatVnd(data.minOrderAmount) })
-      : t("mobile:voucher.card.offerFallback");
+  const percent = new Intl.NumberFormat(i18n.language?.startsWith("en") ? "en-US" : "vi-VN", {
+    maximumFractionDigits: 1,
+  }).format(data.discountValue);
 
-  const dark = theme.mode === "dark";
+  const headline =
+    data.discountType === "Percentage"
+      ? data.maxDiscountAmount && data.maxDiscountAmount > 0
+        ? t("promo:voucherCard.headlinePercentCap", {
+            percent,
+            max: formatVoucherAmount(data.maxDiscountAmount),
+          })
+        : t("promo:voucherCard.headlinePercent", { percent })
+      : t("promo:voucherCard.headlineFixed", { amount: formatVoucherAmount(data.discountValue) });
+
+  const minOrder =
+    data.minOrderAmount && data.minOrderAmount > 0
+      ? t("promo:voucherCard.minOrder", { amount: formatVoucherAmount(data.minOrderAmount) })
+      : t("promo:voucherCard.noMinOrder");
+
+  const timeText = formatVoucherCardTiming({
+    status: data.status,
+    startAt: data.startAt,
+    endAt: data.endAt,
+  });
+
+  const disabledReason = action?.disabled
+    ? action.disabledReason ?? t("promo:voucherCard.reasonUnavailable")
+    : null;
+
+  const resolvedStatusLabel = statusLabel ?? t(status.labelKey);
+  /** Chip trạng thái trên tiêu đề chỉ dành cho voucher đang diễn ra (không trùng nhãn Lịch sử). */
+  const showStatusChip =
+    statusLabel === null && (data.status === "active" || data.status === "upcoming");
+
+  function handleActionPress(event: GestureResponderEvent) {
+    event.stopPropagation();
+    if (!action || action.pending) return;
+    if (action.disabled) {
+      showToast({ type: "info", title: action.label, message: disabledReason ?? undefined });
+      return;
+    }
+    action.onClick();
+  }
 
   return (
-    <View
-      style={[
+    <Pressable
+      onPress={onOpenDetail}
+      disabled={!onOpenDetail}
+      accessibilityRole={onOpenDetail ? "button" : undefined}
+      accessibilityLabel={onOpenDetail ? t("mobile:voucher.card.detailAria") : undefined}
+      accessibilityHint={onOpenDetail ? data.name : undefined}
+      android_ripple={onOpenDetail ? { color: theme.brandSoft } : undefined}
+      style={({ pressed }) => [
         styles.card,
         muted && styles.cardMuted,
         highlight && styles.cardHighlight,
+        pressed && onOpenDetail ? styles.cardPressed : null,
       ]}
     >
       <VoucherTicketStub
         discountType={data.discountType}
         discountValue={data.discountValue}
-        caption={capLabel}
+        dimmed={muted}
       />
-      <View style={styles.divider} />
 
       <View style={styles.body}>
-        <View style={styles.badgeRow}>
-          <View
-            style={[
-              styles.statusChip,
-              {
-                backgroundColor: dark ? `${status.dot}1F` : status.chipBg,
-                borderColor: dark ? `${status.dot}55` : status.chipBorder,
-              },
-            ]}
-          >
-            <View style={[styles.statusDot, { backgroundColor: status.dot }]} />
-            <AppText style={[styles.statusText, { color: dark ? status.dot : status.chipText }]}>
-              {t(status.labelKey)}
-            </AppText>
-          </View>
+        <View style={styles.titleRow}>
+          <AppText style={styles.name} numberOfLines={2}>
+            {data.name}
+          </AppText>
+          {badge ? <View style={styles.badgeSlot}>{badge}</View> : null}
+          {showStatusChip ? (
+            <View style={styles.statusChip}>
+              <View style={[styles.statusDot, { backgroundColor: status.dot }]} />
+              <AppText style={styles.statusChipText}>{resolvedStatusLabel}</AppText>
+            </View>
+          ) : null}
+        </View>
 
-          {expiringSoon ? (
-            <View
-              style={[
-                styles.expiringChip,
-                {
-                  backgroundColor: dark ? "rgba(245,158,11,0.15)" : "#FFFBEB",
-                  borderColor: dark ? "rgba(245,158,11,0.35)" : "#FDE68A",
-                },
+        {/* 4 dòng thông tin sát giữa (mã / giảm / đơn tối thiểu / thời gian) */}
+        <View style={styles.infoBlock}>
+          <AppText style={styles.infoCode} numberOfLines={1}>
+            {t("promo:voucherCard.codeLabel", { code: data.code })}
+          </AppText>
+          <AppText style={[styles.infoHeadline, muted && styles.infoHeadlineMuted]} numberOfLines={1}>
+            {headline}
+          </AppText>
+          <AppText style={styles.infoMinOrder} numberOfLines={1}>
+            {minOrder}
+          </AppText>
+          <AppText
+            style={[styles.infoTime, expiringSoon && { color: urgentColor, fontWeight: "800" }]}
+            numberOfLines={1}
+          >
+            {timeText}
+          </AppText>
+        </View>
+
+        <View style={styles.footerRow}>
+          {action ? (
+            <Pressable
+              onPress={handleActionPress}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={disabledReason ? `${action.label} — ${disabledReason}` : action.label}
+              accessibilityHint={disabledReason ?? undefined}
+              accessibilityState={{ disabled: action.disabled === true, busy: action.pending === true }}
+              style={({ pressed }) => [
+                styles.actionButton,
+                action.tone === "success"
+                  ? styles.actionSuccess
+                  : action.tone === "ghost"
+                    ? styles.actionGhost
+                    : styles.actionPrimary,
+                action.disabled && styles.actionDisabled,
+                pressed && !action.disabled && !action.pending ? styles.actionPressed : null,
               ]}
             >
-              <AppText style={[styles.expiringText, { color: dark ? "#FBBF24" : "#B45309" }]}>
-                ⏰ {t("promo:voucherCard.expiringSoon")}
-              </AppText>
-            </View>
-          ) : null}
-
-          {badge}
-        </View>
-
-        <AppText style={styles.name} numberOfLines={2}>
-          {data.name}
-        </AppText>
-        {data.description ? (
-          <AppText style={styles.description} numberOfLines={2}>
-            {data.description}
-          </AppText>
-        ) : null}
-
-        <View style={styles.metaRow}>
-          <AppText style={styles.metaText}>{formatVehicleLabel(data.vehicleType)}</AppText>
-          {endLabel ? (
-            <AppText style={styles.metaText}>
-              {t("promo:voucherCard.expiry", { date: endLabel })}
-            </AppText>
-          ) : null}
-        </View>
-
-        {showCode ? (
-          <View style={styles.codeRow}>
-            <View style={styles.codeBox}>
-              <AppText style={styles.codeText} numberOfLines={1}>
-                {data.code}
-              </AppText>
-            </View>
-            {onCopyCode ? (
-              <Pressable
-                onPress={onCopyCode}
-                style={styles.copyButton}
-                accessibilityRole="button"
-                accessibilityLabel={t("promo:voucherCard.copyAria")}
-              >
-                {copied ? (
-                  <Check color="#FFFFFF" size={13} />
-                ) : (
-                  <Copy color="#FFFFFF" size={13} />
-                )}
-                <AppText style={styles.copyButtonText}>
-                  {copied ? t("mobile:voucher.card.copied") : t("mobile:voucher.card.copy")}
-                </AppText>
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
-
-        {usagePercent !== null ? (
-          <View style={styles.usageWrap}>
-            <View style={styles.usageHead}>
-              <AppText style={styles.usageLabel}>{t("promo:voucherCard.usageLabel")}</AppText>
-              <AppText style={styles.usagePercent}>{Math.round(usagePercent)}%</AppText>
-            </View>
-            <View style={styles.usageTrack}>
-              {usagePercent >= 80 ? (
-                <LinearGradient
-                  colors={["#F59E0B", "#F43F5E"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={[styles.usageFill, { width: `${usagePercent}%` }]}
-                />
+              {action.pending ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : action.disabled ? (
+                <Lock color={theme.muted} size={12} />
               ) : (
-                <LinearGradient
-                  colors={["#8B5CF6", "#6366F1"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={[styles.usageFill, { width: `${usagePercent}%` }]}
-                />
+                action.icon ?? <TicketPercent color="#FFFFFF" size={13} />
               )}
+              <AppText
+                style={[styles.actionText, action.disabled && styles.actionTextDisabled]}
+                numberOfLines={1}
+              >
+                {action.label}
+              </AppText>
+            </Pressable>
+          ) : (
+            <View style={styles.statusPill}>
+              <View style={[styles.statusDot, { backgroundColor: status.dot }]} />
+              <AppText style={styles.statusText}>{resolvedStatusLabel}</AppText>
             </View>
-          </View>
-        ) : null}
-
-        {onOpenDetail || action ? (
-          <View style={styles.actionRow}>
-            {onOpenDetail ? (
-              <Pressable
-                onPress={onOpenDetail}
-                style={styles.detailButton}
-                accessibilityRole="button"
-                accessibilityLabel={t("mobile:voucher.card.detailAria")}
-              >
-                <AppText style={styles.detailButtonText}>{t("promo:voucherCard.detail")}</AppText>
-              </Pressable>
-            ) : null}
-            {action ? (
-              <Pressable
-                onPress={action.onClick}
-                disabled={action.pending}
-                style={[
-                  styles.actionButton,
-                  action.tone === "success"
-                    ? styles.actionSuccess
-                    : action.tone === "ghost"
-                      ? styles.actionGhost
-                      : styles.actionPrimary,
-                  action.pending && styles.actionDisabled,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={action.label}
-              >
-                {action.pending ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  action.icon ?? <TicketPercent color="#FFFFFF" size={14} />
-                )}
-                <AppText style={styles.actionButtonText} numberOfLines={1}>
-                  {action.label}
-                </AppText>
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
+          )}
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -300,113 +250,98 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     card: {
       flexDirection: "row",
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 12,
+      borderWidth: 1,
       borderColor: theme.border,
       backgroundColor: theme.surface,
       overflow: "hidden",
     },
-    cardMuted: { opacity: 0.78 },
+    cardMuted: { opacity: 0.8 },
+    cardPressed: { opacity: 0.92 },
     cardHighlight: {
       borderWidth: 2,
       borderColor: theme.brand,
-      backgroundColor: theme.mode === "dark" ? "rgba(139,92,255,0.12)" : "rgba(107,25,255,0.06)",
+      backgroundColor: theme.mode === "dark" ? "rgba(139,92,255,0.12)" : "rgba(107,25,255,0.05)",
     },
-    divider: {
-      width: 0,
-      borderLeftWidth: 2,
-      borderStyle: "dashed",
-      borderColor: theme.mode === "dark" ? "#3F3F46" : "#DDD6FE",
-      marginVertical: 10,
+    body: {
+      flex: 1,
+      minWidth: 0,
+      paddingHorizontal: 11,
+      paddingVertical: 10,
+      gap: 6,
     },
-    body: { flex: 1, minWidth: 0, padding: 14, gap: 7 },
-    badgeRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: 8,
+    },
+    name: {
+      flex: 1,
+      minWidth: 0,
+      color: theme.text,
+      fontSize: 14,
+      fontWeight: "800",
+      lineHeight: 18,
+    },
+    badgeSlot: { alignSelf: "flex-start", flexShrink: 0, maxWidth: "48%" },
     statusChip: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 5,
-      borderRadius: 999,
-      borderWidth: 1,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-    },
-    statusDot: { width: 6, height: 6, borderRadius: 3 },
-    statusText: { fontSize: 10, fontWeight: "800" },
-    expiringChip: {
-      borderRadius: 999,
-      borderWidth: 1,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-    },
-    expiringText: { fontSize: 10, fontWeight: "800" },
-    name: { color: theme.text, fontSize: 14, fontWeight: "800", lineHeight: 19 },
-    description: { color: theme.muted, fontSize: 12, lineHeight: 17 },
-    metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-    metaText: { color: theme.muted, fontSize: 12 },
-    codeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 1 },
-    codeBox: {
-      flex: 1,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderStyle: "dashed",
-      borderColor: theme.brandBorder,
-      backgroundColor: theme.brandSoft,
-      paddingHorizontal: 10,
-      paddingVertical: 7,
-    },
-    codeText: { color: theme.brand, fontSize: 12, fontWeight: "800", fontFamily: "monospace" },
-    copyButton: {
-      flexDirection: "row",
-      alignItems: "center",
       gap: 4,
-      borderRadius: 10,
-      backgroundColor: "#7C3AED",
-      paddingHorizontal: 12,
-      paddingVertical: 8,
+      paddingHorizontal: 7,
+      paddingVertical: 2,
+      borderRadius: 6,
+      backgroundColor: theme.mode === "dark" ? "rgba(107,25,255,0.12)" : "rgba(107,25,255,0.08)",
       flexShrink: 0,
     },
-    copyButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
-    usageWrap: { gap: 4, marginTop: 1 },
-    usageHead: { flexDirection: "row", justifyContent: "space-between", gap: 6 },
-    usageLabel: { color: theme.faint, fontSize: 10, fontWeight: "700" },
-    usagePercent: { color: theme.brand, fontSize: 10, fontWeight: "800" },
-    usageTrack: {
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F1F5F9",
-      overflow: "hidden",
-    },
-    usageFill: { height: "100%", borderRadius: 3 },
-    actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
-    detailButton: {
-      flexShrink: 0,
+    statusDot: { width: 5, height: 5, borderRadius: 3 },
+    statusChipText: { color: theme.brand, fontSize: 10, fontWeight: "800" },
+    infoBlock: { gap: 2 },
+    infoCode: { color: theme.muted, fontSize: 11, lineHeight: 14 },
+    infoHeadline: { color: theme.brand, fontSize: 13, fontWeight: "800", lineHeight: 17 },
+    infoHeadlineMuted: { color: theme.muted },
+    infoMinOrder: { color: theme.muted, fontSize: 11, lineHeight: 14 },
+    infoTime: { color: theme.faint, fontSize: 11, lineHeight: 14, flexShrink: 1 },
+    footerRow: {
       flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
-      borderRadius: 10,
-      backgroundColor: theme.brandSoft,
-      paddingVertical: 9,
-      paddingHorizontal: 11,
+      alignItems: "flex-end",
+      justifyContent: "flex-end",
+      gap: 8,
+      marginTop: 4,
     },
-    detailButtonText: { color: theme.brand, fontSize: 12, fontWeight: "800" },
     actionButton: {
-      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 6,
-      borderRadius: 10,
-      paddingVertical: 9,
-      paddingHorizontal: 11,
+      gap: 5,
+      height: 34,
+      minWidth: 78,
+      maxWidth: 132,
+      borderRadius: 9,
+      paddingHorizontal: 12,
+      flexShrink: 0,
     },
-    actionPrimary: { backgroundColor: "#7C3AED" },
-    actionSuccess: { backgroundColor: "#059669" },
+    actionPrimary: { backgroundColor: theme.brand },
+    actionSuccess: { backgroundColor: theme.success },
     actionGhost: {
       borderWidth: 1,
       borderColor: theme.border,
       backgroundColor: theme.surface,
     },
-    actionDisabled: { opacity: 0.6 },
-    actionButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "800" },
+    actionDisabled: { backgroundColor: theme.surfaceAlt },
+    actionPressed: { opacity: 0.85 },
+    actionText: { color: "#FFFFFF", fontSize: 12, fontWeight: "800" },
+    actionTextDisabled: { color: theme.muted },
+    statusPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      height: 28,
+      borderRadius: 8,
+      backgroundColor: theme.surfaceAlt,
+      paddingHorizontal: 10,
+      flexShrink: 0,
+    },
+    statusText: { color: theme.muted, fontSize: 11, fontWeight: "800" },
   });

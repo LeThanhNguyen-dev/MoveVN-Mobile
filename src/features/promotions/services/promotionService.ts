@@ -1,4 +1,5 @@
 import { apiClient } from "@/services/apiClient";
+import type { ApiResponse } from "@/features/auth/types";
 import type { Promotion, ApplyPromotionResponse } from "../types";
 
 const BASE = "/api/promotions";
@@ -45,9 +46,35 @@ export async function togglePromotion(id: number) {
   return res.data.data as { isActive: boolean };
 }
 
-export async function validatePromotion(code: string, vehicleId: number, totalAmount: number) {
-  const res = await apiClient.post<any>(`${BASE}/validate`, { code, vehicleId, totalAmount });
-  return res.data.data as ApplyPromotionResponse;
+export async function validatePromotion(
+  code: string,
+  vehicleId: number,
+  startDate: string,
+  endDate: string,
+): Promise<ApplyPromotionResponse> {
+  const res = await apiClient.post<ApiResponse<ApplyPromotionResponse>>(`${BASE}/validate`, {
+    code,
+    vehicleId,
+    startDate,
+    endDate,
+  });
+  const envelope = res.data;
+  if (envelope.status && envelope.data) {
+    return envelope.data;
+  }
+  // Backend rejects with HTTP 200 + status:false and data:null; the real reason
+  // lives in envelope.message. Return it as a failed result so callers show that
+  // reason instead of a generic "invalid code".
+  return {
+    success: false,
+    message: envelope.message || undefined,
+    promotionId: 0,
+    code,
+    discountAmount: 0,
+    systemPaidAmount: 0,
+    ownerPaidAmount: 0,
+    finalAmount: 0,
+  };
 }
 
 export async function approvePromotion(id: number) {

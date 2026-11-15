@@ -1,7 +1,6 @@
 import type { ComponentRef } from "react";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import * as Clipboard from "expo-clipboard";
 import { Sparkles, TicketPercent } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,7 +25,7 @@ import PromotionDetailSheet, {
 import VoucherTicketCard, {
   type VoucherCardData,
 } from "@/features/vouchers/components/VoucherTicketCard";
-import { getDaysLeft, isExpiringSoon } from "@/features/vouchers/voucherFormat";
+import { isExpiringSoon, isUpcomingStart } from "@/features/vouchers/voucherFormat";
 import { claimVoucher, getVoucherHunt } from "@/features/voucherClaims/services/voucherClaimService";
 import type { VoucherHuntItem } from "@/features/voucherClaims/types";
 
@@ -74,10 +73,11 @@ function toCardData(item: VoucherHuntItem): VoucherCardData {
     maxDiscountAmount: item.maxDiscountAmount,
     minOrderAmount: item.minOrderAmount,
     vehicleType: item.vehicleType,
+    startAt: item.startAt,
     endAt: item.endAt,
     usageCount: item.usageCount,
     maxUsageCount: item.maxUsageCount,
-    status: "active",
+    status: isUpcomingStart(item.startAt) ? "upcoming" : "active",
   };
 }
 
@@ -85,9 +85,7 @@ type HuntCardProps = {
   item: VoucherHuntItem;
   highlighted: boolean;
   claiming: boolean;
-  copied: boolean;
   onClaim: () => void;
-  onCopy: () => void;
   onOpenDetail: () => void;
   onLayoutY: (promotionId: number, y: number) => void;
 };
@@ -96,53 +94,33 @@ function HuntCard({
   item,
   highlighted,
   claiming,
-  copied,
   onClaim,
-  onCopy,
   onOpenDetail,
   onLayoutY,
 }: HuntCardProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const daysLeft = getDaysLeft(item.endAt);
 
   return (
     <View onLayout={(e) => onLayoutY(item.promotionId, e.nativeEvent.layout.y)}>
       <VoucherTicketCard
         data={toCardData(item)}
         highlight={highlighted}
-        showCode
-        copied={copied}
-        onCopyCode={onCopy}
         onOpenDetail={onOpenDetail}
         badge={
           highlighted ? (
             <View style={styles.highlightBadge}>
-              <Sparkles color={theme.brand} size={11} />
-              <AppText style={styles.highlightBadgeText}>
+              <Sparkles color={theme.brand} size={10} />
+              <AppText style={styles.highlightBadgeText} numberOfLines={1}>
                 {t("promo:hunt.badgeFinding")}
-              </AppText>
-            </View>
-          ) : daysLeft !== null && daysLeft <= 3 ? (
-            <View
-              style={[
-                styles.urgentBadge,
-                {
-                  backgroundColor: theme.mode === "dark" ? "rgba(244,63,94,0.15)" : "#FEE2E2",
-                  borderColor: theme.mode === "dark" ? "rgba(244,63,94,0.35)" : "#FECACA",
-                },
-              ]}
-            >
-              <AppText style={[styles.urgentBadgeText, { color: theme.mode === "dark" ? "#FB7185" : "#B91C1C" }]}>
-                {t("mobile:voucher.hunt.expiresIn", { days: daysLeft })}
               </AppText>
             </View>
           ) : null
         }
         action={{
           label: t("promo:hunt.claim"),
-          icon: claiming ? null : <Sparkles color="#FFFFFF" size={14} />,
+          icon: claiming ? null : <TicketPercent color="#FFFFFF" size={13} />,
           pending: claiming,
           onClick: onClaim,
         }}
@@ -167,7 +145,6 @@ export default function VoucherHuntScreen() {
   const [sort, setSort] = useState<HuntSort>("value");
   const [search, setSearch] = useState("");
   const [claimingId, setClaimingId] = useState<number | null>(null);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selected, setSelected] = useState<PromotionDetailSlide | null>(null);
 
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -309,21 +286,6 @@ export default function VoucherHuntScreen() {
     }
   }
 
-  async function handleCopy(item: VoucherHuntItem) {
-    try {
-      await Clipboard.setStringAsync(item.code);
-      setCopiedId(item.promotionId);
-      showToast({ type: "success", title: t("promo:hunt.copiedTitle"), message: item.code });
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch {
-      showToast({
-        type: "error",
-        title: t("promo:errorTitle"),
-        message: t("promo:hunt.copyError"),
-      });
-    }
-  }
-
   const handleSheetCta = useCallback(
     (promotionId: number) => {
       setSelected(null);
@@ -390,7 +352,7 @@ export default function VoucherHuntScreen() {
               {t("promo:hunt.emptyDescription")}
             </AppText>
             <Pressable
-              onPress={() => navigation.navigate("Promotions")}
+              onPress={() => navigation.navigate("VoucherWallet")}
               style={styles.emptyLinkTouch}
             >
               <AppText style={styles.emptyLink}>
@@ -435,9 +397,7 @@ export default function VoucherHuntScreen() {
                     item={v}
                     highlighted={v.promotionId === highlightId}
                     claiming={claimingId === v.promotionId}
-                    copied={copiedId === v.promotionId}
                     onClaim={() => void handleClaim(v)}
-                    onCopy={() => void handleCopy(v)}
                     onOpenDetail={() => setSelected(toDetailSlide(v))}
                     onLayoutY={handleLayoutY}
                   />
@@ -500,15 +460,8 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 8,
       paddingVertical: 3,
     },
-    highlightBadgeText: { color: theme.brand, fontSize: 10, fontWeight: "800" },
-    urgentBadge: {
-      borderRadius: 999,
-      borderWidth: 1,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-    },
-    urgentBadgeText: { fontSize: 10, fontWeight: "800" },
-    cardList: { gap: 14 },
+    highlightBadgeText: { color: theme.brand, fontSize: 10, fontWeight: "800", flexShrink: 1 },
+    cardList: { gap: 12 },
     centerBox: { paddingVertical: 64, alignItems: "center" },
     emptyBox: {
       alignItems: "center",
