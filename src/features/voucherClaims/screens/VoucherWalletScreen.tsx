@@ -238,6 +238,10 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
     });
 
     return result.sort((first, second) => {
+      // Usable-now first, upcoming after; the chosen sort orders within each group.
+      const firstUpcoming = isUpcomingStart(first.startAt);
+      const secondUpcoming = isUpcomingStart(second.startAt);
+      if (firstUpcoming !== secondUpcoming) return firstUpcoming ? 1 : -1;
       if (sort === "value") return second.discountValue - first.discountValue;
       if (sort === "ending") {
         const firstEnd = first.endAt ? new Date(first.endAt).getTime() : Number.MAX_SAFE_INTEGER;

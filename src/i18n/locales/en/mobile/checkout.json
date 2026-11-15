@@ -94,6 +94,7 @@
       "discount": "{{off}} off",
       "minOrder": " · min order {{amount}}",
       "blocked": "Not valid for this vehicle type",
+      "blockedUpcoming": "Not usable yet",
       "use": "Use"
     },
     "editor": {

@@ -13,6 +13,7 @@ import {
 import AppText from "@/components/AppText";
 import { formatMoney } from "@/features/booking/utils/format";
 import type { VoucherClaimResponse } from "@/features/voucherClaims/types";
+import { isUpcomingStart } from "@/features/vouchers/voucherFormat";
 import { checkoutFont, useCheckoutTheme } from "./checkoutTheme";
 
 type Props = {
@@ -33,8 +34,22 @@ function describe(v: VoucherClaimResponse): string {
   return i18n.t("mobile:checkout.voucher.discount", { off }) + cap;
 }
 
-function usableFor(v: VoucherClaimResponse, vehicleType: string | null | undefined): boolean {
-  return !vehicleType || v.vehicleType === "All" || v.vehicleType === vehicleType;
+/** Voucher đã dùng / hết hạn / hết lượt / bị chặn cấp chiến dịch: ẩn khỏi ví đặt xe. */
+function isHidden(v: VoucherClaimResponse): boolean {
+  if (v.usedAt) return true;
+  if (v.endAt && new Date(v.endAt).getTime() < Date.now()) return true;
+  if (v.maxUsageCount > 0 && v.usageCount >= v.maxUsageCount) return true;
+  return Boolean(v.availabilityReasonCode);
+}
+
+/** Lý do chưa áp dụng được (null = dùng được): sai loại xe hoặc chưa đến hạn. */
+function blockReason(
+  v: VoucherClaimResponse,
+  vehicleType: string | null | undefined,
+): "vehicle" | "upcoming" | null {
+  if (vehicleType && v.vehicleType !== "All" && v.vehicleType !== vehicleType) return "vehicle";
+  if (isUpcomingStart(v.startAt)) return "upcoming";
+  return null;
 }
 
 export default function CheckoutVoucherSheet({
@@ -49,6 +64,7 @@ export default function CheckoutVoucherSheet({
   const { p } = useCheckoutTheme();
   const { t } = useTranslation();
   const styles = useMemo(() => createStyles(p), [p]);
+  const visibleVouchers = useMemo(() => vouchers.filter((v) => !isHidden(v)), [vouchers]);
 
   return (
     <Modal
@@ -86,7 +102,7 @@ export default function CheckoutVoucherSheet({
               <ActivityIndicator color={p.brand} />
               <AppText style={styles.stateText}>{t("mobile:checkout.voucher.loading")}</AppText>
             </View>
-          ) : vouchers.length === 0 ? (
+          ) : visibleVouchers.length === 0 ? (
             <View style={styles.state}>
               <TicketPercent color={p.faint} size={26} strokeWidth={1.8} />
               <AppText style={styles.stateTitle}>{t("mobile:checkout.voucher.emptyTitle")}</AppText>
@@ -101,8 +117,9 @@ export default function CheckoutVoucherSheet({
               showsVerticalScrollIndicator={false}
               style={styles.listScroll}
             >
-              {vouchers.map((v) => {
-                const ok = usableFor(v, vehicleType);
+              {visibleVouchers.map((v) => {
+                const reason = blockReason(v, vehicleType);
+                const ok = reason === null;
                 return (
                   <Pressable
                     accessibilityRole="button"
@@ -131,7 +148,11 @@ export default function CheckoutVoucherSheet({
                         {v.minOrderAmount ? t("mobile:checkout.voucher.minOrder", { amount: formatMoney(v.minOrderAmount) }) : ""}
                       </AppText>
                       {!ok ? (
-                        <AppText style={styles.blocked}>{t("mobile:checkout.voucher.blocked")}</AppText>
+                        <AppText style={styles.blocked}>
+                          {reason === "vehicle"
+                            ? t("mobile:checkout.voucher.blocked")
+                            : t("mobile:checkout.voucher.blockedUpcoming")}
+                        </AppText>
                       ) : null}
                     </View>
                     {ok ? (
