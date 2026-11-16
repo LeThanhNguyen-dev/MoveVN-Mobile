@@ -58,6 +58,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { OutstandingSurcharge } from "../components/CheckoutSummary";
 import { DetailButton, DetailCard, DetailHeader, DetailNotice, DetailPill, DetailRow, DetailSectionHeader } from "../components/detail/BookingDetailUI";
 import BookingSummaryCard from "../components/detail/BookingSummaryCard";
+import BookingFlowGuide from "../components/BookingFlowGuide";
 import { parseServerDate } from "../bookingDisplay";
 import { getPendingAutoCancelHours } from "@/features/systemConfig/configService";
 import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
@@ -337,6 +338,8 @@ export default function OwnerBookingDetailScreen({
           {booking.escrowStatus === "Held" ? <DetailPill label={t("mobile:trip.detail.escrowHold", { amount: formatMoney(booking.escrowAmount) })} tone="mint" /> : null}
           <RiskScoreBadge score={booking.riskScore} />
         </View>
+
+        <BookingFlowGuide booking={booking} reports={reports} role="Owner" />
 
         {progress && (
           <DetailCard style={styles.progressCard}>

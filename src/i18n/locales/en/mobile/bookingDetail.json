@@ -109,6 +109,50 @@
     "history": {
       "title": "Booking history",
       "count": "{{count}} updates"
+    },
+    "flow": {
+      "title": "Next step guide",
+      "subtitle": "Step {{step}}/{{total}} in the booking flow",
+      "subtitleClosed": "Booking ended",
+      "actionTitle": "Next step",
+      "waitTitle": "Waiting",
+      "doneTitle": "Completed",
+      "closedTitle": "Booking ended",
+      "stepsOwner": ["Approve", "Deposit", "Pickup", "Renting", "Return", "Done"],
+      "stepsCustomer": ["Approval", "Deposit", "Pickup", "Renting", "Return", "Done"],
+      "next": {
+        "approve": "Tap “Approve booking” so the customer can pay the deposit.",
+        "waitApproval": "Waiting for the owner to approve the booking request.",
+        "payDeposit": "Tap “Pay deposit” before the deadline.",
+        "waitDeposit": "Waiting for the customer to pay the deposit.",
+        "waitDepositExpired": "The deposit deadline has passed. Wait for the system to process it or contact the owner.",
+        "createCheckIn": "Tap “Create check-in report” when handing over the vehicle.",
+        "waitPickup": "Waiting for the pickup time. Reload to check early pickup availability.",
+        "waitPickupReport": "Waiting for the owner to take photos and create the pickup report.",
+        "confirmCheckIn": "Review the report, then tap “Agree to the report and pick up”.",
+        "requestCheckInRevision": "If the report is wrong, tap “Request revision”.",
+        "reportNoShow": "You have not picked up the vehicle. Tap report no-show if you no longer need it.",
+        "waitCheckInConfirm": "Waiting for the customer to review and confirm the pickup report.",
+        "waitCheckInRevision": "Waiting for the owner to send a new pickup report.",
+        "waitStart": "Pickup confirmed. The trip will start as scheduled.",
+        "renting": "The vehicle is being rented. Track the trip progress below.",
+        "reportReturn": "When returning the vehicle, create the return report to compare.",
+        "createCheckOut": "Tap “Create check-out report” when you get the vehicle back.",
+        "waitCheckOutConfirm": "Waiting for the customer to review and confirm the return report.",
+        "confirmCheckOut": "Review the report, then tap “Agree to the report and return”.",
+        "disputeCheckOut": "If the report is wrong, tap “Request revision” before confirming.",
+        "waitReturnReport": "Waiting for the owner to take photos and create the return report.",
+        "waitReturnFinish": "Waiting for the system to close the return.",
+        "waitOwnerReceipt": "Waiting for the owner to confirm receipt of the vehicle.",
+        "confirmReceipt": "Tap “Confirm receipt” to close the return.",
+        "paySurcharge": "Pay the outstanding surcharge to finish the booking.",
+        "settle": "Tap “Release deposit” to receive the deposit.",
+        "settleHold": "The deposit is held for reconciliation, about {{hours}} hours left. Then tap “Release deposit”.",
+        "done": "The booking is complete, no further action needed.",
+        "cancelled": "The booking was cancelled.",
+        "rejected": "The booking was rejected.",
+        "default": "Reload the booking to see the next step."
+      }
     }
   }
 }

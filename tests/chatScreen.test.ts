@@ -37,6 +37,7 @@ vi.mock("@/features/auth/hooks/useAuth", () => ({
 vi.mock("@/services/apiClient", () => ({
   getApiErrorMessage: (_error: unknown, fallback: string) => fallback,
 }));
+vi.mock("expo-image", () => ({ Image: "Image" }));
 vi.mock("expo-secure-store", () => ({
   getItemAsync: vi.fn(async () => null),
   setItemAsync: vi.fn(),
