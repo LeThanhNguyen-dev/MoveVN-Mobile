@@ -93,6 +93,7 @@
       "depositExpiredTitle": "Payment expired",
       "depositExpiredBody": "This booking can no longer accept a deposit because payment has expired. The system will cancel it automatically.",
       "payingWallet": "Deducting from wallet...",
+      "payWithWallet": "Pay with wallet",
       "payWithWalletAmount": "Pay with wallet ({{amount}})",
       "payWithPayOS": "Pay via PayOS",
       "awaitingTransfer": "Waiting for transaction #{{code}} to be confirmed...",

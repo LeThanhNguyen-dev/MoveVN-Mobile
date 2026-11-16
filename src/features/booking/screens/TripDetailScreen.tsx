@@ -887,7 +887,7 @@ export default function TripDetailScreen({
                         ? t("mobile:trip.detail.payingWallet")
                         : walletBalance != null
                           ? t("mobile:trip.detail.payWithWalletAmount", { amount: formatMoney(walletBalance) })
-                          : t("booking:detail.payRemainingWallet")}
+                          : t("mobile:trip.detail.payWithWallet")}
                       onPress={handlePayWithWallet}
                       disabled={!dataReady || actionBusy !== null}
                     />
