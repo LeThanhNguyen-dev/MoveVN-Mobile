@@ -1,3 +1,4 @@
+import { useAssistantUi } from "@/features/assistant/useAssistantUi";
 import { useEffect, useRef } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -50,6 +51,7 @@ export default function ExploreNavigator({
   useEffect(() => {
     onRouteChange?.("ExploreMain");
   }, [onRouteChange]);
+  useEffect(() => () => useAssistantUi.getState().setVehicleDetailId(null), []);
   useEffect(() => {
     if (!quickBook || consumedQuickBookRef.current === quickBook || !exploreNavRef.current) return;
     consumedQuickBookRef.current = quickBook;
@@ -98,6 +100,8 @@ export default function ExploreNavigator({
           if (!state) return;
           const route = state.routes[state.index];
           if (route?.name) onRouteChange?.(route.name);
+          const vehicleId = (route?.params as { vehicleId?: unknown } | undefined)?.vehicleId;
+          useAssistantUi.getState().setVehicleDetailId(route?.name === "VehicleDetail" && typeof vehicleId === "number" && Number.isSafeInteger(vehicleId) && vehicleId > 0 ? vehicleId : null);
         },
       }}
     >

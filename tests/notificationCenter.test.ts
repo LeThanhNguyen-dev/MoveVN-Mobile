@@ -35,7 +35,7 @@ vi.mock("react-native", () => ({
     : ListEmptyComponent, ListFooterComponent),
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView", SafeAreaProvider: "SafeAreaProvider" }));
-vi.mock("lucide-react-native", () => Object.fromEntries(["ArrowLeft", "Bell", "BellOff", "CalendarCheck", "CarFront", "CheckCheck", "ChevronRight", "CircleAlert", "FileCheck2", "Flag", "Headphones", "MessageSquare", "RefreshCw", "Scale", "ShieldAlert", "Wallet"].map((name) => [name, name])));
+vi.mock("lucide-react-native", () => Object.fromEntries(["FileCheck2", "Flag", "Scale", "ArrowLeft", "Bell", "BellOff", "CalendarCheck", "CarFront", "CheckCheck", "ChevronRight", "CircleAlert", "Headphones", "MessageSquare", "RefreshCw", "ShieldAlert", "Wallet"].map((name) => [name, name])));
 
 import NotificationBell from "@/features/notifications/components/NotificationBell";
 import RoleNotSupportedScreen from "@/features/app/screens/RoleNotSupportedScreen";
@@ -63,7 +63,7 @@ async function mount() {
 }
 async function press(label: string) {
   const button = tree!.root.findAll((node) => (node.type as unknown) === "Pressable" && node.props.accessibilityLabel === label)[0];
-  expect(button).toBeDefined();
+  expect(button, label).toBeDefined();
   await act(async () => { await button!.props.onPress(); });
 }
 
@@ -97,7 +97,7 @@ it("opens full details, marks read on the server and lets Android back return to
   expect(store.getState().unreadCount).toBe(0);
   const modal = tree!.root.find((node) => (node.type as unknown) === "Modal");
   await act(async () => modal.props.onRequestClose());
-  expect(text()).toContain("Bạn đã đọc hết thông báo");
+  expect(text()).toContain("Bạn đã xem hết thông báo");
   expect(text()).not.toContain("Chi tiết thông báo");
   await act(async () => modal.props.onRequestClose());
   expect(store.getState().centerOpen).toBe(false);

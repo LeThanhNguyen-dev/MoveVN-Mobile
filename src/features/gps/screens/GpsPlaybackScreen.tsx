@@ -157,7 +157,7 @@ export default function GpsPlaybackScreen({
       </View>
 
       <View style={styles.mapWrap}>
-        <WebView
+        <WebView<object>
           ref={webRef}
           source={{ html: buildPlaybackMapHtml(theme.brand, theme.surfaceAlt) }}
           style={styles.map}

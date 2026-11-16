@@ -1,10 +1,12 @@
+import { setAssistantLocale } from "../src/features/assistant/assistantLanguage";
+import { useAssistantUi } from "../src/features/assistant/useAssistantUi";
 import React, { forwardRef, useImperativeHandle } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { themes } from "@/theme/tokens";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
-const mocks = vi.hoisted(() => ({ list: vi.fn(), history: vi.fn(), send: vi.fn(), getDraft: vi.fn(), patch: vi.fn(), stored: vi.fn(), handoff: vi.fn(), feedback: vi.fn(), getMessage: vi.fn(), event: null as null | ((event: { conversationId: string; status: string }) => void) }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), history: vi.fn(), send: vi.fn(), getDraft: vi.fn(), state: vi.fn(), patch: vi.fn(), stored: vi.fn(), handoff: vi.fn(), feedback: vi.fn(), getMessage: vi.fn(), event: null as null | ((event: { conversationId: string; status: string }) => void) }));
 vi.mock("react-native", () => ({
   View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable", ScrollView: "ScrollView", ActivityIndicator: "ActivityIndicator", KeyboardAvoidingView: "KeyboardAvoidingView",
   Platform: { OS: "android" }, StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 },
@@ -20,11 +22,12 @@ vi.mock("@/theme/useTheme", () => ({ useTheme: () => ({ theme: themes.light }) }
 vi.mock("@/features/auth/hooks/useAuth", () => ({ useAuthStore: (selector: any) => selector({ user: { userId: 1, roles: ["Customer"] } }) }));
 vi.mock("@/services/apiClient", () => ({ getApiErrorMessage: (_err: unknown, fallback: string) => fallback }));
 vi.mock("@/features/assistant/assistantConnection", () => ({ subscribeAssistant: (event: any) => { mocks.event = event; return () => {}; } }));
-vi.mock("@/features/assistant/components/AssistantBooking", () => ({ AgentBlocks: "AgentBlocks" }));
+vi.mock("@/features/assistant/components/AssistantBooking", () => ({ AgentBlocks: "AgentBlocks", BookingPaymentCard: "BookingPaymentCard", ConfirmationCard: "ConfirmationCard" }));
 vi.mock("@/features/assistant/components/BookingFunnel", () => ({ default: "BookingFunnel" }));
+vi.mock("@/features/locations/components/AddressAutocomplete", () => ({ default: "AddressAutocomplete" }));
 vi.mock("@/features/cms/screens/PolicyDetailScreen", () => ({ default: "PolicyDetailScreen" }));
 vi.mock("@/features/assistant/assistantService", () => ({
-  listConversations: mocks.list, getHistory: mocks.history, sendQuestion: mocks.send, getDraft: mocks.getDraft, patchDraft: mocks.patch,
+  listConversations: mocks.list, getHistory: mocks.history, sendQuestion: mocks.send, getDraft: mocks.getDraft, getConversationState: mocks.state, patchDraft: mocks.patch, prepareDraft: vi.fn(),
   createConversation: vi.fn(), getMessage: mocks.getMessage, handoff: mocks.handoff, sendFeedback: mocks.feedback, assistantError: () => "Error", assistantFailure: (_error: unknown, fallback: string) => fallback,
 }));
 import AssistantScreen from "@/features/assistant/screens/AssistantScreen";
@@ -45,6 +48,7 @@ function button(label: string) {
 }
 async function press(label: string) { await act(async () => { button(label).props.onPress(); }); }
 beforeEach(() => {
+  setAssistantLocale("vi"); useAssistantUi.setState({ vehicleDetailId: null });
   vi.clearAllMocks(); mocks.stored.mockResolvedValue(null);
   mocks.list.mockResolvedValue({ items: [current] });
   mocks.history.mockResolvedValue({ items: [message], totalCount: 1 });
@@ -75,7 +79,7 @@ it("opens a policy source and returns to the conversation", async () => {
 
 it("opens the booking funnel before a vehicle is selected and requests more search results", async () => {
   await render(); await press("Xem thêm xe");
-  expect(mocks.send).toHaveBeenCalledWith("c1", "Xem thêm xe", expect.any(String));
+  expect(mocks.send).toHaveBeenCalledWith("c1", "Xem thêm xe", expect.any(String), { uiLocale: "vi" });
   await act(async () => tree.root.findByProps({ accessibilityLabel: "Đặt xe nhanh" }).props.onPress());
   const funnel = tree.root.findByType("BookingFunnel" as never);
   expect(funnel.props.conversationId).toBe("c1");
@@ -120,7 +124,7 @@ it("accepts the next composed turn while an earlier accepted turn is queued", as
   await act(async () => tree.root.findAllByType("TextInput" as never)[0]!.props.onChangeText("Xe ở Đà Nẵng"));
   expect(tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.disabled).toBe(false);
   await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
-  expect(mocks.send).toHaveBeenCalledWith("c1", "Xe ở Đà Nẵng", expect.any(String));
+  expect(mocks.send).toHaveBeenCalledWith("c1", "Xe ở Đà Nẵng", expect.any(String), { uiLocale: "vi" });
 });
 
 it("polls each accepted request through repeated Processing responses without realtime", async () => {
@@ -171,6 +175,35 @@ it("opens vehicle details separately from choosing a vehicle to book", async () 
   expect(props.onViewVehicle).toHaveBeenCalledTimes(1);
 });
 
+it("reopens an old car card without patching its stale dates over the saved customer form", async () => {
+  const oldPeriod = { startAt: "2099-11-20T02:00:00Z", endAt: "2099-11-23T02:00:00Z" };
+  const saved = { draftId: "saved", version: 4, status: "Draft", slots: { vehicleId: 7, startAt: "2099-11-21T02:00:00Z", endAt: "2099-11-24T02:00:00Z" }, missing: [], bookingId: null };
+  mocks.history.mockResolvedValue({ items: [{ ...message, answer: { ...answer, rentalPeriod: oldPeriod } }], totalCount: 1 });
+  mocks.getDraft.mockResolvedValue(saved);
+  mocks.patch.mockResolvedValue({ ...saved, version: 5 });
+  mocks.state.mockResolvedValue({ activeFilters: { startAt: saved.slots.startAt, endAt: saved.slots.endAt }, slotEvidence: { startAt: { origin: "CustomerForm", confirmation: "Confirmed", precision: "DateTime" }, endAt: { origin: "CustomerForm", confirmation: "Confirmed", precision: "DateTime" } } });
+  await render(); await press("Đặt xe này");
+  expect(mocks.patch).toHaveBeenCalledExactlyOnceWith("c1", 4, { vehicleId: 7 });
+  const { default: RealFunnel } = await vi.importActual<typeof import("@/features/assistant/components/BookingFunnel")>("@/features/assistant/components/BookingFunnel");
+  const funnelProps = tree.root.findByType("BookingFunnel" as never).props as React.ComponentProps<typeof RealFunnel>;
+  expect(funnelProps.initialPeriod).toEqual(oldPeriod);
+  await act(async () => tree.update(React.createElement(RealFunnel, funnelProps)));
+  const fields = tree.root.findAllByType("TextInput" as never);
+  expect(fields[0]!.props.value).toBe("2099-11-21");
+  expect(fields[1]!.props.value).toBe("09:00");
+  expect(fields[2]!.props.value).toBe("2099-11-24");
+  expect(fields[3]!.props.value).toBe("09:00");
+});
+
+it("renders localized catalog enums and keeps unknown metadata unchanged", async () => {
+  mocks.history.mockResolvedValue({ items: [{ ...message, answer: { ...answer, replyLocale: "en", cards: [{ name: "vehicles.search", data: { items: [{ id: 7, transmission: "Số tự động", fuelType: "Xăng" }, { id: 8, transmission: "Custom gearbox", fuelType: "Hybrid" }] } }] } }], totalCount: 1 });
+  await render();
+  const output = JSON.stringify(tree.toJSON());
+  expect(output).toContain("Automatic · Petrol");
+  expect(output).toContain("Custom gearbox · Hybrid");
+  expect(output).not.toContain("Số tự động");
+});
+
 it("uses the stored conversation and does not merge messages from another history", async () => {
   const other = { ...current, id: "c2", createdAt: "2026-10-21" };
   mocks.stored.mockResolvedValue("c2");
@@ -186,7 +219,8 @@ it("uses the stored conversation and does not merge messages from another histor
 it("uses server quick replies and supplies contextual fallbacks", () => {
   expect(getAssistantReplies("Ngày nào?", ["Ngày mai"])).toEqual(["Ngày mai"]);
   expect(getAssistantReplies("Ngày nào?", [])).toEqual([]);
-  expect(getAssistantReplies("Ngân sách bao nhiêu?")).toContain("3tr tổng chuyến");
+  expect(getAssistantReplies("Ngân sách bao nhiêu?")).toContain("Tìm ô tô dưới 1 triệu/ngày");
+  expect(getAssistantReplies("Ngày nào?")).toEqual(getAssistantReplies("Ngân sách bao nhiêu?"));
 });
 
 it("does not send empty questions", async () => {
@@ -204,7 +238,7 @@ it("requires explicit staff consent and a support note before transferring", asy
   expect(button("Đồng ý chuyển").props.disabled).toBe(true);
   await act(async () => tree.root.findByProps({ placeholder: "Bạn cần hỗ trợ vấn đề gì?" }).props.onChangeText("Cần hỗ trợ thuê xe"));
   await press("Đồng ý chuyển");
-  expect(mocks.handoff).toHaveBeenCalledWith("c1", "Cần hỗ trợ thuê xe");
+  expect(mocks.handoff).toHaveBeenCalledWith("c1", "Cần hỗ trợ thuê xe", "vi");
   expect(tree.root.findByProps({ placeholder: "Nhắn cho nhân viên…" })).toBeDefined();
 });
 
@@ -224,4 +258,78 @@ it("closes input on an ended conversation and allows starting a clean conversati
   await press("Bắt đầu trò chuyện mới");
   expect(tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" })).toBeDefined();
   expect(JSON.stringify(tree.toJSON())).not.toContain("Tìm được xe");
+});
+
+it("uses replyLocale for English UI and cards while keeping the response verbatim", async () => {
+  mocks.history.mockResolvedValue({ items: [{ ...message, content: "Pick up in Đà Nẵng.", answer: { ...answer, replyLocale: "en", content: "Pick up in Đà Nẵng." } }], totalCount: 1 });
+  await render();
+  const output = JSON.stringify(tree.toJSON());
+  expect(output).toContain("MoveVN assistant");
+  expect(output).toContain("Book this car");
+  expect(output).toContain("Pick up in Đà Nẵng.");
+  expect(tree.root.findByProps({ placeholder: "Ask MoveVN…" })).toBeDefined();
+});
+
+it("uses the UI preference for a new conversation after auto-detecting English in a previous one", async () => {
+  mocks.history.mockResolvedValue({ items: [{ ...message, answer: { ...answer, replyLocale: "en" } }], totalCount: 1 });
+  await render();
+  expect(JSON.stringify(tree.toJSON())).toContain("MoveVN assistant");
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Cuộc trò chuyện mới" }).props.onPress());
+  expect(JSON.stringify(tree.toJSON())).toContain("Trợ lý MoveVN");
+  expect(JSON.stringify(tree.toJSON())).not.toContain("MoveVN assistant");
+});
+
+it("uses a newer message language over the previous English conversation locale", async () => {
+  mocks.history.mockResolvedValue({ items: [{ ...message, answer: { ...answer, replyLocale: "en" } }, { id: "user:new", requestId: "new", role: "user", status: "Queued", replyLocale: "vi", content: "Trả lời tiếng Việt nhé", createdAt: "2026-10-23", answer: null }], totalCount: 2 });
+  await render();
+  const output = JSON.stringify(tree.toJSON());
+  expect(output).toContain("Trợ lý MoveVN");
+  expect(output).toContain('"placeholder":"Hỏi MoveVN…"');
+  expect(output).toContain("Book this car"); // Historical English cards keep their own language.
+});
+
+it("keeps a completed reply after its question when history has not projected the user row yet", async () => {
+  const timestamp = "2026-10-24T00:00:00Z";
+  mocks.send.mockResolvedValue({ id: "new-receipt", status: "Completed", acceptedAt: timestamp, completedAt: timestamp, answer: { content: "Reply belongs after the new question", sources: [], cards: [], actions: [] } });
+  await render();
+  await act(async () => tree.root.findAllByType("TextInput" as never)[0]!.props.onChangeText("New question before the reply"));
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
+  const output = JSON.stringify(tree.toJSON());
+  expect(output.indexOf("New question before the reply")).toBeGreaterThan(0);
+  expect(output.indexOf("New question before the reply")).toBeLessThan(output.indexOf("Reply belongs after the new question"));
+});
+
+it("uses a new request ID when the same question refers to a different vehicle after a lost response", async () => {
+  mocks.send.mockRejectedValueOnce(new Error("offline"));
+  useAssistantUi.setState({ vehicleDetailId: 7 });
+  await render();
+  await act(async () => tree.root.findAllByType("TextInput" as never)[0]!.props.onChangeText("Is this car available?"));
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
+  await act(async () => useAssistantUi.setState({ vehicleDetailId: 8 }));
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
+  expect(mocks.send.mock.calls[1]![2]).not.toBe(mocks.send.mock.calls[0]![2]);
+  expect(mocks.send.mock.calls[1]![3]).toEqual({ uiLocale: "vi", context: { vehicleId: 8, source: "vehicle_detail" } });
+});
+
+it("requests a real conversation language switch when the user selects English", async () => {
+  await render();
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Switch to English" }).props.onPress());
+  expect(mocks.send).toHaveBeenCalledWith("c1", "Please reply in English.", expect.any(String), { uiLocale: "en" });
+});
+
+it("attaches the current vehicle page reference without exposing page text", async () => {
+  useAssistantUi.setState({ vehicleDetailId: 17 });
+  await render();
+  await act(async () => tree.root.findAllByType("TextInput" as never)[0]!.props.onChangeText("Is this car available?"));
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Gửi tin nhắn" }).props.onPress());
+  expect(mocks.send).toHaveBeenCalledWith("c1", "Is this car available?", expect.any(String), { uiLocale: "vi", context: { vehicleId: 17, source: "vehicle_detail" } });
+});
+
+it("opens consent rather than transferring immediately for a server handoff action", async () => {
+  mocks.history.mockResolvedValue({ items: [{ ...message, answer: { ...answer, actions: [{ type: "RequestHandoff" }] } }], totalCount: 1 });
+  await render();
+  expect(tree.root.findAllByType("Pressable" as never).filter(node => JSON.stringify(node.findAllByType("Text" as never).map(text => text.props.children)).includes("Gặp nhân viên"))).toHaveLength(2);
+  await press("Gặp nhân viên");
+  expect(mocks.handoff).not.toHaveBeenCalled();
+  expect(JSON.stringify(tree.toJSON())).toContain("Nhân viên sẽ được xem nội dung cuộc trò chuyện");
 });

@@ -37,6 +37,7 @@ vi.mock("@/features/auth/hooks/useAuth", () => ({
 vi.mock("@/services/apiClient", () => ({
   getApiErrorMessage: (_error: unknown, fallback: string) => fallback,
 }));
+vi.mock("expo-image", () => ({ Image: "Image" }));
 vi.mock("expo-secure-store", () => ({
   getItemAsync: vi.fn(async () => null),
   setItemAsync: vi.fn(),
@@ -75,9 +76,9 @@ vi.mock("react-native", () => ({
   ScrollView: "ScrollView",
   RefreshControl: "RefreshControl",
   KeyboardAvoidingView: "KeyboardAvoidingView",
+  Keyboard: { addListener: vi.fn(() => ({ remove: vi.fn() })), dismiss: vi.fn() },
   Platform: { OS: "android" },
-  Keyboard: { dismiss: vi.fn(), addListener: () => ({ remove: () => {} }) },
-  useWindowDimensions: () => ({ width: 400, height: 800, scale: 2, fontScale: 1 }),
+  useWindowDimensions: () => ({ width: 390, height: 844, scale: 1, fontScale: 1 }),
   StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 },
   TextInput: forwardRef((props: Record<string, unknown>, ref) => {
     useImperativeHandle(ref, () => ({ focus: vi.fn() }));
@@ -128,9 +129,8 @@ vi.mock("react-native", () => ({
   ),
 }));
 vi.mock("react-native-safe-area-context", () => ({
-  SafeAreaView: "SafeAreaView",
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }), SafeAreaView: "SafeAreaView",
   SafeAreaProvider: "SafeAreaProvider",
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 vi.mock("lucide-react-native", () =>
   Object.fromEntries(

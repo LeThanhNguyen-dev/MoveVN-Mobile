@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+import { setAssistantLocale } from "../src/features/assistant/assistantLanguage";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
@@ -25,11 +26,22 @@ import {
   prepareDraft,
   sendFeedback,
   sendQuestion,
+  validatedInputContext,
 } from "@/features/assistant/assistantService";
 
 const UUID = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
 
+beforeEach(() => setAssistantLocale("vi"));
+
 describe("Assistant chat + booking contract", () => {
+  it("sends the language and an allowlisted vehicle reference", async () => {
+    mocks.post.mockResolvedValue({ data: { data: { id: UUID, status: "Queued" } } });
+    await sendQuestion(UUID, "Is this car available?", UUID, { uiLocale: "en", context: { vehicleId: 7, source: "vehicle_detail" } });
+    expect(mocks.post).toHaveBeenLastCalledWith(expect.stringContaining("/messages"), { content: "Is this car available?", clientMessageId: UUID, uiLocale: "en", context: { vehicleId: 7, source: "vehicle_detail" } });
+    expect(validatedInputContext({ vehicleId: -1, source: "vehicle_detail" })).toBeUndefined();
+    expect(validatedInputContext({ vehicleId: 7, source: "assistant_card", sourceMessageId: "<script>" })).toBeUndefined();
+    expect(validatedInputContext({ vehicleId: 7, source: "untrusted" as never })).toBeUndefined();
+  });
   it("calls conversation APIs", async () => {
     mocks.post.mockResolvedValue({ status: 202, data: { data: { id: UUID, status: "Queued", errorCode: null, answer: null } } });
     mocks.get.mockResolvedValue({ data: { data: { items: [] } } });
@@ -122,5 +134,13 @@ describe("Assistant chat + booking contract", () => {
     await confirmAction("new-token", true);
     const keys = mocks.post.mock.calls.map(call => call[2].headers["Idempotency-Key"]);
     expect(new Set(keys).size).toBe(3);
+  });
+
+  it("reuses the confirmation operation key when its response is lost and consent is unchanged", async () => {
+    mocks.post.mockRejectedValueOnce(new Error("lost confirmation response")).mockResolvedValueOnce({ data: { data: { status: "PaymentPending", bookingId: 9 } } });
+    await expect(confirmAction("same-uncertain-token", false)).rejects.toThrow("lost confirmation response");
+    await expect(confirmAction("same-uncertain-token", false)).resolves.toMatchObject({ status: "PaymentPending", bookingId: 9 });
+    expect(mocks.post.mock.calls[1]![2].headers["Idempotency-Key"]).toBe(mocks.post.mock.calls[0]![2].headers["Idempotency-Key"]);
+    expect(mocks.post.mock.calls.map(call => call[1])).toEqual([{ acceptPriceChange: false }, { acceptPriceChange: false }]);
   });
 });

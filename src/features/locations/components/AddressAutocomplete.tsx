@@ -20,6 +20,7 @@ export type SelectedAddress = {
 
 type Props = {
   value: string;
+  locale?: "vi" | "en";
   onChange: (value: string) => void;
   onSelect: (address: SelectedAddress) => void;
   onManualChange?: () => void;
@@ -31,6 +32,7 @@ type Props = {
 
 export default function AddressAutocomplete({
   value,
+  locale = "vi",
   onChange,
   onSelect,
   onManualChange,
@@ -100,7 +102,7 @@ export default function AddressAutocomplete({
       // Không lấy được tọa độ thì vẫn giữ địa chỉ text đã chọn.
       onChange(item.description);
       onSelect({ address: item.description, latitude: null, longitude: null, placeId: item.placeId });
-      setError(t("common:addressCoordsError"));
+      setError(locale === "en" ? "Could not locate this address." : locale === "vi" ? "Không lấy được tọa độ địa chỉ." : t("common:addressCoordsError"));
     } finally {
       if (sequence === selectionSequence.current) setSelecting(false);
     }
@@ -133,7 +135,7 @@ export default function AddressAutocomplete({
         {busy ? (
           <ActivityIndicator color={theme.brand} size="small" />
         ) : value ? (
-          <Pressable onPress={handleClear} accessibilityLabel={t("mobile:vehicleList.address.clearAria")}>
+          <Pressable onPress={handleClear} accessibilityLabel={locale === "en" ? "Clear address" : locale === "vi" ? "Xóa địa chỉ" : t("mobile:vehicleList.address.clearAria")}>
             <X color={theme.muted} size={15} />
           </Pressable>
         ) : null}
