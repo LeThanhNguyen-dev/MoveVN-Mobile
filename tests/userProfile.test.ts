@@ -87,7 +87,7 @@ describe("profile time helpers", () => {
   });
 });
 
-const vehicleFixtures: PublicProfileVehicle[] = [
+const vehicleFixtures: [PublicProfileVehicle, PublicProfileVehicle] = [
   {
     id: 1,
     brandName: "Honda",

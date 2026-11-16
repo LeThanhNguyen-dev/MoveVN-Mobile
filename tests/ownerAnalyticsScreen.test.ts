@@ -16,7 +16,7 @@ vi.mock("@/features/disputes/screens/DisputeDetailScreen", () => ({ default: () 
 vi.mock("react-native", () => ({ View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable", ScrollView: "ScrollView", ActivityIndicator: "ActivityIndicator", RefreshControl: "RefreshControl", StyleSheet: { create: (x: unknown) => x, hairlineWidth: 1, absoluteFill: {} },
   Modal: ({ visible, children }: { visible: boolean; children: React.ReactNode }) => visible ? React.createElement("Modal", null, children) : null,
 }));
-vi.mock("lucide-react-native", () => Object.fromEntries(["BarChart3", "CalendarCheck", "CarFront", "ChevronDown", "ChevronUp", "CircleHelp", "Download", "FileText", "LayoutDashboard", "RefreshCw", "ShieldCheck", "SlidersHorizontal", "Star", "Trophy", "X"].map(n => [n, n])));
+vi.mock("lucide-react-native", () => Object.fromEntries(["ArrowLeft", "ChevronUp", "FileText", "LayoutDashboard", "SlidersHorizontal", "BarChart3", "CalendarCheck", "CarFront", "ChevronDown", "CircleHelp", "Download", "RefreshCw", "ShieldCheck", "Star", "Trophy", "X"].map(n => [n, n])));
 vi.mock("expo-secure-store", () => ({ getItemAsync: vi.fn(async () => null), setItemAsync: vi.fn(), deleteItemAsync: vi.fn() }));
 import OwnerAnalyticsScreen from "@/features/ownerAnalytics/OwnerAnalyticsScreen";
 
@@ -88,6 +88,6 @@ it("ignores a stale response after switching the filter", async () => {
 it("opens metric definitions and reports export failure without closing the overview", async () => {
   await mount(); await press("Báo cáo"); await press("Cách tính số liệu và lưu ý"); expect(text()).toContain("không phải lợi nhuận");
   mocks.download.mockRejectedValueOnce(new Error("Không tải được Excel")); await press("Xuất Excel");
-  expect(text()).toContain("Không tải được Excel"); expect(text()).toContain("Hiệu quả đội xe");
+  expect(text()).toContain("Không tải được Excel"); expect(text()).toContain("Xuất Excel");
   await press("Xuất Excel"); expect(mocks.download).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
 });

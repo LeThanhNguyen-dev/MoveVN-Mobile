@@ -3,6 +3,8 @@ import { create } from "zustand";
 interface AssistantUiState {
   /** Modal chat mở hay không (điều khiển từ FAB hoặc Trung tâm hỗ trợ). */
   chatOpen: boolean;
+  vehicleDetailId: number | null;
+  setVehicleDetailId: (id: number | null) => void;
   /** Người dùng đã ẩn nút tròn nổi (vì che giao diện) hay chưa. */
   fabHidden: boolean;
   /** Độ lệch kéo-thả của nút nổi so với vị trí mặc định (giữ trong phiên). */
@@ -16,6 +18,8 @@ interface AssistantUiState {
 // cùng mở/tắt một modal chat duy nhất.
 export const useAssistantUi = create<AssistantUiState>((set) => ({
   chatOpen: false,
+  vehicleDetailId: null,
+  setVehicleDetailId: (vehicleDetailId) => set({ vehicleDetailId }),
   fabHidden: false,
   fabPos: null,
   setChatOpen: (chatOpen) => set({ chatOpen }),

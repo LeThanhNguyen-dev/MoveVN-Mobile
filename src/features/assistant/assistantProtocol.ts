@@ -1,7 +1,8 @@
-import i18n from "@/i18n";
+import { type AssistantLocale } from "./assistantLanguage";
 import type { AssistantAnswer, MessageResult, TimelineItem } from "./assistantService";
 
 export type AssistantLifecycle = {
+  replyLocale?: AssistantLocale;
   turnSequence?: number; stateVersion?: number; draftVersion?: number;
   acceptedAt?: string; startedAt?: string; deadlineAt?: string; completedAt?: string; serverNow?: string;
   phase?: string; projectionStatus?: string; businessStatus?: string; outcome?: string;
@@ -12,6 +13,27 @@ const list = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
 const number = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
 const date = (value: unknown): value is string => typeof value === "string" && Number.isFinite(Date.parse(value));
 const text = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
+const rentalDate = (value: unknown): value is string => typeof value === "string"
+  && /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2}))?$/.test(value) && date(value);
+export function bookingPeriodFromCard(value: unknown): { startAt?: string; endAt?: string } {
+  if (!object(value)) return {};
+  const filters = object(value.appliedFilters) ? value.appliedFilters : {};
+  const start = [value.startAt, value.startDate, filters.startAt, filters.startDate].find(rentalDate);
+  const end = [value.endAt, value.endDate, filters.endAt, filters.endDate].find(rentalDate);
+  return { ...(start ? { startAt: start } : {}), ...(end ? { endAt: end } : {}) };
+}
+export function conversationBookingPeriod(items: TimelineItem[], selectedPeriod: { startAt?: string; endAt?: string } = {}) {
+  return items.reduce((period, item) => {
+    if (item.role !== "assistant" || item.status !== "Completed" || !item.answer) return period;
+    const fromCards = item.answer.cards.reduce((known, card) => ({ ...known, ...bookingPeriodFromCard(card.data) }), period);
+    return { ...fromCards, ...bookingPeriodFromCard(item.answer.rentalPeriod) };
+  }, selectedPeriod);
+}
+export function validAssistantAction(value: unknown): value is { type: string; resourceId?: string } {
+  if (!object(value)) return false;
+  if (value.type === "RequestHandoff") return value.resourceId === undefined || value.resourceId === null;
+  return ["OpenVehicle", "OpenBooking"].includes(String(value.type)) && typeof value.resourceId === "string" && /^[1-9]\d*$/.test(value.resourceId) && Number.isSafeInteger(Number(value.resourceId));
+}
 const quote = (value: unknown) => object(value) && text(value.quoteId) && number(value.vehicleId) && date(value.startAt) && date(value.endAt)
   && date(value.expiresAt) && ["rental", "rentalDiscount", "promotionDiscount", "total", "deposit", "securityDeposit"].every(key => number(value[key]));
 function safeBlock(value: unknown): boolean {
@@ -28,6 +50,7 @@ function cardData(value: Record<string, unknown>): Record<string, unknown> {
   for (const [key, field] of Object.entries(value)) {
     if (field === null || typeof field === "string" || typeof field === "boolean" || number(field)) result[key] = field;
   }
+  if (object(value.appliedFilters)) result.appliedFilters = bookingPeriodFromCard(value.appliedFilters);
   if (Array.isArray(value.features)) result.features = value.features.filter(text).slice(0, 30);
   if (object(value.quote) && number(value.quote.refundAmount)) result.quote = { refundAmount: value.quote.refundAmount, canCancel: value.quote.canCancel === true, policyMessage: typeof value.quote.policyMessage === "string" ? value.quote.policyMessage : "" };
   if (Array.isArray(value.items)) result.items = value.items.filter(object).filter(item => number(item.id)).slice(0, 50).map(cardData);
@@ -38,9 +61,11 @@ export function decodeAnswer(value: unknown): AssistantAnswer | null {
   if (!object(value) || !text(value.content) || value.content.length > 8000) return null;
   return {
     content: value.content,
+    replyLocale: value.replyLocale === "en" || value.replyLocale === "vi" ? value.replyLocale : undefined,
+    rentalPeriod: object(value.rentalPeriod) ? bookingPeriodFromCard(value.rentalPeriod) : undefined,
     sources: list(value.sources).filter(object).filter(source => number(source.id) && number(source.version) && text(source.title) && text(source.slug) && typeof source.excerpt === "string").slice(0, 12),
     cards: list(value.cards).filter(object).filter(card => typeof card.name === "string" && /^(vehicles\.(search|detail|reviews|availability)|bookings\.(list|detail|cancellationQuote)|promotions\.list|policies\.lookup)$/.test(card.name) && object(card.data)).slice(0, 12).map(card => ({ name: card.name, data: cardData(card.data as Record<string, unknown>) })),
-    actions: list(value.actions).filter(object).filter(action => ["OpenVehicle", "OpenBooking", "RequestHandoff"].includes(String(action.type)) && (action.resourceId === undefined || typeof action.resourceId === "string")).slice(0, 12),
+    actions: list(value.actions).filter(validAssistantAction).slice(0, 12),
     blocks: list(value.blocks).filter(safeBlock).slice(0, 12),
     quickReplies: Array.isArray(value.quickReplies) ? value.quickReplies.filter(text).map(reply => reply.slice(0, 200)).slice(0, 6) : undefined,
   } as AssistantAnswer;
@@ -59,10 +84,10 @@ export function decodeHistory<T extends { items: TimelineItem[] }>(page: T): T {
   return { ...page, items: page.items.filter(object).filter(item => text(item.id) && ["user", "assistant", "staff"].includes(String(item.role)) && typeof item.content === "string").map(item => ({ ...item, answer: decodeAnswer(item.answer) })) } as T;
 }
 export const isPendingMessage = (message: { status: string }) => ["Queued", "Processing"].includes(message.status);
-export function pendingNotice(message: AssistantLifecycle, now = Date.now()): string | null {
-  if (/committed|projecting/i.test(message.phase ?? "") || /committed/i.test(message.businessStatus ?? message.outcome ?? "")) return i18n.t("mobile:assistant.progress.committed");
+export function pendingNotice(message: AssistantLifecycle, now = Date.now(), locale?: AssistantLocale): string | null {
+  if (/committed|projecting/i.test(message.phase ?? "") || /committed/i.test(message.businessStatus ?? message.outcome ?? "")) return locale === "en" ? "Result recorded. MoveVN is syncing details…" : "Đã ghi nhận kết quả. MoveVN đang đồng bộ thông tin…";
   const deadline = message.deadlineAt ? Date.parse(message.deadlineAt) : NaN;
-  return Number.isFinite(deadline) && now > deadline + 10000 ? i18n.t("mobile:assistant.progress.stale") : null;
+  return Number.isFinite(deadline) && now > deadline + 10000 ? (locale === "en" ? "Status is unconfirmed. Check again; your message is saved." : "Chưa xác nhận được trạng thái. Bạn có thể kiểm tra lại; tin nhắn đang được giữ nguyên.") : null;
 }
 export function actionIsExpired(data: { expiresAt?: unknown }, now = Date.now()) {
   return data.expiresAt !== undefined && (!date(data.expiresAt) || Date.parse(data.expiresAt) <= now);
