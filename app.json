@@ -11,6 +11,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.movevn.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -24,6 +25,13 @@
     },
     "assetBundlePatterns": [
       "**/*"
-    ]
+    ],
+    "extra": {
+      "remotePushEnabled": false,
+      "eas": {
+        "projectId": "a09efa7a-70be-4d12-b3f3-ec6c17f83f1d"
+      }
+    },
+    "owner": "tdinh7967s-team"
   }
 }

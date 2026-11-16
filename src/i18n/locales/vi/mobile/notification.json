@@ -52,6 +52,7 @@
     "rowAria": "{{status}}, {{category}}{{urgent}}: {{title}}",
     "urgentSuffix": ", Cảnh báo quá hạn",
     "channelBookingDemo": "Thông báo đơn thuê",
-    "channelBookings": "Đơn thuê và bàn giao xe"
+    "channelBookings": "Đơn thuê và bàn giao xe",
+    "channelNotifications": "Thông báo MoveVN"
   }
 }

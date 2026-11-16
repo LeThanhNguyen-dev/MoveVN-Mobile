@@ -52,6 +52,7 @@
     "rowAria": "{{status}}, {{category}}{{urgent}}: {{title}}",
     "urgentSuffix": ", Overdue alert",
     "channelBookingDemo": "Rental notifications",
-    "channelBookings": "Rentals and vehicle handovers"
+    "channelBookings": "Rentals and vehicle handovers",
+    "channelNotifications": "MoveVN notifications"
   }
 }

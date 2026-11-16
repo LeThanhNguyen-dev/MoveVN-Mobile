@@ -41,6 +41,7 @@ import NotificationBell from "@/features/notifications/components/NotificationBe
 import RoleNotSupportedScreen from "@/features/app/screens/RoleNotSupportedScreen";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
 import { useNotificationStore as store } from "@/features/notifications/useNotifications";
+import { readNotification } from "@/features/notifications/notificationActions";
 
 const unread: NotificationItem = { id: 1, type: "BookingApproved", title: "Đơn thuê đã được duyệt", body: "Nội dung đầy đủ không bị cắt trong chi tiết.", channel: "InApp", isRead: false, createdAt: "2026-10-13T08:00:00Z" };
 const read: NotificationItem = { ...unread, id: 2, title: "Thông báo đã xem", isRead: true };
@@ -101,6 +102,55 @@ it("opens full details, marks read on the server and lets Android back return to
   expect(text()).not.toContain("Chi tiết thông báo");
   await act(async () => modal.props.onRequestClose());
   expect(store.getState().centerOpen).toBe(false);
+});
+
+it("opens the full pushed notification even when it is not on the first page", async () => {
+  const older = { ...unread, id: 999, title: "Phản hồi hỗ trợ", body: "Nội dung thông báo từ trang cũ", isRead: true };
+  mocks.read.mockResolvedValue(older);
+  store.setState({ centerOpen: true, selectedNotificationId: 999 });
+  await mount();
+  expect(mocks.read).toHaveBeenCalledWith(999);
+  expect(text()).toContain(older.body);
+  expect(text()).toContain("Chi tiết thông báo");
+  expect(store.getState().selectedNotificationId).toBeNull();
+  await act(async () => { store.getState().setUnreadCount(2); });
+  expect(text()).toContain(older.body);
+});
+
+it("waits for an existing mark-read request before opening pushed details", async () => {
+  const older = { ...unread, id: 999, body: "Chi tiết push trong lúc đang đọc", isRead: true };
+  let finish!: (item: NotificationItem) => void;
+  mocks.read.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  const pending = readNotification(999);
+  store.setState({ centerOpen: true, selectedNotificationId: 999 });
+  await mount();
+  expect(mocks.read).toHaveBeenCalledTimes(1);
+  await act(async () => { finish(older); await pending; });
+  expect(text()).toContain(older.body);
+  expect(text()).toContain("Chi tiết thông báo");
+});
+
+it("preserves a push tap while mark-all is busy and opens it afterward", async () => {
+  const older = { ...unread, id: 999, body: "Chi tiết push sau khi đọc tất cả", isRead: true };
+  mocks.read.mockResolvedValue(older);
+  store.setState({ centerOpen: true, selectedNotificationId: 999, markingAll: true });
+  await mount();
+  expect(mocks.read).not.toHaveBeenCalled();
+  expect(store.getState().selectedNotificationId).toBe(999);
+  await act(async () => { store.setState({ markingAll: false }); });
+  expect(text()).toContain(older.body);
+  expect(store.getState().selectedNotificationId).toBeNull();
+});
+
+it("opens a cold-start push under React StrictMode effect replay", async () => {
+  const older = { ...unread, id: 999, body: "Chi tiết push khi khởi động", isRead: true };
+  mocks.read.mockResolvedValue(older);
+  store.setState({ centerOpen: true, selectedNotificationId: 999 });
+  await act(async () => {
+    tree = create(React.createElement(React.StrictMode, null, React.createElement(NotificationCenter, { userId: 1 })));
+  });
+  expect(mocks.read).toHaveBeenCalledTimes(1);
+  expect(text()).toContain(older.body);
 });
 
 it("displays details and a retry action while keeping the item unread on a failed mark-read", async () => {
