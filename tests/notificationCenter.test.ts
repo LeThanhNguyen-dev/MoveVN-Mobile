@@ -25,6 +25,7 @@ vi.mock("react-native", () => ({
     data: NotificationItem[]; renderItem: (props: { item: NotificationItem }) => React.ReactNode;
     ListEmptyComponent: React.ReactNode; ListFooterComponent: React.ReactNode; refreshControl: React.ReactNode;
   }) => React.createElement("FlatList", null, refreshControl, data.length ? data.map((item) => React.createElement(React.Fragment, { key: item.id }, renderItem({ item }))) : ListEmptyComponent, ListFooterComponent),
+
   SectionList: ({ sections, renderItem, renderSectionHeader, ListEmptyComponent, ListFooterComponent, refreshControl }: {
     sections: { title: string; data: NotificationItem[] }[];
     renderItem: (props: { item: NotificationItem }) => React.ReactNode;
@@ -33,6 +34,7 @@ vi.mock("react-native", () => ({
   }) => React.createElement("SectionList", null, refreshControl, sections.length
     ? sections.map((section) => React.createElement(React.Fragment, { key: section.title }, renderSectionHeader({ section }), ...section.data.map((item) => React.createElement(React.Fragment, { key: item.id }, renderItem({ item })))))
     : ListEmptyComponent, ListFooterComponent),
+
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView", SafeAreaProvider: "SafeAreaProvider" }));
 vi.mock("lucide-react-native", () => Object.fromEntries(["FileCheck2", "Flag", "Scale", "ArrowLeft", "Bell", "BellOff", "CalendarCheck", "CarFront", "CheckCheck", "ChevronRight", "CircleAlert", "Headphones", "MessageSquare", "RefreshCw", "ShieldAlert", "Wallet"].map((name) => [name, name])));

@@ -12,7 +12,6 @@ import {
 import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { ChevronLeft, ShieldCheck } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import type { ScrollViewInstance } from "react-native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -101,7 +100,7 @@ export default function CreateBookingScreen({
   const [voucherModal, setVoucherModal] = useState(false);
   const [vouchers, setVouchers] = useState<VoucherClaimResponse[]>([]);
   const [vouchersLoading, setVouchersLoading] = useState(false);
-  const scrollRef = useRef<ScrollViewInstance>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const fieldY = useRef<Record<string, number>>({});
 
   function scrollToField(key: string) {

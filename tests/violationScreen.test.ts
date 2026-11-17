@@ -17,7 +17,9 @@ vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "View" }));
 vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: mocks.pick, launchCameraAsync: mocks.camera, requestCameraPermissionsAsync: mocks.permission }));
 vi.mock("expo-image-manipulator", () => ({ manipulateAsync: mocks.convert, SaveFormat: { JPEG: "jpeg" } }));
 vi.mock("expo-file-system", () => ({ File: class { get size() { return mocks.size; } } }));
+
 vi.mock("lucide-react-native", () => Object.fromEntries(["ChevronDown", "ChevronLeft", "ChevronRight", "Flag", "CheckCircle2", "Search", "Send", "ShieldCheck", "ArrowLeft", "RefreshCw", "Camera", "ImagePlus", "X"].map(n => [n, n])));
+
 import ViolationsScreen from "@/features/violations/ViolationsScreen";
 let tree: ReactTestRenderer | undefined;
 const textOf = (node: ReactTestInstance) => node.findAll(n => n.type as unknown === "Text").map(n => n.children.filter(c => typeof c === "string" || typeof c === "number").join("")).join("\n");

@@ -172,9 +172,6 @@
     "topUpBodyWithDue": "After the extension, the total rental amount increases, so an additional {{amount}} is required before {{dueAt}}. If it is overdue, the extension request will be cancelled and the existing contract remains in effect.",
     "topUpBody": "After the extension, the total rental amount increases, so an additional {{amount}} is required. If it is overdue, the extension request will be cancelled and the existing contract remains in effect.",
     "payViaPayOS": "Pay via PayOS",
-    "remainingPaymentTitle": "Pay the remaining balance",
-    "remainingPaymentBody": "<bold>{{amount}}</bold> still unpaid. You can pay right away with your wallet or PayOS; the amount is held securely and the vehicle owner only receives what has been collected.",
-    "payRemainingWallet": "Pay with wallet",
     "vehicleTitle": "Vehicle information",
     "vehicleAlt": "Vehicle",
     "vehicleFallback": "Vehicle #{{id}}",
@@ -347,10 +344,6 @@
       "replySavedTitle": "Reply saved",
       "replySavedMessage": "The review reply was updated.",
       "depositSuccessMessage": "Payment successful!",
-      "remainingPaidMessage": "The remaining balance is confirmed. Updating...",
-      "remainingLinkError": "Could not create the payment link for the remaining balance.",
-      "remainingWalletPaidMessage": "Remaining balance paid with wallet successfully!",
-      "remainingWalletError": "Could not pay the remaining balance with your wallet.",
       "checkOutConfirmError": "Could not complete the trip."
     }
   },

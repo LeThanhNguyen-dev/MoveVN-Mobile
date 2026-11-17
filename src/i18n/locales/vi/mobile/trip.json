@@ -93,6 +93,7 @@
       "depositExpiredTitle": "Đã hết hạn thanh toán",
       "depositExpiredBody": "Booking không còn hiệu lực nhận cọc vì đã hết hạn thanh toán. Hệ thống sẽ tự hủy booking này.",
       "payingWallet": "Đang trừ ví...",
+      "payWithWallet": "Trả bằng ví",
       "payWithWalletAmount": "Trả bằng ví ({{amount}})",
       "payWithPayOS": "Trả qua PayOS",
       "awaitingTransfer": "Đang chờ xác nhận giao dịch #{{code}}...",

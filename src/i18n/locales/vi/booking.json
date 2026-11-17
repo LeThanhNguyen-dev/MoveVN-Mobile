@@ -172,9 +172,6 @@
     "topUpBodyWithDue": "Sau khi gia hạn, tổng tiền thuê tăng lên nên cần bổ sung thêm {{amount}} trước {{dueAt}}. Nếu quá hạn, yêu cầu gia hạn sẽ bị hủy và hợp đồng cũ tiếp tục hiệu lực.",
     "topUpBody": "Sau khi gia hạn, tổng tiền thuê tăng lên nên cần bổ sung thêm {{amount}}. Nếu quá hạn, yêu cầu gia hạn sẽ bị hủy và hợp đồng cũ tiếp tục hiệu lực.",
     "payViaPayOS": "Thanh toán qua PayOS",
-    "remainingPaymentTitle": "Thanh toán phần còn lại",
-    "remainingPaymentBody": "Còn <bold>{{amount}}</bold> chưa thanh toán. Bạn có thể trả ngay bằng ví hoặc PayOS; khoản này được giữ an toàn và chủ xe chỉ nhận được phần đã thu.",
-    "payRemainingWallet": "Trả bằng ví",
     "vehicleTitle": "Thông tin phương tiện",
     "vehicleAlt": "Phương tiện",
     "vehicleFallback": "Phương tiện #{{id}}",
@@ -347,10 +344,6 @@
       "replySavedTitle": "Đã lưu phản hồi",
       "replySavedMessage": "Phản hồi đánh giá đã được cập nhật.",
       "depositSuccessMessage": "Thanh toán thành công!",
-      "remainingPaidMessage": "Phần còn lại đã được xác nhận. Đang cập nhật...",
-      "remainingLinkError": "Không thể tạo liên kết thanh toán phần còn lại.",
-      "remainingWalletPaidMessage": "Thanh toán phần còn lại bằng ví thành công!",
-      "remainingWalletError": "Không thể thanh toán phần còn lại bằng ví.",
       "checkOutConfirmError": "Không thể hoàn tất chuyến đi."
     }
   },

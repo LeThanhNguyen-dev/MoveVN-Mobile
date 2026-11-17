@@ -34,11 +34,13 @@ async function press(label: string) {
 
 it("renders both rankings, separate wallet income and an idle vehicle from the real response shape", async () => {
   await mount(); expect(text()).toContain("Hiệu quả đội xe");
+
   expect(text()).toContain("675.000");
   await press("Biểu đồ");
   expect(text()).toContain("500.000");
   expect(text()).toContain("Xe được đặt nhiều nhất"); expect(text()).toContain("Xe có thu nhập cao nhất");
   await press("Đội xe"); expect(text()).toContain("Yamaha Grande"); expect(text()).toContain("1/3 xe chưa có đơn hợp lệ");
+
 });
 it("selects a ranked vehicle, resets paging and allows returning to the full fleet", async () => {
   await mount(); await press("Biểu đồ"); await press("Xe được đặt nhiều nhất: 43A-12345");
