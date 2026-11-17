@@ -6,6 +6,7 @@ import { sortNotifications, useNotificationStore } from "./useNotifications";
 
 let listRequest = 0;
 let countRequest = 0;
+const readsInFlight = new Map<string, Promise<boolean>>();
 
 function captureSession() {
   const { userId, epoch } = useNotificationStore.getState();
@@ -68,7 +69,19 @@ export async function loadNotificationPage(options: { filter?: "all" | "unread";
   }
 }
 
-export async function readNotification(id: number) {
+export function readNotification(id: number): Promise<boolean> {
+  const { userId, epoch } = useNotificationStore.getState();
+  const key = `${getSessionGeneration()}:${epoch}:${userId}:${id}`;
+  const pending = readsInFlight.get(key);
+  if (pending) return pending;
+  // A push tap and a row tap may arrive together. Both await the same result,
+  // while a response from an earlier session cannot be reused by a new account.
+  const request = performReadNotification(id).finally(() => { readsInFlight.delete(key); });
+  readsInFlight.set(key, request);
+  return request;
+}
+
+async function performReadNotification(id: number) {
   const current = captureSession();
   const state = useNotificationStore.getState();
   if (!current() || state.pendingIds.includes(id) || state.markingAll) return false;

@@ -21,6 +21,7 @@ type NotificationState = {
   pendingIds: number[];
   markingAll: boolean;
   centerOpen: boolean;
+  selectedNotificationId: number | null;
   connectionStatus: "connecting" | "connected" | "offline";
   activate: (userId: number | null) => void;
   setUnreadCount: (count: number) => void;
@@ -33,7 +34,7 @@ const empty = {
   userId: null, items: [] as NotificationItem[], unreadCount: 0, countRevision: 0,
   revision: 0, updates: {}, filter: "all" as const, page: 0, totalPages: 0, totalCount: 0,
   loading: false, refreshing: false, loadingMore: false, error: null, countError: false,
-  pendingIds: [] as number[], markingAll: false, centerOpen: false, connectionStatus: "offline" as const,
+  pendingIds: [] as number[], markingAll: false, centerOpen: false, selectedNotificationId: null, connectionStatus: "offline" as const,
 };
 
 export function sortNotifications(items: NotificationItem[]) {

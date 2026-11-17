@@ -2,12 +2,17 @@
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  const remotePushEnabled = process.env.EXPO_PUBLIC_ENABLE_REMOTE_PUSH === "true";
+  const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID || config.extra?.eas?.projectId;
+  if (remotePushEnabled && !/^[a-f\d]{8}(-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(projectId ?? "")) {
+    throw new Error("Remote push requires a valid EAS project ID. Run eas init, set EXPO_PUBLIC_EAS_PROJECT_ID, then npm run push:check.");
+  }
 
   return {
     ...config,
     name: config.name ?? "MoveVN Mobile",
     slug: config.slug ?? "movevn-mobile",
-    extra: { ...config.extra, remotePushEnabled: process.env.EXPO_PUBLIC_ENABLE_REMOTE_PUSH === "true", eas: { ...config.extra?.eas, ...(process.env.EXPO_PUBLIC_EAS_PROJECT_ID ? { projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID } : {}) } },
+    extra: { ...config.extra, remotePushEnabled, eas: { ...config.extra?.eas, ...(projectId ? { projectId } : {}) } },
     ios: { ...config.ios, ...(process.env.MOVEVN_IOS_BUNDLE_IDENTIFIER ? { bundleIdentifier: process.env.MOVEVN_IOS_BUNDLE_IDENTIFIER } : {}) },
     android: { ...config.android, ...(process.env.MOVEVN_ANDROID_PACKAGE ? { package: process.env.MOVEVN_ANDROID_PACKAGE } : {}), ...(process.env.MOVEVN_GOOGLE_SERVICES_FILE ? { googleServicesFile: process.env.MOVEVN_GOOGLE_SERVICES_FILE } : {}) },
     plugins: [

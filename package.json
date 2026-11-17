@@ -68,7 +68,8 @@
     "i18n:sync:check": "node scripts/sync-locales.mjs --check",
     "i18n:check": "node scripts/check-i18n.mjs",
     "i18n:scan": "node scripts/scan-vi.mjs",
-    "i18n:keys": "node scripts/check-keys.mjs"
+    "i18n:keys": "node scripts/check-keys.mjs",
+    "push:check": "node scripts/check-push-config.mjs"
   },
   "private": true,
   "expo": {
