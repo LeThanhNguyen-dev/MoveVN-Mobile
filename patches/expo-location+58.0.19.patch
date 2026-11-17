@@ -1,0 +1,25 @@
+diff --git a/node_modules/expo-location/android/src/main/java/expo/modules/location/services/LocationTaskService.kt b/node_modules/expo-location/android/src/main/java/expo/modules/location/services/LocationTaskService.kt
+index 7d2781c..208a471 100644
+--- a/node_modules/expo-location/android/src/main/java/expo/modules/location/services/LocationTaskService.kt
++++ b/node_modules/expo-location/android/src/main/java/expo/modules/location/services/LocationTaskService.kt
+@@ -19,6 +19,7 @@ class LocationTaskService : Service() {
+   private var mKillService = false
+   private lateinit var mParentContext: Context
+   private val mServiceId = sServiceId++
++  private val mStartedAt = System.currentTimeMillis()
+   private val mBinder: IBinder = ServiceBinder()
+ 
+   inner class ServiceBinder : Binder() {
+@@ -110,6 +111,12 @@ class LocationTaskService : Service() {
+ 
+     return builder.setCategory(Notification.CATEGORY_SERVICE)
+       .setSmallIcon(iconsResId)
++      // MoveVN: thông báo thường trực, hiển thị đồng hồ đếm thời gian chia sẻ.
++      .setOngoing(true)
++      .setOnlyAlertOnce(true)
++      .setShowWhen(true)
++      .setWhen(mStartedAt)
++      .setUsesChronometer(true)
+       .build()
+   }
+ 
