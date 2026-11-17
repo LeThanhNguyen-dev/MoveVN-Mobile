@@ -318,6 +318,10 @@ export default function OwnerBookingDetailScreen({
           onOpenUserProfile={(id) => (onOpenUserProfile ? onOpenUserProfile(id) : navigation.navigate("BookingUserProfile", { userId: id }))}
         />
         <View style={styles.body}>
+        {status === "Completed" && (
+          <DetailButton variant="secondary" icon={CalendarDays} label={t("booking:detail.viewTripPlayback")} disabled={busy !== null} onPress={() => navigation.navigate("OwnerPlayback", { bookingId, vehicleName: booking.vehicleName })} />
+        )}
+
         {!dataReady ? <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.staleTitle")} tone="warn">{t("mobile:trip.detail.staleBody")}</DetailNotice> : null}
 
         <View style={styles.toolbarRow}>
@@ -359,12 +363,9 @@ export default function OwnerBookingDetailScreen({
           </DetailCard>
         )}
 
-        {(status === "InProgress" || status === "Returning") && (
+        {status === "InProgress" || status === "Returning" ? (
           <DetailButton variant="secondary" icon={MapPin} label={t("mobile:ownerBooking.detail.viewGps")} disabled={busy !== null} onPress={() => navigation.navigate("OwnerTracking", { bookingId, vehicleName: booking.vehicleName })} />
-        )}
-        {status === "Completed" && (
-          <DetailButton variant="secondary" icon={CalendarDays} label={t("booking:detail.viewTripPlayback")} disabled={busy !== null} onPress={() => navigation.navigate("OwnerPlayback", { bookingId, vehicleName: booking.vehicleName })} />
-        )}
+        ) : null}
 
         <ReturnProgress booking={booking} report={checkOutReport} role="Owner" />
 

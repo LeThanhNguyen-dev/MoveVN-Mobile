@@ -29,8 +29,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         barcodeScannerEnabled: false,
       }],
       ["expo-location", {
-        // Chỉ xin location khi app mở (MVP tracking foreground, không xin background).
         locationWhenInUsePermission: "MoveVN cần vị trí của bạn để chủ xe theo dõi chuyến đi khi thuê xe.",
+        // Chia sẻ GPS khi khoá màn hình / thu nhỏ app (foreground service + thông báo thường trực).
+        locationAlwaysAndWhenInUsePermission: "MoveVN tiếp tục chia sẻ vị trí chuyến đi với chủ xe khi bạn khoá màn hình.",
+        isAndroidBackgroundLocationEnabled: true,
+        isAndroidForegroundServiceEnabled: true,
+        isIosBackgroundLocationEnabled: true,
       }],
       ...(iosClientId ? [["@react-native-google-signin/google-signin", {
         iosUrlScheme: iosClientId.split(".").reverse().join("."),

@@ -3,6 +3,15 @@
     "backAria": "Quay lại",
     "errorTitle": "Lỗi",
     "bookingFallback": "Booking #{{id}}",
+    "info": {
+      "aria": "Cách hệ thống đọc vị trí GPS",
+      "title": "Cách hệ thống đọc GPS",
+      "body": "• Điện thoại gửi vị trí khoảng 8 giây/lần, mỗi điểm kèm sai số GPS thực tế (ngoài đường thường 5–20 m).\n• Xe được tính là đứng yên khi tốc độ dưới 3 km/h và còn trong bán kính sai số quanh mốc đỗ; khi đó vị trí được ghim về mốc để đường không ngoằn ngoèo.\n• Điểm có sai số trên 50 m (trong hầm, nhà cao tầng) không được vẽ vào lộ trình nhưng vẫn giữ kết nối.\n• Trong lúc chia sẻ, app chạy dịch vụ nền kèm thông báo thường trực nên vẫn gửi vị trí khi khoá màn hình; tắt hẳn app hoặc mất sóng quá 2 phút sẽ hiện \"mất tín hiệu\"."
+    },
+    "foreground": {
+      "title": "MoveVN đang chia sẻ vị trí",
+      "body": "Vị trí chuyến đi đang được gửi cho chủ xe. Nhấn để mở MoveVN."
+    },
     "playback": {
       "title": "Hành trình · {{name}}",
       "loading": "Đang tải hành trình...",
@@ -20,7 +29,22 @@
       "distance": "Quãng đường",
       "speedRange": "Tốc độ tối đa / trung bình",
       "signalLost": "Số lần mất tín hiệu",
-      "provisionalNote": "Chuyến chưa kết thúc — số liệu tính tạm từ log hiện có."
+      "provisionalNote": "Chuyến chưa kết thúc — số liệu tính tạm từ log hiện có.",
+      "prevPoint": "Lùi 1 điểm GPS",
+      "nextPoint": "Tiến 1 điểm GPS",
+      "showRoute": "Hiện lộ trình",
+      "hideRoute": "Ẩn lộ trình",
+      "viewLiveTrip": "Xem hành trình đang chạy",
+      "liveNote": "Đang thuê · GPS trực tiếp",
+      "summaryTitle": "Tổng hợp chuyến đi",
+      "maxSpeed": "Tốc độ tối đa",
+      "avgSpeed": "Tốc độ trung bình",
+      "pointCount": "Số điểm ghi nhận",
+      "noSummary": "Chưa có dữ liệu tổng hợp cho chuyến này.",
+      "historyTitle": "Lịch sử theo giờ",
+      "historyEmpty": "Chưa có điểm ghi nhận.",
+      "hourPoints": "{{count}} điểm",
+      "follow": "Theo xe"
     },
     "tracking": {
       "title": "Vị trí xe · {{name}}",

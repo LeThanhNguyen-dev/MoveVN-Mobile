@@ -19,6 +19,7 @@ import { getGpsAddress, getGpsLivePosition, getGpsRoute, requestGpsEnable } from
 import { useGpsConnection } from "../useGpsConnection";
 import { useGpsStore } from "../gpsStore";
 import { buildTrackingMapHtml } from "../components/trackingMapHtml";
+import GpsInfoButton from "../components/GpsInfoButton";
 import { formatLogTime, mergeLogPoints, rewindPath, type GpsLogPoint } from "../gpsLogPoints";
 import type { GpsLiveState, GpsRoutePointResponse } from "../types";
 type TrackingRoute = RouteProp<OwnerBookingsStackParamList, "OwnerTracking">;
@@ -56,6 +57,13 @@ export default function GpsTrackingScreen({
   const [logExpanded, setLogExpanded] = useState(false);
   // Dòng log đang xem lại (null = đang theo dõi trực tiếp).
   const [inspect, setInspect] = useState<GpsLogPoint | null>(null);
+
+  // Source chỉ đổi khi vị trí khởi tạo/màu đổi — tránh WebView reload mỗi lần
+  // nhận vị trí mới từ SignalR.
+  const mapSource = useMemo(
+    () => ({ html: buildTrackingMapHtml(initial, theme.brand, theme.surfaceAlt) }),
+    [initial, theme.brand, theme.surfaceAlt],
+  );
 
   const { position, status, sharingState } = useGpsConnection(bookingId);
 
@@ -249,13 +257,13 @@ export default function GpsTrackingScreen({
         <AppText numberOfLines={1} style={styles.headerTitle}>
           {t("mobile:gps.tracking.title", { name: vehicleName || t("mobile:gps.bookingFallback", { id: bookingId }) })}
         </AppText>
-        <View style={styles.backButton} />
+        <GpsInfoButton size={34} />
       </View>
 
       <View style={styles.mapWrap}>
         <WebView<object>
           ref={webRef}
-          source={{ html: buildTrackingMapHtml(initial, theme.brand, theme.surfaceAlt) }}
+          source={mapSource}
           style={styles.map}
           originWhitelist={["*"]}
           javaScriptEnabled

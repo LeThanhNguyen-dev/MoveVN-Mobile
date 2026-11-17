@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import TripDetailScreen from "@/features/booking/screens/TripDetailScreen";
 import TripListScreen from "@/features/booking/screens/TripListScreen";
+import GpsPlaybackScreen from "@/features/gps/screens/GpsPlaybackScreen";
+import { goBackOrFallback } from "./goBackOrFallback";
 import ChatRoomScreen from "@/features/chat/screens/ChatRoomScreen";
 import ContractDetailScreen from "@/features/contracts/screens/ContractDetailScreen";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
@@ -57,6 +59,16 @@ export default function TripsNavigator({
         )}
       </Stack.Screen>
       <Stack.Screen name="TripHandover">{(props) => <TripDetailScreen {...props} onOpenDisputes={onOpenDisputes} onOpenUserProfile={onOpenUserProfile} />}</Stack.Screen>
+      <Stack.Screen name="TripPlayback">
+        {({ route, navigation }) => (
+          <GpsPlaybackScreen
+            bookingId={route.params.bookingId}
+            vehicleName={route.params.vehicleName}
+            live={route.params.live}
+            onBack={() => goBackOrFallback(navigation, () => navigation.navigate("TripList"))}
+          />
+        )}
+      </Stack.Screen>
       <Stack.Screen name="BookingWallet">{({ navigation }) => <WalletScreen onBack={() => navigation.goBack()} />}</Stack.Screen>
       <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} />
       <Stack.Screen name="BookingUserProfile">{({ route, navigation }) => <PublicUserProfileScreen userId={route.params.userId} onBack={() => navigation.goBack()} onOpenProfile={userId => navigation.push("BookingUserProfile", { userId })} onViewVehicle={vehicleId => navigation.navigate("VehicleDetail", { vehicleId })} onOpenBooking={bookingId => navigation.navigate("TripDetail", { bookingId })} />}</Stack.Screen>

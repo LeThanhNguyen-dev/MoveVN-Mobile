@@ -30,6 +30,7 @@ import {
   PlayCircle,
   ReceiptText,
   RotateCcw,
+  Route,
   ShieldCheck,
   Star,
   TriangleAlert,
@@ -638,6 +639,16 @@ export default function TripDetailScreen({
           />
 
           <View style={styles.body}>
+            {status === "Completed" ? (
+              <DetailButton
+                variant="secondary"
+                icon={Route}
+                label={t("booking:detail.viewTripPlayback")}
+                onPress={() => navigation.navigate("TripPlayback", { bookingId, vehicleName: booking.vehicleName })}
+                disabled={!dataReady || actionBusy !== null}
+              />
+            ) : null}
+
             {actionError ? <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.actionErrorTitle")} tone="danger">{actionError}</DetailNotice> : null}
             {!dataReady ? <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.staleTitle")} tone="warn">{t("mobile:trip.detail.staleBody")}</DetailNotice> : null}
 
@@ -742,6 +753,16 @@ export default function TripDetailScreen({
               <DetailNotice icon={MapPin} title={t("mobile:trip.detail.gpsRequestedTitle")} tone="brand">
                 {t("mobile:trip.detail.gpsRequestedBody")}
               </DetailNotice>
+            ) : null}
+
+            {status === "InProgress" || status === "Returning" ? (
+              <DetailButton
+                variant="secondary"
+                icon={Route}
+                label={t("mobile:gps.playback.viewLiveTrip")}
+                onPress={() => navigation.navigate("TripPlayback", { bookingId, vehicleName: booking.vehicleName, live: true })}
+                disabled={!dataReady || actionBusy !== null}
+              />
             ) : null}
 
             {status === "Pending" && autoCancelHours != null && booking.createdAt ? (
