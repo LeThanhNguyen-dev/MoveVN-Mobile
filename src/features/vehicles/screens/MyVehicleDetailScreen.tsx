@@ -11,11 +11,13 @@ import {
   ChevronRight,
   Eye,
   FileText,
+  Fuel,
   Gauge,
   Hash,
   Layers,
   Pencil,
   Plus,
+  Settings2,
   Trash2,
   X,
   XCircle,
@@ -52,6 +54,9 @@ import {
   vehicleTypeLabel,
 } from "@/features/vehicles/ownerDisplay";
 import { getVehicleErrorMessage } from "@/features/vehicles/vehicleDisplay";
+import { formatTransmission } from "@/features/vehicles/transmission";
+import { formatFuelType } from "@/features/vehicles/fuel";
+import { getVehicleVariantFacts } from "@/features/vehicles/variantSpecifications";
 import { translatedLabels } from "@/i18n/liveLabels";
 import { getVehicleAvailability } from "@/features/vehicles/services/publicVehicleService";
 import { formatPeriodPart, MONTHS_VI } from "@/features/vehicles/utils/rentalPeriod";
@@ -464,6 +469,44 @@ export default function MyVehicleDetailScreen({ vehicleId, onBack, onEdit, onDel
               {vehicle.variantName ? <AppText style={styles.specSub}>{vehicle.variantName}</AppText> : null}
             </View>
           </View>
+          {vehicle.vehicleType === "Car" && (
+            <>
+              <View style={styles.rowDivider} />
+              <View style={styles.specRow}>
+                <View style={styles.specLeft}>
+                  <Settings2 color={theme.muted} size={15} />
+                  <AppText style={styles.kvKey}>{t("common:transmission.label")}</AppText>
+                </View>
+                <View style={styles.specRight}>
+                  <AppText style={styles.kvVal}>{formatTransmission(vehicle.transmission)}</AppText>
+                </View>
+              </View>
+            </>
+          )}
+          <View style={styles.rowDivider} />
+          <View style={styles.specRow}>
+            <View style={styles.specLeft}>
+              <Fuel color={theme.muted} size={15} />
+              <AppText style={styles.kvKey}>{t("common:fuel.label")}</AppText>
+            </View>
+            <View style={styles.specRight}>
+              <AppText style={styles.kvVal}>{formatFuelType(vehicle.fuelType)}</AppText>
+            </View>
+          </View>
+          {getVehicleVariantFacts(vehicle).map((fact) => (
+            <View key={fact.key}>
+              <View style={styles.rowDivider} />
+              <View style={styles.specRow}>
+                <View style={styles.specLeft}>
+                  <Layers color={theme.muted} size={15} />
+                  <AppText style={styles.kvKey}>{fact.label}</AppText>
+                </View>
+                <View style={styles.specRight}>
+                  <AppText style={styles.kvVal}>{fact.value}</AppText>
+                </View>
+              </View>
+            </View>
+          ))}
           <View style={styles.rowDivider} />
           <View style={styles.specRow}>
             <View style={styles.specLeft}>

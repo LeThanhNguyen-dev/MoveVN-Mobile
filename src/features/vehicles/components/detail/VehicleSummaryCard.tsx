@@ -3,8 +3,10 @@ import {
   CalendarDays,
   Car,
   Gauge,
+  Fuel,
   MapPin,
   ShieldCheck,
+  Settings2,
   Star,
   type LucideIcon,
 } from "lucide-react-native";
@@ -14,6 +16,9 @@ import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import type { VehicleResponse } from "@/features/vehicles/types";
 import { formatVnd } from "@/features/vehicles/ownerDisplay";
+import { formatTransmission } from "@/features/vehicles/transmission";
+import { formatFuelType } from "@/features/vehicles/fuel";
+import { getVehicleVariantFacts } from "@/features/vehicles/variantSpecifications";
 import { detailFont, useDetailTheme } from "./detailTheme";
 
 type Props = {
@@ -129,6 +134,28 @@ export default function VehicleSummaryCard({
         </View>
       </View>
 
+      {vehicle.vehicleType === "Car" && (
+        <View style={styles.transmissionRow}>
+          <Settings2 color={p.brand} size={15} />
+          <AppText style={styles.transmissionLabel}>{t("common:transmission.label")}</AppText>
+          <AppText style={styles.transmissionValue}>{formatTransmission(vehicle.transmission)}</AppText>
+        </View>
+      )}
+
+      <View style={styles.transmissionRow}>
+        <Fuel color={p.brand} size={15} />
+        <AppText style={styles.transmissionLabel}>{t("common:fuel.label")}</AppText>
+        <AppText style={styles.transmissionValue}>{formatFuelType(vehicle.fuelType)}</AppText>
+      </View>
+
+      {getVehicleVariantFacts(vehicle).map((fact) => (
+        <View key={fact.key} style={styles.transmissionRow}>
+          <VehicleIcon color={p.brand} size={15} />
+          <AppText style={styles.transmissionLabel}>{fact.label}</AppText>
+          <AppText style={styles.transmissionValue}>{fact.value}</AppText>
+        </View>
+      ))}
+
       <View style={styles.facts}>
         {facts.map((fact) => {
           const Icon = fact.icon;
@@ -205,6 +232,9 @@ const createStyles = (p: ReturnType<typeof useDetailTheme>["p"]) =>
     },
     unit: { color: p.muted, fontFamily: detailFont.semibold, fontSize: 10, marginTop: 1 },
     priceNote: { color: p.faint, fontFamily: detailFont.regular, fontSize: 9.5, marginTop: 3 },
+    transmissionRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 },
+    transmissionLabel: { color: p.muted, fontFamily: detailFont.semibold, fontSize: 12 },
+    transmissionValue: { flex: 1, color: p.ink, fontFamily: detailFont.semibold, fontSize: 12, textAlign: "right" },
     facts: {
       flexDirection: "row",
       marginTop: 16,
