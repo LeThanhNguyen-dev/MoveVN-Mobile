@@ -8,6 +8,7 @@ import { deleteItemAsync, getItemAsync, setItemAsync } from "@/services/deviceSt
 export type GpsStoredConsent = "granted" | "declined";
 
 const STORAGE_KEY = "movevn.gps.consents";
+const ACTIVE_KEY = "movevn.gps.activeBooking";
 
 type ConsentMap = Record<string, { state: GpsStoredConsent; at: number }>;
 
@@ -63,4 +64,31 @@ export async function pruneStoredConsents(activeBookingIds: number[]): Promise<v
     }
   }
   if (changed) await writeMap(next);
+}
+
+/**
+ * Chuyến đang được chia sẻ vị trí, lưu trên thiết bị để tiến trình chạy nền
+ * (foreground service) biết phải gửi GPS cho booking nào khi app đã bị đóng.
+ */
+export async function setActivePublishTarget(bookingId: number | null): Promise<void> {
+  try {
+    if (bookingId == null) await deleteItemAsync(ACTIVE_KEY);
+    else await setItemAsync(ACTIVE_KEY, String(bookingId));
+  } catch {
+    // Thiết bị chặn storage: nền không gửi được, app vẫn chạy foreground bình thường.
+  }
+}
+
+export async function getActivePublishTarget(): Promise<number | null> {
+  try {
+    const raw = await getItemAsync(ACTIVE_KEY);
+    const id = raw ? Number(raw) : NaN;
+    return Number.isInteger(id) && id > 0 ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearActivePublishTarget(): Promise<void> {
+  await setActivePublishTarget(null);
 }

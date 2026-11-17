@@ -10,6 +10,7 @@ import { useTheme } from "@/theme/useTheme";
 import { useGpsStore } from "../gpsStore";
 import { useFleetTracking } from "../useFleetTracking";
 import { buildFleetMapHtml } from "../components/trackingMapHtml";
+import GpsInfoButton from "../components/GpsInfoButton";
 import type { GpsLiveState, GpsSharingState } from "../types";
 
 type FleetRow = {
@@ -57,6 +58,8 @@ export default function GpsFleetScreen({
   const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  // Source cố định giữa các render — WebView reload HTML mỗi khi source đổi identity.
+  const mapSource = useMemo(() => ({ html: buildFleetMapHtml(theme.brand, theme.surfaceAlt) }), [theme.brand, theme.surfaceAlt]);
   const webRef = useRef<WebView<object>>(null);
   const [mapReady, setMapReady] = useState(false);
   const { items, loading, failed, updatedAt, refresh } = useFleetTracking();
@@ -130,6 +133,7 @@ export default function GpsFleetScreen({
               : t("mobile:gps.fleet.subtitle", { count: rows.length })}
           </AppText>
         </View>
+        <GpsInfoButton size={38} />
         <Pressable onPress={() => void refresh()} style={styles.headerButton} accessibilityLabel={t("mobile:gps.fleet.refreshAria")}>
           {loading && rows.length > 0 ? <ActivityIndicator size="small" color={theme.brand} /> : <RefreshCw color={theme.text} size={19} />}
         </Pressable>
@@ -138,7 +142,7 @@ export default function GpsFleetScreen({
       <View style={styles.mapWrap}>
         <WebView<object>
           ref={webRef}
-          source={{ html: buildFleetMapHtml(theme.brand, theme.surfaceAlt) }}
+          source={mapSource}
           style={styles.map}
           originWhitelist={["*"]}
           javaScriptEnabled

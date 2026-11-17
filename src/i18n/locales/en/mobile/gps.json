@@ -3,6 +3,15 @@
     "backAria": "Back",
     "errorTitle": "Error",
     "bookingFallback": "Booking #{{id}}",
+    "info": {
+      "aria": "How GPS positions are read",
+      "title": "How we read GPS",
+      "body": "• The phone sends a position about every 8 seconds, each with its GPS accuracy (usually 5–20 m on open roads).\n• The vehicle counts as stopped when its speed is below 3 km/h and it stays within the accuracy radius of the parked point; the position is pinned to that point so the line does not zigzag.\n• Points with accuracy above 50 m (tunnels, tall buildings) are not drawn on the route but still keep the connection alive.\n• While sharing, the app runs a background service with a persistent notification, so positions keep flowing with the screen locked; force-closing the app or losing signal for over 2 minutes shows as \"signal lost\"."
+    },
+    "foreground": {
+      "title": "MoveVN is sharing your location",
+      "body": "Your trip location is being sent to the owner. Tap to open MoveVN."
+    },
     "playback": {
       "title": "Trip route · {{name}}",
       "loading": "Loading route...",
@@ -20,7 +29,22 @@
       "distance": "Distance",
       "speedRange": "Max / average speed",
       "signalLost": "Signal losses",
-      "provisionalNote": "The trip hasn't ended — figures are provisional from the current log."
+      "provisionalNote": "The trip hasn't ended — figures are provisional from the current log.",
+      "prevPoint": "Previous GPS point",
+      "nextPoint": "Next GPS point",
+      "showRoute": "Show route",
+      "hideRoute": "Hide route",
+      "viewLiveTrip": "View live trip",
+      "liveNote": "Rental in progress · live GPS",
+      "summaryTitle": "Trip summary",
+      "maxSpeed": "Max speed",
+      "avgSpeed": "Average speed",
+      "pointCount": "Recorded points",
+      "noSummary": "No summary data for this trip yet.",
+      "historyTitle": "History by hour",
+      "historyEmpty": "No recorded points yet.",
+      "hourPoints": "{{count}} points",
+      "follow": "Follow vehicle"
     },
     "tracking": {
       "title": "Vehicle location · {{name}}",
