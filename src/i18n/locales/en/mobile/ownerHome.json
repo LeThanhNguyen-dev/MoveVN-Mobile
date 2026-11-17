@@ -8,7 +8,8 @@
       "refreshAria": "Refresh overview"
     },
     "shortcuts": {
-      "analytics": "Analytics"
+      "analytics": "Analytics",
+      "fleet": "Fleet map"
     },
     "operations": {
       "title": "Needs your attention",

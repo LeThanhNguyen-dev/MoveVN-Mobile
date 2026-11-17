@@ -11,6 +11,7 @@ export function useGpsConnection(bookingId: number | null | undefined) {
   const connectionStatus = useGpsStore((state) => state.connectionStatus);
   const position = useGpsStore((state) => (bookingId != null ? state.positions[bookingId] : undefined));
   const status = useGpsStore((state) => (bookingId != null ? state.statuses[bookingId] : undefined));
+  const sharingState = useGpsStore((state) => (bookingId != null ? state.sharingStates[bookingId] : undefined));
 
   useEffect(() => {
     if (bookingId == null) return;
@@ -31,11 +32,15 @@ export function useGpsConnection(bookingId: number | null | undefined) {
       void (async () => {
         try {
           const live = await getGpsLivePosition(bookingId);
-          if (!active || !live.lastUpdatedAt) return;
+          if (!active) return;
           const store = useGpsStore.getState();
+          // Trạng thái chia sẻ phải cập nhật cả khi chưa từng có toạ độ
+          // (khách từ chối/chưa chia sẻ → lastUpdatedAt = null).
+          store.setSharingState(bookingId, live.sharingState);
+          store.setStatus(bookingId, live.state);
+          if (!live.lastUpdatedAt) return;
           const current = store.positions[bookingId];
           if (current && Date.parse(current.lastUpdatedAt) > Date.parse(live.lastUpdatedAt)) return;
-          store.setStatus(bookingId, live.state);
           if (live.latitude != null && live.longitude != null) {
             store.setPosition(bookingId, {
               latitude: live.latitude,
@@ -60,5 +65,5 @@ export function useGpsConnection(bookingId: number | null | undefined) {
     };
   }, [bookingId]);
 
-  return { connectionStatus, position, status };
+  return { connectionStatus, position, status, sharingState };
 }

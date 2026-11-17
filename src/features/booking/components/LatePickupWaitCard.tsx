@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { BookingButton } from "./BookingControls";
@@ -30,9 +31,9 @@ export default function LatePickupWaitCard({ booking, hasCheckIn, onUpdated }: {
     try {
       onUpdated(await acceptLatePickup(booking.id));
       setOpen(false);
-      Alert.alert(t("booking:latePickup.registeredToastTitle"), t("booking:latePickup.registeredToastMessage"));
+      showAppAlert(t("booking:latePickup.registeredToastTitle"), t("booking:latePickup.registeredToastMessage"));
     } catch (err) {
-      Alert.alert(t("booking:latePickup.registerFailedToastTitle"), getApiErrorMessage(err, t("booking:latePickup.registerFailedFallback")));
+      showAppAlert(t("booking:latePickup.registerFailedToastTitle"), getApiErrorMessage(err, t("booking:latePickup.registerFailedFallback")));
     } finally {
       setBusy(false);
     }

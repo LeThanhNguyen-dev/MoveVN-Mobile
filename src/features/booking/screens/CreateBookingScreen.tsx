@@ -2,7 +2,6 @@ import type { ComponentRef } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,9 +9,9 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { ChevronLeft, ShieldCheck } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import type { ScrollViewInstance } from "react-native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -101,7 +100,7 @@ export default function CreateBookingScreen({
   const [voucherModal, setVoucherModal] = useState(false);
   const [vouchers, setVouchers] = useState<VoucherClaimResponse[]>([]);
   const [vouchersLoading, setVouchersLoading] = useState(false);
-  const scrollRef = useRef<ScrollViewInstance>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const fieldY = useRef<Record<string, number>>({});
 
   function scrollToField(key: string) {
@@ -248,12 +247,6 @@ export default function CreateBookingScreen({
     );
   }, [vehicle, days, quote, promoResult, deliveryPreview, pricePerDay]);
 
-  // Base chưa trừ promo để validate mã (giống web).
-  const promoBase = useMemo(() => {
-    if (!pricePreview) return 0;
-    return pricePreview.base - pricePreview.discAmt;
-  }, [pricePreview]);
-
   async function validateCode(code: string) {
     const normalized = code.trim().toUpperCase();
     if (!normalized || !vehicleId || days <= 0) return;
@@ -261,7 +254,7 @@ export default function CreateBookingScreen({
     setPromoError(null);
     setPromoResult(null);
     try {
-      const result = await validatePromotion(normalized, vehicleId, promoBase);
+      const result = await validatePromotion(normalized, vehicleId, startDate ?? "", endDate ?? "");
       if (result?.success) {
         setPromoResult({ discountAmount: result.discountAmount, code: result.code });
       } else {
@@ -344,7 +337,7 @@ export default function CreateBookingScreen({
         customerNote: note.trim() || undefined,
         promotionCode: promoResult ? promoCode.trim().toUpperCase() : undefined,
       });
-      Alert.alert(t("booking:create.submitSuccessTitle"), t("mobile:checkout.create.successMessage", { code: created.bookingCode }), [
+      showAppAlert(t("booking:create.submitSuccessTitle"), t("mobile:checkout.create.successMessage", { code: created.bookingCode }), [
         { text: t("mobile:checkout.create.viewTrip"), onPress: () => onCreated?.(created.id) },
       ]);
     } catch (err) {

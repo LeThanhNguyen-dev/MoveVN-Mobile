@@ -1,6 +1,6 @@
+import { Pressable, AssistantLocaleProvider, useAssistantLanguagePreference } from "../assistantLocale";
 import { useMemo, useRef } from "react";
-import { Animated, Dimensions, Modal, PanResponder, Pressable, StyleSheet, View } from "react-native";
-import { useTranslation } from "react-i18next";
+import { Animated, Dimensions, Modal, PanResponder, StyleSheet, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Bot, X } from "lucide-react-native";
 
@@ -47,8 +47,8 @@ export default function AssistantFab({
   onQuickBook?: (params: QuickBookParams) => void;
   onBookingConfirmed?: (bookingId: number) => void;
 }) {
+  const [locale] = useAssistantLanguagePreference();
   const { theme } = useTheme();
-  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const chatOpen = useAssistantUi((state) => state.chatOpen);
   const setChatOpen = useAssistantUi((state) => state.setChatOpen);
@@ -89,14 +89,14 @@ export default function AssistantFab({
   ).current;
 
   return (
-    <>
+    <AssistantLocaleProvider locale={locale}>
       {!fabHidden ? (
         <Animated.View
           style={[styles.fabWrap, { transform: pan.getTranslateTransform() }]}
           {...responder.panHandlers}
         >
           <Pressable
-            accessibilityLabel={t("mobile:assistant.fab.open")}
+            accessibilityLabel="Mở trợ lý MoveVN"
             accessibilityRole="button"
             onPress={() => setChatOpen(true)}
             style={styles.fab}
@@ -104,7 +104,7 @@ export default function AssistantFab({
             <Bot color="#fff" size={26} />
           </Pressable>
           <Pressable
-            accessibilityLabel={t("mobile:assistant.fab.hide")}
+            accessibilityLabel="Ẩn trợ lý MoveVN"
             accessibilityRole="button"
             onPress={() => setFabHidden(true)}
             style={styles.dismiss}
@@ -126,7 +126,7 @@ export default function AssistantFab({
           <View style={styles.modal}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t("mobile:assistant.fab.close")}
+              accessibilityLabel="Đóng trợ lý MoveVN"
               onPress={() => setChatOpen(false)}
               style={StyleSheet.absoluteFill}
             />
@@ -150,7 +150,7 @@ export default function AssistantFab({
           </View>
         </SafeAreaProvider>
       </Modal>
-    </>
+    </AssistantLocaleProvider>
   );
 }
 

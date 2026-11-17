@@ -3,13 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AppState,
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { FileText } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -104,11 +104,11 @@ export default function ContractBlock({
     setSendingId(contract.id);
     try {
       await sendForSigning(contract.id);
-      Alert.alert(t("contract:toast.successTitle"), t("contract:toast.sentForSigning"));
+      showAppAlert(t("contract:toast.successTitle"), t("contract:toast.sentForSigning"));
       await load();
       onChanged?.();
     } catch (err) {
-      Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("contract:toast.sendFailed")));
+      showAppAlert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("contract:toast.sendFailed")));
       await load();
     } finally {
       setSendingId(null);
@@ -136,7 +136,7 @@ export default function ContractBlock({
     try {
       const updated = await extendContract(extendTarget.id, count);
       setExtendTarget(null); await load(); onChanged?.();
-      Alert.alert(
+      showAppAlert(
         t("mobile:contract.alerts.extendedTitle"),
         t("mobile:contract.block.extendedMessage", { version: updated.version }),
       );

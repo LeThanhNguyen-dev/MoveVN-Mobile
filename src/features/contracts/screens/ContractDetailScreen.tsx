@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Download, History, KeyRound, LockKeyhole, PenLine, X } from "lucide-react-native";
@@ -95,7 +96,7 @@ export default function ContractDetailScreen({
         setPinPurpose("download");
         setPinOpen(true);
       } else {
-        Alert.alert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.block.downloadFailed")));
+        showAppAlert(t("mobile:contract.alerts.failureTitle"), getApiErrorMessage(err, t("mobile:contract.block.downloadFailed")));
       }
     } finally {
       setFileBusy(false);

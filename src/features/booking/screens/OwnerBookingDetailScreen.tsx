@@ -15,7 +15,6 @@ import { useTranslation } from "react-i18next";
 import {
   AppState,
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
   Pressable,
@@ -25,6 +24,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { CalendarDays, Camera, CircleCheck, ClipboardCheck, Clock3, KeyRound, MapPin, MessageSquare, PackageCheck, ReceiptText, RotateCcw, Star, TriangleAlert, Wallet, XCircle } from "lucide-react-native";
 import { detailFont as font, useDetailTheme } from "@/features/vehicles/components/detail/detailTheme";
 import type { RouteProp } from "@react-navigation/native";
@@ -58,6 +58,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { OutstandingSurcharge } from "../components/CheckoutSummary";
 import { DetailButton, DetailCard, DetailHeader, DetailNotice, DetailPill, DetailRow, DetailSectionHeader } from "../components/detail/BookingDetailUI";
 import BookingSummaryCard from "../components/detail/BookingSummaryCard";
+import BookingFlowGuide from "../components/BookingFlowGuide";
 import { parseServerDate } from "../bookingDisplay";
 import { getPendingAutoCancelHours } from "@/features/systemConfig/configService";
 import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
@@ -137,7 +138,7 @@ export default function OwnerBookingDetailScreen({
     } catch (err) {
       if (request !== loadId.current) return;
       setDataReady(false);
-      Alert.alert(t("booking:detail.toast.errorTitle"), getApiErrorMessage(err, t("mobile:ownerBooking.detail.loadError")));
+      showAppAlert(t("booking:detail.toast.errorTitle"), getApiErrorMessage(err, t("mobile:ownerBooking.detail.loadError")));
     } finally {
       if (request === loadId.current) setLoading(false);
     }
@@ -158,12 +159,12 @@ export default function OwnerBookingDetailScreen({
     try {
       await fn();
       await load();
-      if (success) Alert.alert(t("booking:detail.toast.successTitle"), success);
+      if (success) showAppAlert(t("booking:detail.toast.successTitle"), success);
       return true;
     } catch (err) {
       const message = getApiErrorMessage(err, t("mobile:trip.dialogs.tryAgain"));
       onError?.(message);
-      Alert.alert(t("mobile:trip.dialogs.failedTitle"), message);
+      showAppAlert(t("mobile:trip.dialogs.failedTitle"), message);
       return false;
     } finally {
       actionLock.current = false;
@@ -172,12 +173,12 @@ export default function OwnerBookingDetailScreen({
   }
 
   function backToList(message: string) {
-    Alert.alert(t("booking:detail.toast.successTitle"), message, [{ text: t("mobile:trip.dialogs.backToList"), onPress: handleBack }]);
+    showAppAlert(t("booking:detail.toast.successTitle"), message, [{ text: t("mobile:trip.dialogs.backToList"), onPress: handleBack }]);
   }
 
   async function submitReason() {
     if (!reasonModal || !reason.trim()) {
-      Alert.alert(t("mobile:trip.dialogs.cancelReasonRequiredTitle"), t("mobile:ownerBooking.reason.required"));
+      showAppAlert(t("mobile:trip.dialogs.cancelReasonRequiredTitle"), t("mobile:ownerBooking.reason.required"));
       return;
     }
     const mode = reasonModal.mode;
@@ -317,6 +318,10 @@ export default function OwnerBookingDetailScreen({
           onOpenUserProfile={(id) => (onOpenUserProfile ? onOpenUserProfile(id) : navigation.navigate("BookingUserProfile", { userId: id }))}
         />
         <View style={styles.body}>
+        {status === "Completed" && (
+          <DetailButton variant="secondary" icon={CalendarDays} label={t("booking:detail.viewTripPlayback")} disabled={busy !== null} onPress={() => navigation.navigate("OwnerPlayback", { bookingId, vehicleName: booking.vehicleName })} />
+        )}
+
         {!dataReady ? <DetailNotice icon={TriangleAlert} title={t("mobile:trip.detail.staleTitle")} tone="warn">{t("mobile:trip.detail.staleBody")}</DetailNotice> : null}
 
         <View style={styles.toolbarRow}>
@@ -338,6 +343,8 @@ export default function OwnerBookingDetailScreen({
           <RiskScoreBadge score={booking.riskScore} />
         </View>
 
+        <BookingFlowGuide booking={booking} reports={reports} role="Owner" />
+
         {progress && (
           <DetailCard style={styles.progressCard}>
             <View style={styles.progressHead}>
@@ -356,12 +363,9 @@ export default function OwnerBookingDetailScreen({
           </DetailCard>
         )}
 
-        {(status === "InProgress" || status === "Returning") && (
+        {status === "InProgress" || status === "Returning" ? (
           <DetailButton variant="secondary" icon={MapPin} label={t("mobile:ownerBooking.detail.viewGps")} disabled={busy !== null} onPress={() => navigation.navigate("OwnerTracking", { bookingId, vehicleName: booking.vehicleName })} />
-        )}
-        {status === "Completed" && (
-          <DetailButton variant="secondary" icon={CalendarDays} label={t("booking:detail.viewTripPlayback")} disabled={busy !== null} onPress={() => navigation.navigate("OwnerPlayback", { bookingId, vehicleName: booking.vehicleName })} />
-        )}
+        ) : null}
 
         <ReturnProgress booking={booking} report={checkOutReport} role="Owner" />
 
@@ -644,7 +648,7 @@ export default function OwnerBookingDetailScreen({
                 disabled={!dataReady || busy !== null}
                 onPress={() => {
                   if (rating < 1) {
-                    Alert.alert(t("mobile:trip.dialogs.ratingMissingTitle"), t("mobile:ownerBooking.review.ratingRequired"));
+                    showAppAlert(t("mobile:trip.dialogs.ratingMissingTitle"), t("mobile:ownerBooking.review.ratingRequired"));
                     return;
                   }
                   void runAction("review", () => createOwnerReview({ bookingId, rating, comment: comment.trim() || undefined }).then(() => undefined), t("mobile:trip.dialogs.reviewThanks")).then((ok) => { if (ok) setReviewOpen(false); });

@@ -66,6 +66,24 @@ export default function NotificationCenter({ userId }: { userId: number }) {
   }, [visible]);
 
   useEffect(() => {
+    const id = state.selectedNotificationId;
+    if (!visible || !id || state.markingAll) return;
+    let cancelled = false;
+    const generation = getSessionGeneration();
+    // The owner-scoped mark-read endpoint also returns full content, even for older pages.
+    void readNotification(id).then(success => {
+      if (!success || cancelled || getSessionGeneration() !== generation || getAuthUser()?.userId !== userId) return;
+      const latest = useNotificationStore.getState();
+      if (latest.selectedNotificationId !== id) return;
+      setSelected(latest.updates[id]?.item ?? latest.items.find(item => item.id === id) ?? null);
+      useNotificationStore.setState({ selectedNotificationId: null });
+    }).catch(error => {
+      if (!cancelled) setActionError(getApiErrorMessage(error, t("mobile:notification.loadError")));
+    });
+    return () => { cancelled = true; };
+  }, [visible, state.selectedNotificationId, state.markingAll, userId]);
+
+  useEffect(() => {
     if (!visible) return;
     setNow(Date.now());
     const timer = setInterval(() => setNow(Date.now()), 60_000);

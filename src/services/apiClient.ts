@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosHeaders, type InternalAxiosRequestConfig } from "axios";
+import { getAssistantRequestLocale } from "@/features/assistant/assistantLanguage";
 
 import { getConfiguredApiBaseUrl } from "@/config/apiConfig";
 import { clearSession, getRefreshToken, getToken, setSession, getSessionGeneration } from "@/features/auth/hooks/useAuth";
@@ -92,6 +93,11 @@ export async function refreshAuthSession() {
 
 apiClient.interceptors.request.use((config) => {
   applyAcceptLanguage(config);
+  if (config.url?.startsWith("/api/assistant/")) {
+    const headers = AxiosHeaders.from(config.headers);
+    headers.set("Accept-Language", getAssistantRequestLocale());
+    config.headers = headers;
+  }
   const retryable = config as RetryableRequestConfig;
   if (retryable._generation !== undefined && retryable._generation !== getSessionGeneration()) {
     throw new axios.CanceledError("Session changed.");

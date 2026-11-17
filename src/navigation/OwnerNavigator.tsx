@@ -9,6 +9,7 @@ import WalletScreen from "@/features/wallets/screens/WalletScreen";
 import OwnerOverviewScreen from "@/features/app/screens/OwnerOverviewScreen";
 import OwnerAnalyticsScreen from "@/features/ownerAnalytics/OwnerAnalyticsScreen";
 import OwnerVehiclesScreen, { type OwnerVehicleRoute } from "@/features/app/screens/OwnerVehiclesScreen";
+import GpsFleetScreen from "@/features/gps/screens/GpsFleetScreen";
 import AssistantFab from "@/features/assistant/components/AssistantFab";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import PublicUserProfileScreen from "@/features/users/screens/PublicUserProfileScreen";
@@ -39,20 +40,28 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showFleet, setShowFleet] = useState(false);
   useEffect(() => {
     if (!showAnalytics) return;
     const listener = BackHandler.addEventListener("hardwareBackPress", () => { setShowAnalytics(false); return true; });
     return () => listener.remove();
   }, [showAnalytics]);
+  useEffect(() => {
+    if (!showFleet) return;
+    const listener = BackHandler.addEventListener("hardwareBackPress", () => { setShowFleet(false); return true; });
+    return () => listener.remove();
+  }, [showFleet]);
   const [vehicleEntry, setVehicleEntry] = useState<{ key: number; route: OwnerVehicleRoute }>({ key: 0, route: { name: "list" } });
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const [chatRoute, setChatRoute] = useState("ChatList");
   const [bookingRoute, setBookingRoute] = useState("OwnerBookingList");
+  const [trackingEntry, setTrackingEntry] = useState<{ bookingId: number; vehicleName?: string; requestId: string } | null>(null);
   const [pushBooking, setPushBooking] = useState<{ bookingId: number; requestId: string } | null>(null);
   const pendingPush = usePushNavigation(state => state.pending);
   useEffect(() => {
     if (!pendingPush || pendingPush.userId !== user.userId || pendingPush.roleTarget !== "Owner") return;
-    setShowProfile(false); setShowWallet(false); setShowAnalytics(false); setProfileUserId(null);
+    setShowProfile(false); setShowWallet(false); setShowAnalytics(false); setShowFleet(false); setProfileUserId(null);
+    setTrackingEntry(null);
     setPushBooking(pendingPush);
     setActiveTab("bookings");
     usePushNavigation.getState().clear();
@@ -91,6 +100,16 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
     <SafeAreaView edges={["top"]} style={[styles.safe, { backgroundColor: theme.background }]}>
       {showAnalytics ? (
         <OwnerAnalyticsScreen user={user} onBack={() => setShowAnalytics(false)} />
+      ) : showFleet ? (
+        <GpsFleetScreen
+          onBack={() => setShowFleet(false)}
+          onOpenTracking={(bookingId, vehicleName) => {
+            setShowFleet(false);
+            setPushBooking(null);
+            setTrackingEntry({ bookingId, vehicleName, requestId: `fleet-${bookingId}-${Date.now()}` });
+            setActiveTab("bookings");
+          }}
+        />
       ) : profileUserId != null ? (
         <PublicUserProfileScreen
           userId={profileUserId}
@@ -122,15 +141,17 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
                 onAvatarPress={() => setShowProfile(true)}
                 onOpenWallet={() => setShowWallet(true)}
                 onOpenAnalytics={() => setShowAnalytics(true)}
-                onOpenBookings={() => { setPushBooking(null); setActiveTab("bookings"); }}
-                onOpenBooking={bookingId => { setPushBooking({ bookingId, requestId: `overview-${bookingId}-${Date.now()}` }); setActiveTab("bookings"); }}
+                onOpenFleet={() => setShowFleet(true)}
+                onOpenBookings={() => { setPushBooking(null); setTrackingEntry(null); setActiveTab("bookings"); }}
+                onOpenBooking={bookingId => { setTrackingEntry(null); setPushBooking({ bookingId, requestId: `overview-${bookingId}-${Date.now()}` }); setActiveTab("bookings"); }}
                 onOpenVehicles={add => { setVehicleEntry(entry => ({ key: entry.key + 1, route: { name: add ? "add" : "list" } })); setActiveTab("vehicles"); }}
                 onOpenVehicle={vehicleId => { setVehicleEntry(entry => ({ key: entry.key + 1, route: { name: "detail", vehicleId } })); setActiveTab("vehicles"); }}
               />
             ) : activeTab === "bookings" ? (
               <OwnerBookingsNavigator
-                key={pushBooking?.requestId ?? "bookings"}
+                key={pushBooking?.requestId ?? trackingEntry?.requestId ?? "bookings"}
                 pendingBookingId={pushBooking?.bookingId}
+                pendingTracking={trackingEntry ?? undefined}
                 onRouteChange={setBookingRoute}
                 onOpenDisputes={openDisputes}
                 onOpenUserProfile={openUserProfile}
@@ -154,7 +175,7 @@ export default function OwnerNavigator({ user }: { user: AuthUser }) {
           </View>
           {(activeTab !== "messages" || chatRoute === "ChatList") && (activeTab !== "bookings" || bookingRoute === "OwnerBookingList") && !disputesVisible ? <MobileBottomBar activeKey={activeTab} items={ownerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={tab => {
             if (tab === "vehicles" && activeTab !== "vehicles") setVehicleEntry(entry => ({ key: entry.key + 1, route: { name: "list" } }));
-            if (tab === "bookings" && activeTab !== "bookings") setPushBooking(null);
+            if (tab === "bookings" && activeTab !== "bookings") { setPushBooking(null); setTrackingEntry(null); }
             setActiveTab(tab);
           }} /> : null}
           {/* ChatbotAI (không booking) cho chủ xe */}

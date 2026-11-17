@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, TextInput, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Flag, Send, ShieldCheck } from "lucide-react-native";
 import AppText from "@/components/AppText";
@@ -107,7 +108,7 @@ function CreateReport({ target, onBack, onCreated, onList, registerBack }: { tar
   function back() {
     if (lock.current || images.picking) return;
     if (!description.trim() && !images.photos.length && !reason) return onBack();
-    Alert.alert(t("mobile:violation.create.discardTitle"), t("mobile:violation.create.discardMessage"), [{ text: t("mobile:violation.create.keepDraft"), style: "cancel" }, { text: t("mobile:violation.create.discard"), style: "destructive", onPress: onBack }]);
+    showAppAlert(t("mobile:violation.create.discardTitle"), t("mobile:violation.create.discardMessage"), [{ text: t("mobile:violation.create.keepDraft"), style: "cancel" }, { text: t("mobile:violation.create.discard"), style: "destructive", onPress: onBack }]);
   }
   useEffect(() => { registerBack(back); });
   async function send() {
@@ -134,7 +135,7 @@ function CreateReport({ target, onBack, onCreated, onList, registerBack }: { tar
     </View>
     {error && <TicketNotice message={error} />}
     <TicketButton title={t("mobile:violation.create.submit")} busy={busy} disabled={reasons.loading || Boolean(reasons.error) || images.picking} icon={<Send color={theme.onBrand} size={18} />} onPress={() => { void send(); }} />
-    <TicketButton secondary title={t("mobile:violation.create.viewSent")} disabled={busy || images.picking} onPress={() => { if (description.trim() || images.photos.length || reason) Alert.alert(t("mobile:violation.create.viewSentTitle"), t("mobile:violation.create.viewSentMessage"), [{ text: t("mobile:violation.create.keepDraft"), style: "cancel" }, { text: t("mobile:violation.create.viewList"), onPress: onList }]); else onList(); }} />
+    <TicketButton secondary title={t("mobile:violation.create.viewSent")} disabled={busy || images.picking} onPress={() => { if (description.trim() || images.photos.length || reason) showAppAlert(t("mobile:violation.create.viewSentTitle"), t("mobile:violation.create.viewSentMessage"), [{ text: t("mobile:violation.create.keepDraft"), style: "cancel" }, { text: t("mobile:violation.create.viewList"), onPress: onList }]); else onList(); }} />
   </ScrollView></KeyboardAvoidingView>;
 }
 

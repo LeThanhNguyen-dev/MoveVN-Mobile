@@ -21,7 +21,6 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  Alert,
   BackHandler,
   Modal,
   Pressable,
@@ -31,6 +30,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppText from "@/components/AppText";
 import ProfileHeader from "@/features/users/components/ProfileHeader";
@@ -292,7 +292,7 @@ export default function PublicUserProfileScreen({
           return;
         }
         if (silent) {
-          Alert.alert(
+          showAppAlert(
             t("mobile:user.screen.refreshErrorTitle"),
             t("mobile:user.screen.connectionRetry"),
           );
@@ -423,12 +423,12 @@ export default function PublicUserProfileScreen({
         setChatRoomId(room.id);
         return;
       }
-      Alert.alert(
+      showAppAlert(
         t("mobile:user.screen.noChatRoomTitle"),
         t("mobile:user.screen.noChatRoomBody"),
       );
     } catch {
-      Alert.alert(
+      showAppAlert(
         t("mobile:user.screen.openChatErrorTitle"),
         t("mobile:user.screen.connectionRetry"),
       );

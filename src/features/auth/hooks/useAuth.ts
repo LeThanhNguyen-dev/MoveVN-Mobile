@@ -5,6 +5,8 @@ import type { AuthSession, AuthState, AuthUser, UserRole } from "@/features/auth
 
 const sessionKey = "movevn.auth.session";
 const activeRoleKey = "movevn.auth.activeRole";
+/** Tiến trình GPS chạy nền đọc token trực tiếp từ SecureStore (store trong RAM rỗng khi headless). */
+export const authSessionStorageKey = sessionKey;
 const emptySession: AuthSession = { token: null, user: null };
 const rolePriority: UserRole[] = ["Admin", "Staff", "Owner", "Customer"];
 let generation = 0;

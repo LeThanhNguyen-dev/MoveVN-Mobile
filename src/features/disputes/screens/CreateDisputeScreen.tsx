@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import * as ImagePicker from "expo-image-picker";
 
 import type { Theme } from "@/theme/tokens";
@@ -175,7 +176,7 @@ export default function CreateDisputeScreen({
         return;
       }
     }
-    Alert.alert(
+    showAppAlert(
       t("disputes:confirmCreate.title"),
       reportType === "TrafficFine"
         ? t("mobile:dispute.create.confirmTrafficFine")

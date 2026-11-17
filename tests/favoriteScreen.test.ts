@@ -40,6 +40,7 @@ vi.mock("@/features/auth/hooks/useAuth", () => ({
 vi.mock("@/services/apiClient", () => ({
   getApiErrorMessage: (_error: unknown, fallback: string) => fallback,
 }));
+vi.mock("@/components/appDialog/dialogStore", () => ({ showAppAlert: mocks.alert }));
 vi.mock("@/features/vehicles/services/favoriteVehicleService", () => ({
   getFavoriteVehicleIds: mocks.ids,
   getFavoriteVehicles: mocks.list,

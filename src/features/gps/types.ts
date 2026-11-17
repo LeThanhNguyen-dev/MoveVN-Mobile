@@ -20,9 +20,13 @@ export type GpsPointsAcceptedResponse = {
 
 export type GpsLiveState = "live" | "stale" | "ended" | "none";
 
+/** Trạng thái chia sẻ vị trí do khách thuê chủ động bật/tắt. */
+export type GpsSharingState = "sharing" | "paused" | "declined" | "notShared" | "ended";
+
 export type GpsLivePositionResponse = {
   bookingId: number;
   state: GpsLiveState;
+  sharingState: GpsSharingState;
   latitude: number | null;
   longitude: number | null;
   speedKmh?: number | null;
@@ -50,15 +54,46 @@ export type GpsTrackingSessionResponse = {
   endedAt: string | null;
   endReason?: string | null;
   state: "Active" | "Stale" | "Ended" | string;
+  sharingState: GpsSharingState;
   lastSeenAt: string | null;
   signalLostCount: number;
   trackingActive: boolean;
+};
+
+export type GpsSharingConsentResponse = {
+  bookingId: number;
+  consentGiven: boolean;
+  sharingState: GpsSharingState;
+  updatedAt: string;
 };
 
 export type RequestGpsEnableResponse = {
   bookingId: number;
   requested: boolean;
   requestedAt: string;
+};
+
+/** Một xe đang cho thuê trong bản đồ tổng hợp của chủ xe. */
+export type OwnerTrackingVehicleResponse = {
+  bookingId: number;
+  bookingCode: string;
+  vehicleId: number;
+  licensePlate?: string | null;
+  bookingStatus: string;
+  sharingState: GpsSharingState;
+  state: GpsLiveState;
+  latitude: number | null;
+  longitude: number | null;
+  speedKmh?: number | null;
+  heading?: number | null;
+  isMock?: boolean;
+  lastUpdatedAt: string | null;
+  trackingActive: boolean;
+};
+
+export type OwnerTrackingOverviewResponse = {
+  items: OwnerTrackingVehicleResponse[];
+  serverTimestamp: string;
 };
 
 export type GpsLocationUpdatedPayload = {
@@ -75,7 +110,7 @@ export type GpsLocationUpdatedPayload = {
 
 export type GpsStatusChangedPayload = {
   bookingId: number;
-  status: "lost" | "restored" | "ended" | "gpsEnableRequested" | string;
+  status: "lost" | "restored" | "ended" | "gpsEnableRequested" | "sharingStarted" | "sharingStopped" | string;
   serverTimestamp: string;
 };
 

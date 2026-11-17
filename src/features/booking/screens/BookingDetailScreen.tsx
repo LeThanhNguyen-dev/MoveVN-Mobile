@@ -3,7 +3,8 @@ import CheckoutEditor from "../components/CheckoutEditor";
 import { OutstandingSurcharge } from "../components/CheckoutSummary";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, AppState, BackHandler, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, AppState, BackHandler, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { CalendarDays, CircleCheck, ClipboardCheck, Clock3, CreditCard, KeyRound, MapPin, PackageCheck, ReceiptText, RefreshCw, RotateCcw, Send, ShieldCheck, TriangleAlert, Wallet, XCircle } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import type { Theme } from "@/theme/tokens";
@@ -97,7 +98,7 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
     if (type === "CheckOut") { setCheckoutToConfirm(reports.find(r => r.type === "CheckOut") ?? null); return; }
     const report = reports.find(r => r.type === "CheckIn");
     if (!report || report.requiresRevision) return;
-    Alert.alert(t("mobile:bookingDetail.alerts.confirmPickupTitle"),
+    showAppAlert(t("mobile:bookingDetail.alerts.confirmPickupTitle"),
       t("mobile:bookingDetail.alerts.confirmPickupBody"), [
         { text: t("mobile:bookingDetail.alerts.reviewAgain"), style: "cancel" },
         { text: t("mobile:bookingDetail.alerts.agreeAndConfirm"), onPress: () => void action(() => confirmCheckIn(bookingId, report.version ?? 1), t("mobile:bookingDetail.alerts.pickupConfirmed")) },
@@ -147,7 +148,7 @@ export default function BookingDetailScreen({ bookingId, role, onBack }: { booki
       const quote = await getBookingCancellationQuote(bookingId);
       if (!mounted.current) return;
       if (!quote.canCancel) { setError(quote.policyMessage || t("mobile:bookingDetail.errors.cancelUnavailable")); return; }
-      Alert.alert(t("mobile:bookingDetail.alerts.cancelTitle"), t("mobile:bookingDetail.alerts.cancelBody", {
+      showAppAlert(t("mobile:bookingDetail.alerts.cancelTitle"), t("mobile:bookingDetail.alerts.cancelBody", {
         policy: quote.policyMessage,
         refund: formatMoney(quote.refundAmount),
         forfeited: formatMoney(quote.forfeitedAmount),

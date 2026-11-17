@@ -38,9 +38,9 @@ export type ExploreStackParamList = {
 };
 
 export type DealsStackParamList = {
-  Promotions: undefined;
   VoucherHunt: { promotionId?: number } | undefined;
   VoucherWallet: undefined;
+  VoucherHistory: undefined;
 };
 
 export type TripsStackParamList = {
@@ -49,6 +49,7 @@ export type TripsStackParamList = {
     bookingId: number;
   };
   TripHandover: { bookingId: number; inspectionType: "CheckIn" | "CheckOut" };
+  TripPlayback: { bookingId: number; vehicleName?: string; live?: boolean };
   BookingWallet: undefined;
   VehicleDetail: { vehicleId: number; startDate?: string; endDate?: string };
   BookingUserProfile: { userId: number };

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { ArrowLeft, Monitor, RefreshCw, ShieldCheck, Smartphone } from "lucide-react-native";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -53,7 +53,7 @@ export default function LoginSessionsScreen({ onBack }: { onBack: () => void }) 
   }, [load]);
 
   function confirmAction(title: string, message: string, onConfirm: () => void) {
-    Alert.alert(title, message, [
+    showAppAlert(title, message, [
       { text: t("common:cancel"), style: "cancel" },
       { text: t("accountSecurity:sessions.signOut"), style: "destructive", onPress: onConfirm },
     ]);

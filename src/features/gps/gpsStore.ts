@@ -1,5 +1,15 @@
 import { create } from "zustand";
-import type { GpsConnectionStatus, GpsLiveState, GpsLocationUpdatedPayload, GpsStatusChangedPayload, GpsPosition } from "./types";
+import type {
+  GpsConnectionStatus,
+  GpsLiveState,
+  GpsLocationUpdatedPayload,
+  GpsPosition,
+  GpsSharingState,
+  GpsStatusChangedPayload,
+} from "./types";
+
+/** Trạng thái chia sẻ trên thiết bị khách: idle = chưa quyết định (cần hỏi). */
+export type GpsPublishSharingState = GpsSharingState | "idle";
 
 type GpsState = {
   userId: number | null;
@@ -8,8 +18,12 @@ type GpsState = {
   positions: Record<number, GpsPosition>;
   /** Trạng thái tracking theo bookingId: live | stale | ended | none. */
   statuses: Record<number, GpsLiveState>;
+  /** Trạng thái chia sẻ theo bookingId: sharing | paused | declined | notShared | ended. */
+  sharingStates: Record<number, GpsSharingState>;
   /** Booking khách thuê đang đi và app đang chia sẻ vị trí (null = dừng gửi). */
   activePublishBookingId: number | null;
+  /** Trạng thái chia sẻ của booking đang hoạt động (điều khiển publisher + banner). */
+  publishSharingState: GpsPublishSharingState;
   publishError: string | null;
   permissionStatus: "undetermined" | "granted" | "denied";
   /** Lần cuối gửi điểm GPS thành công (epoch ms) — cho chỉ báo "đang chia sẻ vị trí". */
@@ -23,7 +37,9 @@ type GpsState = {
   applyStatus: (payload: GpsStatusChangedPayload) => void;
   setPosition: (bookingId: number, position: GpsPosition) => void;
   setStatus: (bookingId: number, state: GpsLiveState) => void;
+  setSharingState: (bookingId: number, state: GpsSharingState) => void;
   setActivePublishBooking: (bookingId: number | null) => void;
+  setPublishSharingState: (state: GpsPublishSharingState) => void;
   setPublishError: (message: string | null) => void;
   setPermissionStatus: (status: "undetermined" | "granted" | "denied") => void;
   markPublished: () => void;
@@ -36,13 +52,26 @@ export const useGpsStore = create<GpsState>((set) => ({
   connectionStatus: "offline",
   positions: {},
   statuses: {},
+  sharingStates: {},
   activePublishBookingId: null,
+  publishSharingState: "idle",
   publishError: null,
   permissionStatus: "undetermined",
   lastPublishedAt: null,
   gpsEnableRequestedAt: null,
 
-  activate: (userId) => set((state) => (state.userId === userId ? state : ({ ...state, userId, positions: {}, statuses: {}, activePublishBookingId: null, publishError: null, lastPublishedAt: null, gpsEnableRequestedAt: null }))),
+  activate: (userId) => set((state) => (state.userId === userId ? state : ({
+    ...state,
+    userId,
+    positions: {},
+    statuses: {},
+    sharingStates: {},
+    activePublishBookingId: null,
+    publishSharingState: "idle",
+    publishError: null,
+    lastPublishedAt: null,
+    gpsEnableRequestedAt: null,
+  }))),
   setConnectionStatus: (connectionStatus) => set({ connectionStatus }),
   applyPosition: (payload) => set((state) => ({
     positions: {
@@ -58,24 +87,59 @@ export const useGpsStore = create<GpsState>((set) => ({
       },
     },
     statuses: { ...state.statuses, [payload.bookingId]: "live" },
+    sharingStates: { ...state.sharingStates, [payload.bookingId]: "sharing" },
   })),
   applyStatus: (payload) => set((state) => {
-    const next: Partial<GpsState> = {
-      statuses: { ...state.statuses, [payload.bookingId]: mapStatus(payload.status) },
-    };
     if (payload.status === "gpsEnableRequested") {
-      next.gpsEnableRequestedAt = Date.now();
+      return { gpsEnableRequestedAt: Date.now() };
     }
-    return next as GpsState;
+    // Chỉ sự kiện tracking mới đổi status; sự kiện chia sẻ chỉ đổi sharingState
+    // để không biến "khách dừng chia sẻ" thành "mất tín hiệu".
+    if (payload.status === "sharingStopped") {
+      return { sharingStates: { ...state.sharingStates, [payload.bookingId]: "paused" } };
+    }
+    if (payload.status === "sharingStarted") {
+      return { sharingStates: { ...state.sharingStates, [payload.bookingId]: "sharing" } };
+    }
+    if (payload.status === "ended") {
+      return {
+        statuses: { ...state.statuses, [payload.bookingId]: "ended" },
+        sharingStates: { ...state.sharingStates, [payload.bookingId]: "ended" },
+      };
+    }
+    if (payload.status === "lost" || payload.status === "restored") {
+      return {
+        statuses: { ...state.statuses, [payload.bookingId]: mapStatus(payload.status) },
+        sharingStates: { ...state.sharingStates, [payload.bookingId]: "sharing" },
+      };
+    }
+    return state;
   }),
   setPosition: (bookingId, position) => set((state) => ({ positions: { ...state.positions, [bookingId]: position } })),
   setStatus: (bookingId, stateValue) => set((state) => ({ statuses: { ...state.statuses, [bookingId]: stateValue } })),
-  setActivePublishBooking: (activePublishBookingId) => set({ activePublishBookingId, publishError: null }),
+  setSharingState: (bookingId, stateValue) => set((state) => ({ sharingStates: { ...state.sharingStates, [bookingId]: stateValue } })),
+  setActivePublishBooking: (activePublishBookingId) => set((state) => ({
+    activePublishBookingId,
+    // Đổi chuyến → chưa biết lựa chọn của chuyến mới (publisher sẽ khôi phục).
+    publishSharingState: state.activePublishBookingId === activePublishBookingId ? state.publishSharingState : "idle",
+    publishError: null,
+  })),
+  setPublishSharingState: (publishSharingState) => set({ publishSharingState }),
   setPublishError: (publishError) => set({ publishError }),
   setPermissionStatus: (permissionStatus) => set({ permissionStatus }),
   markPublished: () => set({ lastPublishedAt: Date.now() }),
   markGpsEnableRequested: () => set({ gpsEnableRequestedAt: Date.now() }),
-  reset: () => set({ userId: null, positions: {}, statuses: {}, activePublishBookingId: null, publishError: null, lastPublishedAt: null, gpsEnableRequestedAt: null }),
+  reset: () => set({
+    userId: null,
+    positions: {},
+    statuses: {},
+    sharingStates: {},
+    activePublishBookingId: null,
+    publishSharingState: "idle",
+    publishError: null,
+    lastPublishedAt: null,
+    gpsEnableRequestedAt: null,
+  }),
 }));
 
 function mapStatus(status: string): GpsLiveState {

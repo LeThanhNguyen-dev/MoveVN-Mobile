@@ -109,6 +109,50 @@
     "history": {
       "title": "Lịch sử đơn thuê",
       "count": "{{count}} cập nhật"
+    },
+    "flow": {
+      "title": "Hướng dẫn bước tiếp theo",
+      "subtitle": "Bước {{step}}/{{total}} trong luồng đơn thuê",
+      "subtitleClosed": "Đơn đã kết thúc",
+      "actionTitle": "Bước tiếp theo",
+      "waitTitle": "Đang chờ",
+      "doneTitle": "Hoàn tất",
+      "closedTitle": "Đơn đã kết thúc",
+      "stepsOwner": ["Duyệt đơn", "Đặt cọc", "Nhận xe", "Đang thuê", "Trả xe", "Hoàn tất"],
+      "stepsCustomer": ["Chờ duyệt", "Đặt cọc", "Nhận xe", "Đang thuê", "Trả xe", "Hoàn tất"],
+      "next": {
+        "approve": "Bấm nút “Duyệt đơn thuê” để khách đặt cọc.",
+        "waitApproval": "Chờ chủ xe duyệt yêu cầu thuê.",
+        "payDeposit": "Bấm nút “Thanh toán đặt cọc” trước khi hết hạn.",
+        "waitDeposit": "Chờ khách thanh toán tiền đặt cọc.",
+        "waitDepositExpired": "Hạn đặt cọc đã qua. Chờ hệ thống xử lý hoặc liên hệ chủ xe.",
+        "createCheckIn": "Bấm nút “Lập biên bản nhận xe” khi giao xe.",
+        "waitPickup": "Chờ đến giờ nhận xe. Bấm tải lại để kiểm tra khả năng nhận sớm.",
+        "waitPickupReport": "Chờ chủ xe chụp ảnh và lập biên bản nhận xe.",
+        "confirmCheckIn": "Xem biên bản rồi bấm “Đồng ý biên bản và nhận xe”.",
+        "requestCheckInRevision": "Nếu biên bản chưa đúng, bấm “Yêu cầu lập lại biên bản”.",
+        "reportNoShow": "Bạn chưa nhận xe. Nếu không thuê nữa, bấm báo không đến nhận xe.",
+        "waitCheckInConfirm": "Chờ khách xem biên bản và xác nhận nhận xe.",
+        "waitCheckInRevision": "Chờ chủ xe gửi lại biên bản nhận xe.",
+        "waitStart": "Đã xác nhận nhận xe. Chuyến đi sẽ bắt đầu theo lịch.",
+        "renting": "Xe đang được thuê. Theo dõi tiến trình chuyến đi bên dưới.",
+        "reportReturn": "Khi trả xe, bấm tạo biên bản trả xe để đối chiếu.",
+        "createCheckOut": "Bấm nút “Lập biên bản trả xe” khi nhận lại xe.",
+        "waitCheckOutConfirm": "Chờ khách xem biên bản và xác nhận trả xe.",
+        "confirmCheckOut": "Xem biên bản rồi bấm “Đồng ý biên bản và trả xe”.",
+        "disputeCheckOut": "Nếu biên bản chưa đúng, bấm “Yêu cầu lập lại” trước khi xác nhận.",
+        "waitReturnReport": "Chờ chủ xe chụp ảnh và lập biên bản trả xe.",
+        "waitReturnFinish": "Chờ hệ thống chốt trả xe.",
+        "waitOwnerReceipt": "Chờ chủ xe xác nhận đã nhận lại xe.",
+        "confirmReceipt": "Bấm nút “Xác nhận đã nhận xe” để chốt trả xe.",
+        "paySurcharge": "Bấm thanh toán phụ phí phát sinh để hoàn tất đơn.",
+        "settle": "Bấm nút “Giải ngân tiền cọc” để nhận tiền cọc.",
+        "settleHold": "Tiền cọc đang giữ để đối soát, còn khoảng {{hours}} giờ. Sau đó bấm “Giải ngân tiền cọc”.",
+        "done": "Đơn đã hoàn tất, không còn thao tác nào.",
+        "cancelled": "Đơn đã hủy.",
+        "rejected": "Đơn đã bị từ chối.",
+        "default": "Bấm tải lại đơn để xem bước tiếp theo."
+      }
     }
   }
 }

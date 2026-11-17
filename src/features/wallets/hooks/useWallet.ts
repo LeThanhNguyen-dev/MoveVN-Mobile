@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, AppState } from "react-native";
+import { AppState } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import i18n from "@/i18n";
 import {
   cancelWithdrawal,
@@ -86,7 +87,7 @@ export function useWallet() {
       setWdTotal(wd.totalCount);
       setBank(bankInfo);
     } catch (err) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("accountWallet:toasts.errorTitle"),
         getApiErrorMessage(err, i18n.t("mobile:wallet.errors.loadWallet")),
       );
@@ -107,7 +108,7 @@ export function useWallet() {
         setTxPage(tx.page);
         setTxTotal(tx.totalCount);
       } catch (err) {
-        Alert.alert(
+        showAppAlert(
           i18n.t("accountWallet:toasts.errorTitle"),
           getApiErrorMessage(err, i18n.t("mobile:wallet.errors.loadHistory")),
         );
@@ -141,7 +142,7 @@ export function useWallet() {
           const res = await checkPaymentStatus(orderCode);
           if (res.isConfirmed) {
             setPendingOrderCode(null);
-            Alert.alert(
+            showAppAlert(
               i18n.t("accountWallet:toasts.successTitle"),
               i18n.t("mobile:wallet.alerts.topUpDone"),
             );
@@ -150,7 +151,7 @@ export function useWallet() {
           }
           if (["Cancelled", "Expired", "Failed"].includes(res.status)) {
             setPendingOrderCode(null);
-            Alert.alert(
+            showAppAlert(
               i18n.t("mobile:wallet.alerts.noticeTitle"),
               res.message || i18n.t("mobile:wallet.alerts.paymentEnded"),
             );
@@ -164,7 +165,7 @@ export function useWallet() {
           pollTopUp(orderCode, attempt + 1);
         } else {
           setPendingOrderCode(null);
-          Alert.alert(
+          showAppAlert(
             i18n.t("mobile:wallet.alerts.timeoutTitle"),
             i18n.t("mobile:wallet.alerts.checkBalanceHint"),
           );
@@ -186,14 +187,14 @@ export function useWallet() {
   async function handleTopUp(onSuccess?: () => void) {
     const amount = Number(topUpAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.invalidAmountTitle"),
         i18n.t("mobile:wallet.alerts.topUpAmountRequired"),
       );
       return;
     }
     if (amount < TOPUP_MIN_AMOUNT) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.amountTooSmallTitle"),
         i18n.t("mobile:wallet.alerts.topUpMin", {
           amount: TOPUP_MIN_AMOUNT.toLocaleString("vi-VN"),
@@ -202,7 +203,7 @@ export function useWallet() {
       return;
     }
     if (amount > TOPUP_MAX_AMOUNT) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.amountTooLargeTitle"),
         i18n.t("mobile:wallet.alerts.topUpMax", {
           amount: TOPUP_MAX_AMOUNT.toLocaleString("vi-VN"),
@@ -220,7 +221,7 @@ export function useWallet() {
       pollTopUp(link.orderCode);
       onSuccess?.();
     } catch (err) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.failedTitle"),
         getApiErrorMessage(err, i18n.t("mobile:wallet.alerts.topUpCreateFailed")),
       );
@@ -232,14 +233,14 @@ export function useWallet() {
   async function handleWithdraw() {
     const amount = Number(withdrawAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.invalidAmountTitle"),
         i18n.t("mobile:wallet.alerts.withdrawAmountRequired"),
       );
       return false;
     }
     if (amount < WITHDRAW_MIN_AMOUNT) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.amountTooSmallTitle"),
         i18n.t("mobile:wallet.alerts.withdrawMin", {
           amount: WITHDRAW_MIN_AMOUNT.toLocaleString("vi-VN"),
@@ -248,7 +249,7 @@ export function useWallet() {
       return false;
     }
     if (amount > WITHDRAW_MAX_AMOUNT) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.amountTooLargeTitle"),
         i18n.t("mobile:wallet.alerts.withdrawMax", {
           amount: WITHDRAW_MAX_AMOUNT.toLocaleString("vi-VN"),
@@ -257,14 +258,14 @@ export function useWallet() {
       return false;
     }
     if (!bank?.bankAccountNumber) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.noPayoutAccountTitle"),
         i18n.t("mobile:wallet.alerts.noPayoutAccountMessage"),
       );
       return false;
     }
     if (wallet && amount > wallet.balance) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.insufficientTitle"),
         i18n.t("mobile:wallet.alerts.insufficientMessage", {
           balance: wallet.balance.toLocaleString("vi-VN"),
@@ -273,7 +274,7 @@ export function useWallet() {
       return false;
     }
     if (activeWithdrawal) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.pendingRequestTitle"),
         i18n.t("mobile:wallet.alerts.pendingRequestMessage", { id: activeWithdrawal.id }),
       );
@@ -284,14 +285,14 @@ export function useWallet() {
     try {
       await createWithdrawal(Math.round(amount));
       setWithdrawAmount("");
-      Alert.alert(
+      showAppAlert(
         i18n.t("accountWallet:toasts.successTitle"),
         i18n.t("mobile:wallet.alerts.withdrawCreated"),
       );
       await reload();
       return true;
     } catch (err) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.failedTitle"),
         getApiErrorMessage(err, i18n.t("mobile:wallet.alerts.withdrawCreateFailed")),
       );
@@ -302,7 +303,7 @@ export function useWallet() {
   }
 
   async function handleCancelWithdrawal(id: number) {
-    Alert.alert(
+    showAppAlert(
       i18n.t("mobile:wallet.alerts.cancelRequestTitle"),
       i18n.t("mobile:wallet.alerts.cancelRequestBody"),
       [
@@ -316,7 +317,7 @@ export function useWallet() {
                 await cancelWithdrawal(id);
                 await reload();
               } catch (err) {
-                Alert.alert(
+                showAppAlert(
                   i18n.t("mobile:wallet.alerts.failedTitle"),
                   getApiErrorMessage(err, i18n.t("mobile:wallet.alerts.cancelRequestFailed")),
                 );
@@ -339,7 +340,7 @@ export function useWallet() {
 
   async function handleRequestBankOtp(onSent?: () => void) {
     if (!bankName.trim() || !accountNumber.trim() || !holderName.trim()) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("accountVerification:bank.toastMissingInfoTitle"),
         i18n.t("mobile:wallet.alerts.bankMissingInfo"),
       );
@@ -350,13 +351,13 @@ export function useWallet() {
     try {
       await requestBankAccountOtp();
       setBankStep("otp");
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.otpSentTitle"),
         i18n.t("mobile:wallet.alerts.otpSentMessage"),
       );
       onSent?.();
     } catch (err) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.failedTitle"),
         getApiErrorMessage(err, i18n.t("mobile:wallet.alerts.otpSendFailed")),
       );
@@ -367,7 +368,7 @@ export function useWallet() {
 
   async function handleSaveBank() {
     if (bankOtp.trim().length < 6) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.missingOtpTitle"),
         i18n.t("mobile:wallet.alerts.otpRequired"),
       );
@@ -384,14 +385,14 @@ export function useWallet() {
         bankAccountHolderName: holderName.trim(),
         bankBin: bankBin || picked?.bin,
       });
-      Alert.alert(
+      showAppAlert(
         i18n.t("accountWallet:toasts.successTitle"),
         i18n.t("mobile:wallet.alerts.bankSaved"),
       );
       await reload();
       return true;
     } catch (err) {
-      Alert.alert(
+      showAppAlert(
         i18n.t("mobile:wallet.alerts.failedTitle"),
         getApiErrorMessage(err, i18n.t("mobile:wallet.alerts.bankSaveFailed")),
       );

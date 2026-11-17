@@ -88,57 +88,59 @@ function DealsFilterBar({
         ) : null}
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipRow}
-      >
-        {filters.map((filter) => {
-          const active = filter.value === activeFilter;
-          const amber = filter.tone === "amber";
-          return (
-            <Pressable
-              key={filter.value}
-              onPress={() => onFilterChange(filter.value)}
-              style={[
-                styles.chip,
-                active
-                  ? amber
-                    ? styles.chipActiveAmber
-                    : styles.chipActive
-                  : amber
-                    ? styles.chipIdleAmber
-                    : styles.chipIdle,
-              ]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: active }}
-              accessibilityLabel={filter.label}
-            >
-              <AppText style={[styles.chipText, active && styles.chipTextActive]}>
-                {filter.label}
-              </AppText>
-              {typeof filter.count === "number" ? (
-                <AppText style={[styles.chipCount, active && styles.chipCountActive]}>
-                  ({filter.count})
+      <View style={styles.chipRowWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipScroll}
+          contentContainerStyle={styles.chipRow}
+        >
+          {filters.map((filter) => {
+            const active = filter.value === activeFilter;
+            const amber = filter.tone === "amber";
+            return (
+              <Pressable
+                key={filter.value}
+                onPress={() => onFilterChange(filter.value)}
+                style={[
+                  styles.chip,
+                  active
+                    ? amber
+                      ? styles.chipActiveAmber
+                      : styles.chipActive
+                    : amber
+                      ? styles.chipIdleAmber
+                      : styles.chipIdle,
+                ]}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={filter.label}
+              >
+                <AppText style={[styles.chipText, active && styles.chipTextActive]}>
+                  {filter.label}
                 </AppText>
-              ) : null}
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+                {typeof filter.count === "number" ? (
+                  <AppText style={[styles.chipCount, active && styles.chipCountActive]}>
+                    ({filter.count})
+                  </AppText>
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
-      <Pressable
-        onPress={() => setSortOpen(true)}
-        style={styles.sortButton}
-        accessibilityRole="button"
-        accessibilityLabel={resolvedSortLabel}
-      >
-        <AppText style={styles.sortLabel}>{resolvedSortLabel}</AppText>
-        <AppText style={styles.sortValue} numberOfLines={1}>
-          {selectedSort?.label ?? ""}
-        </AppText>
-        <ChevronDown color={theme.muted} size={15} />
-      </Pressable>
+        <Pressable
+          onPress={() => setSortOpen(true)}
+          style={styles.sortButton}
+          accessibilityRole="button"
+          accessibilityLabel={`${resolvedSortLabel}: ${selectedSort?.label ?? ""}`}
+        >
+          <AppText style={styles.sortValue} numberOfLines={1}>
+            {selectedSort?.label ?? resolvedSortLabel}
+          </AppText>
+          <ChevronDown color={theme.muted} size={14} />
+        </Pressable>
+      </View>
 
       <Modal visible={sortOpen} transparent animationType="slide" onRequestClose={() => setSortOpen(false)}>
         <SortSheet
@@ -214,7 +216,7 @@ export default memo(DealsFilterBar);
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    wrap: { gap: 10 },
+    wrap: { gap: 8 },
     searchRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -227,18 +229,20 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 12,
     },
     searchInput: { flex: 1, color: theme.text, fontSize: 14, height: "100%" },
-    chipRow: { gap: 8, paddingRight: 8 },
+    chipRowWrap: { flexDirection: "row", alignItems: "center", gap: 8 },
+    chipScroll: { flex: 1 },
+    chipRow: { gap: 6, paddingRight: 2 },
     chip: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 5,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 9,
+      gap: 4,
+      height: 32,
+      borderRadius: 8,
+      paddingHorizontal: 10,
     },
     chipIdle: { backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F1F5F9" },
     chipIdleAmber: { backgroundColor: theme.mode === "dark" ? theme.surfaceAlt : "#F1F5F9" },
-    chipActive: { backgroundColor: "#6D28D9" },
+    chipActive: { backgroundColor: theme.brand },
     chipActiveAmber: { backgroundColor: "#F59E0B" },
     chipText: { color: theme.muted, fontSize: 12, fontWeight: "700" },
     chipTextActive: { color: "#FFFFFF" },
@@ -247,17 +251,17 @@ const createStyles = (theme: Theme) =>
     sortButton: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
-      alignSelf: "flex-start",
-      borderRadius: 12,
+      gap: 4,
+      height: 32,
+      maxWidth: 150,
+      flexShrink: 0,
+      borderRadius: 8,
       borderWidth: 1,
       borderColor: theme.border,
       backgroundColor: theme.surface,
-      paddingHorizontal: 12,
-      paddingVertical: 9,
+      paddingHorizontal: 10,
     },
-    sortLabel: { color: theme.muted, fontSize: 12, fontWeight: "600" },
-    sortValue: { color: theme.text, fontSize: 12, fontWeight: "800", maxWidth: 150 },
+    sortValue: { color: theme.text, fontSize: 12, fontWeight: "800", flexShrink: 1 },
     sheetOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: theme.overlay },
     sheet: {
       backgroundColor: theme.surface,

@@ -1,7 +1,7 @@
 import type { NotificationItem } from "./types";
 import { useNotificationStore } from "./useNotifications";
 import { showToast } from "./toastStore";
-import { presentBookingSystemNotification } from "./bookingSystemNotifications";
+import { presentSystemNotification } from "./systemNotificationPresentation";
 
 // Shared by SignalR and polling: a replay must never display a second banner.
 export function receiveNotification(item: NotificationItem, unreadCount: number) {
@@ -14,6 +14,6 @@ export function receiveNotification(item: NotificationItem, unreadCount: number)
       type: "info", title: item.title, message: item.body,
       onPress: () => useNotificationStore.setState({ centerOpen: true }),
     });
-    if (!presentBookingSystemNotification(item, state.userId, toast)) toast();
+    if (!presentSystemNotification(item, state.userId, toast)) toast();
   }
 }

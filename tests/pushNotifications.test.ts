@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 vi.stubGlobal("__DEV__", false);
+vi.mock("@/features/notifications/notificationActions", () => ({ refreshNotificationCount: vi.fn() }));
 const mocks = vi.hoisted(() => ({
   userId: 1 as number | null, roles: ["Customer", "Owner"],
   initial: null as unknown, response: undefined as ((value: unknown) => void) | undefined,
@@ -19,6 +20,7 @@ vi.mock("@/features/auth/hooks/useAuth", () => {
 });
 vi.mock("@/features/notifications/pushRegistration", () => ({
   registerPushDevice: mocks.register,
+  loadPushNotifications: async () => null,
   prepareLocalNotifications: async () => ({ scheduleNotificationAsync: mocks.schedule }),
   loadLocalNotifications: async () => ({
     DEFAULT_ACTION_IDENTIFIER: "default", setNotificationHandler: mocks.handler,
@@ -26,6 +28,7 @@ vi.mock("@/features/notifications/pushRegistration", () => ({
     clearLastNotificationResponseAsync: mocks.clear,
     addNotificationResponseReceivedListener: (callback: (value: unknown) => void) => { mocks.response = callback; return { remove: mocks.removed }; },
     addPushTokenListener: () => ({ remove: mocks.removed }),
+    addNotificationReceivedListener: () => ({ remove: vi.fn() }),
   }),
 }));
 import { usePushNotifications } from "@/features/notifications/usePushNotifications";
@@ -44,6 +47,7 @@ beforeEach(() => {
   mocks.initial = null; mocks.response = undefined;
   mocks.register.mockResolvedValue(undefined); mocks.clear.mockResolvedValue(undefined);
   mocks.schedule.mockResolvedValue("scheduled");
+  useNotificationStore.getState().reset();
   useNotificationStore.getState().activate(1); useToastStore.getState().clearToasts();
   usePushNavigation.getState().clear();
 });
@@ -87,7 +91,7 @@ it("presents a real booking event as an OS notification once while the app is op
   const item = { id: 902, type: "Booking", title: "Đơn thuê đã duyệt", body: "Bạn có thể đặt cọc", channel: "InApp", isRead: false, createdAt: "2026-10-24T01:00:00Z", dataJson: '{"bookingId":42,"roleTarget":"customer"}' };
   receiveNotification(item, 1); receiveNotification(item, 1);
   expect(mocks.schedule).toHaveBeenCalledOnce();
-  expect(mocks.schedule).toHaveBeenCalledWith(expect.objectContaining({ content: expect.objectContaining({ title: item.title, sound: "default", data: expect.objectContaining({ localBooking: true, userId: "1" }) }), trigger: { channelId: "bookings-demo" } }));
+  expect(mocks.schedule).toHaveBeenCalledWith(expect.objectContaining({ content: expect.objectContaining({ title: item.title, sound: "default", data: expect.objectContaining({ localNotification: true, userId: "1" }) }), trigger: { channelId: "bookings" } }));
   expect(useToastStore.getState().toasts).toHaveLength(0);
 });
 
@@ -97,4 +101,29 @@ it("falls back to the existing toast if the OS cannot display the notification",
   receiveNotification({ id: 903, type: "Booking", title: "Biên bản mới", body: "Kiểm tra biên bản", channel: "InApp", isRead: false, createdAt: "2026-10-24T01:00:00Z" }, 1);
   await act(async () => {});
   expect(useToastStore.getState().toasts[0]?.title).toBe("Biên bản mới");
+});
+
+it.each(["SupportTicket", "Dispute", "Payment", "VehicleAvailability", "Broadcast"])("presents %s as an OS notification too", async type => {
+  await act(async () => { tree = create(React.createElement(Host)); });
+  receiveNotification({ id: 910, type, title: "New event", body: "Details", channel: "Both", isRead: false, createdAt: "2026-10-24T01:00:00Z" }, 1);
+  expect(mocks.schedule).toHaveBeenCalledOnce();
+});
+
+it("opens non-booking push in the inbox with its full notification selected", async () => {
+  mocks.initial = { actionIdentifier: "default", notification: { request: {
+    identifier: "support-1", content: { data: { userId: "1", notificationId: 920, dataJson: '{"ticketId":3}' } },
+  } } };
+  await act(async () => { tree = create(React.createElement(Host)); });
+  expect(useNotificationStore.getState().centerOpen).toBe(true);
+  expect(useNotificationStore.getState().selectedNotificationId).toBe(920);
+  expect(usePushNavigation.getState().pending).toBeNull();
+});
+
+it("does not open another account's generic notification", async () => {
+  mocks.initial = { actionIdentifier: "default", notification: { request: {
+    identifier: "wrong-account", content: { data: { userId: "2", notificationId: 920 } },
+  } } };
+  await act(async () => { tree = create(React.createElement(Host)); });
+  expect(useNotificationStore.getState().centerOpen).toBe(false);
+  expect(useNotificationStore.getState().selectedNotificationId).toBeNull();
 });

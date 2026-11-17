@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, BackHandler, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, TextInput, View } from "react-native";
+import { ActivityIndicator, BackHandler, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, TextInput, View } from "react-native";
+import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { ChevronLeft, ChevronRight, Headphones, MessageCircle, Plus, Send } from "lucide-react-native";
 import AppText from "@/components/AppText";
 import { getSessionGeneration } from "@/features/auth/hooks/useAuth";
@@ -101,7 +102,7 @@ function TicketCreate({ entry, onBack, onCreated, registerBack }: { entry: Ticke
   function back() {
     if (lock.current || images.picking) return;
     if (!subject.trim() && !message.trim() && !images.photos.length) return onBack();
-    Alert.alert(t("mobile:supportTicket.create.discardTitle"), t("mobile:supportTicket.create.discardMessage"), [{ text: t("mobile:supportTicket.create.keepDraft"), style: "cancel" }, { text: t("mobile:supportTicket.create.discardDraft"), style: "destructive", onPress: onBack }]);
+    showAppAlert(t("mobile:supportTicket.create.discardTitle"), t("mobile:supportTicket.create.discardMessage"), [{ text: t("mobile:supportTicket.create.keepDraft"), style: "cancel" }, { text: t("mobile:supportTicket.create.discardDraft"), style: "destructive", onPress: onBack }]);
   }
   useEffect(() => { const sub = BackHandler.addEventListener("hardwareBackPress", () => { back(); return true; }); return () => sub.remove(); });
   useEffect(() => { registerBack?.(back); });
@@ -139,7 +140,7 @@ function TicketDetail({ id, onBack, registerBack }: { id: number; onBack: () => 
   const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const images = useTicketImages(); const lock = useRef(false); const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const ticket = query.data; const closed = ticket ? isTicketClosed(ticket.status) : true;
-  function back() { if (lock.current || images.picking) return; if (!message.trim() && !images.photos.length) return onBack(); Alert.alert(t("mobile:supportTicket.detail.discardReplyTitle"), t("mobile:supportTicket.detail.discardReplyMessage"), [{ text: t("mobile:supportTicket.create.keepDraft"), style: "cancel" }, { text: t("mobile:supportTicket.create.discardDraft"), style: "destructive", onPress: onBack }]); }
+  function back() { if (lock.current || images.picking) return; if (!message.trim() && !images.photos.length) return onBack(); showAppAlert(t("mobile:supportTicket.detail.discardReplyTitle"), t("mobile:supportTicket.detail.discardReplyMessage"), [{ text: t("mobile:supportTicket.create.keepDraft"), style: "cancel" }, { text: t("mobile:supportTicket.create.discardDraft"), style: "destructive", onPress: onBack }]); }
   useEffect(() => { const sub = BackHandler.addEventListener("hardwareBackPress", () => { back(); return true; }); return () => sub.remove(); });
   useEffect(() => { registerBack?.(back); });
   async function reply() {

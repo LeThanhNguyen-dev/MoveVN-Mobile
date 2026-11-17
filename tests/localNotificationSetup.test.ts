@@ -27,12 +27,16 @@ beforeEach(() => {
 it("enables local OS banners and sound in Expo Go without registering remote push", async () => {
   expect(await prepareLocalNotifications()).not.toBeNull();
   await registerPushDevice();
-  expect(mocks.channel).toHaveBeenCalledWith("bookings-demo", expect.objectContaining({ importance: 4, sound: "default" }));
+  expect(mocks.channel).toHaveBeenCalledWith("bookings", expect.objectContaining({ importance: 4 }));
+  expect(mocks.channel.mock.calls[0]![1]).not.toHaveProperty("sound");
   expect(mocks.request).toHaveBeenCalledOnce();
   expect(mocks.registerApi).not.toHaveBeenCalled();
   const handler = mocks.handler.mock.calls[0]![0].handleNotification;
-  expect(await handler({ request: { content: { data: { localBooking: true } } } })).toMatchObject({ shouldShowBanner: true, shouldPlaySound: true });
+  expect(await handler({ request: { content: { data: { localNotification: true, userId: "42", notificationId: 1 } } } })).toMatchObject({ shouldShowBanner: true, shouldPlaySound: true });
   expect(await handler({ request: { content: { data: {} } } })).toMatchObject({ shouldShowBanner: false });
+  expect(await handler({ request: { content: { data: { userId: "42", notificationId: 2 } } } })).toMatchObject({ shouldShowBanner: true, shouldPlaySound: true });
+  expect(await handler({ request: { content: { data: { userId: "42", notificationId: 2 } } } })).toMatchObject({ shouldShowBanner: false });
+  expect(await handler({ request: { content: { data: { userId: "99", notificationId: 3 } } } })).toMatchObject({ shouldShowBanner: false });
 });
 
 it("does not repeatedly prompt or enable a presenter when permission is denied", async () => {
