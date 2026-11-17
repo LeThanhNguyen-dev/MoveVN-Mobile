@@ -1,6 +1,32 @@
 {
   "car": "Car",
   "motorbike": "Motorbike",
+  "transmission": {
+    "label": "Transmission",
+    "unknown": "Not provided",
+    "Manual": "Manual",
+    "Automatic": "Automatic",
+    "CVT": "Automatic (CVT)",
+    "DCT": "Automatic (DCT)"
+  },
+  "vehicleSpecs": {
+    "seatCount": "Seats",
+    "seats": "{{count}} seats",
+    "bodyType": "Body style",
+    "bikeType": "Motorbike style",
+    "engineCapacity": "Engine displacement",
+    "unknown": "Not provided",
+    "bodyTypes": {
+      "Sedan": "Sedan",
+      "SUV": "SUV",
+      "Hatchback": "Hatchback",
+      "Coupe": "Coupe",
+      "Convertible": "Convertible",
+      "Pickup": "Pickup",
+      "MPV": "MPV / Minivan",
+      "Wagon": "Wagon"
+    }
+  },
   "featuredBadge": "Featured",
   "noDeposit": "No deposit required",
   "reviewsCount": "{{count}} reviews",
@@ -42,6 +68,8 @@
   "addressSuggestError": "Unable to load address suggestions.",
   "addressCoordsError": "Unable to resolve coordinates for this address.",
   "fuel": {
+    "label": "Fuel type",
+    "unknown": "Not provided",
     "Gasoline": "Petrol",
     "Diesel": "Diesel",
     "Electric": "Electric",

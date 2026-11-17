@@ -162,6 +162,12 @@ export type VehicleResponse = {
   modelName: string;
   variantId: number | null;
   variantName: string | null;
+  transmission?: string | null;
+  fuelType?: string | null;
+  seatCount?: number | null;
+  bodyType?: string | null;
+  bikeType?: string | null;
+  engineCapacity?: string | null;
   vehicleType: string;
   year: number;
   licensePlate: string;

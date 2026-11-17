@@ -1,6 +1,32 @@
 {
   "car": "Ô tô",
   "motorbike": "Xe máy",
+  "transmission": {
+    "label": "Hộp số",
+    "unknown": "Chưa cập nhật",
+    "Manual": "Số sàn",
+    "Automatic": "Số tự động",
+    "CVT": "Số tự động (CVT)",
+    "DCT": "Số tự động (DCT)"
+  },
+  "vehicleSpecs": {
+    "seatCount": "Số chỗ ngồi",
+    "seats": "{{count}} chỗ",
+    "bodyType": "Kiểu dáng",
+    "bikeType": "Dòng xe máy",
+    "engineCapacity": "Dung tích động cơ",
+    "unknown": "Chưa cập nhật",
+    "bodyTypes": {
+      "Sedan": "Sedan",
+      "SUV": "SUV",
+      "Hatchback": "Hatchback",
+      "Coupe": "Coupe",
+      "Convertible": "Mui trần",
+      "Pickup": "Bán tải",
+      "MPV": "MPV / Minivan",
+      "Wagon": "Wagon"
+    }
+  },
   "featuredBadge": "Nổi bật",
   "noDeposit": "Miễn thế chấp",
   "reviewsCount": "{{count}} đánh giá",
@@ -42,6 +68,8 @@
   "addressSuggestError": "Không tải được gợi ý địa chỉ.",
   "addressCoordsError": "Không lấy được tọa độ địa chỉ.",
   "fuel": {
+    "label": "Nhiên liệu",
+    "unknown": "Chưa cập nhật",
     "Gasoline": "Xăng",
     "Diesel": "Dầu",
     "Electric": "Điện",

@@ -413,7 +413,6 @@ export default function ChatRoomScreen({
             ListEmptyComponent={
               <View
                 style={{
-                  transform: [{ scaleY: -1 }],
                   padding: 32,
                   alignItems: "center",
                   gap: 12,
