@@ -23,9 +23,11 @@ export type PlaybackAnchor = {
 };
 
 export type PlaybackModel = {
-  /** Đỉnh polyline đã khớp đường phố. */
+  /** Đỉnh polyline đã khớp đường phố (nối liền các đoạn để tra cứu theo chỉ số). */
   path: LatLng[];
-  /** Quãng đường tích luỹ tới từng đỉnh (m). */
+  /** Các đoạn liền mạch; gap mất tín hiệu không được nối bằng đường thẳng. */
+  segments: LatLng[][];
+  /** Quãng đường tích luỹ tới từng đỉnh (m); bước nối gap = 0 m. */
   cum: number[];
   totalM: number;
   anchors: PlaybackAnchor[];
@@ -79,8 +81,10 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-/** Đường phố từ API → danh sách đỉnh đã bỏ trùng liên tiếp + quãng đường tích luỹ. */
-function buildPath(path: GpsRoadPathResponse["path"] | null | undefined) {
+/** Khe giữa hai điểm log quá ngưỡng này = mất tín hiệu, không nối thẳng. */
+const GAP_BREAK_M = 250;
+
+function sanitizePoints(path: { latitude: number; longitude: number }[] | null | undefined): LatLng[] {
   const points: LatLng[] = [];
   for (const point of path ?? []) {
     const lat = Number(point.latitude);
@@ -90,16 +94,52 @@ function buildPath(path: GpsRoadPathResponse["path"] | null | undefined) {
     if (last && Math.abs(last[0] - lat) < 1e-9 && Math.abs(last[1] - lng) < 1e-9) continue;
     points.push([lat, lng]);
   }
+  return points;
+}
+
+function splitAtGaps(points: LatLng[]): LatLng[][] {
+  if (points.length < 2) return [];
+  const out: LatLng[][] = [[points[0]!]];
+  for (let index = 1; index < points.length; index++) {
+    const current = points[index]!;
+    if (haversineMeters(points[index - 1]!, current) > GAP_BREAK_M) out.push([current]);
+    else out[out.length - 1]!.push(current);
+  }
+  return out.filter((segment) => segment.length >= 2);
+}
+
+/** Backend trả segments (v2) → dùng; client cũ/không có → tự cắt path tại gap. */
+function resolveSegments(road: GpsRoadPathResponse | null): LatLng[][] {
+  const backend = (road?.segments ?? [])
+    .map((segment) => sanitizePoints(segment.points))
+    .filter((segment) => segment.length >= 2);
+  if (backend.length > 0) return backend;
+  return splitAtGaps(sanitizePoints(road?.path));
+}
+
+/** Các đoạn liền mạch → path phẳng + quãng đường tích luỹ (gap = 0 m). */
+function buildPath(road: GpsRoadPathResponse | null) {
+  const segments = resolveSegments(road);
+  const points = segments.flat();
+
+  const segmentStarts = new Set<number>();
+  let cursor = 0;
+  for (const segment of segments) {
+    segmentStarts.add(cursor);
+    cursor += segment.length;
+  }
 
   const cum: number[] = [];
   for (let index = 0; index < points.length; index++) {
     const previous = points[index - 1];
     const current = points[index]!;
-    cum.push(index === 0 || !previous ? 0 : cum[index - 1]! + haversineMeters(previous, current));
+    if (index === 0 || !previous) cum.push(0);
+    else if (segmentStarts.has(index)) cum.push(cum[index - 1]!);
+    else cum.push(cum[index - 1]! + haversineMeters(previous, current));
   }
 
   const lastCum = cum[cum.length - 1];
-  return { points, cum, totalM: lastCum == null ? 0 : lastCum };
+  return { points, segments, cum, totalM: lastCum == null ? 0 : lastCum };
 }
 
 type RawAnchor = { t: number; latitude: number; longitude: number; speedKmh: number };
@@ -231,7 +271,7 @@ export function buildPlaybackModel(
   gps: GpsRoutePointResponse[],
   road: GpsRoadPathResponse | null,
 ): PlaybackModel | null {
-  const { points, cum, totalM } = buildPath(road?.path);
+  const { points, segments, cum, totalM } = buildPath(road);
   if (points.length < 2 || totalM < 1) return null;
 
   const anchors = projectAnchors(toRawAnchors(gps), points, cum);
@@ -242,6 +282,7 @@ export function buildPlaybackModel(
 
   return {
     path: points,
+    segments,
     cum,
     totalM,
     anchors,
@@ -284,11 +325,13 @@ function sampleAtTime(model: PlaybackModel, timeMs: number): Sample {
 function positionAtDistance(model: PlaybackModel, d: number) {
   const target = clamp(d, 0, model.totalM);
   const cum = model.cum;
+  // Tìm đỉnh cuối có cum < target: tại ranh giới đoạn (cum trùng nhau) marker
+  // đứng ở cuối đoạn trước trong suốt gap, chỉ nhảy khi quãng đường vượt qua.
   let lo = 0;
   let hi = cum.length - 1;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    if ((cum[mid] ?? Number.POSITIVE_INFINITY) <= target) lo = mid;
+    if ((cum[mid] ?? Number.POSITIVE_INFINITY) < target) lo = mid;
     else hi = mid - 1;
   }
   const index = Math.min(lo, model.path.length - 2);

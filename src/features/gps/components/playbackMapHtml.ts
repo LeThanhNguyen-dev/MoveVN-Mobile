@@ -18,7 +18,7 @@ export type PlaybackMapTheme = {
  * HTML bản đồ phát lại hành trình (WebView Leaflet) — cùng pattern trackingMapHtml.
  *
  * RN → map:
- * - `window.setPath(points)` nạp polyline (chỉ gọi 1 lần sau khi tải dữ liệu),
+ * - `window.setRoutes(segments)` nạp các đoạn polyline (gap mất tín hiệu không nối),
  * - `window.setProgress(vertex, lat, lng)` tách tuyến thành "đã đi" (brand) và
  *   "chưa đi" (xám) + di chuyển marker tới vị trí nội suy,
  * - `window.moveVehicle(lat, lng, heading, speed, follow)` xoay mũi tên + chip tốc độ,
@@ -51,9 +51,10 @@ html,body,#map{margin:0;width:100%;height:100%;background:${theme.background};ov
   function send(payload){if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(JSON.stringify(payload));}}
   function icon(html,size,anchor,z){return L.divIcon({className:'',html:html,iconSize:size,iconAnchor:anchor});}
 
+  var segments=[];
   var path=[];
-  var doneLatLngs=[];
-  var todoLatLngs=[];
+  var segStart=[];
+  var segEnd=[];
   var doneLine=null;
   var todoLine=null;
   var marker=null;
@@ -77,36 +78,103 @@ html,body,#map{margin:0;width:100%;height:100%;background:${theme.background};ov
 
   map.setView([16.05,108.1],6);
 
-  window.setPath=function(points){
-    if(!points||points.length<1)return;
-    path=points.filter(function(p){return Number.isFinite(p[0])&&Number.isFinite(p[1]);});
-    if(path.length<1)return;
-    if(doneLine){map.removeLayer(doneLine);doneLine=null;}
-    if(todoLine){map.removeLayer(todoLine);todoLine=null;}
-    if(startDot){map.removeLayer(startDot);startDot=null;}
-    if(endDot){map.removeLayer(endDot);endDot=null;}
-    if(marker){map.removeLayer(marker);marker=null;}
+  function removeLayer(layer){
+    if(layer){map.removeLayer(layer);}
+  }
 
-    todoLine=L.polyline(path,{color:${JSON.stringify(theme.pending)},weight:4,opacity:0.9}).addTo(map);
-    doneLine=L.polyline([],{color:${JSON.stringify(theme.brand)},weight:5,opacity:0.95}).addTo(map);
-    if(path.length>=2){
-      startDot=L.marker(path[0],{icon:icon('<span class="start-dot"></span>',[14,14],[7,7]),zIndexOffset:500}).addTo(map);
-      endDot=L.marker(path[path.length-1],{icon:icon('<span class="end-dot"></span>',[14,14],[7,7]),zIndexOffset:500}).addTo(map);
+  // Chấp nhận cả mảng đoạn [[[lat,lng],...],...] lẫn path phẳng cũ [[lat,lng],...].
+  function normalizeSegments(input){
+    if(!Array.isArray(input)||input.length===0)return [];
+    var first=input[0];
+    var flat=Array.isArray(first)&&first.length===2&&typeof first[0]==='number';
+    var source=flat?[input]:input;
+    var out=[];
+    for(var s=0;s<source.length;s++){
+      var raw=Array.isArray(source[s])?source[s]:[];
+      var points=[];
+      for(var i=0;i<raw.length;i++){
+        var point=raw[i];
+        if(Array.isArray(point)&&Number.isFinite(point[0])&&Number.isFinite(point[1]))points.push(point);
+      }
+      if(points.length>=2)out.push(points);
     }
-    marker=L.marker(path[0],{icon:carIcon,zIndexOffset:900}).addTo(map);
-    map.fitBounds(L.latLngBounds(path),{padding:[28,28]});
-    if(path.length<2){map.setView(path[0],16,{animate:false});}
+    return out;
+  }
+
+  function rebuildIndex(){
+    path=[];
+    segStart=[];
+    segEnd=[];
+    for(var s=0;s<segments.length;s++){
+      segStart.push(path.length);
+      for(var i=0;i<segments[s].length;i++)path.push(segments[s][i]);
+      segEnd.push(path.length-1);
+    }
+  }
+
+  function segmentIndexAt(vertex){
+    for(var s=0;s<segments.length;s++){
+      if(vertex<=segEnd[s])return s;
+    }
+    return segments.length-1;
+  }
+
+  window.setRoutes=function(input){
+    removeLayer(doneLine);doneLine=null;
+    removeLayer(todoLine);todoLine=null;
+    removeLayer(startDot);startDot=null;
+    removeLayer(endDot);endDot=null;
+    removeLayer(marker);marker=null;
+    routeVisible=true;
+
+    segments=normalizeSegments(input);
+    rebuildIndex();
+    if(path.length<1)return;
+
+    todoLine=L.polyline(segments,{color:${JSON.stringify(theme.pending)},weight:4,opacity:0.9}).addTo(map);
+    doneLine=L.polyline([],{color:${JSON.stringify(theme.brand)},weight:5,opacity:0.95}).addTo(map);
+    var first=path[0];
+    var last=path[path.length-1];
+    startDot=L.marker(first,{icon:icon('<span class="start-dot"></span>',[14,14],[7,7]),zIndexOffset:500}).addTo(map);
+    endDot=L.marker(last,{icon:icon('<span class="end-dot"></span>',[14,14],[7,7]),zIndexOffset:500}).addTo(map);
+    marker=L.marker(first,{icon:carIcon,zIndexOffset:900}).addTo(map);
+    if(path.length>=2){map.fitBounds(L.latLngBounds(path),{padding:[28,28]});}
+    else{map.setView(first,16,{animate:false});}
+  };
+  // Tên cũ: chỉ vẽ 1 đoạn.
+  window.setPath=window.setRoutes;
+
+  window.clearRoute=function(){
+    removeLayer(doneLine);doneLine=null;
+    removeLayer(todoLine);todoLine=null;
+    removeLayer(startDot);startDot=null;
+    removeLayer(endDot);endDot=null;
+    segments=[];
+    path=[];
+    segStart=[];
+    segEnd=[];
   };
 
   window.setProgress=function(vertex,latitude,longitude){
-    if(!path.length)return;
+    if(!path.length||!doneLine||!todoLine)return;
     if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return;
     var i=Math.max(0,Math.min(path.length-1,Math.floor(vertex)));
+    var s=segmentIndexAt(i);
+    var local=i-segStart[s];
     var here=[latitude,longitude];
-    doneLatLngs=path.slice(0,i+1).concat([here]);
-    todoLatLngs=[here].concat(path.slice(i+1));
-    if(doneLine)doneLine.setLatLngs(doneLatLngs.length>=2?doneLatLngs:[here,here]);
-    if(todoLine)todoLine.setLatLngs(todoLatLngs.length>=2?todoLatLngs:[here,here]);
+
+    // Các đoạn trước đã đi hết; chỉ đoạn hiện tại được cắt tại vị trí marker.
+    var done=segments.slice(0,s);
+    if(local>0){
+      done.push(segments[s].slice(0,local+1).concat([here]));
+    }
+    var todo=[];
+    var tail=[here].concat(segments[s].slice(local+1));
+    if(tail.length>=2)todo.push(tail);
+    todo=todo.concat(segments.slice(s+1));
+
+    doneLine.setLatLngs(done);
+    todoLine.setLatLngs(todo);
   };
 
   window.moveVehicle=function(latitude,longitude,heading,speed,follow){
@@ -124,17 +192,19 @@ html,body,#map{margin:0;width:100%;height:100%;background:${theme.background};ov
     routeVisible=!!visible;
     if(todoLine){if(routeVisible)todoLine.addTo(map);else map.removeLayer(todoLine);}
     if(doneLine){if(routeVisible)doneLine.addTo(map);else map.removeLayer(doneLine);}
+    if(startDot){if(routeVisible)startDot.addTo(map);else map.removeLayer(startDot);}
+    if(endDot){if(routeVisible)endDot.addTo(map);else map.removeLayer(endDot);}
   };
 
   window.resetVehicle=function(latitude,longitude,heading){
-    if(marker)marker.setLatLng([latitude,longitude]);
+    if(marker&&path.length)marker.setLatLng([latitude,longitude]);
     var arrow=document.querySelector('.veh-arrow');
     if(arrow&&Number.isFinite(heading)){arrow.style.transform='rotate('+heading+'deg)';}
     var chip=document.querySelector('.veh-chip');
     if(chip){chip.textContent='0';}
-    if(routeVisible&&todoLine){todoLine.setLatLngs(path);}
+    if(routeVisible&&todoLine)todoLine.setLatLngs(segments);
     if(doneLine){doneLine.setLatLngs([]);}
-    map.fitBounds(L.latLngBounds(path),{padding:[28,28]});
+    if(path.length>=2)map.fitBounds(L.latLngBounds(path),{padding:[28,28]});
   };
 
   setTimeout(function(){map.invalidateSize();},100);

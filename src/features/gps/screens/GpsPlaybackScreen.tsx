@@ -210,7 +210,7 @@ export default function GpsPlaybackScreen({
   useEffect(() => {
     if (!mapReady || !model) return;
     webRef.current?.injectJavaScript(
-      `window.setPath(${JSON.stringify(model.path)}); window.setRouteVisible(${routeVisible}); true;`,
+      `window.setRoutes(${JSON.stringify(model.segments)}); window.setRouteVisible(${routeVisible}); true;`,
     );
   }, [mapReady, model]);
 
