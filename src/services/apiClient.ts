@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosHeaders, type InternalAxiosRequestConfig } from
 import { getAssistantRequestLocale } from "@/features/assistant/assistantLanguage";
 
 import { getConfiguredApiBaseUrl } from "@/config/apiConfig";
-import { clearSession, getRefreshToken, getToken, setSession, getSessionGeneration } from "@/features/auth/hooks/useAuth";
+import { clearSession, getRefreshToken, getToken, setSession, getSessionGeneration, useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { ApiResponse, AuthResponse } from "@/features/auth/types";
 import i18n from "@/i18n";
 import { endpoints } from "@/services/endpoints";
@@ -40,6 +40,7 @@ bareApiClient.interceptors.request.use(applyAcceptLanguage);
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
+  _roleRetry?: boolean;
   _generation?: number;
 };
 
@@ -126,6 +127,25 @@ apiClient.interceptors.response.use(
       await clearSession();
       unauthorizedHandler?.();
       return Promise.reject(error);
+    }
+    if (
+      error.response?.status === 403 &&
+      request &&
+      !request._roleRetry &&
+      request.method?.toLowerCase() === "get" &&
+      (useAuthStore.getState().user?.roles?.includes("Owner") || useAuthStore.getState().activeRole === "Owner")
+    ) {
+      request._roleRetry = true;
+      try {
+        const refreshed = await refreshAuthSession();
+        if (!refreshed.user.roles?.includes("Owner")) return Promise.reject(error);
+        const headers = AxiosHeaders.from(request.headers);
+        headers.set("Authorization", `Bearer ${refreshed.token.accessToken}`);
+        request.headers = headers;
+        return apiClient(request);
+      } catch (refreshError) {
+        return Promise.reject(refreshError);
+      }
     }
     if (!shouldAttemptRefresh(error)) {
       return Promise.reject(error);

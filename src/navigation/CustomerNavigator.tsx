@@ -6,6 +6,7 @@ import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
 import WalletScreen from "@/features/wallets/screens/WalletScreen";
+import type { WalletTabKey } from "@/features/wallets/navigation/WalletNavigator";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import AssistantFab from "@/features/assistant/components/AssistantFab";
 import type { QuickBookParams } from "@/features/assistant/screens/AssistantScreen";
@@ -43,6 +44,9 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
+  const [walletInitialTab, setWalletInitialTab] = useState<WalletTabKey>("home");
+  const [walletReturnToOwnerVerification, setWalletReturnToOwnerVerification] = useState(false);
+  const [reopenOwnerVerification, setReopenOwnerVerification] = useState(false);
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const showFavorites = useFavoriteStore((state) => state.open && state.userId === user.userId);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
@@ -59,6 +63,18 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [disputesVisible, setDisputesVisible] = useState(false);
   const unread = useChatStore((state) => state.rooms.reduce((sum, room) => sum + room.unreadCount, 0));
   const { theme } = useTheme();
+
+  const openWallet = (initialTab: WalletTabKey = "home", returnToOwnerVerification = false) => {
+    setWalletInitialTab(initialTab);
+    setWalletReturnToOwnerVerification(returnToOwnerVerification);
+    setShowWallet(true);
+  };
+
+  const closeWallet = () => {
+    setShowWallet(false);
+    if (walletReturnToOwnerVerification) setReopenOwnerVerification(true);
+    setWalletReturnToOwnerVerification(false);
+  };
 
   const handleExploreRouteChange = useCallback((routeName: string) => {
     setExploreRoute(routeName);
@@ -159,7 +175,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />
       ) : showWallet ? (
         <View style={[styles.screen, styles.overlayPad]}>
-          <WalletScreen onBack={() => setShowWallet(false)} />
+          <WalletScreen initialTab={walletInitialTab} onBack={closeWallet} />
         </View>
       ) : (
         <>
@@ -195,7 +211,9 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
             ) : (
               <AccountTabScreen
                 onProfilePress={() => setShowProfile(true)}
-                onWalletPress={() => setShowWallet(true)}
+                onWalletPress={openWallet}
+                ownerVerificationOnOpen={reopenOwnerVerification}
+                onOwnerVerificationOpened={() => setReopenOwnerVerification(false)}
                 user={user}
                 initialDisputes={pendingDispute}
                 onConsumedDisputes={consumeDisputes}

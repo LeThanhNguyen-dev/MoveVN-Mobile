@@ -22,7 +22,7 @@ import WalletBankScreen from "@/features/wallets/screens/WalletBankScreen";
 
 export type WalletTabKey = "home" | "history" | "cashflow" | "bank";
 
-export default function WalletNavigator({ onBack }: { onBack: () => void }) {
+export default function WalletNavigator({ onBack, initialTab = "home" }: { onBack: () => void; initialTab?: WalletTabKey }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { t } = useTranslation();
@@ -32,7 +32,7 @@ export default function WalletNavigator({ onBack }: { onBack: () => void }) {
   const activeRole = useAuthStore((s) => s.activeRole);
   const isOwner = activeRole === "Owner";
 
-  const [activeTab, setActiveTab] = useState<WalletTabKey>("home");
+  const [activeTab, setActiveTab] = useState<WalletTabKey>(initialTab);
   const [cashflowPane, setCashflowPane] = useState<CashflowPane>(isOwner ? "withdraw" : "topup");
   const [balanceHidden, setBalanceHidden] = useState(false);
 
