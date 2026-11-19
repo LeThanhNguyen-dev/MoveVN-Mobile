@@ -8,9 +8,11 @@ export type ToastPayload = {
   title: string;
   message?: string;
   onPress?: () => void;
+  actionLabel?: string;
+  durationMs?: number;
 };
 
-type ToastItem = ToastPayload & { id: number };
+export type ToastItem = ToastPayload & { id: number };
 
 type ToastState = {
   toasts: ToastItem[];
@@ -30,7 +32,7 @@ export const useToastStore = create<ToastState>((set, get) => ({
   showToast: (payload) => {
     const id = ++toastSeq;
     set((state) => ({ toasts: [...state.toasts.slice(-MAX_TOASTS + 1), { ...payload, id }] }));
-    setTimeout(() => get().dismissToast(id), AUTO_DISMISS_MS);
+    setTimeout(() => get().dismissToast(id), payload.durationMs ?? AUTO_DISMISS_MS);
   },
 }));
 
