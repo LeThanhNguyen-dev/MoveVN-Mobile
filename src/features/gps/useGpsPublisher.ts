@@ -53,6 +53,12 @@ export function useGpsPublisher() {
 
   // Reset khi đổi tài khoản: tránh gửi nhầm GPS của booking cũ dưới userId mới.
   useEffect(() => {
+    const previousUserId = useGpsStore.getState().userId;
+    if (previousUserId != null && previousUserId !== userId) {
+      // Đổi user/đăng xuất là trường hợp duy nhất được tắt dịch vụ nền từ vòng đời UI.
+      void stopGpsTask();
+      void clearActivePublishTarget();
+    }
     useGpsStore.getState().activate(userId);
   }, [userId]);
 
@@ -180,8 +186,12 @@ export function useGpsPublisher() {
   }, [activePublishBookingId]);
 
   // Không chia sẻ nữa (dừng/kết thúc/đổi chuyến) → tắt hẳn dịch vụ nền + thông báo.
+  // Lúc mở lại app store còn trống (null + idle) chưa phải là "đã dừng": giữ service
+  // đang chạy cho tới khi publisher khôi phục xong trạng thái chia sẻ.
   useEffect(() => {
-    if (activePublishBookingId != null && publishSharingState === "sharing") return;
+    if (activePublishBookingId == null && publishSharingState === "idle") return;
+    if (activePublishBookingId != null
+      && !["ended", "paused", "declined", "notShared"].includes(publishSharingState)) return;
     void stopGpsTask();
     void clearActivePublishTarget();
   }, [activePublishBookingId, publishSharingState]);
@@ -282,10 +292,9 @@ export function useGpsPublisher() {
       subscription?.remove();
       clearInterval(retryTimer);
       appStateSub.remove();
-      // Rời trạng thái chia sẻ: gửi nốt điểm còn lại rồi tắt dịch vụ nền + thông báo.
+      // App bị đóng/đổi màn hình KHÔNG được tắt dịch vụ nền: task tự gửi tiếp bằng
+      // target đã lưu. Chỉ gửi nốt điểm còn trong buffer rồi thôi.
       void flushGpsBuffer(bookingId);
-      void stopGpsTask();
-      void clearActivePublishTarget();
     };
   }, [activePublishBookingId, publishSharingState]);
 

@@ -20,7 +20,7 @@ import { useGpsConnection } from "../useGpsConnection";
 import { useGpsStore } from "../gpsStore";
 import { buildTrackingMapHtml } from "../components/trackingMapHtml";
 import GpsInfoButton from "../components/GpsInfoButton";
-import { formatLogTime, mergeLogPoints, rewindPath, type GpsLogPoint } from "../gpsLogPoints";
+import { formatLogTime, mergeLogPoints, rewindPath, splitPathAtGaps, type GpsLogPoint } from "../gpsLogPoints";
 import type { GpsLiveState, GpsRoutePointResponse } from "../types";
 type TrackingRoute = RouteProp<OwnerBookingsStackParamList, "OwnerTracking">;
 type TrackingNav = NativeStackNavigationProp<OwnerBookingsStackParamList>;
@@ -45,14 +45,12 @@ export default function GpsTrackingScreen({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId, vehicleName } = route.params;
   const webRef = useRef<WebView<object>>(null);
-  const routeFitRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
   const [initial, setInitial] = useState<{ latitude: number; longitude: number } | null>(null);
   const [trackingActive, setTrackingActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
   const [followed, setFollowed] = useState(true);
-  const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
   const [logPoints, setLogPoints] = useState<GpsLogPoint[]>([]);
   const [logExpanded, setLogExpanded] = useState(false);
   // Dòng log đang xem lại (null = đang theo dõi trực tiếp).
@@ -95,7 +93,6 @@ export default function GpsTrackingScreen({
           });
         }
       }
-      setRouteCoords(history.map((point) => [point.latitude, point.longitude] as [number, number]));
       // Nhật ký toạ độ: gộp với điểm realtime đã về trước khi REST trả lời.
       setLogPoints((current) => mergeLogPoints(
         history.map((point) => ({
@@ -166,26 +163,7 @@ export default function GpsTrackingScreen({
     );
   }, [mapReady, position?.latitude, position?.longitude, state, inspect]);
 
-  // Vệt đường realtime: nối tiếp vào vệt lịch sử để trở lại trực tiếp không bị mất đoạn mới.
-  useEffect(() => {
-    if (!position) return;
-    setRouteCoords((previous) => {
-      const last = previous[previous.length - 1];
-      if (last && Math.abs(last[0] - position.latitude) < 1e-6 && Math.abs(last[1] - position.longitude) < 1e-6) {
-        return previous;
-      }
-      return [...previous, [position.latitude, position.longitude] as [number, number]];
-    });
-  }, [position?.latitude, position?.longitude]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Vệt đường: chỉ inject khi WebView đã sẵn sàng; fitBounds mỗi lần vẽ đầu, sau đó giữ zoom người dùng.
-  useEffect(() => {
-    if (!mapReady || inspect || routeCoords.length < 1) return;
-    const fit = !routeFitRef.current;
-    routeFitRef.current = true;
-    webRef.current?.injectJavaScript(`window.setRoute(${JSON.stringify(routeCoords)},${fit}); true;`);
-  }, [mapReady, routeCoords, inspect]);
-
+  // Live tracking chỉ hiện ghim vị trí; vệt đường chỉ vẽ khi "tua ngược".
   // Nhật ký toạ độ: thêm điểm mới ngay khi SignalR/REST cập nhật (bỏ qua trùng lặp).
   useEffect(() => {
     if (!position?.lastUpdatedAt) return;
@@ -213,19 +191,19 @@ export default function GpsTrackingScreen({
     webRef.current?.injectJavaScript(`window.setFollowed(${followed ? "true" : "false"}); true;`);
   }, [mapReady, followed]);
 
-  // Tua ngược: cắt vệt tại mốc đã chọn; trở lại trực tiếp thì vẽ lại toàn bộ và bám xe.
+  // Tua ngược: cắt vệt tại mốc đã chọn (tách gap); trở lại trực tiếp thì xoá vệt và bám xe.
   useEffect(() => {
     if (!mapReady) return;
     if (inspect) {
-      const prefix = rewindPath(logPoints, inspect.timestamp);
+      const segments = splitPathAtGaps(rewindPath(logPoints, inspect.timestamp));
       webRef.current?.injectJavaScript(
-        `window.setRoute(${JSON.stringify(prefix)},false); window.setFollowed(false); window.showPoint(${inspect.latitude},${inspect.longitude}); true;`,
+        `window.setRoutes(${JSON.stringify(segments)},false); window.setFollowed(false); window.showPoint(${inspect.latitude},${inspect.longitude}); true;`,
       );
       setFollowed(false);
       return;
     }
     webRef.current?.injectJavaScript(
-      `window.clearPoint(); window.setFollowed(true);${position ? ` window.updatePosition(${position.latitude},${position.longitude},${JSON.stringify(
+      `window.clearPoint(); window.clearRoute(); window.setFollowed(true);${position ? ` window.updatePosition(${position.latitude},${position.longitude},${JSON.stringify(
         state === "live" ? "" : state === "stale" ? "stale" : "ended",
       )});` : ""} true;`,
     );

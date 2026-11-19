@@ -76,6 +76,60 @@ describe("playback model", () => {
   });
 });
 
+describe("playback model across a GPS gap", () => {
+  const roadWithGap: GpsRoadPathResponse = {
+    bookingId: 3,
+    matched: true,
+    path: [
+      { latitude: 16.0, longitude: 108.0 },
+      { latitude: 16.0, longitude: 108.001 },
+      { latitude: 16.0, longitude: 108.011 },
+      { latitude: 16.0, longitude: 108.012 },
+    ],
+    segments: [
+      {
+        matched: true,
+        points: [
+          { latitude: 16.0, longitude: 108.0 },
+          { latitude: 16.0, longitude: 108.001 },
+        ],
+      },
+      {
+        matched: true,
+        points: [
+          { latitude: 16.0, longitude: 108.011 },
+          { latitude: 16.0, longitude: 108.012 },
+        ],
+      },
+    ],
+  };
+  const gpsWithGap: GpsRoutePointResponse[] = [
+    { timestamp: at(0), latitude: 16.0, longitude: 108.0, speedKmh: 20 },
+    { timestamp: at(30), latitude: 16.0, longitude: 108.001, speedKmh: 20 },
+    { timestamp: at(120), latitude: 16.0, longitude: 108.011, speedKmh: 20 },
+    { timestamp: at(150), latitude: 16.0, longitude: 108.012, speedKmh: 20 },
+  ];
+  const model = buildPlaybackModel(gpsWithGap, roadWithGap)!;
+
+  it("excludes the gap from total distance", () => {
+    expect(model.segments).toHaveLength(2);
+    // Mỗi đoạn ~107 m; gap 1 km không được cộng vào.
+    expect(model.totalM).toBeGreaterThan(200);
+    expect(model.totalM).toBeLessThan(230);
+  });
+
+  it("keeps the marker at the end of the old segment during the gap", () => {
+    const frame = frameAtTime(model, start + 90_000, 0);
+    expect(frame.longitude).toBeCloseTo(108.001, 4);
+  });
+
+  it("jumps into the new segment after the gap", () => {
+    const frame = frameAtTime(model, start + 135_000, 0);
+    expect(frame.longitude).toBeGreaterThan(108.011);
+    expect(frame.longitude).toBeLessThan(108.012);
+  });
+});
+
 describe("playback model on an out-and-back street", () => {
   // Đi–về trên CÙNG cung phố: nếu chiếu "đoạn gần nhất" thì điểm của lượt đi
   // sẽ rơi vào nhánh về → marker nhảy tới đích sớm.
