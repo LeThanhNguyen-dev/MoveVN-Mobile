@@ -32,6 +32,7 @@ import AppText from "@/components/AppText";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { signOut } from "@/features/auth/services/authSession";
 import { getCurrentUser } from "@/features/auth/services/authService";
+import { refreshAuthSession } from "@/services/apiClient";
 import type { AuthUser, UserRole } from "@/features/auth/types";
 import ChangePasswordScreen from "@/features/auth/screens/ChangePasswordScreen";
 import LoginSessionsScreen from "@/features/auth/screens/LoginSessionsScreen";
@@ -43,6 +44,7 @@ import type { DriverLicenseStatusResponse } from "@/features/driverLicenses/type
 import OwnerVerificationScreen from "@/features/owner/screens/OwnerVerificationScreen";
 import { getMyApplication } from "@/features/owner/services/ownerService";
 import type { OwnerApplicationDto } from "@/features/owner/types";
+import type { WalletTabKey } from "@/features/wallets/navigation/WalletNavigator";
 import PinChangeModal from "@/features/pin/components/PinChangeModal";
 import PinSetupModal from "@/features/pin/components/PinSetupModal";
 import type { VerifyPinResult } from "@/features/pin/hooks/usePinReveal";
@@ -83,6 +85,8 @@ const verificationTotal = 4;
 export default function AccountTabScreen({
   onProfilePress,
   onWalletPress,
+  ownerVerificationOnOpen = false,
+  onOwnerVerificationOpened,
   onAnalyticsPress,
   user,
   initialDisputes,
@@ -91,7 +95,9 @@ export default function AccountTabScreen({
   onExitDisputes,
 }: {
   onProfilePress: () => void;
-  onWalletPress?: () => void;
+  onWalletPress?: (initialTab?: WalletTabKey, returnToOwnerVerification?: boolean) => void;
+  ownerVerificationOnOpen?: boolean;
+  onOwnerVerificationOpened?: () => void;
   onAnalyticsPress?: () => void;
   user: AuthUser;
   initialDisputes?: DisputeCreatePrefill | null;
@@ -108,13 +114,13 @@ export default function AccountTabScreen({
   const [driverLicense, setDriverLicense] = useState<DriverLicenseStatusResponse | null>(null);
   const [showLicense, setShowLicense] = useState(false);
   const [licenseReturn, setLicenseReturn] = useState<"hub" | "account" | null>(null);
-  const [showOwner, setShowOwner] = useState(false);
+  const [showOwner, setShowOwner] = useState(ownerVerificationOnOpen);
   const [showHub, setShowHub] = useState(false);
   const [showCccd, setShowCccd] = useState(false);
   const [showChangePin, setShowChangePin] = useState(false);
   const [isPinSet, setIsPinSet] = useState<boolean | null>(null);
   const [showSetupPin, setShowSetupPin] = useState(false);
-  const [ownerReturn, setOwnerReturn] = useState<"hub" | "cccd" | "account" | null>(null);
+  const [ownerReturn, setOwnerReturn] = useState<"hub" | "cccd" | "account" | null>(ownerVerificationOnOpen ? "account" : null);
   const [showPolicies, setShowPolicies] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
   const [showDisputes, setShowDisputes] = useState(false);
@@ -158,6 +164,10 @@ export default function AccountTabScreen({
   }, [disputesVisible, onDisputesVisibilityChange]);
 
   useEffect(() => {
+    if (ownerVerificationOnOpen) onOwnerVerificationOpened?.();
+  }, [ownerVerificationOnOpen, onOwnerVerificationOpened]);
+
+  useEffect(() => {
     let ignore = false;
 
     getCurrentUser()
@@ -167,8 +177,12 @@ export default function AccountTabScreen({
       .catch(() => undefined);
 
     getMyApplication()
-      .then((application) => {
-        if (!ignore && application?.id > 0) setOwnerApp(application);
+      .then(async (application) => {
+        if (ignore || !application || application.id <= 0) return;
+        if (application.isOwner && !useAuthStore.getState().user?.roles.includes("Owner")) {
+          await refreshAuthSession().catch(() => undefined);
+        }
+        if (!ignore) setOwnerApp(application);
       })
       .catch(() => undefined);
 
@@ -382,7 +396,13 @@ export default function AccountTabScreen({
   }
 
   if (showOwner) {
-    return <OwnerVerificationScreen onBack={closeOwner} />;
+    return (
+      <OwnerVerificationScreen
+        onBack={closeOwner}
+        onOpenWalletBank={() => onWalletPress?.("bank", true)}
+        onOwnerUpgraded={closeOwner}
+      />
+    );
   }
 
   if (showPolicies) {
@@ -509,7 +529,7 @@ export default function AccountTabScreen({
       </View>
 
       <VerificationSection
-        cccdValue={cccdVerified ? t("account:verified") : undefined}
+        cccdValue={cccdVerified ? t("account:verified") : t("account:unverified")}
         gplxValue={gplxVerified ? t("account:verified") : undefined}
         overviewValue={hubVerifiedCount === 2 ? t("account:verified") : `${hubVerifiedCount}/2`}
         onCccd={() => setShowCccd(true)}
@@ -708,7 +728,7 @@ function getRoleAction(roles: UserRole[], activeRole: UserRole | null) {
   }
 
   return {
-    titleKey: "accountProfile:becomeOwner",
+    titleKey: "mobile:account.roleAction.becomeOwner",
     descriptionKey: "mobile:account.roleAction.becomeOwnerDescription",
     targetRole: null,
   };

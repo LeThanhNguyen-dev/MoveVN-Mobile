@@ -27,11 +27,8 @@ import AppText from "@/components/AppText";
 import * as Clipboard from "expo-clipboard";
 import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
 import type { AuthUser } from "@/features/auth/types";
-import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { HomepageBanner } from "@/features/banners/types";
 import { getHomepageBanners } from "@/features/banners/services/bannerService";
-import { showToast } from "@/features/notifications/toastStore";
-import OwnerVerificationScreen from "@/features/owner/screens/OwnerVerificationScreen";
 import VehicleListCard from "@/features/vehicles/components/VehicleListCard";
 import VehicleCardSkeleton from "@/features/vehicles/components/VehicleCardSkeleton";
 import RentalPeriodSheet from "@/features/vehicles/components/RentalPeriodSheet";
@@ -152,8 +149,6 @@ const ADVANTAGES = [
   { key: "file" },
   { key: "support" },
 ] as const;
-
-const HOST_BANNER_IMAGE = require("../../../../public/images/Gemini_Generated_Image_g3r482g3r482g3r4.png");
 
 function formatBannerDiscount(banner: HomepageBanner): string | null {
   if (banner.discountValue == null) return null;
@@ -434,10 +429,6 @@ export default function CustomerExploreScreen({
   const [banners, setBanners] = useState<HomepageBanner[]>([]);
   const [bannersLoading, setBannersLoading] = useState(true);
   const [selectedBanner, setSelectedBanner] = useState<HomepageBanner | null>(null);
-  const [showOwnerVerify, setShowOwnerVerify] = useState(false);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  const setActiveRole = useAuthStore((state) => state.setActiveRole);
-
   // Hiện sẵn địa điểm đã chọn lần gần nhất (lưu trên máy).
   // Dùng focus (không chỉ mount) để quay về từ màn List vẫn thấy chỗ mới chọn.
   useFocusEffect(
@@ -577,23 +568,6 @@ export default function CustomerExploreScreen({
       startDate: startDate || undefined,
       endDate: endDate || undefined,
     });
-  }
-
-  // Banner chủ xe: đã là chủ xe -> chuyển thẳng sang khu vực chủ xe;
-  // chưa phải -> toast + mở màn xác thực CCCD để đăng ký làm chủ xe
-  // (mirror AccountTabScreen.handleRoleAction).
-  function handleHostPress() {
-    if (user.roles.includes("Owner") && activeRole !== "Owner") {
-      void setActiveRole("Owner");
-      return;
-    }
-    if (activeRole === "Owner") return;
-    showToast({
-      type: "info",
-      title: t("mobile:explore.host.toastTitle"),
-      message: t("mobile:explore.host.toastMessage"),
-    });
-    setShowOwnerVerify(true);
   }
 
   return (
@@ -935,49 +909,7 @@ export default function CustomerExploreScreen({
           )}
         </View>
 
-        {/* SECTION 7: BANNER CHỦ XE */}
-        <View style={styles.section}>
-          <View style={styles.sectionPad}>
-            <Pressable
-              onPress={handleHostPress}
-              style={styles.hostCard}
-              accessibilityRole="button"
-              accessibilityLabel={t("mobile:explore.host.aria")}
-            >
-              <Image
-                source={HOST_BANNER_IMAGE}
-                style={StyleSheet.absoluteFill}
-                contentFit="cover"
-                contentPosition="center"
-                transition={250}
-                accessibilityLabel={t("mobile:explore.host.imageAria")}
-              />
-              <LinearGradient
-                colors={["rgba(0,0,0,0.15)", "rgba(0,0,0,0.45)", "rgba(0,0,0,0.72)"]}
-                locations={[0, 0.5, 1]}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.hostContent}>
-                <AppText style={styles.hostEyebrow}>{t("mobile:explore.host.eyebrow")}</AppText>
-                <AppText display style={styles.hostTitle}>{t("mobile:explore.host.title")}</AppText>
-                <AppText style={styles.hostDesc}>
-                  {t("mobile:explore.host.description")}
-                </AppText>
-                <View style={styles.hostButton}>
-                  <AppText style={styles.hostButtonText}>{t("auth:login.registerNow")}</AppText>
-                  <ArrowRight color="#FFFFFF" size={15} />
-                </View>
-              </View>
-            </Pressable>
-          </View>
-        </View>
       </ScrollView>
-
-      {showOwnerVerify ? (
-        <View style={styles.ownerOverlay}>
-          <OwnerVerificationScreen onBack={() => setShowOwnerVerify(false)} />
-        </View>
-      ) : null}
 
       <BannerDetailSheet
         banner={selectedBanner}
@@ -1034,14 +966,6 @@ const createStyles = (theme: Theme) =>
       borderRadius: 2,
       backgroundColor: theme.brand,
       marginTop: 6,
-    },
-    ownerOverlay: {
-      position: "absolute",
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      backgroundColor: theme.background,
     },
     sectionSubtitle: { color: theme.muted, fontSize: 12, marginTop: 4, lineHeight: 17 },
     sectionAction: { flexDirection: "row", alignItems: "center", gap: 2, flexShrink: 0 },
@@ -1345,28 +1269,4 @@ const createStyles = (theme: Theme) =>
     retryButtonText: { color: theme.onBrand, fontSize: 13, fontWeight: "800" },
     emptyText: { color: theme.muted, fontSize: 13 },
 
-    // --- Section 7: host banner ---
-    hostCard: {
-      minHeight: 232,
-      borderRadius: 20,
-      overflow: "hidden",
-      backgroundColor: "#1F2937",
-    },
-    hostContent: { flex: 1, justifyContent: "flex-end", padding: 20, gap: 8 },
-    hostEyebrow: { color: "#E9D5FF", fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
-    hostTitle: { color: "#FFFFFF", fontSize: 21, fontWeight: "800" },
-    hostDesc: { color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 19 },
-    hostButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      alignSelf: "flex-start",
-      gap: 6,
-      marginTop: 4,
-      height: 42,
-      paddingHorizontal: 20,
-      borderRadius: 10,
-      backgroundColor: theme.brand,
-    },
-    hostButtonText: { color: theme.onBrand, fontSize: 14, fontWeight: "800" },
   });

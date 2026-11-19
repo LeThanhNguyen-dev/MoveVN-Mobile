@@ -2,6 +2,7 @@ export type OwnerApplicationStatus =
   | "Draft"
   | "WaitingEmailVerification"
   | "WaitingCccdVerification"
+  | "WaitingDriverLicense"
   | "WaitingBankInfo"
   | "ReadyToSubmit"
   | "Submitted"
@@ -14,6 +15,7 @@ export type OwnerApplicationStatus =
 export type OwnerNextStep =
   | "VerifyEmail"
   | "UploadNationalId"
+  | "DriverLicense"
   | "BankInfo"
   | "ReviewSubmit"
   | "ManualReview"
