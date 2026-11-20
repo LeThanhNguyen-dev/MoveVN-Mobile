@@ -10,7 +10,11 @@ import {
   StyleSheet,
   View,
 } from "react-native"
+import type { ViewInstance } from "react-native";
 import AppText from "@/components/AppText";
+import { showToast } from "@/features/notifications/toastStore";
+import TourOverlay from "@/features/onboarding/components/TourOverlay";
+import { useBookingTour } from "@/features/onboarding/bookingTour";
 import { localizedOption } from "@/i18n/liveLabels";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -64,6 +68,24 @@ export default function VehicleListScreen({
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const base = route.params;
+  const tourStep = useBookingTour((state) => state.step);
+  const headerRef = useRef<ViewInstance>(null);
+
+  // Sang bước chi tiết xe (màn khác) — nhắc khách bấm vào một xe trong danh sách.
+  const advanceToDetail = useCallback(() => {
+    useBookingTour.getState().next();
+    showToast({
+      type: "info",
+      title: t("mobile:tour.detailHint.title"),
+      message: t("mobile:tour.detailHint.body"),
+    });
+  }, [t]);
+
+  // Khách có thể bấm TÌM XE luôn mà chưa bấm Tiếp tục ở bước chọn ngày:
+  // đã tới danh sách thì tour tự sang bước của màn này.
+  useEffect(() => {
+    if (useBookingTour.getState().step === "dates") useBookingTour.getState().next();
+  }, []);
 
   const [filters, setFilters] = useState<VehicleListFilters>(() => ({
     ...EMPTY_FILTERS,
@@ -517,7 +539,7 @@ export default function VehicleListScreen({
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
+      <View ref={headerRef} collapsable={false} style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={20} />
         </Pressable>
@@ -747,6 +769,10 @@ export default function VehicleListScreen({
           </View>
         </View>
       </Modal>
+
+      {tourStep === "vehicleList" ? (
+        <TourOverlay step="vehicleList" anchorRef={headerRef} onNext={advanceToDetail} />
+      ) : null}
     </View>
   );
 }

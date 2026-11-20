@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type ViewInstance,
 } from "react-native";
 import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { ChevronLeft, ShieldCheck } from "lucide-react-native";
@@ -39,6 +40,8 @@ import CheckoutSubmitDock from "@/features/booking/components/createBooking/Chec
 import CheckoutTripCard from "@/features/booking/components/createBooking/CheckoutTripCard";
 import CheckoutVoucherSheet from "@/features/booking/components/createBooking/CheckoutVoucherSheet";
 import { checkoutFont, useCheckoutTheme } from "@/features/booking/components/createBooking/checkoutTheme";
+import TourOverlay from "@/features/onboarding/components/TourOverlay";
+import { useBookingTour } from "@/features/onboarding/bookingTour";
 import {
   calcDeliveryPreview,
   calcPricePreview,
@@ -101,6 +104,11 @@ export default function CreateBookingScreen({
   const [vouchers, setVouchers] = useState<VoucherClaimResponse[]>([]);
   const [vouchersLoading, setVouchersLoading] = useState(false);
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const datesRef = useRef<ViewInstance>(null);
+  const pickupRef = useRef<ViewInstance>(null);
+  const voucherRef = useRef<ViewInstance>(null);
+  const submitDockRef = useRef<ViewInstance>(null);
+  const tourStep = useBookingTour((state) => state.step);
   const fieldY = useRef<Record<string, number>>({});
 
   function scrollToField(key: string) {
@@ -193,6 +201,17 @@ export default function CreateBookingScreen({
   useEffect(() => {
     getDeliveryConfig().then(setDeliveryConfig).catch(() => undefined);
   }, []);
+
+  // Tour đang chờ ở bước chọn xe; vừa tới trang đặt xe thì chuyển sang bước này.
+  useEffect(() => {
+    if (useBookingTour.getState().step === "vehicleDetail") useBookingTour.getState().next();
+  }, []);
+
+  // Bước tour trỏ tới địa chỉ/voucher (nằm dưới màn): cuộn sẵn để spotlight đo đúng chỗ.
+  useEffect(() => {
+    if (tourStep === "bookingAddress") scrollToField("handover");
+    else if (tourStep === "bookingVoucher") scrollToField("payment");
+  }, [tourStep]);
 
   const days = calculateRentalDays(startDate ?? "", endDate ?? "");
   const overlapped = useMemo(
@@ -412,6 +431,7 @@ export default function CreateBookingScreen({
                 }}
                 onOpenPeriod={() => setPeriodOpen(true)}
                 overlapped={overlapped}
+                periodRef={datesRef}
                 startDate={startDate ?? ""}
                 vehicle={vehicle}
               />
@@ -439,6 +459,7 @@ export default function CreateBookingScreen({
                   onSelectReturn={handleSelectReturn}
                   onToggleSameReturn={setSameReturn}
                   pickupAddress={pickupAddress}
+                  pickupRef={pickupRef}
                   pickupUnpinned={pickupLat == null || pickupLng == null}
                   returnAddress={returnAddress}
                   returnUnpinned={returnLat == null || returnLng == null}
@@ -469,6 +490,7 @@ export default function CreateBookingScreen({
                   promoCode={promoCode}
                   promoError={promoError}
                   promoLoading={promoLoading}
+                  promoRef={voucherRef}
                   security={{
                     required: Boolean(vehicle.securityRequiresDeposit),
                     amount: vehicle.securityDepositAmount ?? 0,
@@ -481,6 +503,7 @@ export default function CreateBookingScreen({
 
         {vehicle ? (
           <CheckoutSubmitDock
+            anchorRef={submitDockRef}
             bottomInset={insets.bottom}
             days={days}
             deposit={pricePreview?.deposit ?? null}
@@ -518,6 +541,22 @@ export default function CreateBookingScreen({
         visible={voucherModal}
         vouchers={vouchers}
       />
+
+      {vehicle && tourStep === "bookingDates" ? (
+        <TourOverlay step="bookingDates" anchorRef={datesRef} />
+      ) : null}
+
+      {vehicle && tourStep === "bookingAddress" ? (
+        <TourOverlay step="bookingAddress" anchorRef={pickupRef} />
+      ) : null}
+
+      {vehicle && tourStep === "bookingVoucher" ? (
+        <TourOverlay step="bookingVoucher" anchorRef={voucherRef} />
+      ) : null}
+
+      {vehicle && tourStep === "createBooking" ? (
+        <TourOverlay step="createBooking" anchorRef={submitDockRef} />
+      ) : null}
     </View>
   );
 }

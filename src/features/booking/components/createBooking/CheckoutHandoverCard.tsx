@@ -1,7 +1,7 @@
 import { CircleAlert, CircleCheck, IdCard, MapPin, Repeat2, TriangleAlert } from "lucide-react-native";
-import { useMemo } from "react";
+import { useMemo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, Switch, TextInput, View } from "react-native";
+import { StyleSheet, Switch, TextInput, View, type ViewInstance } from "react-native";
 import AppText from "@/components/AppText";
 import AddressAutocomplete, {
   type SelectedAddress,
@@ -31,6 +31,7 @@ type Props = {
   note: string;
   onChangeNote: (value: string) => void;
   onFocusNote: () => void;
+  pickupRef?: RefObject<ViewInstance | null>;
 };
 
 export default function CheckoutHandoverCard({
@@ -53,6 +54,7 @@ export default function CheckoutHandoverCard({
   note,
   onChangeNote,
   onFocusNote,
+  pickupRef,
 }: Props) {
   const { p } = useCheckoutTheme();
   const { t } = useTranslation();
@@ -86,7 +88,7 @@ export default function CheckoutHandoverCard({
         title={t("mobile:trip.detail.placesTitle")}
       />
 
-      <View style={styles.block}>
+      <View ref={pickupRef} collapsable={false} style={styles.block}>
         <AppText style={styles.blockTitle}>{t("mobile:trip.detail.pickupPoint")}</AppText>
         <AddressAutocomplete
           onChange={onChangePickup}

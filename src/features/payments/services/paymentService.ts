@@ -7,6 +7,11 @@ export interface CreatePaymentLinkResponse {
   qrCode: string;
   orderCode: number;
   paymentLinkId: string;
+  amount: number;
+  bin?: string;
+  accountNumber?: string;
+  accountName?: string;
+  expiredAt?: number | null;
 }
 
 export async function createPaymentLink(bookingId: number, returnUrl?: string): Promise<CreatePaymentLinkResponse> {
@@ -54,6 +59,11 @@ export async function getPendingTopUp(bookingId: number): Promise<BookingTopUpPe
 
 export async function checkPaymentStatus(orderCode: number): Promise<PaymentStatusResponse> {
   const res = await apiClient.get<ApiResponse<PaymentStatusResponse>>(endpoints.payments.check(orderCode));
+  return res.data.data!;
+}
+
+export async function cancelPaymentLink(orderCode: number): Promise<PaymentStatusResponse> {
+  const res = await apiClient.post<ApiResponse<PaymentStatusResponse>>(`/api/payments/cancel/${orderCode}`);
   return res.data.data!;
 }
 

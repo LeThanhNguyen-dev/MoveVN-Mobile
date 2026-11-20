@@ -10,9 +10,9 @@ import {
   Wallet,
   X,
 } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type ViewInstance } from "react-native";
 import AppText from "@/components/AppText";
 import { formatMoney } from "@/features/booking/utils/format";
 import type { PricePreview } from "@/features/booking/utils/bookingPricing";
@@ -38,6 +38,7 @@ type Props = {
   onOpenWallet: () => void;
   onClearPromo: () => void;
   onFocusPromo: () => void;
+  promoRef?: RefObject<ViewInstance | null>;
 };
 
 export default function CheckoutPaymentCard({
@@ -56,6 +57,7 @@ export default function CheckoutPaymentCard({
   onOpenWallet,
   onClearPromo,
   onFocusPromo,
+  promoRef,
 }: Props) {
   const { p } = useCheckoutTheme();
   const { t } = useTranslation();
@@ -77,7 +79,7 @@ export default function CheckoutPaymentCard({
         title={t("booking:funnel.payment")}
       />
 
-      <View style={styles.promoBlock}>
+      <View ref={promoRef} collapsable={false} style={styles.promoBlock}>
         {appliedPromo ? (
           <View style={styles.applied}>
             <View style={styles.appliedIcon}>

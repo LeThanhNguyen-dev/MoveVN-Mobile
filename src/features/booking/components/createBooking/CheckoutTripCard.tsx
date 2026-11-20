@@ -10,9 +10,9 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react-native";
-import { useMemo } from "react";
+import { useMemo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View, type ViewInstance } from "react-native";
 import AppText from "@/components/AppText";
 import { formatCheckoutDate, formatCheckoutMeta } from "@/features/booking/utils/checkoutFormat";
 import { formatVnd, vehicleTypeLabel } from "@/features/vehicles/ownerDisplay";
@@ -32,6 +32,7 @@ type Props = {
   nextAvailableDate: string | null;
   onOpenPeriod: () => void;
   onApplyNextAvailable: () => void;
+  periodRef?: RefObject<ViewInstance | null>;
 };
 
 export default function CheckoutTripCard({
@@ -46,6 +47,7 @@ export default function CheckoutTripCard({
   nextAvailableDate,
   onOpenPeriod,
   onApplyNextAvailable,
+  periodRef,
 }: Props) {
   const { p } = useCheckoutTheme();
   const { t } = useTranslation();
@@ -143,6 +145,7 @@ export default function CheckoutTripCard({
       <View style={styles.divider} />
 
       <Pressable
+        ref={periodRef}
         accessibilityHint={t("mobile:checkout.trip.periodAriaHint")}
         accessibilityLabel={t("booking:detail.rentalDuration")}
         accessibilityRole="button"

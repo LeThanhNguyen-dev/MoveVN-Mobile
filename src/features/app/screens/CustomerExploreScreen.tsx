@@ -7,6 +7,7 @@ import {
   Car,
   Check,
   ChevronRight,
+  CircleHelp,
   Copy,
   MapPin,
   Motorbike,
@@ -14,7 +15,7 @@ import {
   TicketPercent,
   X,
 } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Modal,
@@ -23,6 +24,7 @@ import {
   StyleSheet,
   View,
 } from "react-native"
+import type { ViewInstance } from "react-native";
 import AppText from "@/components/AppText";
 import * as Clipboard from "expo-clipboard";
 import AppDashboardHeader from "@/features/app/components/AppDashboardHeader";
@@ -31,6 +33,8 @@ import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import type { HomepageBanner } from "@/features/banners/types";
 import { getHomepageBanners } from "@/features/banners/services/bannerService";
 import { showToast } from "@/features/notifications/toastStore";
+import TourOverlay from "@/features/onboarding/components/TourOverlay";
+import { useBookingTour } from "@/features/onboarding/bookingTour";
 import OwnerVerificationScreen from "@/features/owner/screens/OwnerVerificationScreen";
 import VehicleListCard from "@/features/vehicles/components/VehicleListCard";
 import VehicleCardSkeleton from "@/features/vehicles/components/VehicleCardSkeleton";
@@ -437,6 +441,28 @@ export default function CustomerExploreScreen({
   const [showOwnerVerify, setShowOwnerVerify] = useState(false);
   const activeRole = useAuthStore((state) => state.activeRole);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
+  const tourStep = useBookingTour((state) => state.step);
+  const searchCardRef = useRef<ViewInstance>(null);
+  const datesFieldRef = useRef<ViewInstance>(null);
+  const previousTourStep = useRef(tourStep);
+
+  // Tour đặt xe tự chạy một lần cho mỗi tài khoản ở lần đầu vào Trang chủ.
+  useEffect(() => {
+    void useBookingTour.getState().autoStart(user.userId);
+  }, [user.userId]);
+
+  // Hết bước 2 (chọn ngày) thì bước 3 nằm ở danh sách xe — nhắc khách bấm
+  // TÌM XE thay vì để overlay biến mất im lặng.
+  useEffect(() => {
+    if (previousTourStep.current === "dates" && tourStep === "vehicleList") {
+      showToast({
+        type: "info",
+        title: t("mobile:tour.nextHint.title"),
+        message: t("mobile:tour.nextHint.body"),
+      });
+    }
+    previousTourStep.current = tourStep;
+  }, [tourStep, t]);
 
   // Hiện sẵn địa điểm đã chọn lần gần nhất (lưu trên máy).
   // Dùng focus (không chỉ mount) để quay về từ màn List vẫn thấy chỗ mới chọn.
@@ -621,7 +647,7 @@ export default function CustomerExploreScreen({
           </View>
         </View>
 
-        <View style={[styles.searchCard, { marginTop: -cardOverlap }]}>
+        <View ref={searchCardRef} collapsable={false} style={[styles.searchCard, { marginTop: -cardOverlap }]}>
             <View style={styles.tabs}>
               <Pressable
                 onPress={() => setSearchTab("Car")}
@@ -662,21 +688,23 @@ export default function CustomerExploreScreen({
 
               <View style={styles.fieldDivider} />
 
-              <Pressable style={styles.fieldRow} onPress={() => setSheetVisible(true)}>
-                <CalendarDays color={HERO.fieldIcon} size={18} />
-                <View style={styles.fieldTextWrap}>
-                  <AppText style={styles.fieldLabel}>{t("common:rentalPicker.label")}</AppText>
-                  <AppText
-                    style={[
-                      styles.fieldValue,
-                      !startDate && !endDate && styles.fieldPlaceholder,
-                    ]}
-                    numberOfLines={2}
-                  >
-                    {periodText}
-                  </AppText>
-                </View>
-              </Pressable>
+              <View ref={datesFieldRef} collapsable={false}>
+                <Pressable style={styles.fieldRow} onPress={() => setSheetVisible(true)}>
+                  <CalendarDays color={HERO.fieldIcon} size={18} />
+                  <View style={styles.fieldTextWrap}>
+                    <AppText style={styles.fieldLabel}>{t("common:rentalPicker.label")}</AppText>
+                    <AppText
+                      style={[
+                        styles.fieldValue,
+                        !startDate && !endDate && styles.fieldPlaceholder,
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {periodText}
+                    </AppText>
+                  </View>
+                </Pressable>
+              </View>
             </View>
 
             {error ? <AppText style={styles.error}>{error}</AppText> : null}
@@ -697,6 +725,18 @@ export default function CustomerExploreScreen({
                 <AppText style={styles.searchButtonText}>{t("mobile:explore.searchCta")}</AppText>
               </LinearGradient>
             </Pressable>
+        </View>
+
+        <View style={styles.tourReplayWrap}>
+          <Pressable
+            onPress={() => useBookingTour.getState().start(user.userId)}
+            style={styles.tourReplay}
+            accessibilityRole="button"
+            accessibilityLabel={t("mobile:tour.replayAria")}
+          >
+            <CircleHelp color={theme.brand} size={14} />
+            <AppText style={styles.tourReplayText}>{t("mobile:tour.replay")}</AppText>
+          </Pressable>
         </View>
 
         {/* SECTION 2: KHUYẾN MÃI — ảnh 16:9 từ bảng Banners, bấm mở popup chi tiết */}
@@ -1006,6 +1046,9 @@ export default function CustomerExploreScreen({
         }}
         onClose={() => setAreaVisible(false)}
       />
+
+      {tourStep === "search" ? <TourOverlay step="search" anchorRef={searchCardRef} /> : null}
+      {tourStep === "dates" ? <TourOverlay step="dates" anchorRef={datesFieldRef} /> : null}
     </View>
   );
 }
@@ -1013,6 +1056,19 @@ export default function CustomerExploreScreen({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: theme.background },
+    tourReplayWrap: { alignItems: "center", marginTop: 12 },
+    tourReplay: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: theme.brandBorder,
+      backgroundColor: theme.brandSoft,
+    },
+    tourReplayText: { color: theme.brand, fontSize: 12, fontWeight: "700" },
     headerPad: { paddingHorizontal: 20, paddingTop: 8 },
     scroll: { flex: 1 },
     // Vừa đủ để card cuối không bị Bottom Bar nổi che (bar trong suốt nên 96 là fit).

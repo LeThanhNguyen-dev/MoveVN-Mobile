@@ -1,0 +1,72 @@
+{
+  "tour": {
+    "badge": "Bước {{current}}/{{total}}",
+    "skip": "Bỏ qua",
+    "next": "Tiếp tục",
+    "done": "Xong",
+    "replay": "Hướng dẫn đặt xe",
+    "replayAria": "Mở hướng dẫn đặt xe",
+    "nextHint": {
+      "title": "Bấm TÌM XE để xem danh sách",
+      "body": "Chọn ngày nhận – trả xe xong thì bấm TÌM XE để xem các xe còn trống."
+    },
+    "detailHint": {
+      "title": "Mở một xe để xem chi tiết",
+      "body": "Bấm vào thẻ xe trong danh sách để xem chi tiết và đặt xe."
+    },
+    "tripDetailHint": {
+      "title": "Mở một chuyến để xem chi tiết",
+      "body": "Bấm vào chuyến trong danh sách để xem trạng thái, bàn giao xe và thanh toán còn lại."
+    },
+    "depositHint": {
+      "title": "Đặt cọc để giữ xe",
+      "body": "Bấm nút Đặt cọc trong chi tiết chuyến để mở mã QR chuyển khoản tiền cọc."
+    },
+    "steps": {
+      "search": {
+        "title": "Tìm xe phù hợp",
+        "body": "Chọn loại xe và địa điểm, rồi bấm TÌM XE để xem danh sách xe còn trống."
+      },
+      "dates": {
+        "title": "Chọn ngày nhận – trả xe",
+        "body": "Bấm vào khung này để chọn ngày nhận và trả xe. Xong thì bấm TÌM XE để tìm xe theo đúng lịch."
+      },
+      "vehicleList": {
+        "title": "Chọn xe phù hợp",
+        "body": "Bộ lọc, sắp xếp và chế độ bản đồ nằm ở đây. Bấm Tiếp tục rồi chọn một xe để xem chi tiết."
+      },
+      "vehicleDetail": {
+        "title": "Đặt xe",
+        "body": "Thanh dưới cùng hiển thị giá thuê và nút Đặt xe. Chọn ngày nếu cần rồi bấm Đặt xe để sang bước đặt cọc."
+      },
+      "bookingDates": {
+        "title": "Chọn ngày nhận – trả xe",
+        "body": "Bấm vào khung này để mở bảng chọn ngày và giờ nhận – trả xe. Đổi xong thì bấm Tiếp tục."
+      },
+      "bookingAddress": {
+        "title": "Điền điểm nhận xe",
+        "body": "Chỗ này là địa chỉ nhận xe: gõ hoặc chọn địa chỉ để xe được giao tới. Xong thì bấm Tiếp tục."
+      },
+      "bookingVoucher": {
+        "title": "Áp voucher / mã giảm giá",
+        "body": "Nhập mã giảm giá rồi bấm Áp dụng, hoặc bấm Ví để chọn voucher đang có. Xong thì bấm Tiếp tục."
+      },
+      "createBooking": {
+        "title": "Đặt cọc để tạo đơn",
+        "body": "Kiểm tra tổng tiền và tiền cọc, rồi bấm nút này để tạo đơn giữ xe."
+      },
+      "payment": {
+        "title": "Đặt cọc để giữ xe",
+        "body": "Quét mã VietQR hoặc chuyển khoản đúng nội dung bên dưới. Chuyến của bạn tự xác nhận khi nhận đủ tiền cọc."
+      },
+      "trip": {
+        "title": "Tab Chuyến đi",
+        "body": "Sau khi cọc, chuyến của bạn nằm trong tab này. Bấm Tiếp tục để mở danh sách chuyến."
+      },
+      "tripDetail": {
+        "title": "Chi tiết chuyến và bàn giao xe",
+        "body": "Trong chi tiết chuyến, cuộn xuống mục Bàn giao xe để xem biên bản nhận/trả xe và xác nhận đã nhận xe."
+      }
+    }
+  }
+}

@@ -86,6 +86,7 @@ import vi_82 from "./locales/vi/vehicleList/map.json";
 import vi_83 from "./locales/vi/vehicleList/results.json";
 import vi_84 from "./locales/vi/vehicleList/search.json";
 import vi_85 from "./locales/vi/violations.json";
+import vi_86 from "./locales/vi/mobile/tour.json";
 import en_86 from "./locales/en/account.json";
 import en_87 from "./locales/en/accountProfile.json";
 import en_88 from "./locales/en/accountSecurity/logout.json";
@@ -172,6 +173,7 @@ import en_168 from "./locales/en/vehicleList/map.json";
 import en_169 from "./locales/en/vehicleList/results.json";
 import en_170 from "./locales/en/vehicleList/search.json";
 import en_171 from "./locales/en/violations.json";
+import en_172 from "./locales/en/mobile/tour.json";
 
 export const localeModules = {
   vi: {
@@ -261,6 +263,7 @@ export const localeModules = {
     "vehicleList/results.json": vi_83,
     "vehicleList/search.json": vi_84,
     "violations.json": vi_85,
+    "mobile/tour.json": vi_86,
   },
   en: {
     "account.json": en_86,
@@ -349,5 +352,6 @@ export const localeModules = {
     "vehicleList/results.json": en_169,
     "vehicleList/search.json": en_170,
     "violations.json": en_171,
+    "mobile/tour.json": en_172,
   },
 };
