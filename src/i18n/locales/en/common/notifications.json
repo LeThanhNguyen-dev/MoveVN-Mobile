@@ -35,6 +35,7 @@
     "unreadSuffix": ", unread",
     "viewAll": "View all notifications",
     "viewBooking": "View booking",
+    "openTrip": "Open trip",
     "collapse": "Collapse",
     "paginationGroup": "Notification pagination",
     "page": "Page {{page}} / {{total}}",

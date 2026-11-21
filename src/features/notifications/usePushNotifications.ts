@@ -3,6 +3,7 @@ import { AppState, Platform } from "react-native";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { loadLocalNotifications, loadPushNotifications, prepareLocalNotifications, registerPushDevice } from "./pushRegistration";
 import { pushBookingTarget, usePushNavigation } from "./pushNavigation";
+import { parseBookingTarget } from "./utils/target";
 import { useNotificationStore } from "./useNotifications";
 import { refreshNotificationCount } from "./notificationActions";
 import { notificationRecipient, NOTIFICATION_CHANNEL_ID, resetSystemNotifications, setSystemNotificationPresenter } from "./systemNotificationPresentation";
@@ -62,8 +63,18 @@ export function usePushNotifications() {
           useNotificationStore.setState({ centerOpen: false });
           usePushNavigation.setState({ pending });
         } else if (!pending && recipient?.userId === userId && currentUser?.userId === userId) {
-          // Support, disputes, payments, availability, broadcasts and future types use the authenticated inbox.
-          useNotificationStore.setState({ centerOpen: true, selectedNotificationId: recipient.notificationId });
+          // GPS request carries bookingId but no roleTarget; open the trip for the current role.
+          const gpsTarget = parseBookingTarget(typeof request.content.data?.dataJson === "string" ? request.content.data.dataJson : null);
+          const role = currentUser.roles.includes("Customer") ? "Customer" : currentUser.roles.includes("Owner") ? "Owner" : null;
+          if (gpsTarget && role) {
+            useNotificationStore.setState({ centerOpen: false });
+            usePushNavigation.setState({
+              pending: { bookingId: gpsTarget.bookingId, roleTarget: role, userId, requestId: request.identifier },
+            });
+          } else {
+            // Support, disputes, payments, availability, broadcasts and future types use the authenticated inbox.
+            useNotificationStore.setState({ centerOpen: true, selectedNotificationId: recipient.notificationId });
+          }
         }
         void notifications.clearLastNotificationResponseAsync().catch(report);
       };

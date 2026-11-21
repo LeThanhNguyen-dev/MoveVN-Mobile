@@ -14,6 +14,13 @@ function bookingTone(action: string): ToastType {
   return "info";
 }
 
+function currentUserRole(): "Owner" | "Customer" | null {
+  const roles = useAuthStore.getState().user?.roles ?? [];
+  if (roles.includes("Customer")) return "Customer";
+  if (roles.includes("Owner")) return "Owner";
+  return null;
+}
+
 function openBooking(bookingId: number, roleTarget: string, notificationId: number) {
   const user = useAuthStore.getState().user;
   const role: "Owner" | "Customer" | null = roleTarget.toLowerCase() === "owner" ? "Owner"
@@ -39,6 +46,20 @@ export function receiveNotification(item: NotificationItem, unreadCount: number)
   const known = state.items.some(entry => entry.id === item.id) || Boolean(state.updates[item.id]);
   state.prependNotification(item, unreadCount);
   if (!known && !item.isRead) {
+    // Owner yêu cầu bật GPS: banner hệ thống tự ẩn sau vài giây nên dễ lỡ tay.
+    // Hiện toast trong app đủ lâu để đọc và bấm thẳng vào chuyến.
+    const gpsRequest = item.type === "GPS" ? parseBookingTarget(item.dataJson) : null;
+    if (gpsRequest) {
+      showToast({
+        type: "info",
+        title: item.title,
+        message: item.body,
+        actionLabel: i18n.t("common:notifications.openTrip"),
+        durationMs: 10_000,
+        onPress: () => openBooking(gpsRequest.bookingId, currentUserRole() ?? "", item.id),
+      });
+      return;
+    }
     const target = item.type === "Booking" ? parseBookingTarget(item.dataJson) : null;
     const toast = target
       ? () => showToast({

@@ -48,3 +48,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# local release builds kept for rollback
+/release-archive
