@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getOwnerTrackingVehicles } from "./gpsService";
 import { startGpsTrackingConnection, subscribeToBooking, unsubscribeFromBooking } from "./gpsConnection";
 import { useGpsStore } from "./gpsStore";
+import { useGpsTrackingEnabled } from "@/features/systemConfig/configService";
 import type { OwnerTrackingVehicleResponse } from "./types";
 
 const POLL_INTERVAL_MS = 20_000;
@@ -11,6 +12,7 @@ const POLL_INTERVAL_MS = 20_000;
  * lưới an toàn và subscribe SignalR từng booking để cập nhật realtime.
  */
 export function useFleetTracking() {
+  const gpsEnabled = useGpsTrackingEnabled();
   const [items, setItems] = useState<OwnerTrackingVehicleResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -19,6 +21,10 @@ export function useFleetTracking() {
   const activeRef = useRef(true);
 
   const refresh = useCallback(async () => {
+    if (gpsEnabled !== true) {
+      if (activeRef.current) setLoading(false);
+      return;
+    }
     try {
       const data = await getOwnerTrackingVehicles();
       if (!activeRef.current) return;
@@ -70,11 +76,19 @@ export function useFleetTracking() {
     } finally {
       if (activeRef.current) setLoading(false);
     }
-  }, []);
+  }, [gpsEnabled]);
 
   useEffect(() => {
     activeRef.current = true;
     void refresh();
+    if (gpsEnabled !== true) {
+      return () => {
+        activeRef.current = false;
+        const ids = [...subscribedRef.current];
+        subscribedRef.current.clear();
+        for (const bookingId of ids) void unsubscribeFromBooking(bookingId);
+      };
+    }
     const timer = setInterval(() => { void refresh(); }, POLL_INTERVAL_MS);
     return () => {
       activeRef.current = false;
@@ -83,7 +97,7 @@ export function useFleetTracking() {
       subscribedRef.current.clear();
       for (const bookingId of ids) void unsubscribeFromBooking(bookingId);
     };
-  }, [refresh]);
+  }, [refresh, gpsEnabled]);
 
   return { items, loading, failed, updatedAt, refresh };
 }

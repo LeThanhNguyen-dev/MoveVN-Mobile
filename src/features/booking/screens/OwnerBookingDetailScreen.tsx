@@ -6,6 +6,7 @@ import { checkoutStartDate } from "../bookingDisplay";
 import { getPendingTopUp, type BookingTopUpPendingResponse } from "@/features/payments/services/paymentService";
 import InspectionFormScreen from "./InspectionFormScreen";
 import { useBookingNotificationRefresh } from "../useBookingNotificationRefresh";
+import { useGpsTrackingEnabled } from "@/features/systemConfig/configService";
 import BookingAssistance from "../components/BookingAssistance";
 import ReturnProgress from "../components/ReturnProgress";
 import InspectionReportCard from "../components/InspectionReportCard";
@@ -79,6 +80,7 @@ export default function OwnerBookingDetailScreen({
 }) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const gpsEnabled = useGpsTrackingEnabled();
   const { p } = useDetailTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookingId } = route.params;
@@ -363,7 +365,7 @@ export default function OwnerBookingDetailScreen({
           </DetailCard>
         )}
 
-        {status === "InProgress" || status === "Returning" ? (
+        {(status === "InProgress" || status === "Returning") && gpsEnabled === true ? (
           <DetailButton variant="secondary" icon={MapPin} label={t("mobile:ownerBooking.detail.viewGps")} disabled={busy !== null} onPress={() => navigation.navigate("OwnerTracking", { bookingId, vehicleName: booking.vehicleName })} />
         ) : null}
 

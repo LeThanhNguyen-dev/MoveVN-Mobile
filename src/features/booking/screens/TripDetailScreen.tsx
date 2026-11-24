@@ -87,6 +87,7 @@ import DisputeDetailScreen from "@/features/disputes/screens/DisputeDetailScreen
 import { getApiErrorMessage } from "@/services/apiClient";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { useGpsStore } from "@/features/gps/gpsStore";
+import { useGpsTrackingEnabled } from "@/features/systemConfig/configService";
 import { setGpsSharingConsent } from "@/features/gps/gpsService";
 import { clearStoredConsent, setStoredConsent } from "@/features/gps/gpsConsentStorage";
 import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehicleService";
@@ -201,6 +202,7 @@ export default function TripDetailScreen({
   // useGpsPublisher (mount ở CustomerNavigator) sẽ xin quyền và gửi vị trí định kỳ.
   // Hook phải đứng trước mọi return sớm của màn hình.
   const setActivePublishBooking = useGpsStore((state) => state.setActivePublishBooking);
+  const gpsEnabled = useGpsTrackingEnabled();
   const gpsPermissionStatus = useGpsStore((state) => state.permissionStatus);
   const gpsPublishError = useGpsStore((state) => state.publishError);
   const gpsSharingHere = useGpsStore((state) => state.activePublishBookingId === bookingId);
@@ -214,7 +216,8 @@ export default function TripDetailScreen({
     // Publisher tự ngừng khi server trả GPS_BOOKING_NOT_ACTIVE (chuyến đã kết thúc).
     if (!booking) return;
     if (booking.status === "InProgress" || booking.status === "Returning") {
-      setActivePublishBooking(booking.id);
+      // Chức năng đang tắt thì không đăng ký chia sẻ (không xin quyền vị trí).
+      if (gpsEnabled === true) setActivePublishBooking(booking.id);
     } else {
       // Chuyến đã kết thúc: dọn lựa chọn đã lưu để lần thuê sau hỏi lại từ đầu.
       if (useGpsStore.getState().activePublishBookingId === booking.id) {
@@ -222,7 +225,7 @@ export default function TripDetailScreen({
       }
       void clearStoredConsent(booking.id);
     }
-  }, [booking?.id, booking?.status, setActivePublishBooking]);
+  }, [booking?.id, booking?.status, gpsEnabled, setActivePublishBooking]);
 
   // Khách bật/tắt chia sẻ vị trí: ghi nhận phía máy chủ + lưu lựa chọn trên thiết bị.
   const updateGpsConsent = useCallback(async (granted: boolean) => {
@@ -689,7 +692,7 @@ export default function TripDetailScreen({
               </DetailCard>
             ) : null}
 
-            {(status === "InProgress" || status === "Returning") && gpsSharingHere && gpsSharingState !== "idle" && gpsSharingState !== "ended" ? (
+            {(status === "InProgress" || status === "Returning") && gpsEnabled === true && gpsSharingHere && gpsSharingState !== "idle" && gpsSharingState !== "ended" ? (
               gpsSharingState === "sharing" ? (
                 gpsPermissionStatus === "denied" || gpsPublishError ? (
                   <DetailCard>
@@ -749,13 +752,13 @@ export default function TripDetailScreen({
                 </DetailCard>
               )
             ) : null}
-            {(status === "InProgress" || status === "Returning") && gpsSharingHere && gpsEnableRequestedAt && gpsSharingState !== "sharing" ? (
+            {(status === "InProgress" || status === "Returning") && gpsEnabled === true && gpsSharingHere && gpsEnableRequestedAt && gpsSharingState !== "sharing" ? (
               <DetailNotice icon={MapPin} title={t("mobile:trip.detail.gpsRequestedTitle")} tone="brand">
                 {t("mobile:trip.detail.gpsRequestedBody")}
               </DetailNotice>
             ) : null}
 
-            {status === "InProgress" || status === "Returning" ? (
+            {(status === "InProgress" || status === "Returning") && gpsEnabled === true ? (
               <DetailButton
                 variant="secondary"
                 icon={Route}
@@ -1009,7 +1012,7 @@ export default function TripDetailScreen({
       }} />
 
       <Modal
-        visible={gpsSharingHere && gpsSharingState === "idle" && (status === "InProgress" || status === "Returning")}
+        visible={gpsEnabled === true && gpsSharingHere && gpsSharingState === "idle" && (status === "InProgress" || status === "Returning")}
         transparent
         animationType="fade"
         onRequestClose={() => useGpsStore.getState().setPublishSharingState("notShared")}

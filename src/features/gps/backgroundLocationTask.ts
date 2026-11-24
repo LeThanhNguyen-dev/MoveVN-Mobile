@@ -221,11 +221,24 @@ async function markPaused(bookingId: number) {
   await stopGpsTask();
 }
 
+/** Quản trị viên tắt chức năng: dừng gửi, giữ lựa chọn đồng ý để bật lại sẽ tiếp tục. */
+async function markFeatureDisabled(bookingId: number) {
+  gpsRuntime.buffer = [];
+  resetGpsRuntime();
+  await clearActivePublishTarget();
+  const store = useGpsStore.getState();
+  if (store.activePublishBookingId === bookingId) {
+    store.setPublishSharingState("notShared");
+    store.setPublishError(null);
+  }
+  await stopGpsTask();
+}
+
 function errorCodeOf(error: unknown): string | undefined {
   return (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
 }
 
-type PostOutcome = { kind: "ok" } | { kind: "unauthorized" } | { kind: "ended" | "paused" | "retry" };
+type PostOutcome = { kind: "ok" } | { kind: "unauthorized" } | { kind: "ended" | "paused" | "disabled" | "retry" };
 
 async function postPoints(bookingId: number, points: GpsPointRequest[], accessToken: string): Promise<PostOutcome> {
   try {
@@ -243,6 +256,8 @@ async function postPoints(bookingId: number, points: GpsPointRequest[], accessTo
     if (code === "GPS_13001" || code === "GPS_13003") return { kind: "ended" };
     // Khách đã dừng chia sẻ (server đã ghi nhận) → đồng bộ lại trạng thái.
     if (code === "GPS_13005") return { kind: "paused" };
+    // Quản trị viên tắt chức năng → ngừng gửi, không giữ điểm chờ gửi lại.
+    if (code === "GPS_13006") return { kind: "disabled" };
     return { kind: "retry" };
   }
 }
@@ -287,6 +302,10 @@ export async function flushGpsBuffer(explicitBookingId?: number | null): Promise
     }
     if (outcome.kind === "paused") {
       await markPaused(bookingId);
+      return;
+    }
+    if (outcome.kind === "disabled") {
+      await markFeatureDisabled(bookingId);
       return;
     }
 

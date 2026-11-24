@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useGpsTrackingEnabled } from "@/features/systemConfig/configService";
 import { useGpsStore } from "./gpsStore";
 import { getGpsLivePosition } from "./gpsService";
 import { startGpsTrackingConnection, stopGpsTrackingConnection, subscribeToBooking, unsubscribeFromBooking } from "./gpsConnection";
@@ -8,13 +9,14 @@ import { startGpsTrackingConnection, stopGpsTrackingConnection, subscribeToBooki
  * Kèm poll REST mỗi 15s làm lưới an toàn: SignalR có thể miss event khi reconnect.
  */
 export function useGpsConnection(bookingId: number | null | undefined) {
+  const gpsEnabled = useGpsTrackingEnabled();
   const connectionStatus = useGpsStore((state) => state.connectionStatus);
   const position = useGpsStore((state) => (bookingId != null ? state.positions[bookingId] : undefined));
   const status = useGpsStore((state) => (bookingId != null ? state.statuses[bookingId] : undefined));
   const sharingState = useGpsStore((state) => (bookingId != null ? state.sharingStates[bookingId] : undefined));
 
   useEffect(() => {
-    if (bookingId == null) return;
+    if (bookingId == null || gpsEnabled !== true) return;
     let active = true;
     void (async () => {
       const started = await startGpsTrackingConnection();
@@ -63,7 +65,7 @@ export function useGpsConnection(bookingId: number | null | undefined) {
       clearInterval(pollTimer);
       void unsubscribeFromBooking(bookingId);
     };
-  }, [bookingId]);
+  }, [bookingId, gpsEnabled]);
 
   return { connectionStatus, position, status, sharingState };
 }

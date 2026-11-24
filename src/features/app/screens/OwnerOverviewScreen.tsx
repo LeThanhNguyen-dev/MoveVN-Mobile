@@ -10,6 +10,7 @@ import { formatDateTime } from "@/features/booking/utils/format";
 import { comparison, money, number, shortDate } from "@/features/ownerAnalytics/types";
 import { useOwnerDashboard } from "@/features/ownerDashboard/useOwnerDashboard";
 import { createDashboardStyles } from "@/features/ownerDashboard/styles";
+import { useGpsTrackingEnabled } from "@/features/systemConfig/configService";
 import { useTheme } from "@/theme/useTheme";
 
 const OWNER_FLEET_ILLUSTRATION = require("../../../../public/images/1.png");
@@ -31,13 +32,17 @@ export default function OwnerOverviewScreen({ user, onAvatarPress, onOpenVehicle
   const { theme } = useTheme();
   const styles = useMemo(() => createDashboardStyles(theme), [theme]);
   const { operations, business, operationsError, businessError, loading, refresh } = useOwnerDashboard(user.userId, true);
+  // Admin tắt chia sẻ vị trí thì ẩn lối vào bản đồ đội xe.
+  const gpsEnabled = useGpsTrackingEnabled();
 
   const shortcuts = [
     { label: t("owner:home.actions.addVehicle"), icon: Plus, onPress: () => onOpenVehicles(true), color: theme.brand, background: theme.brandSoft },
     { label: t("owner:analytics.actions.bookings"), icon: CalendarCheck, onPress: onOpenBookings, color: theme.info, background: theme.infoSoft },
     { label: t("accountWallet:title"), icon: Wallet, onPress: onOpenWallet, color: theme.success, background: theme.successSoft },
     { label: t("mobile:ownerHome.shortcuts.analytics"), icon: BarChart3, onPress: onOpenAnalytics, color: theme.brand, background: theme.brandSoft },
-    { label: t("mobile:ownerHome.shortcuts.fleet"), icon: MapPinned, onPress: onOpenFleet, color: theme.info, background: theme.infoSoft },
+    ...(gpsEnabled === true
+      ? [{ label: t("mobile:ownerHome.shortcuts.fleet"), icon: MapPinned, onPress: onOpenFleet, color: theme.info, background: theme.infoSoft }]
+      : []),
   ];
 
   return <View style={styles.root}>

@@ -7,7 +7,7 @@ import type { WebViewMessageEvent } from "react-native-webview";
 import { useFocusEffect } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { ArrowLeft, ChevronDown, ChevronUp, Crosshair, ListOrdered, Navigation, TriangleAlert } from "lucide-react-native";
+import { ArrowLeft, ChevronDown, ChevronUp, Crosshair, ListOrdered, MapPin, Navigation, TriangleAlert } from "lucide-react-native";
 import AppText from "@/components/AppText";
 import { translatedLabels } from "@/i18n/liveLabels";
 import { goBackOrFallback } from "@/navigation/goBackOrFallback";
@@ -15,6 +15,7 @@ import type { OwnerBookingsStackParamList } from "@/navigation/OwnerBookingsNavi
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import { getApiErrorMessage } from "@/services/apiClient";
+import { useGpsTrackingEnabled } from "@/features/systemConfig/configService";
 import { getGpsAddress, getGpsLivePosition, getGpsRoute, requestGpsEnable } from "../gpsService";
 import { useGpsConnection } from "../useGpsConnection";
 import { useGpsStore } from "../gpsStore";
@@ -43,6 +44,7 @@ export default function GpsTrackingScreen({
   const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const gpsEnabled = useGpsTrackingEnabled();
   const { bookingId, vehicleName } = route.params;
   const webRef = useRef<WebView<object>>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -225,6 +227,29 @@ export default function GpsTrackingScreen({
       setRequesting(false);
     }
   }, [bookingId, t]);
+
+  if (gpsEnabled !== true) {
+    return (
+      <View style={styles.screen}>
+        <View style={styles.header}>
+          <Pressable onPress={() => goBackOrFallback(navigation, () => navigation.navigate("OwnerBookingList"))} style={styles.backButton} accessibilityLabel={t("mobile:gps.backAria")}>
+            <ArrowLeft color={theme.text} size={20} />
+          </Pressable>
+          <AppText numberOfLines={1} style={styles.headerTitle}>
+            {t("mobile:gps.tracking.title", { name: vehicleName || t("mobile:gps.bookingFallback", { id: bookingId }) })}
+          </AppText>
+          <GpsInfoButton size={34} />
+        </View>
+        <View style={styles.disabledBox}>
+          {gpsEnabled === null
+            ? <ActivityIndicator size="small" color={theme.brand} />
+            : <MapPin size={26} color={theme.faint} />}
+          <AppText style={styles.disabledTitle}>{t("mobile:gps.disabled.title")}</AppText>
+          <AppText style={styles.disabledText}>{t("mobile:gps.disabled.message")}</AppText>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -434,6 +459,9 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   logMock: { flexDirection: "row", alignItems: "center", gap: 2 },
   logMockText: { color: theme.brand, fontSize: 9, fontWeight: "700" },
   logSpeed: { width: 52, textAlign: "right", color: theme.muted, fontSize: 11, fontVariant: ["tabular-nums"] },
+  disabledBox: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 32 },
+  disabledTitle: { color: theme.text, fontSize: 15, fontWeight: "800", textAlign: "center" },
+  disabledText: { color: theme.muted, fontSize: 12, textAlign: "center", lineHeight: 18 },
   inspectBanner: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, borderWidth: 1, borderColor: "#fcd34d", backgroundColor: "#fffbeb", paddingHorizontal: 10, paddingVertical: 8 },
   inspectInfo: { flex: 1, gap: 1 },
   inspectTitle: { color: "#92400e", fontSize: 12, fontWeight: "800" },
