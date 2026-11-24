@@ -1,5 +1,8 @@
 import AvailabilityAlertPanel from "@/features/availabilityAlerts/AvailabilityAlertPanel";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ViewInstance } from "react-native";
+import TourOverlay from "@/features/onboarding/components/TourOverlay";
+import { useBookingTour } from "@/features/onboarding/bookingTour";
 import {
   FlatList,
   Modal,
@@ -98,6 +101,14 @@ export default function VehicleDetailScreen({
   const [deliveryConfig, setDeliveryConfig] = useState({ freeKm: 5, perKm: 10000, maxKm: 50 });
   const [quote, setQuote] = useState<PricingQuoteResponse | null>(null);
   const [quoteState, setQuoteState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const tourStep = useBookingTour((state) => state.step);
+  const dockRef = useRef<ViewInstance>(null);
+
+  // Khách có thể bấm vào xe luôn mà chưa bấm Tiếp tục ở danh sách:
+  // đã tới chi tiết thì tour tự sang bước của màn này.
+  useEffect(() => {
+    if (useBookingTour.getState().step === "vehicleList") useBookingTour.getState().next();
+  }, []);
   const [quoteRetry, setQuoteRetry] = useState(0);
 
   useEffect(() => {
@@ -363,9 +374,14 @@ export default function VehicleDetailScreen({
             overlapping={overlapping}
             pricing={pricing}
             quoteState={quoteState}
+            anchorRef={dockRef}
           />
         </>
       )}
+
+      {tourStep === "vehicleDetail" && vehicle ? (
+        <TourOverlay step="vehicleDetail" anchorRef={dockRef} />
+      ) : null}
 
       <RentalPeriodSheet
         availabilityError={availabilityError}

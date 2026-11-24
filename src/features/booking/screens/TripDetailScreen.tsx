@@ -14,7 +14,11 @@ import { isDepositExpired, parseServerDate } from "../bookingDisplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator, AppState, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import type { ViewInstance } from "react-native";
+import TourOverlay from "@/features/onboarding/components/TourOverlay";
+import { useBookingTour } from "@/features/onboarding/bookingTour";
 import { showAppAlert } from "@/components/appDialog/dialogStore";
+import { showToast } from "@/features/notifications/toastStore";
 import {
   Banknote,
   Camera,
@@ -66,19 +70,21 @@ import {
 import type { BookingCancellationQuote, BookingResponse, InspectionReportResponse } from "@/features/booking/types";
 import { formatDateTime, formatMoney, rentalProgress } from "@/features/booking/utils/format";
 import {
+  cancelPaymentLink,
   checkPaymentStatus,
   createBookingTopUpLink,
   createPaymentLink,
   getPendingTopUp,
   payDepositWithWallet,
   type BookingTopUpPendingResponse,
+  type CreatePaymentLinkResponse,
 } from "@/features/payments/services/paymentService";
 import { getMyWallet } from "@/features/wallets/services/walletService";
 import { getPendingAutoCancelHours } from "@/features/systemConfig/configService";
 import ContractBlock from "@/features/contracts/components/ContractBlock";
 import BookingTimeline from "@/features/booking/components/BookingTimeline";
 import BookingPricingDetails from "@/features/booking/components/BookingPricingDetails";
-import PaymentWebViewModal, { payOsReturnUrl } from "@/features/payments/components/PaymentWebViewModal";
+import PayOsQrSheet, { payOsReturnUrl, type PayOsSheetData } from "@/features/payments/components/PayOsQrSheet";
 import RiskScoreBadge from "@/features/booking/components/RiskScoreBadge";
 import type { DisputeCreatePrefill } from "@/features/disputes/screens/DisputesScreen";
 import { createCustomerReview, getBookingReviews, hasReviewed, type ReviewResponse } from "@/features/review/reviewService";
@@ -95,8 +101,11 @@ import { getPublicVehicleImages } from "@/features/vehicles/services/publicVehic
 type DetailRoute = RouteProp<TripsStackParamList, "TripDetail" | "TripHandover">;
 type DetailNav = NativeStackNavigationProp<TripsStackParamList>;
 
-const POLL_MAX = 10;
-const POLL_MS = 3000;
+// Poll xác nhận thanh toán: PayOS đối soát chuyển khoản VietQR có thể mất vài phút,
+// nên poll liên tục tới khi có kết quả cuối (link tự Expired sau 30 phút) thay vì bỏ cuộc sau 30s.
+const POLL_FAST_MS = 3000;
+const POLL_FAST_ATTEMPTS = 10;
+const POLL_SLOW_MS = 10000;
 
 export default function TripDetailScreen({
   route,
@@ -139,8 +148,31 @@ export default function TripDetailScreen({
   const [support, setSupport] = useState(0);
   const [comment, setComment] = useState("");
   const userId = useAuthStore((s) => s.user?.userId ?? 0);
+  const tourStep = useBookingTour((state) => state.step);
+  const summaryCardRef = useRef<ViewInstance>(null);
+
+  // Khách mở thẳng chuyến (từ thông báo/danh sách) mà chưa bấm Tiếp tục ở bước
+  // tab Chuyến đi: đã ở chi tiết thì tour tự sang bước của màn này.
+  useEffect(() => {
+    const step = useBookingTour.getState().step;
+    if (step === "trip") {
+      useBookingTour.getState().next();
+    } else if (step === "createBooking") {
+      // Vừa đặt xe xong: nhắc bấm Đặt cọc; overlay QR hiện khi sheet thanh toán mở.
+      useBookingTour.getState().next();
+      showToast({
+        type: "info",
+        title: t("mobile:tour.depositHint.title"),
+        message: t("mobile:tour.depositHint.body"),
+      });
+    }
+  }, [t]);
   const [pendingOrderCode, setPendingOrderCode] = useState<number | null>(null);
-  const [paySheet, setPaySheet] = useState<{ checkoutUrl: string; orderCode: number } | null>(null);
+  const pendingOrderCodeRef = useRef<number | null>(null);
+  useEffect(() => {
+    pendingOrderCodeRef.current = pendingOrderCode;
+  }, [pendingOrderCode]);
+  const [paySheet, setPaySheet] = useState<PayOsSheetData | null>(null);
   const [cancelQuote, setCancelQuote] = useState<BookingCancellationQuote | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [autoCancelHours, setAutoCancelHours] = useState<number | null>(null);
@@ -273,12 +305,14 @@ export default function TripDetailScreen({
         const res = await checkPaymentStatus(orderCode);
         if (res.isConfirmed) {
           setPendingOrderCode(null);
+          setPaySheet(null);
           showAppAlert(t("booking:detail.toast.successTitle"), res.message || t("mobile:trip.dialogs.depositConfirmed"));
           await load();
           return;
         }
         if (res.status === "Cancelled" || res.status === "Expired" || res.status === "Failed") {
           setPendingOrderCode(null);
+          setPaySheet(null);
           showAppAlert(t("payments:toast.noticeTitle"), res.message || t("mobile:trip.dialogs.transactionEnded"));
           await load();
           return;
@@ -286,14 +320,39 @@ export default function TripDetailScreen({
       } catch {
         // Mất mạng lúc poll thì thử lại, không báo lỗi vội.
       }
-      if (attempt < POLL_MAX) {
+      // Còn pendingOrderCode (đọc ref để không kẹt closure cũ khi sheet đã đóng):
+      // poll tiếp, giãn nhịp sau 10 lần đầu.
+      if (pendingOrderCodeRef.current !== null) {
         pollPayment(orderCode, attempt + 1);
-      } else {
-        setPendingOrderCode(null);
-        showAppAlert(t("mobile:trip.dialogs.pollTimeoutTitle"), t("mobile:trip.dialogs.pollTimeoutBody"));
-        await load();
       }
-    }, POLL_MS);
+    }, attempt <= POLL_FAST_ATTEMPTS ? POLL_FAST_MS : POLL_SLOW_MS);
+  }
+
+  function stopPolling() {
+    if (pollTimer.current) clearTimeout(pollTimer.current);
+    pendingOrderCodeRef.current = null;
+    setPendingOrderCode(null);
+  }
+
+  // Lỗi hủy thì ném ra để sheet hiện chữ ngay trong Modal của nó; thành công mới
+  // đóng sheet rồi báo toast vì toast/alert nằm ngoài Modal.
+  async function cancelPaySheetPayment() {
+    const orderCode = paySheet?.orderCode;
+    if (!orderCode) {
+      stopPolling();
+      setPaySheet(null);
+      void load();
+      return;
+    }
+    const res = await cancelPaymentLink(orderCode);
+    stopPolling();
+    setPaySheet(null);
+    void load();
+    showToast({
+      type: "success",
+      title: t("payments:toast.noticeTitle"),
+      message: res.message || t("mobile:wallet.payment.cancelPaymentDone"),
+    });
   }
 
   // User thanh toán xong ở trình duyệt ngoài rồi quay lại app: tự poll trạng thái.
@@ -336,18 +395,36 @@ export default function TripDetailScreen({
 
   async function openPayOsCheckout(
     actionKey: string,
-    makeLink: (returnUrl: string) => Promise<{ checkoutUrl: string; orderCode: number }>,
+    sheetTitle: string,
+    makeLink: (returnUrl: string) => Promise<CreatePaymentLinkResponse>,
   ) {
     if (actionLock.current || !dataReady) return;
     actionLock.current = true;
     setActionBusy(actionKey);
     try {
-      // Mở thanh toán ngay trong app (WebView); PayOS redirect về scheme movevn://
-      // thì sheet tự đóng, poll phía dưới lo xác nhận. Không nhảy trình duyệt ngoài.
+      // Mở sheet QR VietQR ngay trong app; poll phía dưới lo xác nhận.
+      // Không nhảy trình duyệt ngoài.
       const link = await makeLink(payOsReturnUrl());
-      setPaySheet({ checkoutUrl: link.checkoutUrl, orderCode: link.orderCode });
+      // Khi BE đã đối soát link cũ vừa PAID, checkoutUrl rỗng: chỉ poll xác nhận,
+      // không mở sheet (tránh modal kẹt spinner).
       setPendingOrderCode(link.orderCode);
       pollPayment(link.orderCode);
+      if (link.checkoutUrl) {
+        setPaySheet({
+          checkoutUrl: link.checkoutUrl,
+          qrCode: link.qrCode,
+          orderCode: link.orderCode,
+          amount: link.amount,
+          bin: link.bin,
+          accountNumber: link.accountNumber,
+          accountName: link.accountName,
+          expiredAt: link.expiredAt,
+          title: sheetTitle,
+          subtitle: booking?.bookingCode
+            ? t("mobile:trip.dialogs.paySheetSubtitle", { code: booking.bookingCode })
+            : undefined,
+        });
+      }
     } catch (err) {
       showAppAlert(t("mobile:trip.dialogs.failedTitle"), getApiErrorMessage(err, t("mobile:trip.dialogs.paymentLinkError")));
     } finally {
@@ -357,11 +434,15 @@ export default function TripDetailScreen({
   }
 
   async function handlePayWithPayOs() {
-    await openPayOsCheckout("payos", (returnUrl) => createPaymentLink(bookingId, returnUrl));
+    await openPayOsCheckout("payos", t("mobile:trip.dialogs.paySheetTitle"), (returnUrl) =>
+      createPaymentLink(bookingId, returnUrl),
+    );
   }
 
   async function handlePayTopUp() {
-    await openPayOsCheckout("topup", (returnUrl) => createBookingTopUpLink(bookingId, returnUrl));
+    await openPayOsCheckout("topup", t("mobile:trip.dialogs.payTopUpSheetTitle"), (returnUrl) =>
+      createBookingTopUpLink(bookingId, returnUrl),
+    );
   }
 
   async function handleCancel() {
@@ -634,12 +715,14 @@ export default function TripDetailScreen({
             }
           />
           <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <BookingSummaryCard
-            booking={booking}
-            imageUri={vehiclePhoto}
-            onOpenVehicle={() => navigation.navigate("VehicleDetail", { vehicleId: booking.vehicleId })}
-            onOpenUserProfile={(userId) => navigation.navigate("BookingUserProfile", { userId })}
-          />
+          <View ref={summaryCardRef} collapsable={false}>
+            <BookingSummaryCard
+              booking={booking}
+              imageUri={vehiclePhoto}
+              onOpenVehicle={() => navigation.navigate("VehicleDetail", { vehicleId: booking.vehicleId })}
+              onOpenUserProfile={(userId) => navigation.navigate("BookingUserProfile", { userId })}
+            />
+          </View>
 
           <View style={styles.body}>
             {status === "Completed" ? (
@@ -1007,6 +1090,8 @@ export default function TripDetailScreen({
         </>
       )}
 
+      {!handover && tourStep === "tripDetail" ? <TourOverlay step="tripDetail" anchorRef={summaryCardRef} /> : null}
+
       <CheckoutConfirmation booking={booking} report={checkoutToConfirm} busy={actionBusy !== null} onClose={() => setCheckoutToConfirm(null)} onConfirm={(report, paymentMethod) => {
         void runAction("checkout", () => confirmCheckOut(bookingId, report.version ?? 1, paymentMethod).then(() => undefined), t("mobile:trip.dialogs.checkoutConfirmed")).then(ok => { if (ok) setCheckoutToConfirm(null); });
       }} />
@@ -1143,12 +1228,15 @@ export default function TripDetailScreen({
           <DetailButton variant="secondary" label={t("common:closeAction")} disabled={actionBusy !== null} onPress={() => setRevisionOpen(false)} />
         </View></View>
       </Modal>
-      <PaymentWebViewModal
-        checkoutUrl={paySheet?.checkoutUrl ?? null}
+      <PayOsQrSheet
+        data={paySheet}
         onClose={() => {
+          stopPolling();
           setPaySheet(null);
           void load();
         }}
+        onCheckNow={(orderCode) => pollPayment(orderCode)}
+        onCancel={() => cancelPaySheetPayment()}
       />
     </View>
   );

@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { usePushNavigation } from "@/features/notifications/pushNavigation";
 import { CalendarCheck, Gift, LayoutGrid, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
+import type { ViewInstance } from "react-native";
+import { showToast } from "@/features/notifications/toastStore";
+import TourOverlay from "@/features/onboarding/components/TourOverlay";
+import { useBookingTour } from "@/features/onboarding/bookingTour";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
 import WalletScreen from "@/features/wallets/screens/WalletScreen";
@@ -63,6 +67,20 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [disputesVisible, setDisputesVisible] = useState(false);
   const unread = useChatStore((state) => state.rooms.reduce((sum, room) => sum + room.unreadCount, 0));
   const { theme } = useTheme();
+  const tourStep = useBookingTour((state) => state.step);
+  const tripsTabRef = useRef<ViewInstance>(null);
+
+  // Bước "tab Chuyến đi": vừa sang bước kế vừa mở tab để khách thấy ngay danh
+  // sách chuyến, kèm gợi ý bấm vào một chuyến cho bước chi tiết.
+  const advanceToTrips = useCallback(() => {
+    useBookingTour.getState().next();
+    setActiveTab("trips");
+    showToast({
+      type: "info",
+      title: t("mobile:tour.tripDetailHint.title"),
+      message: t("mobile:tour.tripDetailHint.body"),
+    });
+  }, [t]);
 
   const openWallet = (initialTab: WalletTabKey = "home", returnToOwnerVerification = false) => {
     setWalletInitialTab(initialTab);
@@ -223,7 +241,16 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
             )}
           </View>
           {showBottomBar ? (
-            <MobileBottomBar activeKey={activeTab} items={customerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} />
+            <MobileBottomBar
+              activeKey={activeTab}
+              items={customerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)}
+              onChange={setActiveTab}
+              anchorKey="trips"
+              anchorRef={tripsTabRef}
+            />
+          ) : null}
+          {showBottomBar && tourStep === "trip" ? (
+            <TourOverlay step="trip" anchorRef={tripsTabRef} onNext={advanceToTrips} />
           ) : null}
           {/* Giữ xác nhận và thanh toán trong chat; mở chi tiết khi khách chọn. */}
           {!(activeTab === "trips" && (tripsRoute === "TripHandover" || tripsRoute === "ContractDetail")) && <AssistantFab key={user.userId} onViewVehicle={id => { setPendingVehicleId(id); setActiveTab("explore"); }} onViewBooking={goToTrip} onQuickBook={handleQuickBook} />}

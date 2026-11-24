@@ -1,7 +1,8 @@
-import type { ComponentType } from "react";
+import type { ComponentType, RefObject } from "react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native"
+import type { ViewInstance } from "react-native";
 import AppText from "@/components/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Theme } from "@/theme/tokens";
@@ -21,10 +22,15 @@ export default function MobileBottomBar<T extends string>({
   activeKey,
   items,
   onChange,
+  anchorKey,
+  anchorRef,
 }: {
   activeKey: T;
   items: MobileTabItem<T>[];
   onChange: (key: T) => void;
+  /** Tab cần lấy ref để tour hướng dẫn đo vị trí spotlight. */
+  anchorKey?: T;
+  anchorRef?: RefObject<ViewInstance | null>;
 }) {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 8);
@@ -42,6 +48,7 @@ export default function MobileBottomBar<T extends string>({
 
           return (
             <Pressable
+              ref={item.key === anchorKey ? anchorRef : undefined}
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
               accessibilityLabel={item.badge ? t("mobile:navigation.tabUnreadAria", { label: item.label, badge: item.badge }) : item.label}

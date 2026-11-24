@@ -1,7 +1,9 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { ChevronRight } from "lucide-react-native";
 import { useMemo } from "react";
+import type { RefObject } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import type { ViewInstance } from "react-native";
 import { useTranslation } from "react-i18next";
 import AppText from "@/components/AppText";
 import { formatVnd } from "@/features/vehicles/ownerDisplay";
@@ -23,6 +25,8 @@ type Props = {
   onBook: () => void;
   onOpenPeriod: () => void;
   onRetryAvailability: () => void;
+  /** Ref cho tour hướng dẫn đo vị trí spotlight. */
+  anchorRef?: RefObject<ViewInstance | null>;
 };
 
 type Cta = {
@@ -47,6 +51,7 @@ export default function VehicleBookingDock({
   onBook,
   onOpenPeriod,
   onRetryAvailability,
+  anchorRef,
 }: Props) {
   const { t } = useTranslation();
   const { p } = useDetailTheme();
@@ -130,7 +135,7 @@ export default function VehicleBookingDock({
           : t("mobile:vehicleDetail.dock.pickDatesHint");
 
   return (
-    <View style={[styles.dock, { paddingBottom: Math.max(bottomInset, 12) }]}>
+    <View ref={anchorRef} collapsable={false} style={[styles.dock, { paddingBottom: Math.max(bottomInset, 12) }]}>
       <View style={styles.summary}>
         <AppText style={styles.headline} numberOfLines={1}>
           {headline}
