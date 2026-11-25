@@ -47,8 +47,8 @@ import {
   type DeliveryConfig,
 } from "@/features/booking/utils/bookingPricing";
 import { validatePromotion } from "@/features/promotions/services/promotionService";
-import { getVoucherWallet } from "@/features/voucherClaims/services/voucherClaimService";
-import type { VoucherClaimResponse } from "@/features/voucherClaims/types";
+import { getEligibleVouchersForBooking } from "@/features/voucherClaims/services/voucherClaimService";
+import type { EligibleVoucherForBooking } from "@/features/voucherClaims/types";
 import { getApiErrorMessage } from "@/services/apiClient";
 
 type CreateRoute = RouteProp<ExploreStackParamList, "CreateBooking">;
@@ -94,12 +94,20 @@ export default function CreateBookingScreen({
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoResult, setPromoResult] = useState<{ discountAmount: number; code: string } | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [selectedVoucherClaimId, setSelectedVoucherClaimId] = useState<number | null>(null);
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [voucherModal, setVoucherModal] = useState(false);
-  const [vouchers, setVouchers] = useState<VoucherClaimResponse[]>([]);
+  const [vouchers, setVouchers] = useState<EligibleVoucherForBooking[]>([]);
   const [vouchersLoading, setVouchersLoading] = useState(false);
+
+  useEffect(() => {
+    setSelectedVoucherClaimId(null);
+    setPromoResult(null);
+    setPromoError(null);
+    setVouchers([]);
+  }, [startDate, endDate]);
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const fieldY = useRef<Record<string, number>>({});
 
@@ -111,10 +119,14 @@ export default function CreateBookingScreen({
 
   async function openVoucherPicker() {
     setVoucherModal(true);
+    if (!startDate || !endDate || days <= 0 || scheduleBlocked) {
+      setVouchers([]);
+      return;
+    }
     setVouchersLoading(true);
     try {
-      const wallet = await getVoucherWallet();
-      setVouchers(wallet.filter((v) => !v.usedAt));
+      const wallet = await getEligibleVouchersForBooking(vehicleId, startDate, endDate);
+      setVouchers(Array.isArray(wallet) ? wallet : []);
     } catch {
       setVouchers([]);
     } finally {
@@ -336,6 +348,7 @@ export default function CreateBookingScreen({
         returnLongitude: sameReturn ? undefined : returnLng ?? undefined,
         customerNote: note.trim() || undefined,
         promotionCode: promoResult ? promoCode.trim().toUpperCase() : undefined,
+        voucherClaimId: selectedVoucherClaimId ?? undefined,
       });
       showAppAlert(t("booking:create.submitSuccessTitle"), t("mobile:checkout.create.successMessage", { code: created.bookingCode }), [
         { text: t("mobile:checkout.create.viewTrip"), onPress: () => onCreated?.(created.id) },
@@ -455,6 +468,7 @@ export default function CreateBookingScreen({
                   deliveryDistanceKm={deliveryPreview?.distanceKm ?? null}
                   onChangeCode={(text) => {
                     setPromoCode(text.toUpperCase());
+                    setSelectedVoucherClaimId(null);
                     setPromoResult(null);
                     setPromoError(null);
                   }}
@@ -462,6 +476,7 @@ export default function CreateBookingScreen({
                   onClearPromo={() => {
                     setPromoResult(null);
                     setPromoCode("");
+                    setSelectedVoucherClaimId(null);
                   }}
                   onFocusPromo={() => scrollToField("payment")}
                   onOpenWallet={() => void openVoucherPicker()}
@@ -509,12 +524,13 @@ export default function CreateBookingScreen({
         bottomInset={insets.bottom}
         loading={vouchersLoading}
         onClose={() => setVoucherModal(false)}
-        onSelect={(code) => {
-          setPromoCode(code);
+        onSelect={(voucher) => {
+          setPromoCode(voucher.code);
+          setSelectedVoucherClaimId(voucher.id);
+          setPromoResult({ discountAmount: voucher.previewDiscount, code: voucher.code });
+          setPromoError(null);
           setVoucherModal(false);
-          void validateCode(code);
         }}
-        vehicleType={vehicle?.vehicleType}
         visible={voucherModal}
         vouchers={vouchers}
       />

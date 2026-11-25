@@ -12,51 +12,39 @@ import {
 } from "react-native";
 import AppText from "@/components/AppText";
 import { formatMoney } from "@/features/booking/utils/format";
-import type { VoucherClaimResponse } from "@/features/voucherClaims/types";
-import { isUpcomingStart } from "@/features/vouchers/voucherFormat";
+import type { EligibleVoucherForBooking } from "@/features/voucherClaims/types";
 import { checkoutFont, useCheckoutTheme } from "./checkoutTheme";
 
 type Props = {
   visible: boolean;
-  vouchers: readonly VoucherClaimResponse[];
+  vouchers: readonly EligibleVoucherForBooking[];
   loading: boolean;
-  vehicleType: string | null | undefined;
   bottomInset: number;
-  onSelect: (code: string) => void;
+  onSelect: (voucher: EligibleVoucherForBooking) => void;
   onClose: () => void;
 };
 
-function describe(v: VoucherClaimResponse): string {
+function describe(v: EligibleVoucherForBooking): string {
   const off = v.discountType === "Percentage" ? `${v.discountValue}%` : formatMoney(v.discountValue);
   const cap = v.maxDiscountAmount
     ? ` · ${i18n.t("booking:checkout.pickerMax", { amount: formatMoney(v.maxDiscountAmount) })}`
     : "";
-  return i18n.t("mobile:checkout.voucher.discount", { off }) + cap;
+  const preview = v.isEligible
+    ? ` · ${i18n.t("mobile:checkout.voucher.previewDiscount", { amount: formatMoney(v.previewDiscount) })}`
+    : "";
+  return i18n.t("mobile:checkout.voucher.discount", { off }) + cap + preview;
 }
 
 /** Voucher đã dùng / hết hạn / hết lượt / bị chặn cấp chiến dịch: ẩn khỏi ví đặt xe. */
-function isHidden(v: VoucherClaimResponse): boolean {
-  if (v.usedAt) return true;
-  if (v.endAt && new Date(v.endAt).getTime() < Date.now()) return true;
-  if (v.maxUsageCount > 0 && v.usageCount >= v.maxUsageCount) return true;
-  return Boolean(v.availabilityReasonCode);
+function isHidden(v: EligibleVoucherForBooking): boolean {
+  return !v.isEligible || v.isLegacyClaim === true || v.statusReasonCode === "LegacyClaim";
 }
 
 /** Lý do chưa áp dụng được (null = dùng được): sai loại xe hoặc chưa đến hạn. */
-function blockReason(
-  v: VoucherClaimResponse,
-  vehicleType: string | null | undefined,
-): "vehicle" | "upcoming" | null {
-  if (vehicleType && v.vehicleType !== "All" && v.vehicleType !== vehicleType) return "vehicle";
-  if (isUpcomingStart(v.startAt)) return "upcoming";
-  return null;
-}
-
 export default function CheckoutVoucherSheet({
   visible,
   vouchers,
   loading,
-  vehicleType,
   bottomInset,
   onSelect,
   onClose,
@@ -117,24 +105,15 @@ export default function CheckoutVoucherSheet({
               showsVerticalScrollIndicator={false}
               style={styles.listScroll}
             >
-              {visibleVouchers.map((v) => {
-                const reason = blockReason(v, vehicleType);
-                const ok = reason === null;
-                return (
+              {visibleVouchers.map((v) => (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityState={{ disabled: !ok }}
-                    disabled={!ok}
                     key={v.id}
-                    onPress={() => onSelect(v.code)}
-                    style={({ pressed }) => [
-                      styles.item,
-                      !ok && styles.itemDisabled,
-                      pressed && ok && styles.pressed,
-                    ]}
+                    onPress={() => onSelect(v)}
+                    style={({ pressed }) => [styles.item, pressed && styles.pressed]}
                   >
                     <View style={styles.itemIcon}>
-                      <TicketPercent color={ok ? p.brand : p.faint} size={17} strokeWidth={2} />
+                      <TicketPercent color={p.brand} size={17} strokeWidth={2} />
                     </View>
                     <View style={styles.itemBody}>
                       <AppText style={styles.code} numberOfLines={1}>
@@ -147,22 +126,12 @@ export default function CheckoutVoucherSheet({
                         {describe(v)}
                         {v.minOrderAmount ? t("mobile:checkout.voucher.minOrder", { amount: formatMoney(v.minOrderAmount) }) : ""}
                       </AppText>
-                      {!ok ? (
-                        <AppText style={styles.blocked}>
-                          {reason === "vehicle"
-                            ? t("mobile:checkout.voucher.blocked")
-                            : t("mobile:checkout.voucher.blockedUpcoming")}
-                        </AppText>
-                      ) : null}
                     </View>
-                    {ok ? (
-                      <View style={styles.usePill}>
-                        <AppText style={styles.useText}>{t("mobile:checkout.voucher.use")}</AppText>
-                      </View>
-                    ) : null}
+                    <View style={styles.usePill}>
+                      <AppText style={styles.useText}>{t("mobile:checkout.voucher.use")}</AppText>
+                    </View>
                   </Pressable>
-                );
-              })}
+              ))}
             </ScrollView>
           )}
         </View>
@@ -238,7 +207,6 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
       backgroundColor: p.surfaceSoft,
       padding: 12,
     },
-    itemDisabled: { opacity: 0.5 },
     itemIcon: {
       width: 36,
       height: 36,
@@ -257,7 +225,6 @@ const createStyles = (p: ReturnType<typeof useCheckoutTheme>["p"]) =>
     },
     name: { color: p.muted, fontFamily: checkoutFont.medium, fontSize: 10.5, marginTop: 1 },
     meta: { color: p.faint, fontFamily: checkoutFont.regular, fontSize: 9.5, marginTop: 2 },
-    blocked: { color: p.danger, fontFamily: checkoutFont.medium, fontSize: 9.5, marginTop: 2 },
     usePill: {
       borderRadius: 999,
       paddingHorizontal: 11,

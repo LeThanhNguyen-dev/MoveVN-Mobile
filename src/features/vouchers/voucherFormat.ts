@@ -107,7 +107,7 @@ export function formatVoucherDuration(ms: number): string {
   return parts.join(" ");
 }
 
-export type VoucherCardPhase = "active" | "upcoming" | "ended" | "used";
+export type VoucherCardPhase = "active" | "upcoming" | "ended" | "used" | "blocked";
 
 /**
  * Nhãn thời gian gọn trên thẻ — mirror web useVoucherTiming:

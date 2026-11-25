@@ -1,7 +1,7 @@
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { TicketPercent, Wallet } from "lucide-react-native";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import {
@@ -25,7 +25,7 @@ import PromotionDetailSheet, {
 import VoucherTicketCard, {
   type VoucherCardData,
 } from "@/features/vouchers/components/VoucherTicketCard";
-import { formatVoucherDateTime, isExpiringSoon, isUpcomingStart } from "@/features/vouchers/voucherFormat";
+import { formatVoucherDateTime, isUpcomingStart } from "@/features/vouchers/voucherFormat";
 import { getVoucherWallet } from "@/features/voucherClaims/services/voucherClaimService";
 import type {
   VoucherAvailabilityReasonCode,
@@ -33,7 +33,7 @@ import type {
 } from "@/features/voucherClaims/types";
 
 type DealsNav = NativeStackNavigationProp<DealsStackParamList>;
-type WalletFilter = "all" | "available" | "expiring";
+type WalletFilter = "all" | "available" | "upcoming" | "blocked";
 type WalletSort = "newest" | "ending" | "value";
 
 const SORT_OPTIONS: { value: WalletSort; labelKey: string }[] = [
@@ -47,23 +47,32 @@ const REASON_MESSAGE_KEYS: Record<string, string> = {
   CampaignPaused: "promo:wallet.reasonCampaignPaused",
   CampaignNotApproved: "promo:wallet.reasonCampaignNotApproved",
   NoParticipatingOwner: "promo:wallet.reasonNoParticipatingOwner",
+  LegacyClaim: "promo:wallet.reasonLegacyClaim",
+  SnapshotIncomplete: "promo:wallet.reasonSnapshotIncomplete",
+  PromotionMissing: "promo:wallet.reasonPromotionMissing",
+  UsageLimitReached: "promo:wallet.reasonUsageLimitReached",
 };
 
 /** Lý do campaign-level đã localize; null khi voucher không có vấn đề toàn chiến dịch. */
 function resolveReason(t: TFunction, voucher: VoucherClaimResponse): string | null {
+  const statusReasonCode = voucher.statusReasonCode ?? null;
+  if (statusReasonCode && REASON_MESSAGE_KEYS[statusReasonCode]) {
+    return t(REASON_MESSAGE_KEYS[statusReasonCode]);
+  }
   const code = (voucher.availabilityReasonCode ?? null) as VoucherAvailabilityReasonCode | null;
-  if (!code) return null;
+  if (!code) return voucher.status === "Blocked" ? t("promo:wallet.reasonUnavailable") : null;
   const key = REASON_MESSAGE_KEYS[code];
   return key ? t(key) : voucher.availabilityReason ?? t("promo:wallet.reasonUnavailable");
 }
 
 function isUsed(voucher: VoucherClaimResponse) {
-  return Boolean(voucher.usedAt);
+  return voucher.status === "Used" || Boolean(voucher.usedAt);
 }
 
 function isEnded(voucher: VoucherClaimResponse) {
-  if (!voucher.endAt) return false;
-  return new Date(voucher.endAt).getTime() < Date.now();
+  if (voucher.status === "ExpiredUnused") return true;
+  const endAt = voucher.snapshotEndAt ?? voucher.endAt;
+  return Boolean(endAt && new Date(endAt).getTime() < Date.now());
 }
 
 function isExhausted(voucher: VoucherClaimResponse) {
@@ -72,29 +81,46 @@ function isExhausted(voucher: VoucherClaimResponse) {
 
 /** Voucher hết hạn hoặc hết lượt (chưa dùng) → đưa về Lịch sử, không nằm trong ví chính. */
 function isInvalid(voucher: VoucherClaimResponse) {
-  return !isUsed(voucher) && (isEnded(voucher) || isExhausted(voucher));
+  if (voucher.status === "ExpiredUnused") return true;
+  if (isEnded(voucher)) return true;
+  return !isUsed(voucher) && isExhausted(voucher);
+}
+
+function isUpcoming(voucher: VoucherClaimResponse) {
+  if (voucher.status) return voucher.status === "Upcoming";
+  return isUpcomingStart(voucher.snapshotStartAt ?? voucher.startAt);
 }
 
 function toCardData(voucher: VoucherClaimResponse): VoucherCardData {
+  const discountType = voucher.snapshotDiscountType ?? voucher.discountType;
+  const discountValue = voucher.snapshotDiscountValue ?? voucher.discountValue;
+  const vehicleType = voucher.snapshotVehicleType ?? voucher.vehicleType;
+  const startAt = voucher.snapshotStartAt ?? voucher.startAt;
+  const endAt = voucher.snapshotEndAt ?? voucher.endAt;
+  const status = voucher.status === "Blocked"
+    ? "blocked"
+    : voucher.status === "Used"
+      ? "used"
+      : voucher.status === "ExpiredUnused"
+        ? "ended"
+        : voucher.status === "Upcoming" || isUpcomingStart(startAt)
+          ? "upcoming"
+          : "active";
   return {
     key: String(voucher.id),
     code: voucher.code,
     name: voucher.name,
     description: voucher.description,
-    discountType: voucher.discountType,
-    discountValue: voucher.discountValue,
-    maxDiscountAmount: voucher.maxDiscountAmount,
-    minOrderAmount: voucher.minOrderAmount,
-    vehicleType: voucher.vehicleType,
-    startAt: voucher.startAt,
-    endAt: voucher.endAt,
+    discountType,
+    discountValue,
+    maxDiscountAmount: voucher.snapshotMaxDiscountAmount ?? voucher.maxDiscountAmount,
+    minOrderAmount: voucher.snapshotMinOrderAmount ?? voucher.minOrderAmount,
+    vehicleType,
+    startAt,
+    endAt,
     usageCount: voucher.usageCount,
     maxUsageCount: voucher.maxUsageCount,
-    status: isEnded(voucher)
-      ? "ended"
-      : isUpcomingStart(voucher.startAt)
-        ? "upcoming"
-        : "active",
+    status,
     usedAt: voucher.usedAt,
   };
 }
@@ -113,13 +139,13 @@ function toDetailSlide(
     popupDescription: voucher.description ?? null,
     popupCtaLabel: i18n.t("promo:wallet.useNow"),
     promotionName: voucher.name,
-    discountType: voucher.discountType,
-    discountValue: voucher.discountValue,
-    vehicleType: voucher.vehicleType,
-    startAt: voucher.startAt,
-    endAt: voucher.endAt,
-    minOrderAmount: voucher.minOrderAmount,
-    maxDiscountAmount: voucher.maxDiscountAmount,
+    discountType: voucher.snapshotDiscountType ?? voucher.discountType,
+    discountValue: voucher.snapshotDiscountValue ?? voucher.discountValue,
+    vehicleType: voucher.snapshotVehicleType ?? voucher.vehicleType,
+    startAt: voucher.snapshotStartAt ?? voucher.startAt,
+    endAt: voucher.snapshotEndAt ?? voucher.endAt,
+    minOrderAmount: voucher.snapshotMinOrderAmount ?? voucher.minOrderAmount,
+    maxDiscountAmount: voucher.snapshotMaxDiscountAmount ?? voucher.maxDiscountAmount,
     usageCount: voucher.usageCount,
     maxUsageCount: voucher.maxUsageCount,
     ...extra,
@@ -135,11 +161,11 @@ type WalletCardProps = {
 function WalletCard({ voucher, onUseNow, onOpenDetail }: WalletCardProps) {
   const { t } = useTranslation();
   const noticeMessage = resolveReason(t, voucher);
-  const upcoming = isUpcomingStart(voucher.startAt);
+  const upcoming = isUpcoming(voucher);
   // Voucher đã nhận nhưng chưa tới ngày hiệu lực: khoá "Dùng ngay" và giải thích.
   const timingReason = upcoming
     ? t("promo:voucherCard.reasonNotStarted", {
-        datetime: formatVoucherDateTime(voucher.startAt) ?? "",
+        datetime: formatVoucherDateTime(voucher.snapshotStartAt ?? voucher.startAt) ?? "",
       })
     : null;
   const lockReason = timingReason ?? noticeMessage;
@@ -147,6 +173,7 @@ function WalletCard({ voucher, onUseNow, onOpenDetail }: WalletCardProps) {
   return (
     <VoucherTicketCard
       data={toCardData(voucher)}
+      statusLabel={voucher.status === "Blocked" ? t("promo:voucherCard.status.blocked") : null}
       onOpenDetail={onOpenDetail}
       action={{
         label: t("promo:wallet.useNow"),
@@ -190,33 +217,36 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
     }
   }, []);
 
-  useEffect(() => {
-    void fetchWallet();
-  }, [fetchWallet]);
+  useFocusEffect(
+    useCallback(() => {
+      void fetchWallet();
+    }, [fetchWallet]),
+  );
 
   /** Ví chỉ chứa voucher còn dùng được: chưa dùng, chưa hết hạn, chưa hết lượt. */
   const usable = useMemo(
-    () => vouchers.filter((v) => !isUsed(v) && !isInvalid(v)),
+    () => vouchers.filter((v) =>
+      v.statusReasonCode !== "LegacyClaim"
+      && !v.isLegacyClaim
+      && !isUsed(v)
+      && !isInvalid(v)),
     [vouchers],
   );
   const available = useMemo(
-    () => usable.filter((v) => !isUpcomingStart(v.startAt)),
+    () => usable.filter((v) => v.status === "Available" || (!v.status && !isUpcoming(v))),
     [usable],
   );
-  const expiring = useMemo(() => available.filter((v) => isExpiringSoon(v.endAt)), [available]);
+  const upcoming = useMemo(() => usable.filter(isUpcoming), [usable]);
+  const blocked = useMemo(() => usable.filter((v) => v.status === "Blocked"), [usable]);
 
   const filters = useMemo(
     () => [
       { value: "all", label: t("promo:wallet.filterAll"), count: usable.length },
       { value: "available", label: t("promo:wallet.filterAvailable"), count: available.length },
-      {
-        value: "expiring",
-        label: t("promo:wallet.filterExpiring"),
-        count: expiring.length,
-        tone: "amber" as const,
-      },
+      { value: "upcoming", label: t("promo:wallet.filterUpcoming"), count: upcoming.length },
+      { value: "blocked", label: t("promo:wallet.filterBlocked"), count: blocked.length },
     ],
-    [usable.length, available.length, expiring.length, t],
+    [usable.length, available.length, upcoming.length, blocked.length, t],
   );
 
   const sortOptions = useMemo(
@@ -227,8 +257,9 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
   const displayed = useMemo(() => {
     const query = search.trim().toLowerCase();
     const result = usable.filter((voucher) => {
-      if (filter === "available" && isUpcomingStart(voucher.startAt)) return false;
-      if (filter === "expiring" && (!isExpiringSoon(voucher.endAt) || isUpcomingStart(voucher.startAt))) return false;
+      if (filter === "available" && !available.includes(voucher)) return false;
+      if (filter === "upcoming" && !upcoming.includes(voucher)) return false;
+      if (filter === "blocked" && voucher.status !== "Blocked") return false;
       if (!query) return true;
       return (
         voucher.name.toLowerCase().includes(query) ||
@@ -238,23 +269,28 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
     });
 
     return result.sort((first, second) => {
-      // Usable-now first, upcoming after; the chosen sort orders within each group.
-      const firstUpcoming = isUpcomingStart(first.startAt);
-      const secondUpcoming = isUpcomingStart(second.startAt);
+      const firstActive = first.status === "Available" || first.status === "Upcoming";
+      const secondActive = second.status === "Available" || second.status === "Upcoming";
+      if (firstActive !== secondActive) return firstActive ? -1 : 1;
+      const firstUpcoming = isUpcoming(first);
+      const secondUpcoming = isUpcoming(second);
       if (firstUpcoming !== secondUpcoming) return firstUpcoming ? 1 : -1;
       if (sort === "value") return second.discountValue - first.discountValue;
       if (sort === "ending") {
-        const firstEnd = first.endAt ? new Date(first.endAt).getTime() : Number.MAX_SAFE_INTEGER;
-        const secondEnd = second.endAt ? new Date(second.endAt).getTime() : Number.MAX_SAFE_INTEGER;
-        return firstEnd - secondEnd;
+        const firstEnd = first.snapshotEndAt ?? first.endAt;
+        const secondEnd = second.snapshotEndAt ?? second.endAt;
+        const firstEndTime = firstEnd ? new Date(firstEnd).getTime() : Number.MAX_SAFE_INTEGER;
+        const secondEndTime = secondEnd ? new Date(secondEnd).getTime() : Number.MAX_SAFE_INTEGER;
+        return firstEndTime - secondEndTime;
       }
       return new Date(second.claimedAt).getTime() - new Date(first.claimedAt).getTime();
     });
-  }, [usable, filter, sort, search]);
+  }, [usable, available, upcoming, filter, sort, search]);
 
   const filterDesc = useMemo(() => {
     if (filter === "available") return t("promo:wallet.hintAvailable");
-    if (filter === "expiring") return t("promo:wallet.hintExpiring");
+    if (filter === "upcoming") return t("promo:wallet.hintUpcoming");
+    if (filter === "blocked") return t("promo:wallet.hintBlocked");
     return t("promo:wallet.hintAll");
   }, [filter, t]);
 
@@ -369,9 +405,9 @@ export default function VoucherWalletScreen({ onUseNow }: { onUseNow?: () => voi
             ) : (
               <View style={styles.ticketList}>
                 {displayed.map((voucher) => {
-                  const timingWarning = isUpcomingStart(voucher.startAt)
+                  const timingWarning = isUpcoming(voucher)
                     ? t("promo:voucherCard.reasonNotStarted", {
-                        datetime: formatVoucherDateTime(voucher.startAt) ?? "",
+                        datetime: formatVoucherDateTime(voucher.snapshotStartAt ?? voucher.startAt) ?? "",
                       })
                     : null;
                   const warning = timingWarning ?? resolveReason(t, voucher);
