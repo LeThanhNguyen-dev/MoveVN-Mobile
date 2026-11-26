@@ -1,5 +1,5 @@
 import { apiClient } from "@/services/apiClient";
-import type { VoucherHuntItem, VoucherClaimResponse } from "../types";
+import type { EligibleVoucherForBooking, VoucherHuntItem, VoucherClaimResponse } from "../types";
 
 const BASE = "/api/voucher-claims";
 
@@ -16,4 +16,11 @@ export async function getVoucherWallet() {
 export async function claimVoucher(promotionId: number) {
   const res = await apiClient.post<any>(`${BASE}/${promotionId}/claim`);
   return res.data.data as VoucherClaimResponse;
+}
+
+export async function getEligibleVouchersForBooking(vehicleId: number, startDate: string, endDate: string) {
+  const res = await apiClient.get<any>(`${BASE}/eligible-for-booking`, {
+    params: { vehicleId, startDate, endDate },
+  });
+  return res.data.data as EligibleVoucherForBooking[];
 }
