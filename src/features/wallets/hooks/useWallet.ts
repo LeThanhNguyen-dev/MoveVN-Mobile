@@ -408,8 +408,9 @@ export function useWallet() {
     }
   }
 
-  async function handleSaveBank() {
-    if (bankOtp.trim().length < 6) {
+  async function handleSaveBank(otp = bankOtp) {
+    const code = otp.trim();
+    if (code.length < 6) {
       showAppAlert(
         i18n.t("mobile:wallet.alerts.missingOtpTitle"),
         i18n.t("mobile:wallet.alerts.otpRequired"),
@@ -421,7 +422,7 @@ export function useWallet() {
     try {
       const picked = VIETNAM_BANKS.find((b) => b.name === bankName.trim());
       await verifyBankAccountOtp({
-        otp: bankOtp.trim(),
+        otp: code,
         bankAccountNumber: accountNumber.trim(),
         bankName: bankName.trim(),
         bankAccountHolderName: holderName.trim(),
