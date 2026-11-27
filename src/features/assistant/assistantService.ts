@@ -273,14 +273,15 @@ export function assistantError(code?: string | null, locale: AssistantLocale = g
 const ASSISTANT_HTTP_ERRORS = [400, 401, 403, 404, 413, 422];
 
 /** Show only allowlisted diagnostics; upstream bodies can include implementation details. */
-export function assistantFailure(error: unknown, fallback: string, locale: AssistantLocale = getAssistantLocale()): string {
+export function assistantFailure(error: unknown, fallback: string, locale: AssistantLocale = getAssistantLocale(), contextual = false): string {
   const value = error as { response?: { status?: number; data?: { code?: unknown; message?: unknown } }; message?: string };
   const code = value?.response?.data?.code;
   if (typeof code === "string" && /^(AI_|ASSISTANT_|queue_)/.test(code)) return assistantError(code, locale);
   if (value?.message === "AI_INVALID_RESPONSE") return assistantError(value.message, locale);
   const status = value?.response?.status ?? 0;
   const serverMessage = value?.response?.data?.message;
-  if ((status === 400 || status === 422) && typeof serverMessage === "string" && serverMessage.trim() !== "") return serverMessage.trim();
+  if (contextual && (status === 400 || status === 409 || status === 422) && typeof serverMessage === "string" && serverMessage.trim() !== "") return serverMessage.trim();
+  if (contextual && [400, 409, 422].includes(status)) return fallback;
   const messages: Record<number, string> = {
     400: "Yêu cầu chưa hợp lệ. Bạn kiểm tra nội dung rồi thử lại nhé.",
     401: "Phiên đăng nhập đã hết hạn. Bạn đăng nhập lại để tiếp tục nhé.",

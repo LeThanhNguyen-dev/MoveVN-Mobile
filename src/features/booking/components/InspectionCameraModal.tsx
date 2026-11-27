@@ -1,5 +1,6 @@
 import type { ComponentRef } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import * as ImagePicker from "expo-image-picker";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, AppState, Image, Linking, Modal, PixelRatio, Platform, Pressable, StyleSheet, Text, View } from "react-native";
@@ -10,11 +11,10 @@ import { inspectionLabel, inspectionWatermark, type InspectionType } from "../bo
 import { deleteInspectionPhoto, resizeCameraPhoto, stampedInspectionPhoto, type CapturedInspectionPhoto } from "../inspectionPhoto";
 import { getServerTimeISO } from "../utils/serverTime";
 
-export type RawPhoto = { uri: string; width: number; height: number; capturedAt: string };
+export type RawPhoto = { uri: string; width: number; height: number; capturedAt: string; source?: "camera" | "library" };
 
-// No image picker or library entry point is used in this capture flow.
-export default function InspectionCameraModal({ bookingCode, type, onCaptured, onClose }: {
-  bookingCode: string; type: InspectionType; onCaptured: (photo: CapturedInspectionPhoto) => void; onClose: () => void;
+export default function InspectionCameraModal({ bookingCode, type, onCaptured, onClose, guidance }: {
+  guidance?: string; bookingCode: string; type: InspectionType; onCaptured: (photo: CapturedInspectionPhoto) => void; onClose: () => void;
 }) {
   const { t } = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
@@ -67,6 +67,24 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
     }
   }
 
+  async function choosePhoto() {
+    if (captureLock.current) return;
+    captureLock.current = true; setBusy(true); setError(""); setLoaded(false); setLaidOut(false);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.9 });
+      if (result.canceled) { setBusy(false); captureLock.current = false; return; }
+      const asset = result.assets[0];
+      if (!asset) throw new Error("No photo selected");
+      const resized = await resizeCameraPhoto(asset.uri, asset.width, asset.height);
+      if (!track(resized.uri)) return;
+      const capturedAt = await getServerTimeISO();
+      if (alive.current) setRaw({ ...resized, capturedAt, source: "library" });
+    } catch {
+      if (alive.current) { setError(t("mobile:inspection.camera.imageLoadError")); setBusy(false); }
+      captureLock.current = false;
+    }
+  }
+
   useEffect(() => {
     if (!raw || !loaded || !laidOut) return;
     let cancelled = false;
@@ -82,7 +100,7 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
           const uri = await captureRef(stampView, { format: "jpg", quality: 0.9, result: "tmpfile", ...size, useRenderInContext: Platform.OS === "ios" });
           if (!track(uri)) return;
           const stampedPhoto = stampedInspectionPhoto(uri, raw.capturedAt);
-          const photo = stampedPhoto;
+          const photo = { ...stampedPhoto, source: raw.source ?? "camera" };
           if (!cancelled) setStamped(photo);
         } catch {
           if (!cancelled && alive.current) setError(t("mobile:inspection.camera.watermarkError"));
@@ -120,6 +138,7 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
       <View style={styles.header}><Text style={styles.title}>{inspectionLabel(type)}</Text>
         <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:inspection.camera.closeAria")} disabled={busy} onPress={onClose} style={styles.close}><X color="#fff" size={24} /></Pressable>
       </View>
+      {guidance ? <Text style={[styles.copy, { padding: 12 }]}>{guidance}</Text> : null}
       {Platform.OS === "web" ? <View style={styles.center}><Text style={styles.copy}>{t("mobile:inspection.camera.webOnly")}</Text></View>
         : !raw && !permission ? <View style={styles.center}><ActivityIndicator color="#fff" /></View>
         : !raw && !permission?.granted ? <View style={styles.center}>
@@ -142,6 +161,7 @@ export default function InspectionCameraModal({ bookingCode, type, onCaptured, o
           onMountError={() => { setError(t("mobile:inspection.camera.mountError")); setReady(false); }} /> : <View style={styles.center}><Text style={styles.copy}>{t("mobile:inspection.camera.paused")}</Text></View>}
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       <View style={styles.footer}>
+        {!raw ? <Pressable accessibilityRole="button" disabled={busy} style={styles.action} onPress={() => void choosePhoto()}><Text style={styles.actionText}>{t("bookingGuide:choose")}</Text></Pressable> : null}
         <Text style={styles.copy}>{t("mobile:inspection.camera.footer")}</Text>
         {raw ? <View style={styles.buttons}>
           <Pressable accessibilityRole="button" disabled={busy} style={styles.action} onPress={retake}><Text style={styles.actionText}>{t("mobile:inspection.camera.retake")}</Text></Pressable>

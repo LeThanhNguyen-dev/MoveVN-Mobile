@@ -1,13 +1,14 @@
 {
   "expo": {
     "name": "MoveVN Mobile",
-    "slug": "movevn-mobile",
+    "slug": "movevn",
     "scheme": "movevn",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.movevn.mobile",
       "supportsTablet": true
     },
     "android": {
@@ -29,9 +30,9 @@
     "extra": {
       "remotePushEnabled": false,
       "eas": {
-        "projectId": "a09efa7a-70be-4d12-b3f3-ec6c17f83f1d"
+        "projectId": "3d24d115-5d4b-432e-b9ad-12df251dcc6f"
       }
     },
-    "owner": "tdinh7967s-team"
+    "owner": "movevnmobile"
   }
 }

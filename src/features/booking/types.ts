@@ -13,6 +13,7 @@ export interface BookingResponse {
   customerName?: string;
   vehicleId: number;
   vehicleName?: string;
+  vehicleType?: string | null;
   vehicleImage?: string;
   ownerId: number;
   ownerName?: string;
@@ -33,6 +34,7 @@ export interface BookingResponse {
   escrowHeldAt?: string;
   escrowSettledAt?: string;
   completedAt?: string | null;
+  returnedAt?: string | null;
   paymentDueAt?: string;
   pickupAddress: string;
   returnAddress?: string;
@@ -122,6 +124,7 @@ export interface CheckInOutImageResponse {
   inspectionId?: number;
   imageUrl: string;
   imageType: string;
+  photoCategory?: string | null;
   uploadedBy: number;
   createdAt: string;
 }
@@ -180,7 +183,7 @@ export interface BookingSurchargeTermResponse {
   description?: string;
   calculationMethod: string;
   unitPrice: number;
-  includedKm?: number;
+  includedKm?: number | null;
   allowanceScope?: string;
   lateGraceHours?: number;
   lateDayThresholdHours?: number;

@@ -412,6 +412,8 @@
     "revisionReasonPlaceholder": "What needs to be adjusted...",
     "revisionSubmit": "Send redo request",
     "camera": {
+      "starting": "Opening camera…",
+      "retry": "Retry camera",
       "title": "Capture inspection photo",
       "button": "Take vehicle photos",
       "httpsError": "The camera requires an HTTPS connection and camera permission. Please open on a device with a camera.",

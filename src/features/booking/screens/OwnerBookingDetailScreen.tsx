@@ -221,7 +221,7 @@ export default function OwnerBookingDetailScreen({
     ? rentalProgress(booking.startDate, booking.endDate)
     : null;
   const progressPercent = progress ? Math.min(100, Math.max(0, Math.round((progress.elapsedDays / progress.totalDays) * 100))) : 0;
-  const remainingAmount = Math.max(0, booking.totalAmount - booking.depositAmount);
+  const remainingAmount = Math.max(0, booking.totalAmount - booking.escrowAmount);
   const activeHandoverReport = handover === "CheckIn" ? checkInReport : checkOutReport;
 
   const checkInActions = <>

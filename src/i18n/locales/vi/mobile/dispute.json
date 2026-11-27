@@ -55,6 +55,8 @@
       "depositScope": "Tiền cọc booking",
       "chooseImages": "Chọn ảnh từ thư viện",
       "validationRequired": "Chọn booking và nhập mô tả sự việc.",
+      "trafficFineEvidenceRequired": "Cần ít nhất 1 ảnh chứng từ (tối đa 6) cho hồ sơ phạt nguội.",
+      "ownerReceiptRequired": "Cần ảnh biên lai chủ xe đã nộp phạt (tối đa 6).",
       "confirmTrafficFine": "Kiểm tra thông báo, biển số, thời điểm vi phạm và ảnh chứng từ. Hồ sơ được gửi để xác minh."
     },
     "selectBooking": {
@@ -62,6 +64,7 @@
       "searchPlaceholder": "Tìm theo mã booking...",
       "hintTrafficFine": "Booking đã/đang thuê đều được chấp nhận cho phạt nguội.",
       "hintCompleted": "Chỉ booking đã hoàn tất / đã trả xe.",
+      "hintDamageWindow": "Chỉ booking hoàn tất trong 48 giờ gần nhất (quy định tranh chấp hư hại).",
       "count": "{{count}} booking",
       "empty": "Không có booking phù hợp.",
       "picked": "✓ Đang chọn"

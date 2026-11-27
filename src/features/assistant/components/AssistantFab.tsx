@@ -59,6 +59,7 @@ export default function AssistantFab({
   const committed = useRef(useAssistantUi.getState().fabPos ?? { x: 0, y: 0 });
   const pan = useRef(new Animated.ValueXY(committed.current)).current;
   const dragStart = useRef({ x: 0, y: 0 });
+  const pressScale = useRef(new Animated.Value(1)).current;
 
   const responder = useRef(
     PanResponder.create({
@@ -95,14 +96,18 @@ export default function AssistantFab({
           style={[styles.fabWrap, { transform: pan.getTranslateTransform() }]}
           {...responder.panHandlers}
         >
-          <Pressable
-            accessibilityLabel="Mở trợ lý MoveVN"
-            accessibilityRole="button"
-            onPress={() => setChatOpen(true)}
-            style={styles.fab}
-          >
-            <Bot color="#fff" size={26} />
-          </Pressable>
+          <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+            <Pressable
+              accessibilityLabel="Mở trợ lý MoveVN"
+              accessibilityRole="button"
+              onPress={() => setChatOpen(true)}
+              onPressIn={() => Animated.spring(pressScale, { toValue: 0.9, useNativeDriver: true, speed: 40, bounciness: 0 }).start()}
+              onPressOut={() => Animated.spring(pressScale, { toValue: 1, useNativeDriver: true, speed: 40, bounciness: 10 }).start()}
+              style={styles.fab}
+            >
+              <Bot color="#fff" size={26} />
+            </Pressable>
+          </Animated.View>
           <Pressable
             accessibilityLabel="Ẩn trợ lý MoveVN"
             accessibilityRole="button"

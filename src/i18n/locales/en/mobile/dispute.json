@@ -55,6 +55,8 @@
       "depositScope": "Booking deposit",
       "chooseImages": "Choose photos from library",
       "validationRequired": "Select a booking and describe the incident.",
+      "trafficFineEvidenceRequired": "At least 1 document photo (max 6) is required for a traffic fine.",
+      "ownerReceiptRequired": "Owner payment receipt photos are required (max 6).",
       "confirmTrafficFine": "Check the notice, license plate, violation time and document photos. The case is submitted for verification."
     },
     "selectBooking": {
@@ -62,6 +64,7 @@
       "searchPlaceholder": "Search by booking code...",
       "hintTrafficFine": "Ongoing and past rentals are both accepted for traffic fines.",
       "hintCompleted": "Completed / returned bookings only.",
+      "hintDamageWindow": "Only bookings completed within the last 48 hours (damage dispute rule).",
       "count": "{{count}} bookings",
       "empty": "No matching bookings.",
       "picked": "✓ Selected"

@@ -1,3 +1,4 @@
+import PhotoPreview from "@/components/PhotoPreview";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Modal, ScrollView, Text, View } from "react-native";
@@ -80,7 +81,7 @@ export default function ReportBookingViolation({ bookingId, bookingCode }: { boo
             {options.map(item => <BookingButton key={item.code} secondary title={`${reason === item.code ? "✓ " : ""}${item.label}`} disabled={busy} onPress={() => setReason(item.code)} />)}
             <BookingField label={t("mobile:inspection.violation.descriptionLabel")} value={description} onChangeText={setDescription} multiline editable={!busy} />
             <BookingButton secondary title={t("mobile:inspection.violation.capture", { selected: evidence.length })} disabled={busy || evidence.length >= 5} onPress={() => void capture()} />
-            {evidence.map((url, index) => <View key={url} style={{ gap: 6 }}><Image source={{ uri: url }} style={{ width: 120, height: 120 }} /><BookingButton secondary title={t("mobile:inspection.violation.removeEvidence", { index: index + 1 })} disabled={busy} onPress={() => setEvidence(current => current.filter(value => value !== url))} /></View>)}
+            <PhotoPreview photos={evidence.map(uri => ({ uri }))} disabled={busy} onRemove={index => setEvidence(current => current.filter((_, i) => i !== index))} />
             <BookingButton title={t("mobile:inspection.violation.submit")} busy={busy} disabled={!reason || description.trim().length < 20} onPress={submit} />
           </>}
           {!!error && <Text accessibilityRole="alert" style={{ color: theme.danger, fontSize: 11.5, lineHeight: 16 }}>{error}</Text>}

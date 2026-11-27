@@ -15,6 +15,7 @@ type View = { name: "list" } | { name: "detail"; id: number } | { name: "create"
 export default function DisputesScreen({
   role,
   initialCreate,
+  initialDetailId,
   onConsumedInitial,
   onBack,
   onRouteChange,
@@ -22,13 +23,14 @@ export default function DisputesScreen({
 }: {
   role: "Customer" | "Owner";
   initialCreate?: DisputeCreatePrefill | null;
+  initialDetailId?: number | null;
   onConsumedInitial?: () => void;
   onBack: () => void;
   onRouteChange?: (view: View["name"]) => void;
   onExit?: () => void;
 }) {
   const [view, setView] = useState<View>(() =>
-    initialCreate ? { name: "create" } : { name: "list" },
+    initialDetailId ? { name: "detail", id: initialDetailId } : initialCreate ? { name: "create" } : { name: "list" },
   );
   const [prefill, setPrefill] = useState<DisputeCreatePrefill | null>(initialCreate ?? null);
   // Chốt chế độ deep-link lúc mount — tránh đổi luồng giữa chừng khi prefill được consume.

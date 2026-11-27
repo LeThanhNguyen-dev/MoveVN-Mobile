@@ -10,9 +10,12 @@ export function inspectionBalance(booking: BookingResponse, report: InspectionRe
 export function mileagePreview(booking: BookingResponse, initialKm: number | undefined, finalKm: string) {
   const term = booking.surchargeTerms?.find(t => t.feeType === "ExcessMileage");
   if (!term) return null;
-  if (initialKm == null || !/^\d+$/.test(finalKm.trim()) || Number(finalKm) < initialKm || Number(finalKm) > 2147483647) return { valid: false as const };
-  const included = (term.includedKm ?? 0) * (term.allowanceScope === "PerDay" ? Math.max(booking.totalDays, 1) : 1);
+  if (initialKm == null || !Number.isSafeInteger(initialKm) || initialKm < 0
+    || !/^\d+$/.test(finalKm.trim()) || Number(finalKm) < initialKm || Number(finalKm) > 2147483647
+    || term.calculationMethod !== "PerKm" || term.includedKm == null || term.includedKm < 0
+    || !Number.isFinite(term.unitPrice) || term.unitPrice < 0) return { valid: false as const };
+  const included = term.includedKm * (term.allowanceScope === "PerDay" ? Math.max(booking.totalDays, 1) : 1);
   const travelled = Number(finalKm) - initialKm;
   const excess = Math.max(travelled - included, 0);
-  return { valid: true as const, included, travelled, excess, unitPrice: term.unitPrice, fee: Math.round(Math.min(excess * term.unitPrice, term.maxAmount ?? Infinity)) };
+  return { valid: true as const, included, travelled, excess, unitPrice: term.unitPrice, fee: Math.round(Math.min(excess * term.unitPrice, Math.max(term.maxAmount ?? Infinity, 0))) };
 }

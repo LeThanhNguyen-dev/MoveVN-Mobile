@@ -1,18 +1,16 @@
+import { PhotoViewer } from "@/components/PhotoPreview";
 import { Camera, ClipboardCheck, Fuel, Gauge, ShieldCheck, TriangleAlert } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/theme/useTheme";
 import type { BookingResponse, InspectionReportResponse } from "../types";
 import { formatVietnamDateTime } from "../bookingDisplay";
-import { inspectionImageUrl } from "../inspectionImageUrl";
 import CheckoutSummary from "./CheckoutSummary";
 import InspectionFinancialSummary from "./InspectionFinancialSummary";
 import InspectionPdfButton from "./InspectionPdfButton";
 import InspectionPhoto from "./InspectionPhoto";
 import { DetailCard, DetailDivider, DetailNotice, DetailPill, DetailSectionHeader, DetailStat } from "./detail/BookingDetailUI";
-import { BookingButton } from "./BookingControls";
 
 export default function InspectionReportCard({ booking, report }: { booking?: BookingResponse; report: InspectionReportResponse }) {
   const { t } = useTranslation();
@@ -72,18 +70,14 @@ export default function InspectionReportCard({ booking, report }: { booking?: Bo
           onPress={() => setSelected(photo.imageUrl)}
           style={styles.photo}
         >
+          <Text style={{ color: theme.muted, marginBottom: 4 }}>{t(`bookingGuide:labels.${photo.photoCategory ?? "Other"}`)}</Text>
           <InspectionPhoto key={photo.imageUrl} uri={photo.imageUrl} label={t("booking:inspection.gallery.alt", { index: index + 1 })} />
         </Pressable>
       ))}
     </View>
     <Text style={[styles.hint, { color: theme.muted }]}>{t("mobile:inspection.report.photosHint")}</Text>
 
-    {selected ? <Modal visible animationType="fade" onRequestClose={() => setSelected(null)}>
-      <SafeAreaView style={styles.viewer}>
-        <Image accessibilityLabel={t("mobile:inspection.report.photoAlt")} source={{ uri: inspectionImageUrl(selected) }} resizeMode="contain" style={styles.fullPhoto} />
-        <View style={styles.viewerActions}><BookingButton title={t("common:imagePreview.close")} onPress={() => setSelected(null)} /></View>
-      </SafeAreaView>
-    </Modal> : null}
+    {selected ? <PhotoViewer uri={selected} onClose={() => setSelected(null)} /> : null}
   </DetailCard>;
 }
 

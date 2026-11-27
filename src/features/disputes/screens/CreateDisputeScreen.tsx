@@ -1,3 +1,4 @@
+import PhotoPreview from "@/components/PhotoPreview";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -16,6 +17,7 @@ import SelectDisputeBookingScreen from "@/features/disputes/screens/SelectDisput
 import { formatDateTime, formatMoney } from "@/features/booking/utils/format";
 import BookingStatusBadge from "@/features/booking/components/BookingStatusBadge";
 import TrafficFineCreateFields, {
+  canSubmitDispute,
   emptyTrafficFineForm,
   toCreateTrafficFineRequest,
   validateTrafficFineForm,
@@ -221,6 +223,16 @@ export default function CreateDisputeScreen({
     }
   }
 
+  const canSubmit = canSubmitDispute({
+    submitting,
+    bookingId,
+    description,
+    reportType,
+    evidenceCount: evidence.length,
+    paymentMode: fineForm.paymentMode,
+    ownerReceiptCount: ownerReceipts.length,
+  });
+
   if (picking) {
     return (
       <SelectDisputeBookingScreen
@@ -334,16 +346,14 @@ export default function CreateDisputeScreen({
       <Pressable disabled={submitting} onPress={() => void pickImages("evidence")} style={styles.pickButton}>
         <Text style={styles.pickText}>{t("mobile:dispute.create.chooseImages")}</Text>
       </Pressable>
-      {evidence.map((item) => (
-        <View key={item.id} style={styles.fileRow}>
-          <Text numberOfLines={1} style={styles.fileName}>
-            {item.name}
-          </Text>
-          <Pressable onPress={() => setEvidence((prev) => prev.filter((f) => f.id !== item.id))}>
-            <Text style={styles.removeText}>{t("mobile:dispute.detail.removeFile")}</Text>
-          </Pressable>
-        </View>
-      ))}
+      <PhotoPreview photos={evidence} disabled={submitting} onRemove={index => setEvidence(prev => prev.filter((_, i) => i !== index))} />
+
+      {reportType === "TrafficFine" && evidence.length < 1 ? (
+        <Text style={styles.warn}>{t("mobile:dispute.create.trafficFineEvidenceRequired")}</Text>
+      ) : null}
+      {reportType === "TrafficFine" && fineForm.paymentMode === "ReimburseOwner" && ownerReceipts.length < 1 ? (
+        <Text style={styles.warn}>{t("mobile:dispute.create.ownerReceiptRequired")}</Text>
+      ) : null}
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.actions}>
@@ -351,9 +361,9 @@ export default function CreateDisputeScreen({
           <Text style={styles.ghostText}>{t("common:cancel")}</Text>
         </Pressable>
         <Pressable
-          disabled={submitting || !bookingId || !description.trim()}
+          disabled={!canSubmit}
           onPress={() => void submit()}
-          style={[styles.primaryButton, (submitting || !bookingId || !description.trim()) && styles.disabled]}
+          style={[styles.primaryButton, !canSubmit && styles.disabled]}
         >
           {submitting ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>{t("disputes:create.submit")}</Text>}
         </Pressable>

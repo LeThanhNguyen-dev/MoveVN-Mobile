@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
+import Constants from "expo-constants";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { getGpsSession, setGpsSharingConsent } from "./gpsService";
@@ -217,11 +218,16 @@ export function useGpsPublisher() {
       await setActivePublishTarget(bookingId);
 
       let backgroundGranted = false;
-      if (Platform.OS !== "web") {
+      if (Platform.OS !== "web" && Constants.executionEnvironment !== "storeClient") {
         // Android 10+: "Cho phép mọi lúc"; bắt buộc để dịch vụ nền đọc GPS khi khoá máy.
-        const background = await Location.requestBackgroundPermissionsAsync();
+        try {
+          const background = await Location.requestBackgroundPermissionsAsync();
+          backgroundGranted = background.granted;
+        } catch {
+          // Background access may be unavailable in this build; keep foreground GPS.
+          backgroundGranted = false;
+        }
         if (cancelled) return;
-        backgroundGranted = background.granted;
       }
 
       if (backgroundGranted) {
@@ -258,7 +264,10 @@ export function useGpsPublisher() {
       } catch {
         // Không lấy được vị trí tức thời: dịch vụ nền sẽ gửi điểm đầu sau vài giây.
       }
-    })();
+    })().catch(() => {
+      if (cancelled) return;
+      useGpsStore.getState().setPublishError(i18n.t("mobile:gps.publisher.startFailed"));
+    });
 
     const retryTimer = setInterval(() => {
       const store = useGpsStore.getState();

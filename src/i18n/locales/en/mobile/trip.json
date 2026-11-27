@@ -193,7 +193,7 @@
     "display": {
       "checkIn": "Check-in · Pickup",
       "checkOut": "Check-out · Return",
-      "photoCount": "Take 1 to 12 vehicle photos.",
+      "photoCount": "Take 1 to 20 vehicle photos.",
       "damageDescription": "Please describe the vehicle damage."
     }
   }

@@ -1,3 +1,6 @@
+import InspectionGuide from "../components/InspectionGuide";
+import { inspectionAngles, missingInspectionAngles, type PhotoCategory } from "../inspectionGuide";
+import { PhotoViewer } from "@/components/PhotoPreview";
 import CheckoutSurchargePicker from "../components/CheckoutSurchargePicker";
 import InspectionPhoto from "../components/InspectionPhoto";
 import { appendSurcharges, validateSurchargeSelection } from "../checkoutSurcharges";
@@ -39,6 +42,9 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
   const [photos, setPhotos] = useState<CapturedInspectionPhoto[]>([]);
   const photoFiles = useRef<CapturedInspectionPhoto[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const captureTarget = useRef<{ category: PhotoCategory; replaceId?: string }>({ category: "Other" });
+  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
+  function openCamera(category: PhotoCategory, replaceId?: string) { captureTarget.current = { category, replaceId }; setCameraOpen(true); }
   const [busy, setBusy] = useState(false);
   const saveLock = useRef(false);
   const alive = useRef(true);
@@ -64,8 +70,13 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
   });
 
   function addPhoto(photo: CapturedInspectionPhoto) {
-    if (!alive.current || photoFiles.current.length >= MAX_INSPECTION_PHOTOS) { deleteInspectionPhoto(photo.uri); return; }
-    photoFiles.current = [...photoFiles.current, photo]; setPhotos(photoFiles.current); setError("");
+    const { category, replaceId } = captureTarget.current;
+    const old = photoFiles.current.find(p => p.id === replaceId);
+    if (!alive.current || (!old && photoFiles.current.length >= MAX_INSPECTION_PHOTOS)) { deleteInspectionPhoto(photo.uri); return; }
+    const next = { ...photo, photoCategory: category };
+    photoFiles.current = old ? photoFiles.current.map(p => p.id === old.id ? next : p) : [...photoFiles.current, next];
+    setPhotos(photoFiles.current); setError("");
+    if (old && old.uri !== photo.uri) deleteInspectionPhoto(old.uri);
   }
   function removePhoto(photo: CapturedInspectionPhoto) {
     deleteInspectionPhoto(photo.uri);
@@ -79,9 +90,17 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
     photoFiles.current = photoFiles.current.filter((item) => item.id !== photo.id); setPhotos(photoFiles.current);
   }
 
-  async function submit() {
+  async function submit(allowMissing = false) {
     if (saveLock.current) return;
     if (validation) { setError(validation); return; }
+    const missing = missingInspectionAngles(booking.vehicleType, photos);
+    if (!allowMissing && missing.length) {
+      showAppAlert(t("bookingGuide:missingTitle", { count: missing.length }), t("bookingGuide:missingMessage", { angles: missing.map(angle => t(`bookingGuide:labels.${angle}`)).join(", ") }), [
+        { text: t("bookingGuide:supplement"), style: "cancel" },
+        { text: t("bookingGuide:sendAnyway"), onPress: () => void submit(true) },
+      ]);
+      return;
+    }
     saveLock.current = true; setBusy(true); setError("");
     try {
       validateCheckoutKm(odometer, type === "CheckOut" ? reports.find(r => r.type === "CheckIn")?.odometerKm : undefined);
@@ -157,10 +176,15 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
 
       <DetailCard>
         <DetailSectionHeader title={t("mobile:inspection.form.photosSectionTitle", { selected: photos.length, total: MAX_INSPECTION_PHOTOS })} subtitle={t("mobile:inspection.form.photosSectionSubtitle")} />
-        <Text style={styles.intro}>{t("mobile:inspection.form.photosIntro")}</Text>
+        <InspectionGuide vehicleType={booking.vehicleType} photos={photos} disabled={busy} onRemove={removePhoto}
+          references={type === "CheckOut" ? reports.find(r => r.type === "CheckIn")?.images : []} onCapture={openCamera} />
+        {damageNoted ? <Text style={styles.intro}>{t("bookingGuide:damageHint")}</Text> : null}
         <View style={styles.photos}>
-          {photos.map((photo, index) => <View key={photo.id} style={styles.photo}>
-            <InspectionPhoto key={photo.uri} uri={photo.uri} label={t("mobile:inspection.form.photoAlt", { index: index + 1 })} />
+          {photos.filter(photo => !inspectionAngles(booking.vehicleType).some(angle => angle === photo.photoCategory)).map((photo, index) => <View key={photo.id} style={styles.photo}>
+            <Text style={styles.fieldLabel}>{t(`bookingGuide:labels.${photo.photoCategory ?? "Other"}`)}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("bookingGuide:view", { index: index + 1 })} onPress={() => setViewingPhoto(photo.uri)}>
+              <InspectionPhoto key={photo.uri} uri={photo.uri} label={t("mobile:inspection.form.photoAlt", { index: index + 1 })} />
+            </Pressable>
             <Text style={styles.photoTime}>{formatVietnamDateTime(photo.capturedAt)}</Text>
             <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:inspection.form.removePhotoAria", { index: index + 1 })} disabled={busy} onPress={() => removePhoto(photo)} style={styles.remove}>
               <Text style={styles.removeText}>{t("mobile:inspection.form.removePhoto")}</Text>
@@ -171,7 +195,7 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
           accessibilityRole="button"
           accessibilityState={{ disabled: busy || photos.length >= MAX_INSPECTION_PHOTOS }}
           disabled={busy || photos.length >= MAX_INSPECTION_PHOTOS}
-          onPress={() => setCameraOpen(true)}
+          onPress={() => openCamera(damageNoted ? "Damage" : "Other")}
           style={[styles.captureButton, (busy || photos.length >= MAX_INSPECTION_PHOTOS) && styles.disabled]}
         >
           <Text style={styles.captureText}>{t("booking:inspection.camera.button")}</Text>
@@ -191,7 +215,8 @@ export default function InspectionFormScreen({ booking, reports = [], type, onBa
       </Pressable>
       <Text style={styles.footer}>{t("mobile:inspection.form.footer")}</Text>
     </ScrollView>
-    {cameraOpen ? <InspectionCameraModal bookingCode={booking.bookingCode} type={type} onCaptured={addPhoto} onClose={() => setCameraOpen(false)} /> : null}
+    {viewingPhoto ? <PhotoViewer uri={viewingPhoto} onClose={() => setViewingPhoto(null)} /> : null}
+    {cameraOpen ? <InspectionCameraModal guidance={t(`bookingGuide:hints.${captureTarget.current.category}`)} bookingCode={booking.bookingCode} type={type} onCaptured={addPhoto} onClose={() => setCameraOpen(false)} /> : null}
   </KeyboardAvoidingView>;
 }
 

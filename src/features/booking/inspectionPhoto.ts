@@ -4,7 +4,10 @@ import i18n from "@/i18n";
 import type { UploadFile } from "@/types/upload";
 import { MAX_INSPECTION_PHOTO_BYTES } from "./bookingDisplay";
 
+import type { PhotoCategory } from "./inspectionGuide";
+
 export type CapturedInspectionPhoto = {
+  photoCategory?: PhotoCategory;
   source?: "camera" | "library";
   id: string;
   uri: string;

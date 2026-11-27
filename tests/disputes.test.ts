@@ -28,11 +28,13 @@ import {
   trafficFineStatusLabels,
 } from "@/features/disputes/components/disputeLabels";
 import {
+  canSubmitDispute,
   parseVietnamDateTime,
   toCreateTrafficFineRequest,
   validateTrafficFineForm,
   validProofAssets,
 } from "@/features/disputes/components/TrafficFineCreateFields";
+import { disputeFromNotification, isDamageDisputeWindowOpen } from "@/features/disputes/disputeModel";
 
 describe("dispute labels", () => {
   it("covers every status and problem type shown in filters", () => {
@@ -101,5 +103,79 @@ describe("traffic fine form", () => {
     expect(payload.dueAt).toBe("2026-10-31T16:59:59.000Z");
     expect(payload.amount).toBe(500000);
     expect(payload.licensePlate).toBe("43A-12345");
+  });
+
+  it("blocks submit until traffic-fine evidence and owner receipt requirements are met", () => {
+    const base = {
+      submitting: false,
+      bookingId: "42",
+      description: "Xe bị phạt nguội",
+      evidenceCount: 0,
+      ownerReceiptCount: 0,
+    };
+    // Loại thường không bắt buộc ảnh.
+    expect(canSubmitDispute({ ...base, reportType: "Damage" })).toBe(true);
+    expect(canSubmitDispute({ ...base, reportType: "Damage", bookingId: "" })).toBe(false);
+    expect(canSubmitDispute({ ...base, reportType: "Damage", description: "  " })).toBe(false);
+    expect(canSubmitDispute({ ...base, reportType: "Damage", submitting: true })).toBe(false);
+
+    // Phạt nguội: bắt buộc 1..6 ảnh chứng từ.
+    expect(canSubmitDispute({ ...base, reportType: "TrafficFine", paymentMode: "CustomerPaysAuthority" })).toBe(false);
+    expect(canSubmitDispute({ ...base, reportType: "TrafficFine", paymentMode: "CustomerPaysAuthority", evidenceCount: 1 })).toBe(true);
+    expect(canSubmitDispute({ ...base, reportType: "TrafficFine", paymentMode: "CustomerPaysAuthority", evidenceCount: 7 })).toBe(false);
+
+    // Hoàn trả chủ xe: thêm biên lai chủ xe đã nộp phạt.
+    expect(canSubmitDispute({ ...base, reportType: "TrafficFine", paymentMode: "ReimburseOwner", evidenceCount: 1 })).toBe(false);
+    expect(canSubmitDispute({ ...base, reportType: "TrafficFine", paymentMode: "ReimburseOwner", evidenceCount: 1, ownerReceiptCount: 1 })).toBe(true);
+  });
+});
+
+describe("dispute notification deep link", () => {
+  it("reads the dispute id the backend puts in DataJson", () => {
+    expect(disputeFromNotification(JSON.stringify({ disputeId: 44, bookingId: 77 }))).toBe(44);
+    expect(disputeFromNotification(JSON.stringify({ disputeId: "44" }))).toBe(44);
+  });
+
+  it("falls back to the role-specific targetPath", () => {
+    expect(disputeFromNotification(JSON.stringify({ targetPath: "/customer/disputes?disputeId=44" }))).toBe(44);
+    expect(disputeFromNotification(JSON.stringify({ targetPath: "/owner/disputes?disputeId=7" }))).toBe(7);
+    expect(disputeFromNotification(JSON.stringify({ targetPath: "/CUSTOMER/DISPUTES?disputeId=9" }))).toBe(9);
+  });
+
+  it("ignores staff/admin links because the app has no staff screens", () => {
+    expect(disputeFromNotification(JSON.stringify({ targetPath: "/staff/disputes?disputeId=44" }))).toBeNull();
+    expect(disputeFromNotification(JSON.stringify({ targetPath: "/admin/disputes?disputeId=44" }))).toBeNull();
+  });
+
+  it("rejects malformed payloads, missing ids and non-positive ids", () => {
+    expect(disputeFromNotification(null)).toBeNull();
+    expect(disputeFromNotification("not-json")).toBeNull();
+    expect(disputeFromNotification(JSON.stringify({}))).toBeNull();
+    expect(disputeFromNotification(JSON.stringify({ bookingId: 77 }))).toBeNull();
+    expect(disputeFromNotification(JSON.stringify({ disputeId: 0 }))).toBeNull();
+    expect(disputeFromNotification(JSON.stringify({ disputeId: -3 }))).toBeNull();
+    expect(disputeFromNotification(JSON.stringify({ disputeId: 1.5 }))).toBeNull();
+    expect(disputeFromNotification(JSON.stringify({ targetPath: "/customer/disputes?disputeId=abc" }))).toBeNull();
+    expect(disputeFromNotification(JSON.stringify({ targetPath: "/customer/bookings?disputeId=44" }))).toBeNull();
+  });
+});
+
+describe("damage dispute window", () => {
+  const anchor = "2026-10-01T07:30:00.000Z";
+  const at = Date.parse(anchor);
+  const hours = (value: number) => value * 60 * 60 * 1000;
+
+  it("mirrors the backend 48h rule", () => {
+    expect(isDamageDisputeWindowOpen(anchor, at)).toBe(true);
+    expect(isDamageDisputeWindowOpen(anchor, at + hours(47))).toBe(true);
+    expect(isDamageDisputeWindowOpen(anchor, at + hours(48))).toBe(true);
+    expect(isDamageDisputeWindowOpen(anchor, at + hours(48) + 1)).toBe(false);
+    expect(isDamageDisputeWindowOpen(anchor, at - 1)).toBe(false);
+  });
+
+  it("leaves the decision to the backend when the DTO has no usable completion time", () => {
+    expect(isDamageDisputeWindowOpen(null, at)).toBe(true);
+    expect(isDamageDisputeWindowOpen(undefined, at)).toBe(true);
+    expect(isDamageDisputeWindowOpen("not-a-date", at)).toBe(true);
   });
 });

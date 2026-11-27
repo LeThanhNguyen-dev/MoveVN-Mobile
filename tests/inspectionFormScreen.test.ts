@@ -1,3 +1,4 @@
+import { useAppDialogStore } from "@/components/appDialog/dialogStore";
 import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -24,7 +25,7 @@ import InspectionFormScreen from "@/features/booking/screens/InspectionFormScree
 let tree: ReactTestRenderer | undefined;
 const jpeg = new Blob(["stamped jpeg"], { type: "image/jpeg" });
 const photo = { id: "1", uri: "file:///stamped.jpg", capturedAt: "2026-10-04T02:00:00Z", file: jpeg as never };
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => { vi.clearAllMocks(); useAppDialogStore.getState().clear(); });
 afterEach(async () => { if (tree) await act(async () => tree!.unmount()); tree = undefined; });
 function button(title: string) { return tree!.root.findAll((node) => (node.type as unknown) === "Pressable" && node.findAll((child) => (child.type as unknown) === "Text" && child.children.includes(title)).length > 0)[0]!; }
 async function mount(type: "CheckIn" | "CheckOut" = "CheckIn", overrides: Partial<BookingResponse> = {}) {
@@ -32,22 +33,59 @@ async function mount(type: "CheckIn" | "CheckOut" = "CheckIn", overrides: Partia
     booking: { startDate: "2020-01-01T00:00:00Z", id: 42, bookingCode: "MVN-42", vehicleId: 3, ...overrides } as BookingResponse, type, onBack: mocks.back, onSaved: mocks.saved,
   })); });
 }
+function submitConfirmed() {
+  const submit = tree!.root.findAll(n => (n.type as unknown) === "Pressable" && n.props.onPress && n.findAll(c => (c.type as unknown) === "Text" && c.children.some(text => typeof text === "string" && text.startsWith("G\u1eedi bi"))).length > 0)[0]!;
+  submit.props.onPress();
+  const dialog = useAppDialogStore.getState().dialogs.at(-1);
+  if (dialog) { useAppDialogStore.getState().dismiss(dialog.id); dialog.buttons?.at(-1)?.onPress?.(); }
+}
 async function addPhoto() {
   await act(async () => button("Chụp ảnh xe").props.onPress());
   const camera = tree!.root.find((node) => (node.type as unknown) === "CameraCapture");
   await act(async () => { camera.props.onCaptured(photo); camera.props.onClose(); });
 }
 
+it("warns about missing suggested angles, keeps editing on cancel, and sends only after Send anyway", async () => {
+  await mount(); await addPhoto();
+  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
+  expect(mocks.checkIn).not.toHaveBeenCalled();
+  const dialog = useAppDialogStore.getState().dialogs.at(-1)!;
+  expect(dialog.message).toContain("Mặt trước");
+  expect(dialog.buttons?.[0]?.text).toBe("Chụp bổ sung");
+  useAppDialogStore.getState().dismiss(dialog.id);
+  expect(tree!.root.findAll(n => (n.type as unknown) === "Image")).toHaveLength(1);
+  mocks.checkIn.mockResolvedValueOnce({ id: 7 });
+  await act(async () => submitConfirmed());
+  expect(mocks.checkIn).toHaveBeenCalledOnce();
+  expect((mocks.checkIn.mock.calls[0]![1] as FormData).getAll("photoCategories")).toEqual(["Other"]);
+});
+
+it("replaces the selected angle without increasing the photo count", async () => {
+  await mount("CheckIn", { vehicleType: "Car" });
+  await act(async () => button("Chụp ảnh").props.onPress());
+  let camera = tree!.root.find(n => (n.type as unknown) === "CameraCapture");
+  await act(async () => { camera.props.onCaptured(photo); camera.props.onClose(); });
+  await act(async () => button("Chụp lại / thay ảnh").props.onPress());
+  camera = tree!.root.find(n => (n.type as unknown) === "CameraCapture");
+  await act(async () => { camera.props.onCaptured({ ...photo, id: "2", uri: "file:///replacement.jpg" }); camera.props.onClose(); });
+  expect(mocks.delete).toHaveBeenCalledWith(photo.uri);
+  mocks.checkIn.mockResolvedValueOnce({ id: 7 });
+  await act(async () => submitConfirmed());
+  const form = mocks.checkIn.mock.calls[0]![1] as FormData;
+  expect(form.getAll("images")).toHaveLength(1);
+  expect(form.getAll("photoCategories")).toEqual(["Front"]);
+});
+
 it("keeps watermarked photos after upload failure so the owner can retry without recapturing", async () => {
   await mount(); await addPhoto();
   mocks.checkIn.mockRejectedValueOnce(new Error("offline"));
-  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
+  await act(async () => submitConfirmed());
   expect(mocks.saved).not.toHaveBeenCalled(); expect(mocks.delete).not.toHaveBeenCalled();
   expect(JSON.stringify(tree!.toJSON())).toContain("Ảnh vẫn được giữ");
   expect(tree!.root.findAll((node) => (node.type as unknown) === "Image" && node.props.source.uri === photo.uri)).toHaveLength(1);
   const report = { id: 7, type: "CheckIn" };
   mocks.checkIn.mockResolvedValueOnce(report);
-  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
+  await act(async () => submitConfirmed());
   expect(mocks.saved).toHaveBeenCalledWith(report); expect(mocks.checkIn).toHaveBeenCalledTimes(2);
 });
 
@@ -58,7 +96,7 @@ it("blocks duplicate submissions and posts checkout to the checkout service", as
   let complete!: (value: unknown) => void;
   mocks.checkOut.mockImplementationOnce(() => new Promise((resolve) => { complete = resolve; }));
   await act(async () => {
-    const submit = button("Gửi biên bản cho khách xác nhận").props.onPress;
+    const submit = submitConfirmed;
     submit(); submit();
   });
   expect(mocks.checkOut).toHaveBeenCalledTimes(1); expect(mocks.checkIn).not.toHaveBeenCalled();
@@ -74,7 +112,7 @@ it("deletes removed photos and refuses to send a report without a photo", async 
   expect(mocks.delete).toHaveBeenCalledWith(photo.uri);
   expect(button("Gửi biên bản cho khách xác nhận").props.disabled).toBe(true);
   // Even a programmatic call cannot bypass validation.
-  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
+  await act(async () => submitConfirmed());
   expect(mocks.checkIn).not.toHaveBeenCalled();
 });
 
@@ -84,12 +122,12 @@ it("posts selected checkout fees and requires a reason before uploading", async 
   await addPhoto();
   await act(async () => tree!.root.findAll(n => (n.type as unknown) === "TextInput")[0]!.props.onChangeText("2021-01-01 10:00"));
   await act(async () => tree!.root.find(n => (n.type as unknown) === "Switch" && n.props.accessibilityLabel === "Vệ sinh xe").props.onValueChange(true));
-  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
+  await act(async () => submitConfirmed());
   expect(mocks.checkOut).not.toHaveBeenCalled();
   const field = tree!.root.findAll(n => (n.type as unknown) === "TextInput" && n.props.multiline)[0]!;
   await act(async () => field.props.onChangeText("Bùn đất trong xe"));
   mocks.checkOut.mockResolvedValueOnce({ id: 9, type: "CheckOut" });
-  await act(async () => button("Gửi biên bản cho khách xác nhận").props.onPress());
+  await act(async () => submitConfirmed());
   expect(mocks.checkOut).toHaveBeenCalledTimes(1);
   const data = mocks.checkOut.mock.calls[0]![1] as FormData;
   expect(data.get("additionalSurcharges[0].termId")).toBe("201");

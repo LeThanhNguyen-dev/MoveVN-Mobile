@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Modal, Platform, Pressable, RefreshControl, ScrollView, SectionList, StyleSheet, View } from "react-native"
 import AppText from "@/components/AppText";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, BellOff, CarFront, CheckCheck, CircleAlert, Flag, Headphones, RefreshCw } from "lucide-react-native";
+import { ArrowLeft, BellOff, CarFront, CheckCheck, CircleAlert, Flag, Headphones, RefreshCw, Scale } from "lucide-react-native";
 import { useTheme } from "@/theme/useTheme";
 import type { Theme } from "@/theme/tokens";
 import { getApiErrorMessage } from "@/services/apiClient";
@@ -18,6 +18,8 @@ import { openSupportTickets } from "@/features/supportTickets/ticketNavigation";
 import { ticketFromNotification } from "@/features/supportTickets/ticketModel";
 import { openViolations } from "@/features/violations/violationNavigation";
 import { violationFromNotification } from "@/features/violations/violationModel";
+import { openDisputes } from "@/features/disputes/disputeNavigation";
+import { disputeFromNotification } from "@/features/disputes/disputeModel";
 import { availabilityTarget, openAvailabilityAlerts, type AlertVehicleTarget } from "@/features/availabilityAlerts/alertNavigation";
 
 export default function NotificationCenter({ userId }: { userId: number }) {
@@ -45,9 +47,11 @@ export default function NotificationCenter({ userId }: { userId: number }) {
   const pendingTicket = useRef<{ id: number; generation: number } | null>(null);
   const pendingReport = useRef<{ id: string; generation: number } | null>(null);
   const pendingVehicle = useRef<{ target: AlertVehicleTarget; generation: number } | null>(null);
+  const pendingDispute = useRef<{ id: number; generation: number } | null>(null);
   const vehicleTarget = availabilityTarget(detail?.dataJson);
   const ticketId = ticketFromNotification(detail?.dataJson);
   const reportId = violationFromNotification(detail?.dataJson);
+  const disputeId = disputeFromNotification(detail?.dataJson);
   function launchPendingTicket() {
     const pending = pendingTicket.current; pendingTicket.current = null;
     if (pending && getAuthUser()?.userId === userId && pending.generation === getSessionGeneration()) openSupportTickets({ ticketId: pending.id });
@@ -55,6 +59,8 @@ export default function NotificationCenter({ userId }: { userId: number }) {
     if (report && getAuthUser()?.userId === userId && report.generation === getSessionGeneration()) openViolations({ reportId: report.id });
     const vehicle = pendingVehicle.current; pendingVehicle.current = null;
     if (vehicle && getAuthUser()?.userId === userId && vehicle.generation === getSessionGeneration()) openAvailabilityAlerts(vehicle.target);
+    const dispute = pendingDispute.current; pendingDispute.current = null;
+    if (dispute && getAuthUser()?.userId === userId && dispute.generation === getSessionGeneration()) openDisputes({ disputeId: dispute.id });
   }
 
   useEffect(() => {
@@ -162,6 +168,11 @@ export default function NotificationCenter({ userId }: { userId: number }) {
               useNotificationStore.setState({ centerOpen: false });
               if (Platform.OS !== "ios") launchPendingTicket();
             }} style={styles.primaryButton}><Headphones color={theme.onBrand} size={19} /><AppText style={styles.primaryText}>{t("mobile:notification.viewTicket")}</AppText></Pressable>}
+            {disputeId && <Pressable accessibilityRole="button" onPress={() => {
+              pendingDispute.current = { id: disputeId, generation: getSessionGeneration() };
+              useNotificationStore.setState({ centerOpen: false });
+              if (Platform.OS !== "ios") launchPendingTicket();
+            }} style={styles.primaryButton}><Scale color={theme.onBrand} size={19} /><AppText style={styles.primaryText}>{t("mobile:notification.viewDispute")}</AppText></Pressable>}
           </View>
           {actionError ? <ErrorNotice message={actionError} /> : null}
           {!detail.isRead ? <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:notification.markReadAria")} disabled={busy} onPress={() => { void openItem(detail); }} style={[styles.primaryButton, busy && styles.disabled]}>

@@ -45,7 +45,7 @@ function safeBlock(value: unknown): boolean {
   if (data.kind === "cancel") return number(data.bookingId) && object(data.quote) && number(data.quote.refundAmount) && number(data.quote.forfeitedAmount) && text(data.quote.policyMessage);
   return text(data.draftId) && number(data.version) && object(data.slots) && Array.isArray(data.missing) && quote(data.quote);
 }
-function cardData(value: Record<string, unknown>): Record<string, unknown> {
+function cardData(value: Record<string, unknown>, depth = 0): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, field] of Object.entries(value)) {
     if (field === null || typeof field === "string" || typeof field === "boolean" || number(field)) result[key] = field;
@@ -53,7 +53,8 @@ function cardData(value: Record<string, unknown>): Record<string, unknown> {
   if (object(value.appliedFilters)) result.appliedFilters = bookingPeriodFromCard(value.appliedFilters);
   if (Array.isArray(value.features)) result.features = value.features.filter(text).slice(0, 30);
   if (object(value.quote) && number(value.quote.refundAmount)) result.quote = { refundAmount: value.quote.refundAmount, canCancel: value.quote.canCancel === true, policyMessage: typeof value.quote.policyMessage === "string" ? value.quote.policyMessage : "" };
-  if (Array.isArray(value.items)) result.items = value.items.filter(object).filter(item => number(item.id)).slice(0, 50).map(cardData);
+  // Cards contain flat resources; bound malformed nested lists before rendering.
+  if (depth < 2 && Array.isArray(value.items)) result.items = value.items.filter(object).filter(item => number(item.id)).slice(0, 50).map(item => cardData(item, depth + 1));
   return result;
 }
 /** Network data is untrusted. Invalid action blocks never become executable UI. */

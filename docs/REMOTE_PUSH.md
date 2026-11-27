@@ -13,7 +13,7 @@
 Không tạo project ID hay khóa giả. Không đưa khóa bí mật vào `EXPO_PUBLIC_*`, Git hoặc chat.
 
 1. Dùng Node.js LTS >= 22.13.0, vào thư mục `MoveVN-Mobile`, chạy `npm ci`.
-2. Đăng nhập Expo bằng tài khoản có quyền truy cập project của nhóm. Repository đã liên kết `@tdinh7967s-team/movevn-mobile` trong `app.json`; thành viên pull code không cần tạo project mới:
+2. Đăng nhập Expo bằng tài khoản có quyền truy cập project của nhóm. Repository đã liên kết `@movevnmobile/movevn` trong `app.json`; thành viên pull code không cần tạo project mới:
 
    ```powershell
    npx.cmd eas-cli login

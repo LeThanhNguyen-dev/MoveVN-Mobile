@@ -87,3 +87,37 @@ it("blocks duplicate taps before React has rendered the busy state", async () =>
   expect(mocks.accept).toHaveBeenCalledTimes(1);
   await act(async () => { resolve({ ...initial, customerAccepted: true }); });
 });
+
+it("shows the load error once instead of retrying forever when the first load fails", async () => {
+  mocks.get.mockRejectedValueOnce(new Error("Mất kết nối"));
+  await mount();
+  expect(JSON.stringify(tree.toJSON())).toContain("Mất kết nối");
+  // Không đệ quy: chỉ 1 request cho lần load đầu.
+  expect(mocks.get).toHaveBeenCalledTimes(1);
+  expect(tree.root.findAll(n => (n.type as unknown) === "ActivityIndicator")).toHaveLength(0);
+  // Polling 15s vẫn chạy nhưng mỗi chu kỳ đúng 1 request.
+  await act(async () => { await vi.advanceTimersByTimeAsync(15000); });
+  expect(mocks.get).toHaveBeenCalledTimes(2);
+  expect(JSON.stringify(tree.toJSON())).toContain("Sai phụ thu");
+  expect(JSON.stringify(tree.toJSON())).not.toContain("Mất kết nối");
+});
+
+it("does not let polling supersede an initial request that takes longer than 15 seconds", async () => {
+  let resolve!: (detail: DisputeDetailResponse) => void;
+  mocks.get.mockImplementationOnce(() => new Promise(res => { resolve = res; }));
+  await mount();
+  await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+  expect(mocks.get).toHaveBeenCalledTimes(1);
+  await act(async () => { resolve(initial); });
+  expect(JSON.stringify(tree.toJSON())).toContain("Sai phụ thu");
+  expect(tree.root.findAll(n => (n.type as unknown) === "ActivityIndicator")).toHaveLength(0);
+});
+
+it("keeps the current detail when a background refresh fails", async () => {
+  await mount();
+  mocks.get.mockRejectedValueOnce(new Error("Mất kết nối"));
+  await act(async () => { await vi.advanceTimersByTimeAsync(15000); });
+  expect(JSON.stringify(tree.toJSON())).toContain("Sai phụ thu");
+  expect(JSON.stringify(tree.toJSON())).not.toContain("Mất kết nối");
+  expect(mocks.get).toHaveBeenCalledTimes(2);
+});

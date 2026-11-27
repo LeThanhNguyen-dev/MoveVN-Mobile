@@ -1,3 +1,4 @@
+import PhotoPreview from "@/components/PhotoPreview";
 import { useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -196,6 +197,7 @@ export default function TrafficFinePanel({
             : ""}
         </Text>
       ) : null}
+      <PhotoPreview photos={evidenceList(fine.ownerPaymentEvidenceUrls).map(uri => ({ uri }))} />
       {fine.verificationNote ? (
         <Text style={styles.body}>
           {t("disputes:trafficFine.verificationResult", {
@@ -230,6 +232,7 @@ export default function TrafficFinePanel({
                     : t("disputes:trafficFine.proofPending")}
               </Text>
               <Text style={styles.muted}>{t("disputes:trafficFine.proofPaidAt", { date: formatDisputeDateTime(p.paidAt) })}</Text>
+              <PhotoPreview photos={evidenceList(p.evidenceUrls).map(uri => ({ uri }))} />
               {p.note ? <Text style={styles.body}>{p.note}</Text> : null}
               {p.ownerReceiptConfirmedAt ? (
                 <Text style={styles.body}>
@@ -252,13 +255,13 @@ export default function TrafficFinePanel({
           <Text style={styles.label}>{t("mobile:dispute.fine.dissentReasonLabel")}</Text>
           <TextInput value={note} onChangeText={setNote} maxLength={2000} multiline style={[styles.input, styles.multiline]} />
           <View style={styles.actionRow}>
-            <Pressable disabled={busy} onPress={() => void act("respond", { acceptResponsibility: true })} style={styles.primaryButton}>
+            <Pressable disabled={busy} onPress={() => void act("respond", { acceptResponsibility: true })} style={[styles.primaryButton, styles.rowButton]}>
               {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryText}>{t("disputes:trafficFine.accept")}</Text>}
             </Pressable>
             <Pressable
               disabled={busy || !note.trim()}
               onPress={() => void act("respond", { acceptResponsibility: false })}
-              style={[styles.secondaryButton, (busy || !note.trim()) && styles.disabled]}
+              style={[styles.secondaryButton, styles.rowButton, (busy || !note.trim()) && styles.disabled]}
             >
               <Text style={styles.secondaryText}>{t("disputes:trafficFine.dispute")}</Text>
             </Pressable>
@@ -284,6 +287,7 @@ export default function TrafficFinePanel({
           <Pressable onPress={() => void pickFiles()} style={styles.secondaryButton}>
             <Text style={styles.secondaryText}>{t("mobile:dispute.fine.pickProof", { count: files.length, max: 6 })}</Text>
           </Pressable>
+          <PhotoPreview photos={files} disabled={busy} onRemove={index => setFiles(prev => prev.filter((_, i) => i !== index))} />
           <Pressable
             disabled={busy || !validProofAssets(files) || !parseVietnamDateTime(paidAt) || !reference.trim()}
             onPress={() => void act("payment-proof")}
@@ -341,9 +345,10 @@ const createStyles = (theme: Theme) =>
     },
     multiline: { minHeight: 70, textAlignVertical: "top" },
     actionRow: { flexDirection: "row", gap: 8 },
-    primaryButton: { borderRadius: 12, backgroundColor: theme.brand, paddingVertical: 12, alignItems: "center", flex: 1 },
+    rowButton: { flex: 1 },
+    primaryButton: { borderRadius: 12, backgroundColor: theme.brand, paddingVertical: 12, alignItems: "center" },
     primaryText: { color: "#fff", fontSize: 13, fontWeight: "800" },
-    secondaryButton: { borderRadius: 12, borderWidth: 1, borderColor: theme.brandBorder, paddingVertical: 12, alignItems: "center", flex: 1 },
+    secondaryButton: { borderRadius: 12, borderWidth: 1, borderColor: theme.brandBorder, paddingVertical: 12, alignItems: "center" },
     secondaryText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
     disabled: { opacity: 0.4 },
   });

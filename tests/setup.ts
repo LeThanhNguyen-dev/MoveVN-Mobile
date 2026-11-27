@@ -1,5 +1,6 @@
-import { beforeAll } from "vitest";
+import { beforeAll, vi } from "vitest";
 import i18n from "@/i18n";
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
 
 // Metro/Expo đặt __DEV__ toàn cục; một số module (expo async-require) đọc biến này
 // ngay khi import nên phải có trước khi test file được nạp.

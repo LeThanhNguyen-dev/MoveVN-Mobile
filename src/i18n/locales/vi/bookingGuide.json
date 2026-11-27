@@ -1,0 +1,42 @@
+{
+  "title": "Hướng dẫn chụp xe",
+  "intro": "Các góc dưới đây là gợi ý, bạn có thể bỏ qua. Cần ít nhất 1 ảnh và tối đa 20 ảnh mỗi biên bản.",
+  "progress": "Đã chụp {{done}}/{{total}} góc gợi ý · {{count}}/20 ảnh",
+  "capture": "Chụp ảnh",
+  "choose": "Chọn ảnh",
+  "replace": "Chụp lại / thay ảnh",
+  "skip": "Bỏ qua",
+  "skipped": "Đã bỏ qua",
+  "additional": "Ảnh bổ sung",
+  "damageHint": "Nên chụp cận cảnh từng vết trầy hoặc hư hỏng và mô tả vị trí để dễ đối chiếu.",
+  "reference": "Ảnh khi nhận xe — bấm để đối chiếu",
+  "missingTitle": "Còn {{count}} góc chưa chụp",
+  "missingMessage": "Các góc chưa có ảnh: {{angles}}. Bạn có thể chụp bổ sung hoặc vẫn gửi biên bản hiện tại.",
+  "supplement": "Chụp bổ sung",
+  "sendAnyway": "Vẫn gửi",
+  "view": "Xem ảnh {{index}}",
+  "remove": "Xóa ảnh {{index}}",
+  "close": "Đóng ảnh",
+  "loading": "Đang tải ảnh…",
+  "loadError": "Không tải được ảnh",
+  "retry": "Thử lại",
+  "labels": {
+    "Front": "Mặt trước", "Rear": "Mặt sau", "Left": "Bên trái", "Right": "Bên phải",
+    "FrontLeft": "Góc trước trái", "FrontRight": "Góc trước phải", "RearLeft": "Góc sau trái", "RearRight": "Góc sau phải",
+    "Dashboard": "Đồng hồ km / nhiên liệu / pin", "Interior": "Tổng quan nội thất", "Damage": "Trầy xước / hư hỏng", "Other": "Ảnh bổ sung"
+  },
+  "hints": {
+    "Front": "Đứng chính diện, lấy trọn đầu xe, đèn và cản trước.",
+    "Rear": "Đứng phía sau, lấy trọn đuôi xe và biển số rõ nét.",
+    "Left": "Đứng bên trái theo hướng xe chạy, lấy trọn thân và bánh xe.",
+    "Right": "Đứng bên phải theo hướng xe chạy, lấy trọn thân và bánh xe.",
+    "FrontLeft": "Chụp chéo khoảng 45° để thấy đầu xe và bên trái.",
+    "FrontRight": "Chụp chéo khoảng 45° để thấy đầu xe và bên phải.",
+    "RearLeft": "Chụp chéo khoảng 45° để thấy đuôi xe và bên trái.",
+    "RearRight": "Chụp chéo khoảng 45° để thấy đuôi xe và bên phải.",
+    "Dashboard": "Bật đồng hồ, chụp rõ tổng số km và mức nhiên liệu hoặc pin. Có thể thêm ảnh nếu không nằm cùng màn hình.",
+    "Interior": "Chụp tổng quan ghế, bảng điều khiển và tình trạng vệ sinh; thêm ảnh hàng ghế sau nếu cần.",
+    "Damage": "Chụp cận cảnh và thêm ảnh rộng để thấy vị trí hư hỏng trên xe.",
+    "Other": "Thêm ảnh chi tiết, phụ kiện hoặc vị trí cần ghi nhận."
+  }
+}

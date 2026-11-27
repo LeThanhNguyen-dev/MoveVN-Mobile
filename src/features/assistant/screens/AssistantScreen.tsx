@@ -1,11 +1,13 @@
 import { Text, TextInput, Pressable, AssistantLocaleProvider, useAssistantLanguagePreference, useAssistantLocale } from "../assistantLocale";
 import { assistantDate, assistantMoney, assistantText, assistantVehicleLabel, setAssistantRequestLocale, type AssistantLocale } from "../assistantLanguage";
 import { useAssistantUi } from "../useAssistantUi";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -62,24 +64,99 @@ function newClientId() {
   });
 }
 
-// AI trả về markdown (**bold**). RN Text không tự render nên parse thủ công,
-// đoạn **...** thành chữ đậm, còn lại giữ nguyên (giữ số thứ tự, xuống dòng).
-function renderRichText(text: string, keyPrefix: string) {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
-    const bold = /^\*\*([^*]+)\*\*$/.exec(part);
+// AI trả về markdown. RN Text không tự render nên parse thủ công cho khớp
+// AssistantMarkdown bên web: **đậm**, `code`, [text](url), danh sách 1./-.
+const INLINE_RE = /(\*\*[^*\n]+\*\*|`[^`\n]+`|\[[^\]\n]+\]\((?:https?:\/\/)[^)\s]+\))/g;
+const ORDERED_RE = /^\s*\d+[.)]\s+/;
+const UNORDERED_RE = /^\s*[-*•]\s+/;
+
+function renderInline(text: string, keyPrefix: string, linkColor: string) {
+  return text.split(INLINE_RE).map((part, index) => {
+    if (part === "") return null;
+    const key = `${keyPrefix}-${index}`;
+    const bold = /^\*\*([^*\n]+)\*\*$/.exec(part);
     if (bold) {
       return (
-        <NativeText key={`${keyPrefix}-${index}`} style={stylesRef.bold}>
+        <NativeText key={key} style={stylesRef.bold}>
           {bold[1]}
         </NativeText>
       );
     }
-    return <NativeText key={`${keyPrefix}-${index}`}>{part}</NativeText>;
+    const code = /^`([^`\n]+)`$/.exec(part);
+    if (code) {
+      return (
+        <NativeText key={key} style={stylesRef.code}>
+          {code[1]}
+        </NativeText>
+      );
+    }
+    const link = /^\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)$/.exec(part);
+    if (link) {
+      return (
+        <NativeText
+          key={key}
+          style={{ color: linkColor, fontWeight: "700", textDecorationLine: "underline" }}
+          onPress={() => void Linking.openURL(link[2]!)}
+        >
+          {link[1]}
+        </NativeText>
+      );
+    }
+    return <NativeText key={key}>{part}</NativeText>;
+  });
+}
+
+function renderRichText(text: string, keyPrefix: string, linkColor: string) {
+  const lines = text.split("\n");
+  return lines.map((line, index) => {
+    const trimmed = line.trim();
+    let body = line;
+    let marker: string | null = null;
+    const ordered = ORDERED_RE.exec(trimmed);
+    if (ordered) {
+      marker = ordered[0].trim();
+      body = trimmed.slice(ordered[0].length);
+    } else {
+      const unordered = UNORDERED_RE.exec(trimmed);
+      if (unordered) {
+        marker = "•";
+        body = trimmed.slice(unordered[0].length);
+      }
+    }
+    const key = `${keyPrefix}-l${index}`;
+    return (
+      <NativeText key={key}>
+        {index > 0 ? "\n" : null}
+        {marker !== null ? <NativeText style={stylesRef.listMarker}>{marker}  </NativeText> : null}
+        {renderInline(body, key, linkColor)}
+      </NativeText>
+    );
   });
 }
 
 // Style chữ đậm dùng chung cho renderRichText (không phụ thuộc theme).
-const stylesRef = StyleSheet.create({ bold: { fontWeight: "800" } });
+const stylesRef = StyleSheet.create({
+  bold: { fontWeight: "800" },
+  code: {
+    fontFamily: Platform.select({ ios: "Menlo", default: "monospace" }),
+    backgroundColor: "rgba(127,127,127,0.18)",
+    borderRadius: 3,
+  },
+  listMarker: { fontWeight: "700" },
+});
+
+// Hiệu ứng hiện dần cho từng bong bóng tin nhắn mới (mượt hơn khi AI trả lời).
+function BubbleIn({ children }: { children: ReactNode }) {
+  const progress = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(progress, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+  }, [progress]);
+  return (
+    <Animated.View style={{ opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }] }}>
+      {children}
+    </Animated.View>
+  );
+}
 
 // Tham số điền sẵn sang màn CreateBooking (giống web navigate kèm AssistantBookingState).
 export type QuickBookParams = {
@@ -611,13 +688,14 @@ function AssistantContent({
               )
             }
             renderItem={({ item }) => (
+              <BubbleIn>
               <View style={[styles.bubbleRow, item.role === "user" && styles.bubbleRowRight]}>
                 <View style={[styles.bubble, item.role === "user" ? styles.bubbleUser : styles.bubbleBot]}>
                   {item.role !== "user" && <Text style={styles.botLabel}>{item.role === "staff" ? "Nhân viên MoveVN" : "MoveVN AI"}</Text>}
                   <NativeText style={[styles.message, item.role === "user" && styles.messageUser]}>
                     {item.status === "Stale"
                       ? assistantError("AI_SOURCE_STALE", item.answer?.replyLocale ?? item.replyLocale ?? locale)
-                      : renderRichText(item.content, item.id)}
+                      : renderRichText(item.content, item.id, theme.brand)}
                   </NativeText>
                   {item.answer && (
                     <AssistantLocaleProvider locale={item.answer.replyLocale ?? locale}><AnswerDetails
@@ -653,6 +731,7 @@ function AssistantContent({
                   {item.role === "user" && item.status === "Failed" && <Text style={styles.failedHint}>Chưa nhận được câu trả lời</Text>}
                 </View>
               </View>
+              </BubbleIn>
             )}
             ListFooterComponent={
               pending ? (

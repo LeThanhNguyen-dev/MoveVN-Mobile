@@ -16,6 +16,21 @@ for (const [platform, protocol] of [["mobile", mobile], ["web", web]] as const) 
       const answer = protocol.decodeAnswer({ content: "Đã tìm được xe", sources: null, cards: [null], actions: [null], blocks: [{ type: "confirmCard", data: { confirmToken: "unsafe" } }, { type: "quoteCard", data: null }] });
       expect(answer).toMatchObject({ content: "Đã tìm được xe", sources: [], cards: [], actions: [], blocks: [] });
     });
+    it("bounds recursive card data so malformed AI results cannot overflow the stack", () => {
+      let data: Record<string, unknown> = { id: 1 };
+      for (let i = 0; i < 8000; i++) data = { id: i + 2, items: [data] };
+      const input = { content: "Kết quả xe", cards: [{ name: "vehicles.search", data }] };
+      expect(() => protocol.decodeAnswer(input)).not.toThrow();
+      const answer = protocol.decodeAnswer(input)!;
+      expect(answer.content).toBe("Kết quả xe");
+      let decoded = answer.cards[0]!.data as Record<string, unknown>;
+      let depth = 0;
+      while (Array.isArray(decoded.items) && decoded.items.length) {
+        decoded = decoded.items[0] as Record<string, unknown>;
+        depth++;
+      }
+      expect(depth).toBeLessThanOrEqual(2);
+    });
     it("does not accept arbitrary action block types or malformed quick replies", () => {
       expect(protocol.decodeAnswer({ content: "Chào", blocks: [{ type: "execute", data: {} }], quickReplies: [1, "Tìm xe", ""] })).toMatchObject({ blocks: [], quickReplies: ["Tìm xe"] });
     });

@@ -412,6 +412,8 @@
     "revisionReasonPlaceholder": "Nội dung cần điều chỉnh...",
     "revisionSubmit": "Gửi yêu cầu lập lại",
     "camera": {
+      "starting": "Đang mở camera…",
+      "retry": "Thử mở lại camera",
       "title": "Chụp ảnh biên bản",
       "button": "Chụp ảnh xe",
       "httpsError": "Camera cần kết nối HTTPS và quyền truy cập camera. Hãy mở bằng thiết bị có camera.",

@@ -1,0 +1,42 @@
+{
+  "title": "Vehicle photo guide",
+  "intro": "These angles are suggestions and can be skipped. Submit at least 1 and at most 20 photos per report.",
+  "progress": "{{done}}/{{total}} suggested angles captured · {{count}}/20 photos",
+  "capture": "Take photo",
+  "choose": "Choose photo",
+  "replace": "Retake / replace",
+  "skip": "Skip",
+  "skipped": "Skipped",
+  "additional": "Additional photos",
+  "damageHint": "Take close-ups of each scratch or damaged area and describe its location for comparison.",
+  "reference": "Check-in photo — tap to compare",
+  "missingTitle": "{{count}} angles without photos",
+  "missingMessage": "Angles without photos: {{angles}}. You can add photos or send the current report.",
+  "supplement": "Add photos",
+  "sendAnyway": "Send anyway",
+  "view": "View photo {{index}}",
+  "remove": "Remove photo {{index}}",
+  "close": "Close photo",
+  "loading": "Loading photo…",
+  "loadError": "Could not load photo",
+  "retry": "Retry",
+  "labels": {
+    "Front": "Front", "Rear": "Rear", "Left": "Left side", "Right": "Right side",
+    "FrontLeft": "Front left corner", "FrontRight": "Front right corner", "RearLeft": "Rear left corner", "RearRight": "Rear right corner",
+    "Dashboard": "Odometer / fuel / battery", "Interior": "Interior overview", "Damage": "Scratches / damage", "Other": "Additional photo"
+  },
+  "hints": {
+    "Front": "Face the vehicle and include the entire front, lights and bumper.",
+    "Rear": "Include the entire rear and a clearly readable license plate.",
+    "Left": "Capture the entire left side and wheels, relative to the direction of travel.",
+    "Right": "Capture the entire right side and wheels, relative to the direction of travel.",
+    "FrontLeft": "Shoot at roughly 45° to show the front and left side.",
+    "FrontRight": "Shoot at roughly 45° to show the front and right side.",
+    "RearLeft": "Shoot at roughly 45° to show the rear and left side.",
+    "RearRight": "Shoot at roughly 45° to show the rear and right side.",
+    "Dashboard": "Turn on the dashboard and show total mileage and fuel or battery level clearly. Add another photo if needed.",
+    "Interior": "Show the seats, dashboard and cleanliness; add rear-seat photos if needed.",
+    "Damage": "Take close-ups plus a wider photo to identify the damaged area.",
+    "Other": "Add details, accessories or other areas you want to document."
+  }
+}

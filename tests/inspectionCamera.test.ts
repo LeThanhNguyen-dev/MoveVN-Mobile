@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   takePicture: vi.fn(), requestPermission: vi.fn(), captureRef: vi.fn(), resize: vi.fn(), stamped: vi.fn(), delete: vi.fn(),
   captured: vi.fn(), close: vi.fn(), serverTime: vi.fn(), permission: { granted: true, canAskAgain: true },
   platform: "android",
+  library: vi.fn(),
 }));
 vi.mock("react-native", () => ({
   ActivityIndicator: "ActivityIndicator", Image: "Image", Modal: "Modal", Pressable: "Pressable", Text: "Text", View: "View",
@@ -36,6 +37,7 @@ vi.mock("expo-camera", async () => {
     }),
   };
 });
+vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: mocks.library }));
 import InspectionCameraModal from "@/features/booking/components/InspectionCameraModal";
 let tree: ReactTestRenderer | undefined;
 const stamped = { id: "1", uri: "file:///stamped.jpg", capturedAt: "2026-10-04T02:00:00Z", file: { uri: "file:///stamped.jpg", name: "inspection.jpg", type: "image/jpeg" } };
@@ -89,7 +91,7 @@ it("waits for photo decode and layout, burns the watermark, and hands off only t
   expect(mocks.captureRef).toHaveBeenCalledWith(expect.anything(), { format: "jpg", quality: 0.9, result: "tmpfile", width: 1200, height: 1600, useRenderInContext: false });
   expect(button("Dùng ảnh này").props.disabled).toBe(false);
   await act(async () => button("Dùng ảnh này").props.onPress());
-  expect(mocks.captured).toHaveBeenCalledWith(stamped); expect(mocks.close).toHaveBeenCalledOnce();
+  expect(mocks.captured).toHaveBeenCalledWith({ ...stamped, source: "camera" }); expect(mocks.close).toHaveBeenCalledOnce();
   await act(async () => tree!.unmount()); tree = undefined;
   expect(mocks.delete).toHaveBeenCalledWith("file:///raw.jpg");
   expect(mocks.delete).toHaveBeenCalledWith("file:///resized.jpg");
@@ -122,10 +124,10 @@ it("captures iOS at the composition bounds so Retina scaling cannot leave a blan
   expect(button("Dùng ảnh này").props.disabled).toBe(false);
 });
 
-it("requires camera permission without offering the image library", async () => {
+it("offers library selection when camera permission is denied", async () => {
   mocks.permission.granted = false; await mount();
   expect(host("CameraView")).toHaveLength(0);
-  expect(JSON.stringify(tree!.toJSON())).not.toContain("chọn ảnh từ thư viện");
+  expect(button("Chọn ảnh")).toBeDefined();
   expect(button("Cho phép camera")).toBeDefined();
   expect(mocks.takePicture).not.toHaveBeenCalled();
 });

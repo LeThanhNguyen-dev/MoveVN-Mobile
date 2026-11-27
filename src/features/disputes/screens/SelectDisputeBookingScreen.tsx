@@ -7,6 +7,7 @@ import { useTheme } from "@/theme/useTheme";
 import type { BookingResponse } from "@/features/booking/types";
 import { formatDateTime, formatMoney } from "@/features/booking/utils/format";
 import BookingStatusBadge from "@/features/booking/components/BookingStatusBadge";
+import { isDamageDisputeWindowOpen } from "@/features/disputes/disputeModel";
 
 // Màn chọn booking riêng cho luồng tạo tranh chấp — thay cho list inline
 // trong form (từng bị tràn đè các trường khác). Dùng FlatList ảo hóa nên
@@ -41,8 +42,13 @@ export default function SelectDisputeBookingScreen({
         ? ["Completed", "Returned", "Returning", "InProgress"]
         : ["Completed", "Returned", "Returning"];
     const q = query.trim().toLowerCase();
+    const now = Date.now();
     const list = bookings.filter(
-      (b) => allowed.includes(b.status) && (!q || b.bookingCode.toLowerCase().includes(q)),
+      (b) =>
+        allowed.includes(b.status) &&
+        (!q || b.bookingCode.toLowerCase().includes(q)) &&
+        // Ẩn booking đã quá 48h để người dùng không chọn rồi bị backend từ chối.
+        (reportType !== "Damage" || isDamageDisputeWindowOpen(b.completedAt ?? b.returnedAt, now)),
     );
     // Luôn giữ booking được ghim ở đầu dù nó không lọt bộ lọc trạng thái.
     if (lockedBooking && !list.some((b) => b.id === lockedBooking.id)) return [lockedBooking, ...list];
@@ -75,7 +81,9 @@ export default function SelectDisputeBookingScreen({
         <Text style={styles.muted}>
           {reportType === "TrafficFine"
             ? t("mobile:dispute.selectBooking.hintTrafficFine")
-            : t("mobile:dispute.selectBooking.hintCompleted")}{" "}
+            : reportType === "Damage"
+              ? t("mobile:dispute.selectBooking.hintDamageWindow")
+              : t("mobile:dispute.selectBooking.hintCompleted")}{" "}
           {t("mobile:dispute.selectBooking.count", { count: eligible.length })}
         </Text>
       </View>

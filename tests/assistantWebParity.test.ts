@@ -45,10 +45,24 @@ describe("mobile/web assistant API parity", () => {
     expect(api.assistantFailure(error, "uncertain transport", "vi")).not.toContain("private_table");
   });
 
-  it.each([400, 422])("surfaces the server validation message on both clients for HTTP %i", status => {
+  it.each([400, 422])("shows a safe validation message by default on both clients for HTTP %i", status => {
     const error = { response: { status, data: { message: "Ngày nhận phải ở tương lai." } } };
-    expect(mobile.assistantFailure(error, "uncertain transport", "vi")).toBe("Ngày nhận phải ở tương lai.");
-    expect(web.assistantFailure(error, "uncertain transport", "vi")).toBe("Ngày nhận phải ở tương lai.");
+    expect(mobile.assistantFailure(error, "uncertain transport", "vi")).toBe(web.assistantFailure(error, "uncertain transport", "vi"));
+    expect(mobile.assistantFailure(error, "uncertain transport", "vi")).not.toBe(error.response.data.message);
+  });
+
+  it.each([400, 409, 422])("can show validation details in an explicit form context for HTTP %i", status => {
+    const error = { response: { status, data: { message: "Ngày nhận phải ở tương lai." } } };
+    for (const api of [mobile, web]) {
+      expect(api.assistantFailure(error, "form fallback", "vi", true)).toBe("Ngày nhận phải ở tương lai.");
+      expect(api.assistantFailure({ response: { status } }, "form fallback", "vi", true)).toBe("form fallback");
+    }
+  });
+
+  it.each([mobile, web])("surfaces a booking conflict message in an explicit form context", api => {
+    const error = { response: { status: 409, data: { code: "BOOK_10003", message: "Lịch xe bị trùng hoặc không đủ 60 phút kiểm tra, vệ sinh giữa hai booking." } } };
+    expect(api.assistantFailure(error, "form fallback", "vi", true)).toBe("Lịch xe bị trùng hoặc không đủ 60 phút kiểm tra, vệ sinh giữa hai booking.");
+    expect(api.assistantFailure(error, "form fallback", "vi")).toBe("form fallback");
   });
 
   it.each([403, 404])("classifies HTTP %i as a safe definitive rejection on both clients", status => {

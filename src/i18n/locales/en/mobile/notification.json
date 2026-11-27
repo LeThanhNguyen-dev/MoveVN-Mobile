@@ -36,6 +36,7 @@
     "viewVehicle": "View vehicle and rental schedule",
     "viewReport": "View report result",
     "viewTicket": "View support request",
+    "viewDispute": "View dispute case",
     "connecting": "Connecting to live updates…",
     "offline": "Live updates interrupted. Pull down to refresh.",
     "loadFailedTitle": "Couldn't load notifications",

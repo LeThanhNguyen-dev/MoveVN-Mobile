@@ -87,6 +87,7 @@
       }
     },
     "publisher": {
+      "startFailed": "Couldn't start location sharing. Please update the app and try again.",
       "sendFailed": "Couldn't send your location. Will retry.",
       "permissionDenied": "You haven't turned on location sharing. The owner can't follow the trip."
     },

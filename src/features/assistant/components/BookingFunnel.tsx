@@ -74,7 +74,7 @@ export default function BookingFunnel({ conversationId, vehicles, revision, init
         return merged;
       };
       if (mayRetry && (status === 409 || status === 503) && latest) return save(latest, merge(latest), false);
-      setError(assistantFailure(err, "Thông tin đã thay đổi hoặc chưa hợp lệ. Vui lòng kiểm tra lại.", locale));
+      setError(assistantFailure(err, "Thông tin đã thay đổi hoặc chưa hợp lệ. Vui lòng kiểm tra lại.", locale, true));
       if (latest && latest.version > savedVersion.current) merge(latest);
     }
   }

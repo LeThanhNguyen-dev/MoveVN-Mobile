@@ -23,6 +23,7 @@ import { usePushNavigation } from "@/features/notifications/pushNavigation";
 import SupportTicketCenter from "@/features/supportTickets/SupportTicketCenter";
 import AvailabilityAlertCenter from "@/features/availabilityAlerts/AvailabilityAlertCenter";
 import ViolationCenter from "@/features/violations/ViolationCenter";
+import DisputeCenter from "@/features/disputes/DisputeCenter";
 import type { UserRole } from "@/features/auth/types";
 import type { Theme } from "@/theme/tokens";
 import { initializeLanguage, useLanguageStore } from "@/theme/useLanguageStore";
@@ -98,6 +99,7 @@ export default function RootNavigator() {
     {token && user ? <SupportTicketCenter key={`support-${user.userId}`} userId={user.userId} /> : null}
     {token && user ? <AvailabilityAlertCenter key={`availability-${user.userId}`} userId={user.userId} /> : null}
     {token && user ? <ViolationCenter key={`violations-${user.userId}`} userId={user.userId} /> : null}
+    {token && user ? <DisputeCenter key={`disputes-${user.userId}`} userId={user.userId} /> : null}
     <ToastHost />
     <AppDialogHost />
   </NavigationContainer>;

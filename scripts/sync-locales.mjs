@@ -23,6 +23,7 @@ const ALLOWLIST = [
   "profile.json",
   "users.json",
   "booking.json",
+  "bookingGuide.json",
   "contract.json",
   "disputes.json",
   "faq.json",

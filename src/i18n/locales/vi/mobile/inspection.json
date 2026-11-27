@@ -25,7 +25,7 @@
       "damageDescriptionPlaceholder": "Vị trí, mức độ hư hại…",
       "photosSectionTitle": "Ảnh xe ({{selected}}/{{total}})",
       "photosSectionSubtitle": "Bắt buộc ít nhất 1 ảnh có watermark",
-      "photosIntro": "Chụp ảnh trực tiếp bằng camera, tối đa 12 ảnh. Kiểm tra watermark ngày giờ trên từng ảnh trước khi gửi.",
+      "photosIntro": "Chụp hoặc chọn tối đa 20 ảnh theo các góc gợi ý. Kiểm tra từng ảnh trước khi gửi.",
       "photoAlt": "Ảnh chụp xe {{index}} đã có watermark",
       "removePhotoAria": "Xóa ảnh {{index}}",
       "removePhoto": "Xóa / chụp lại",

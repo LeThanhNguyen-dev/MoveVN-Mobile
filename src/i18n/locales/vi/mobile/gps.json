@@ -87,6 +87,7 @@
       }
     },
     "publisher": {
+      "startFailed": "Không thể bắt đầu chia sẻ vị trí. Vui lòng cập nhật ứng dụng và thử lại.",
       "sendFailed": "Không gửi được vị trí. Sẽ thử lại.",
       "permissionDenied": "Bạn chưa bật chia sẻ vị trí. Chủ xe không thể theo dõi chuyến đi."
     },

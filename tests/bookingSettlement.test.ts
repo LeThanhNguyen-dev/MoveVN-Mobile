@@ -30,4 +30,11 @@ describe("booked mileage policy", () => {
     for (const value of ["", "999", "1250.5", "2147483648"]) expect(mileagePreview(booking, 1000, value)).toEqual({ valid: false });
     expect(mileagePreview(booking, undefined, "1650")).toEqual({ valid: false });
   });
+  it("does not treat an incomplete or invalid booked policy as zero included kilometres", () => {
+    for (const invalid of [{ includedKm: null }, { includedKm: -1 }, { calculationMethod: "Fixed" }, { unitPrice: -5000 }]) {
+      const invalidBooking = { ...booking, surchargeTerms: [{ ...booking.surchargeTerms![0]!, ...invalid }] };
+      expect(mileagePreview(invalidBooking, 1000, "1650")).toEqual({ valid: false });
+    }
+    expect(mileagePreview(booking, -1, "1650")).toEqual({ valid: false });
+  });
 });

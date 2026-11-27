@@ -4,7 +4,8 @@ import type { BookingResponse, InspectionReportResponse } from "./types";
 
 export type BookingRole = "Owner" | "Customer";
 export type InspectionType = "CheckIn" | "CheckOut";
-export const MAX_INSPECTION_PHOTOS = 12;
+export { MAX_INSPECTION_PHOTOS } from "./inspectionGuide";
+import { MAX_INSPECTION_PHOTOS } from "./inspectionGuide";
 export const MAX_INSPECTION_PHOTO_BYTES = 5 * 1024 * 1024;
 
 // Three statuses read differently on this screen than in the shared booking labels,

@@ -17,5 +17,6 @@ export function createInspectionForm(fields: {
   if (fields.damageNoted) data.append("damageDescription", fields.damageDescription.trim());
   fields.photos.forEach((photo) => appendUploadFile(data, "images", photo.uploadBlob ?? photo.file));
   fields.photos.forEach((photo) => data.append("capturedAts", photo.capturedAt));
+  fields.photos.forEach((photo) => data.append("photoCategories", photo.photoCategory ?? "Other"));
   return data;
 }

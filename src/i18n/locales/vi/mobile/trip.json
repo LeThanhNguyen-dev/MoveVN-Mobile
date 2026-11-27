@@ -193,7 +193,7 @@
     "display": {
       "checkIn": "Check-in · Nhận xe",
       "checkOut": "Check-out · Trả xe",
-      "photoCount": "Cần chụp từ 1 đến 12 ảnh xe.",
+      "photoCount": "Cần chụp từ 1 đến 20 ảnh xe.",
       "damageDescription": "Vui lòng mô tả hư hại của xe."
     }
   }

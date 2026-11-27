@@ -25,7 +25,7 @@
       "damageDescriptionPlaceholder": "Location and extent of damage…",
       "photosSectionTitle": "Vehicle photos ({{selected}}/{{total}})",
       "photosSectionSubtitle": "At least 1 watermarked photo required",
-      "photosIntro": "Take photos directly with the camera, up to 12 photos. Check the date and time watermark on each photo before sending.",
+      "photosIntro": "Take or choose up to 20 photos using the suggested angles. Review each photo before sending.",
       "photoAlt": "Watermarked vehicle photo {{index}}",
       "removePhotoAria": "Remove photo {{index}}",
       "removePhoto": "Remove / retake",

@@ -1,3 +1,4 @@
+import PhotoPreview, { PhotoViewer, PreviewImage } from "@/components/PhotoPreview";
 import { useCallback, useEffect, useMemo, useState, useRef, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -65,6 +66,8 @@ export default function DisputeDetailScreen({
   const userId = useAuthStore((state) => state.user?.userId);
 
   const requestId = useRef(0);
+  const pendingLoads = useRef(0);
+  const loadedDisputeId = useRef<number | null>(null);
   const actionLock = useRef(false);
   const [detail, setDetail] = useState<DisputeDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -80,21 +83,31 @@ export default function DisputeDetailScreen({
 
   const load = useCallback(async (silent = false) => {
     const current = ++requestId.current;
-    if (!silent) { setLoading(true); setError(""); }
+    const background = silent && loadedDisputeId.current === disputeId;
+    pendingLoads.current++;
+    if (!background) { setLoading(true); setError(""); }
     try {
       const result = await getDisputeById(disputeId);
-      if (current === requestId.current) setDetail(result);
+      if (current === requestId.current) {
+        loadedDisputeId.current = disputeId;
+        setDetail(result);
+      }
     } catch (err) {
-      if (current === requestId.current && !silent) setError(getApiErrorMessage(err, t("disputes:errors.loadDetailFailed")));
-      await load(true);
+      // Không retry đệ quy trong catch: mất mạng sẽ thành vòng lặp vô hạn và
+      // giữ spinner mãi vì requestId đổi liên tục. Lần load im lặng giữ dữ liệu cũ,
+      // lần load đầu hiện lỗi để người dùng chủ động bấm thử lại.
+      if (current === requestId.current && !background) setError(getApiErrorMessage(err, t("disputes:errors.loadDetailFailed")));
     } finally {
+      pendingLoads.current--;
       if (current === requestId.current) setLoading(false);
     }
   }, [disputeId, t]);
 
   useEffect(() => {
+    loadedDisputeId.current = null;
+    setDetail(null);
     void load();
-    const sync = () => { if (AppState.currentState === "active" && !actionLock.current) void load(true); };
+    const sync = () => { if (AppState.currentState === "active" && !actionLock.current && pendingLoads.current === 0) void load(true); };
     const interval = setInterval(sync, 15000);
     const appState = AppState.addEventListener("change", state => { if (state === "active") sync(); });
     const unsubscribe = useNotificationStore.subscribe((state, previous) => {
@@ -346,8 +359,8 @@ export default function DisputeDetailScreen({
         >
           <View style={styles.grid}>
             {evidenceList(detail.evidenceUrls).map((url) => (
-              <Pressable key={url} onPress={() => setViewingImage(url)}>
-                <Image source={{ uri: url }} style={styles.thumb} />
+              <Pressable key={url} style={{ width: 140 }} onPress={() => setViewingImage(url)}>
+                <PreviewImage uri={url} label={t("bookingGuide:view", { index: 1 })} />
               </Pressable>
             ))}
           </View>
@@ -424,8 +437,8 @@ export default function DisputeDetailScreen({
                 <Text style={styles.body}>{submission.message}</Text>
                 <View style={styles.grid}>
                   {evidenceList(submission.evidenceUrls).map((url) => (
-                    <Pressable key={url} onPress={() => setViewingImage(url)}>
-                      <Image source={{ uri: url }} style={styles.thumb} />
+                    <Pressable key={url} style={{ width: 140 }} onPress={() => setViewingImage(url)}>
+                      <PreviewImage uri={url} label={t("bookingGuide:view", { index: 1 })} />
                     </Pressable>
                   ))}
                 </View>
@@ -502,16 +515,7 @@ export default function DisputeDetailScreen({
           <Pressable onPress={() => void pickEvidence()} style={styles.secondaryButton}>
             <Text style={styles.secondaryText}>{t("mobile:dispute.detail.pickEvidence", { count: evidenceFiles.length, max: MAX_EVIDENCE_IMAGES })}</Text>
           </Pressable>
-          {evidenceFiles.map((file, index) => (
-            <View key={`${file.uri}-${index}`} style={styles.fileRow}>
-              <Text numberOfLines={1} style={styles.fileName}>
-                {file.name}
-              </Text>
-              <Pressable onPress={() => setEvidenceFiles((prev) => prev.filter((_, i) => i !== index))}>
-                <Text style={styles.removeText}>{t("mobile:dispute.detail.removeFile")}</Text>
-              </Pressable>
-            </View>
-          ))}
+          <PhotoPreview photos={evidenceFiles} disabled={busy} onRemove={index => setEvidenceFiles(prev => prev.filter((_, i) => i !== index))} />
           <Pressable
             disabled={busy || (!evidenceMessage.trim() && evidenceFiles.length === 0)}
             onPress={() => void submitEvidence()}
@@ -575,12 +579,7 @@ export default function DisputeDetailScreen({
         </Collapsible>
       ) : null}
 
-      <Modal visible={viewingImage !== null} transparent animationType="fade" onRequestClose={() => setViewingImage(null)}>
-        <Pressable onPress={() => setViewingImage(null)} style={styles.viewer}>
-          {viewingImage ? <Image source={{ uri: viewingImage }} resizeMode="contain" style={styles.fullImage} /> : null}
-          <Text style={styles.viewerHint}>{t("mobile:dispute.detail.closeHint")}</Text>
-        </Pressable>
-      </Modal>
+      {viewingImage ? <PhotoViewer uri={viewingImage} onClose={() => setViewingImage(null)} /> : null}
       </ScrollView>
     </View>
   );
@@ -590,7 +589,7 @@ function StatusStepper({ status }: { status: string }) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const steps = ["Open", "Investigating", "NeedMoreEvidence", "DecisionIssued", "AwaitingExternalSettlement"];
+  const steps = ["Open", "Investigating", "DecisionIssued", "AwaitingExternalSettlement"];
   const labels: Record<string, string> = {
     Open: t("mobile:dispute.stepper.open"),
     Investigating: t("mobile:dispute.stepper.investigating"),
@@ -612,21 +611,31 @@ function StatusStepper({ status }: { status: string }) {
       </View>
     );
   }
-  const current = steps.indexOf(status);
+  // NeedMoreEvidence là nhánh tạm dừng (chờ bổ sung), không phải bước kế tiếp của
+  // quy trình. Hiển thị banner riêng và giữ tiến trình ở bước Đang xử lý.
+  const waitingEvidence = status === "NeedMoreEvidence";
+  const current = steps.indexOf(waitingEvidence ? "Investigating" : status);
   return (
-    <View style={styles.stepper}>
-      {steps.map((s, i) => {
-        const done = current < 0 ? false : i <= current;
-        return (
-          <View key={s} style={styles.stepItem}>
-            <View style={[styles.stepDot, done && styles.stepDotDone]}>
-              <Text style={[styles.stepDotText, done && styles.stepDotTextDone]}>{i + 1}</Text>
+    <View>
+      {waitingEvidence ? (
+        <View style={styles.stepperNotice}>
+          <Text style={styles.stepperNoticeText}>{labels.NeedMoreEvidence}</Text>
+        </View>
+      ) : null}
+      <View style={styles.stepper}>
+        {steps.map((s, i) => {
+          const done = current < 0 ? false : i <= current;
+          return (
+            <View key={s} style={styles.stepItem}>
+              <View style={[styles.stepDot, done && styles.stepDotDone]}>
+                <Text style={[styles.stepDotText, done && styles.stepDotTextDone]}>{i + 1}</Text>
+              </View>
+              <Text style={[styles.stepLabel, done && styles.stepLabelDone]}>{labels[s]}</Text>
+              {i < steps.length - 1 ? <View style={[styles.stepLine, done && styles.stepLineDone]} /> : null}
             </View>
-            <Text style={[styles.stepLabel, done && styles.stepLabelDone]}>{labels[s]}</Text>
-            {i < steps.length - 1 ? <View style={[styles.stepLine, done && styles.stepLineDone]} /> : null}
-          </View>
-        );
-      })}
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -721,6 +730,8 @@ const createStyles = (theme: Theme) =>
     stepperDoneText: { color: theme.success, fontSize: 13, fontWeight: "800" },
     stepperEscalated: { backgroundColor: theme.brandSoft, borderRadius: 10, paddingVertical: 8, alignItems: "center" },
     stepperEscalatedText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
+    stepperNotice: { backgroundColor: theme.brandSoft, borderRadius: 10, paddingVertical: 8, alignItems: "center", marginBottom: 8 },
+    stepperNoticeText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
     status: { color: theme.brand, fontSize: 12, fontWeight: "800" },
     problem: { color: theme.text, fontSize: 14, fontWeight: "800" },
     muted: { color: theme.muted, fontSize: 12 },

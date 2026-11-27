@@ -1,3 +1,4 @@
+import PhotoPreview from "@/components/PhotoPreview";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -151,6 +152,7 @@ export default function TrafficFineCreateFields({
           <Pressable onPress={() => void pickReceipts()} style={styles.pickButton}>
             <Text style={styles.pickText}>{t("mobile:dispute.fineForm.pickReceipts", { count: receipts.length })}</Text>
           </Pressable>
+          <PhotoPreview photos={receipts} onRemove={index => onReceipts(receipts.filter((_, i) => i !== index))} />
         </>
       )}
       <Text style={styles.muted}>{t("mobile:dispute.fineForm.noticeHint")}</Text>
@@ -198,6 +200,24 @@ export function validateTrafficFineForm(value: TrafficFineForm, receiptCount: nu
     if (receiptCount < 1 || receiptCount > 6) return i18n.t("mobile:dispute.fineForm.errors.receipts");
   }
   return null;
+}
+
+export function canSubmitDispute(params: {
+  submitting: boolean;
+  bookingId: string;
+  description: string;
+  reportType: string;
+  evidenceCount: number;
+  paymentMode?: TrafficFineForm["paymentMode"];
+  ownerReceiptCount: number;
+}): boolean {
+  const { submitting, bookingId, description, reportType, evidenceCount, paymentMode, ownerReceiptCount } = params;
+  if (submitting || !bookingId || !description.trim()) return false;
+  if (reportType !== "TrafficFine") return true;
+  // Backend bắt buộc 1..6 ảnh chứng từ cho phạt nguội (TrafficFineService.RequireEvidence).
+  if (evidenceCount < 1 || evidenceCount > 6) return false;
+  if (paymentMode === "ReimburseOwner" && (ownerReceiptCount < 1 || ownerReceiptCount > 6)) return false;
+  return true;
 }
 
 export function toCreateTrafficFineRequest(
