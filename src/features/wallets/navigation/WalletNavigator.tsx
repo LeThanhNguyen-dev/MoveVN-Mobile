@@ -11,7 +11,7 @@ import {
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import MobileBottomBar, { type MobileTabItem } from "@/navigation/MobileBottomBar";
-import PaymentWebViewModal from "@/features/payments/components/PaymentWebViewModal";
+import PayOsQrSheet from "@/features/payments/components/PayOsQrSheet";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { useWallet } from "@/features/wallets/hooks/useWallet";
 import { useWalletPinGate } from "@/features/wallets/hooks/useWalletPinGate";
@@ -22,7 +22,7 @@ import WalletBankScreen from "@/features/wallets/screens/WalletBankScreen";
 
 export type WalletTabKey = "home" | "history" | "cashflow" | "bank";
 
-export default function WalletNavigator({ onBack }: { onBack: () => void }) {
+export default function WalletNavigator({ onBack, initialTab = "home" }: { onBack: () => void; initialTab?: WalletTabKey }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { t } = useTranslation();
@@ -32,7 +32,7 @@ export default function WalletNavigator({ onBack }: { onBack: () => void }) {
   const activeRole = useAuthStore((s) => s.activeRole);
   const isOwner = activeRole === "Owner";
 
-  const [activeTab, setActiveTab] = useState<WalletTabKey>("home");
+  const [activeTab, setActiveTab] = useState<WalletTabKey>(initialTab);
   const [cashflowPane, setCashflowPane] = useState<CashflowPane>(isOwner ? "withdraw" : "topup");
   const [balanceHidden, setBalanceHidden] = useState(false);
 
@@ -96,12 +96,14 @@ export default function WalletNavigator({ onBack }: { onBack: () => void }) {
 
       <MobileBottomBar activeKey={activeTab} items={tabs} onChange={setActiveTab} />
 
-      <PaymentWebViewModal
-        checkoutUrl={state.paySheet?.checkoutUrl ?? null}
+      <PayOsQrSheet
+        data={state.paySheet}
         onClose={() => {
-          state.setPaySheet(null);
+          state.dismissPaySheet();
           void state.reload();
         }}
+        onCheckNow={(orderCode) => state.pollTopUp(orderCode)}
+        onCancel={() => state.cancelPaySheet()}
       />
     </View>
   );

@@ -1,442 +1,250 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import * as ImagePicker from "expo-image-picker";
-import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Clock, ImagePlus, RefreshCw } from "lucide-react-native";
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ArrowLeft, ArrowRight, CheckCircle2, Circle, CreditCard, FileBadge, IdCard, RefreshCw } from "lucide-react-native";
 import AppText from "@/components/AppText";
-import { driverLicenseStatusLabel } from "@/features/driverLicenses/driverLicenseDisplay";
-import {
-  createApplication,
-  getMyApplication,
-  uploadNationalId,
-} from "@/features/owner/services/ownerService";
+import { useAuthStore } from "@/features/auth/hooks/useAuth";
+import OwnerCccdVerificationScreen from "@/features/owner/screens/OwnerCccdVerificationScreen";
+import DriverLicenseScreen from "@/features/driverLicenses/screens/DriverLicenseScreen";
+import { createApplication, getMyApplication, submitApplication } from "@/features/owner/services/ownerService";
 import type { OwnerApplicationDto } from "@/features/owner/types";
-import MaskedDocumentValue from "@/features/pin/components/MaskedDocumentValue";
-import { appendUploadFile, type UploadFileInput } from "@/types/upload";
-import { prepareDocumentImage } from "@/utils/documentImage";
+import { refreshAuthSession } from "@/services/apiClient";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
-const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
+type VerificationCardProps = {
+  title: string;
+  complete: boolean;
+  action: string;
+  onPress: () => void;
+  icon: typeof IdCard;
+  completeLabel: string;
+  incompleteLabel: string;
+  theme: Theme;
+};
 
-function getExtension(fileName?: string | null, mimeType?: string | null) {
-  const fromName = fileName?.split(".").pop()?.toLowerCase();
-  if (fromName && fromName.length <= 5) return fromName;
-  if (mimeType?.startsWith("image/")) {
-    const subtype = mimeType.split("/")[1]?.toLowerCase();
-    if (subtype === "jpeg") return "jpg";
-    return subtype;
-  }
-  return undefined;
+function VerificationCard({
+  title, complete, action, onPress, icon: Icon, completeLabel, incompleteLabel, theme,
+}: VerificationCardProps) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <View style={[styles.iconBox, complete && styles.iconBoxComplete]}>
+          <Icon color={complete ? theme.success : theme.brand} size={21} strokeWidth={2.2} />
+        </View>
+        <View style={styles.cardHeading}>
+          <AppText display style={styles.cardTitle}>{title}</AppText>
+          <View style={[styles.status, complete ? styles.statusComplete : styles.statusIncomplete]}>
+            {complete
+              ? <CheckCircle2 color={theme.success} size={15} strokeWidth={2.5} />
+              : <Circle color={theme.muted} size={14} strokeWidth={2.1} />}
+            <AppText style={[styles.statusText, complete ? styles.statusTextComplete : styles.statusTextIncomplete]}>
+              {complete ? completeLabel : incompleteLabel}
+            </AppText>
+          </View>
+        </View>
+      </View>
+      <Pressable accessibilityRole="button" onPress={onPress} style={styles.cardAction}>
+        <AppText style={styles.cardActionText}>{action}</AppText>
+        <ArrowRight color={theme.brand} size={17} strokeWidth={2.3} />
+      </Pressable>
+    </View>
+  );
 }
 
-export default function OwnerVerificationScreen({ onBack }: { onBack: () => void }) {
+export default function OwnerVerificationScreen({
+  onBack,
+  onOpenWalletBank,
+  onOwnerUpgraded,
+}: {
+  onBack: () => void;
+  onOpenWalletBank?: () => void;
+  onOwnerUpgraded?: () => void | Promise<void>;
+}) {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [application, setApplication] = useState<OwnerApplicationDto | null>(null);
-  const [loadingStatus, setLoadingStatus] = useState(true);
-  const [statusError, setStatusError] = useState("");
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<UploadFileInput | null>(null);
-  const [processing, setProcessing] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [cccdOpen, setCccdOpen] = useState(false);
+  const [driverLicenseOpen, setDriverLicenseOpen] = useState(false);
 
   const loadStatus = useCallback(async () => {
-    setLoadingStatus(true);
-    setStatusError("");
+    setLoading(true);
+    setError("");
     try {
-      let app: OwnerApplicationDto | null = null;
+      let app: OwnerApplicationDto;
       try {
         app = await getMyApplication();
       } catch {
-        app = null;
-      }
-      if (!app || !(app.id > 0)) {
         await createApplication();
         app = await getMyApplication();
       }
       setApplication(app);
     } catch (failure) {
-      setStatusError(failure instanceof Error ? failure.message : t("mobile:ownerHome.verification.loadStatusError"));
+      setError(failure instanceof Error ? failure.message : t("mobile:ownerHome.verification.loadStatusError"));
     } finally {
-      setLoadingStatus(false);
+      setLoading(false);
     }
   }, [t]);
 
-  useEffect(() => {
-    void loadStatus();
-  }, [loadStatus]);
+  useEffect(() => { void loadStatus(); }, [loadStatus]);
 
-  const verified = application?.nationalIdVerified ?? false;
-  const requestStatus = application?.nationalIdRequestStatus ?? "None";
-  const showPendingNotice = requestStatus === "Pending" || requestStatus === "Processing";
-
-  async function pickImage(source: "camera" | "library") {
-    setError("");
-    const permission = source === "camera"
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError(source === "camera"
-        ? t("mobile:ownerHome.verification.cameraPermission")
-        : t("mobile:ownerHome.verification.libraryPermission"));
-      return;
-    }
-    const result = source === "camera"
-      ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 1 })
-      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 1 });
-    if (result.canceled) return;
-    const asset = result.assets[0];
-    if (!asset?.uri) return;
-    const extension = getExtension(asset.fileName, asset.mimeType);
-    if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
-      setError(t("mobile:driverLicense.invalidFileType"));
-      return;
-    }
-    // Hiện ảnh gốc ngay để user thấy phản hồi, nén ở nền rồi đổi sang bản đã xử lý.
-    setImageUri(asset.uri);
-    setImageFile(null);
-    setProcessing(true);
-    try {
-      const prepared = await prepareDocumentImage(
-        { uri: asset.uri, width: asset.width, height: asset.height },
-        "cccd",
-      );
-      setImageUri(prepared.uri);
-      setImageFile(prepared.file);
-    } catch {
-      setError(t("mobile:driverLicense.processImageError"));
-      setImageUri(null);
-    } finally {
-      setProcessing(false);
-    }
+  if (cccdOpen) {
+    return (
+      <OwnerCccdVerificationScreen
+        onBack={() => { setCccdOpen(false); void loadStatus(); }}
+        onVerified={(updated) => {
+          if (updated) setApplication(updated);
+          setCccdOpen(false);
+          void loadStatus();
+        }}
+      />
+    );
   }
 
-  async function handleSubmit() {
-    if (!imageFile) {
-      setError(t("mobile:ownerHome.verification.photoRequired"));
-      return;
-    }
-    setBusy(true);
+  if (driverLicenseOpen) {
+    return <DriverLicenseScreen onBack={() => { setDriverLicenseOpen(false); void loadStatus(); }} />;
+  }
+
+  const cccdComplete = application?.nationalIdVerified ?? false;
+  const driverLicenseComplete = application?.driverLicenseVerified ?? false;
+  const bankComplete = application?.bankInfoCompleted ?? false;
+  const allRequirementsComplete = cccdComplete && driverLicenseComplete && bankComplete;
+  const emailVerified = application?.emailVerified ?? false;
+
+  async function handleUpgrade() {
+    if (!allRequirementsComplete || submitting) return;
+    setSubmitting(true);
     setError("");
-    setNotice("");
     try {
-      const formData = new FormData();
-      appendUploadFile(formData, "frontImage", imageFile);
-      const result = await uploadNationalId(formData);
-      if (result.status === "Verified") {
-        setNotice(t("mobile:ownerHome.verification.aiVerified"));
-      } else if (result.status === "Pending" || result.status === "Processing") {
-        setNotice(t("mobile:ownerHome.verification.pendingNoticeShort"));
-      } else {
-        setError(result.message || t("mobile:ownerHome.verification.verifyFailed"));
+      const result = await submitApplication();
+      if (!result.isOwner) throw new Error(t("mobile:ownerHome.verification.upgradeError"));
+      const refreshed = await refreshAuthSession();
+      if (!refreshed.user.roles?.includes("Owner")) {
+        throw new Error(t("mobile:ownerHome.verification.refreshOwnerAccessError"));
       }
-      await loadStatus();
+      await useAuthStore.getState().setActiveRole("Owner");
+      await onOwnerUpgraded?.();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : t("mobile:ownerHome.verification.submitError"));
+      setError(failure instanceof Error ? failure.message : t("mobile:ownerHome.verification.upgradeError"));
     } finally {
-      setBusy(false);
+      setSubmitting(false);
     }
   }
-
-  const submitDisabled = busy || processing || !imageFile;
 
   return (
     <View style={styles.content}>
       <View style={styles.topBar}>
-        <Pressable accessibilityLabel={t("accountVerification:bank.back")} accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("mobile:wallet.a11y.back")} onPress={onBack} style={styles.backButton}>
           <ArrowLeft color={theme.text} size={22} strokeWidth={2.3} />
         </Pressable>
-        <AppText display style={styles.topBarTitle}>{t("mobile:ownerHome.verification.title")}</AppText>
+        <AppText display style={styles.topBarTitle}>{t("mobile:ownerHome.verification.overviewTitle")}</AppText>
         <Pressable
-          accessibilityLabel={t("mobile:driverLicense.reloadAria")}
           accessibilityRole="button"
-          disabled={loadingStatus}
+          accessibilityLabel={t("mobile:driverLicense.reloadAria")}
+          disabled={loading}
           onPress={() => { void loadStatus(); }}
           style={styles.backButton}
         >
-          <RefreshCw color={theme.brand} size={19} strokeWidth={2.3} />
+          {loading
+            ? <ActivityIndicator color={theme.brand} size="small" />
+            : <RefreshCw color={theme.brand} size={19} strokeWidth={2.3} />}
         </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.card}>
-          <AppText display style={styles.cardTitle}>{t("mobile:driverLicense.statusTitle")}</AppText>
-          {loadingStatus ? (
-            <View style={styles.center}>
-              <ActivityIndicator color={theme.brand} size="large" />
-              <AppText style={styles.muted}>{t("mobile:driverLicense.loadingStatus")}</AppText>
-            </View>
-          ) : statusError || !application ? (
-            <View style={styles.stack}>
-              {statusError ? <AppText style={styles.error}>{statusError}</AppText> : null}
-              <Pressable accessibilityRole="button" onPress={() => { void loadStatus(); }} style={styles.outlineButton}>
-                <RefreshCw color={theme.brand} size={18} strokeWidth={2.3} />
-                <AppText style={styles.pickText}>{t("common:retry")}</AppText>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.statusBox}>
-              <StatusBadge status={verified ? "Verified" : requestStatus} />
-              <View style={styles.detailLine}>
-                <AppText style={styles.detailLabel}>{t("accountVerification:cccd.idNumber")}</AppText>
-                <MaskedDocumentValue
-                  canReveal={verified}
-                  documentType="CCCD"
-                  maskedValue={application.nationalIdNumber ?? null}
-                  revealDisabledHint={t("mobile:driverLicense.revealDisabledHint")}
-                />
-              </View>
-              <DetailLine label={t("mobile:ownerHome.verification.fullName")} value={application.fullName || "-"} />
-            </View>
-          )}
-
-          {showPendingNotice ? (
-            <View style={styles.infoBox}>
-              <Clock color={theme.brand} size={18} strokeWidth={2.3} />
-              <AppText style={styles.infoText}>{t("mobile:ownerHome.verification.pendingNotice")}</AppText>
-            </View>
-          ) : null}
-
-          {!verified && !showPendingNotice && application
-          && (requestStatus === "Rejected" || requestStatus === "Failed" || requestStatus === "NeedMoreInfo") ? (
-            <View style={styles.warnBox}>
-              <AlertTriangle color={theme.danger} size={18} strokeWidth={2.3} />
-              <AppText style={styles.warnText}>
-                {t("mobile:ownerHome.verification.retryHint", { status: driverLicenseStatusLabel[requestStatus] ?? requestStatus })}
-              </AppText>
-            </View>
-          ) : null}
-        </View>
-
-        <View style={styles.card}>
-          <AppText display style={styles.cardTitle}>{t("mobile:ownerHome.verification.uploadTitle")}</AppText>
-          <AppText style={styles.hint}>{t("mobile:ownerHome.verification.uploadHint")}</AppText>
-
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.preview} />
-          ) : (
-            <View style={styles.previewPlaceholder}>
-              <ImagePlus color={theme.faint} size={30} strokeWidth={2} />
-              <AppText style={styles.muted}>{t("mobile:driverLicense.noImageSelected")}</AppText>
-            </View>
-          )}
-
-          {processing ? (
-            <View style={styles.processingRow}>
-              <ActivityIndicator color={theme.brand} size="small" />
-              <AppText style={styles.muted}>{t("mobile:driverLicense.processingImage")}</AppText>
-            </View>
-          ) : null}
-
-          <View style={styles.pickRow}>
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy || processing}
-              onPress={() => { void pickImage("camera"); }}
-              style={[styles.pickButton, (busy || processing) && styles.disabled]}
-            >
-              <Camera color={theme.brand} size={18} strokeWidth={2.3} />
-              <AppText style={styles.pickText}>{t("mobile:driverLicense.capture")}</AppText>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy || processing}
-              onPress={() => { void pickImage("library"); }}
-              style={[styles.pickButton, (busy || processing) && styles.disabled]}
-            >
-              <ImagePlus color={theme.brand} size={18} strokeWidth={2.3} />
-              <AppText style={styles.pickText}>{t("mobile:driverLicense.library")}</AppText>
-            </Pressable>
+        {loading && !application ? (
+          <View style={styles.loadingBox}>
+            <ActivityIndicator color={theme.brand} size="large" />
+            <AppText style={styles.muted}>{t("mobile:ownerHome.verification.loading")}</AppText>
           </View>
+        ) : (
+          <>
+            <VerificationCard
+              title={t("mobile:ownerHome.verification.cccdCardTitle")}
+              complete={cccdComplete}
+              action={t(cccdComplete ? "mobile:ownerHome.verification.viewCccd" : "mobile:ownerHome.verification.verifyCccd")}
+              onPress={() => setCccdOpen(true)}
+              icon={IdCard}
+              completeLabel={t("mobile:ownerHome.verification.completed")}
+              incompleteLabel={t("mobile:ownerHome.verification.notCompleted")}
+              theme={theme}
+            />
+            <VerificationCard
+              title={t("mobile:ownerHome.verification.driverLicenseCardTitle")}
+              complete={driverLicenseComplete}
+              action={t(driverLicenseComplete ? "mobile:ownerHome.verification.viewDriverLicense" : "mobile:ownerHome.verification.verifyDriverLicense")}
+              onPress={() => setDriverLicenseOpen(true)}
+              icon={FileBadge}
+              completeLabel={t("mobile:ownerHome.verification.completed")}
+              incompleteLabel={t("mobile:ownerHome.verification.notCompleted")}
+              theme={theme}
+            />
+            <VerificationCard
+              title={t("mobile:ownerHome.verification.bankCardTitle")}
+              complete={bankComplete}
+              action={t(bankComplete ? "mobile:ownerHome.verification.viewBank" : "mobile:ownerHome.verification.setupBank")}
+              onPress={() => onOpenWalletBank?.()}
+              icon={CreditCard}
+              completeLabel={t("mobile:ownerHome.verification.completed")}
+              incompleteLabel={t("mobile:ownerHome.verification.notCompleted")}
+              theme={theme}
+            />
 
-          {error ? <AppText style={styles.error}>{error}</AppText> : null}
-          {notice ? (
-            <View style={styles.successBox}>
-              <CheckCircle2 color={theme.success} size={18} strokeWidth={2.3} />
-              <AppText style={styles.successText}>{notice}</AppText>
-            </View>
-          ) : null}
-
-          <Pressable
-            accessibilityRole="button"
-            disabled={submitDisabled}
-            onPress={() => { void handleSubmit(); }}
-            style={[styles.submitButton, submitDisabled && styles.disabled]}
-          >
-            <AppText style={styles.submitText}>{busy ? t("mobile:driverLicense.submitting") : t("accountVerification:driverLicense.submit")}</AppText>
-          </Pressable>
-        </View>
+            {error ? <AppText accessibilityRole="alert" style={styles.error}>{error}</AppText> : null}
+            {allRequirementsComplete ? (
+              <View style={styles.upgradeArea}>
+                {!emailVerified ? <AppText style={styles.emailHint}>{t("mobile:ownerHome.verification.emailRequired")}</AppText> : null}
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={submitting || loading || !emailVerified}
+                  onPress={() => { void handleUpgrade(); }}
+                  style={[styles.upgradeButton, (submitting || loading || !emailVerified) && styles.disabled]}
+                >
+                  {submitting ? <ActivityIndicator color={theme.onBrand} /> : null}
+                  <AppText style={styles.upgradeText}>
+                    {submitting ? t("mobile:ownerHome.verification.upgrading") : t("mobile:ownerHome.verification.upgradeOwner")}
+                  </AppText>
+                </Pressable>
+              </View>
+            ) : null}
+          </>
+        )}
       </ScrollView>
     </View>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  const verified = status === "Verified";
-  const pending = status === "Pending" || status === "Processing";
-  return (
-    <View
-      style={[
-        styles.badge,
-        verified ? styles.badgeVerified : pending ? styles.badgePending : styles.badgeUnverified,
-      ]}
-    >
-      <AppText
-        style={[
-          styles.badgeText,
-          verified ? styles.badgeTextVerified : pending ? styles.badgeTextPending : styles.badgeTextUnverified,
-        ]}
-      >
-        {driverLicenseStatusLabel[status] ?? status}
-      </AppText>
-    </View>
-  );
-}
-
-function DetailLine({ label, value }: { label: string; value: string }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  return (
-    <View style={styles.detailLine}>
-      <AppText style={styles.detailLabel}>{label}</AppText>
-      <AppText style={styles.detailValue}>{value}</AppText>
-    </View>
-  );
-}
-
 const createStyles = (theme: Theme) => StyleSheet.create({
-  content: { flex: 1 },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    minHeight: 48,
-  },
+  content: { flex: 1, backgroundColor: theme.background },
+  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 4, minHeight: 48 },
   backButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 20 },
-  topBarTitle: { color: theme.text, fontSize: 17, fontWeight: "800" },
-  scroll: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 28, gap: 14 },
-  card: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: theme.border,
-    padding: 16,
-    gap: 10,
-  },
+  topBarTitle: { color: theme.text, fontSize: 16, fontWeight: "800" },
+  scroll: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24, gap: 12 },
+  card: { borderRadius: 14, borderWidth: 1, borderColor: theme.border, padding: 14, gap: 13, backgroundColor: theme.surface },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  iconBox: { width: 38, height: 38, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: theme.brandSoft },
+  iconBoxComplete: { backgroundColor: theme.successSoft },
+  cardHeading: { flex: 1, gap: 6 },
   cardTitle: { color: theme.text, fontSize: 15, fontWeight: "800" },
-  hint: { color: theme.muted, fontSize: 13, lineHeight: 19, fontWeight: "500" },
+  status: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
+  statusComplete: { backgroundColor: theme.successSoft },
+  statusIncomplete: { backgroundColor: theme.surfaceAlt },
+  statusText: { fontSize: 12, fontWeight: "800" },
+  statusTextComplete: { color: theme.success },
+  statusTextIncomplete: { color: theme.muted },
+  cardAction: { minHeight: 44, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border, paddingTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  cardActionText: { color: theme.brand, fontSize: 13, fontWeight: "800" },
+  loadingBox: { alignItems: "center", gap: 10, paddingVertical: 44 },
   muted: { color: theme.muted, fontSize: 13, fontWeight: "600" },
-  center: { alignItems: "center", gap: 12, paddingVertical: 24 },
-  stack: { gap: 12 },
   error: { color: theme.danger, fontSize: 13, lineHeight: 19, fontWeight: "600" },
-  statusBox: { gap: 2 },
-  detailLine: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    paddingVertical: 5,
-  },
-  detailLabel: { color: theme.muted, fontSize: 13, fontWeight: "600" },
-  detailValue: { color: theme.text, fontSize: 13, fontWeight: "700", textAlign: "right", flexShrink: 1 },
-  badge: {
-    alignSelf: "flex-start",
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginBottom: 4,
-  },
-  badgeVerified: { backgroundColor: theme.successSoft },
-  badgePending: { backgroundColor: theme.brandSoft },
-  badgeUnverified: { backgroundColor: theme.surfaceAlt },
-  badgeText: { fontSize: 12, fontWeight: "800" },
-  badgeTextVerified: { color: theme.success },
-  badgeTextPending: { color: theme.brand },
-  badgeTextUnverified: { color: theme.faint },
-  infoBox: {
-    flexDirection: "row",
-    gap: 9,
-    borderRadius: 12,
-    backgroundColor: theme.brandSoft,
-    padding: 12,
-    alignItems: "flex-start",
-  },
-  infoText: { flex: 1, color: theme.text, fontSize: 13, lineHeight: 19, fontWeight: "600" },
-  warnBox: {
-    flexDirection: "row",
-    gap: 9,
-    borderRadius: 12,
-    backgroundColor: theme.dangerSoft,
-    padding: 12,
-    alignItems: "flex-start",
-  },
-  warnText: { flex: 1, color: theme.text, fontSize: 13, lineHeight: 19, fontWeight: "600" },
-  successBox: {
-    flexDirection: "row",
-    gap: 9,
-    borderRadius: 12,
-    backgroundColor: theme.successSoft,
-    padding: 12,
-    alignItems: "flex-start",
-  },
-  successText: { flex: 1, color: theme.text, fontSize: 13, lineHeight: 19, fontWeight: "700" },
-  preview: { width: "100%", height: 200, borderRadius: 12, backgroundColor: theme.surfaceAlt },
-  previewPlaceholder: {
-    height: 140,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: theme.border,
-    backgroundColor: theme.surfaceAlt,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  processingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  pickRow: { flexDirection: "row", gap: 8 },
-  pickButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    minHeight: 46,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.brandBorder,
-    backgroundColor: "transparent",
-  },
-  pickText: { color: theme.brand, fontSize: 14, fontWeight: "700" },
-  outlineButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    minHeight: 46,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.brandBorder,
-    backgroundColor: "transparent",
-  },
-  submitButton: {
-    minHeight: 50,
-    borderRadius: 14,
-    backgroundColor: theme.brand,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  submitText: { color: theme.onBrand, fontSize: 15, fontWeight: "800" },
+  upgradeArea: { gap: 10, marginTop: 2 },
+  emailHint: { color: theme.muted, fontSize: 13, lineHeight: 19, fontWeight: "600" },
+  upgradeButton: { minHeight: 52, borderRadius: 14, backgroundColor: theme.brand, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 16 },
+  upgradeText: { color: theme.onBrand, fontSize: 15, fontWeight: "800" },
   disabled: { opacity: 0.55 },
 });

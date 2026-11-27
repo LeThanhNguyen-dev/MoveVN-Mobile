@@ -3,6 +3,10 @@
     "backAria": "Quay lại",
     "errorTitle": "Lỗi",
     "bookingFallback": "Booking #{{id}}",
+    "disabled": {
+      "title": "Chức năng chia sẻ vị trí đang tắt",
+      "message": "Quản trị viên đang tắt chia sẻ vị trí theo chuyến. Dữ liệu hành trình của các chuyến trước vẫn được lưu và xem lại trong chi tiết đơn thuê."
+    },
     "info": {
       "aria": "Cách hệ thống đọc vị trí GPS",
       "title": "Cách hệ thống đọc GPS",

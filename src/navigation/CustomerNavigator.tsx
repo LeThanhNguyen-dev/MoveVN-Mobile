@@ -1,11 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { usePushNavigation } from "@/features/notifications/pushNavigation";
 import { CalendarCheck, Gift, LayoutGrid, MessageSquare, UserRound } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
+import type { ViewInstance } from "react-native";
+import { showToast } from "@/features/notifications/toastStore";
+import TourOverlay from "@/features/onboarding/components/TourOverlay";
+import { useBookingTour } from "@/features/onboarding/bookingTour";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AccountTabScreen from "@/features/app/screens/AccountTabScreen";
 import WalletScreen from "@/features/wallets/screens/WalletScreen";
+import type { WalletTabKey } from "@/features/wallets/navigation/WalletNavigator";
 import UserProfileScreen from "@/features/app/screens/UserProfileScreen";
 import AssistantFab from "@/features/assistant/components/AssistantFab";
 import type { QuickBookParams } from "@/features/assistant/screens/AssistantScreen";
@@ -43,6 +48,9 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [activeTab, setActiveTab] = useState<CustomerTabKey>("explore");
   const [showProfile, setShowProfile] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
+  const [walletInitialTab, setWalletInitialTab] = useState<WalletTabKey>("home");
+  const [walletReturnToOwnerVerification, setWalletReturnToOwnerVerification] = useState(false);
+  const [reopenOwnerVerification, setReopenOwnerVerification] = useState(false);
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const showFavorites = useFavoriteStore((state) => state.open && state.userId === user.userId);
   const [exploreRoute, setExploreRoute] = useState("ExploreMain");
@@ -59,6 +67,32 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
   const [disputesVisible, setDisputesVisible] = useState(false);
   const unread = useChatStore((state) => state.rooms.reduce((sum, room) => sum + room.unreadCount, 0));
   const { theme } = useTheme();
+  const tourStep = useBookingTour((state) => state.step);
+  const tripsTabRef = useRef<ViewInstance>(null);
+
+  // Bước "tab Chuyến đi": vừa sang bước kế vừa mở tab để khách thấy ngay danh
+  // sách chuyến, kèm gợi ý bấm vào một chuyến cho bước chi tiết.
+  const advanceToTrips = useCallback(() => {
+    useBookingTour.getState().next();
+    setActiveTab("trips");
+    showToast({
+      type: "info",
+      title: t("mobile:tour.tripDetailHint.title"),
+      message: t("mobile:tour.tripDetailHint.body"),
+    });
+  }, [t]);
+
+  const openWallet = (initialTab: WalletTabKey = "home", returnToOwnerVerification = false) => {
+    setWalletInitialTab(initialTab);
+    setWalletReturnToOwnerVerification(returnToOwnerVerification);
+    setShowWallet(true);
+  };
+
+  const closeWallet = () => {
+    setShowWallet(false);
+    if (walletReturnToOwnerVerification) setReopenOwnerVerification(true);
+    setWalletReturnToOwnerVerification(false);
+  };
 
   const handleExploreRouteChange = useCallback((routeName: string) => {
     setExploreRoute(routeName);
@@ -159,7 +193,7 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
         <UserProfileScreen onBack={() => setShowProfile(false)} user={user} />
       ) : showWallet ? (
         <View style={[styles.screen, styles.overlayPad]}>
-          <WalletScreen onBack={() => setShowWallet(false)} />
+          <WalletScreen initialTab={walletInitialTab} onBack={closeWallet} />
         </View>
       ) : (
         <>
@@ -195,7 +229,9 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
             ) : (
               <AccountTabScreen
                 onProfilePress={() => setShowProfile(true)}
-                onWalletPress={() => setShowWallet(true)}
+                onWalletPress={openWallet}
+                ownerVerificationOnOpen={reopenOwnerVerification}
+                onOwnerVerificationOpened={() => setReopenOwnerVerification(false)}
                 user={user}
                 initialDisputes={pendingDispute}
                 onConsumedDisputes={consumeDisputes}
@@ -205,7 +241,16 @@ export default function CustomerNavigator({ user }: { user: AuthUser }) {
             )}
           </View>
           {showBottomBar ? (
-            <MobileBottomBar activeKey={activeTab} items={customerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)} onChange={setActiveTab} />
+            <MobileBottomBar
+              activeKey={activeTab}
+              items={customerTabs.map((item) => item.key === "messages" ? { ...item, badge: unread } : item)}
+              onChange={setActiveTab}
+              anchorKey="trips"
+              anchorRef={tripsTabRef}
+            />
+          ) : null}
+          {showBottomBar && tourStep === "trip" ? (
+            <TourOverlay step="trip" anchorRef={tripsTabRef} onNext={advanceToTrips} />
           ) : null}
           {/* Giữ xác nhận và thanh toán trong chat; mở chi tiết khi khách chọn. */}
           {!(activeTab === "trips" && (tripsRoute === "TripHandover" || tripsRoute === "ContractDetail")) && <AssistantFab key={user.userId} onViewVehicle={id => { setPendingVehicleId(id); setActiveTab("explore"); }} onViewBooking={goToTrip} onQuickBook={handleQuickBook} />}

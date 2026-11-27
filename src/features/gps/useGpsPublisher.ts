@@ -5,6 +5,7 @@ import * as Notifications from "expo-notifications";
 import { getGpsSession, setGpsSharingConsent } from "./gpsService";
 import { useGpsStore } from "./gpsStore";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
+import { useGpsTrackingEnabled } from "@/features/systemConfig/configService";
 import { getMyBookings } from "@/features/booking/bookingService";
 import {
   clearActivePublishTarget,
@@ -50,15 +51,29 @@ export function useGpsPublisher() {
   const activePublishBookingId = useGpsStore((state) => state.activePublishBookingId);
   const publishSharingState = useGpsStore((state) => state.publishSharingState);
   const userId = useAuthStore((state) => state.user?.userId ?? null);
+  const gpsEnabled = useGpsTrackingEnabled();
 
   // Reset khi đổi tài khoản: tránh gửi nhầm GPS của booking cũ dưới userId mới.
   useEffect(() => {
+    const previousUserId = useGpsStore.getState().userId;
+    if (previousUserId != null && previousUserId !== userId) {
+      // Đổi user/đăng xuất là trường hợp duy nhất được tắt dịch vụ nền từ vòng đời UI.
+      void stopGpsTask();
+      void clearActivePublishTarget();
+    }
     useGpsStore.getState().activate(userId);
   }, [userId]);
 
+  // Admin tắt chức năng: dừng dịch vụ nền và không gửi điểm nữa.
+  useEffect(() => {
+    if (gpsEnabled !== false) return;
+    void stopGpsTask();
+    void clearActivePublishTarget();
+  }, [gpsEnabled]);
+
   // Mở lại app (không vào lại đơn): tìm chuyến đang thuê và tự gửi tiếp nếu đã đồng ý.
   useEffect(() => {
-    if (userId == null) return;
+    if (userId == null || gpsEnabled !== true) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -107,11 +122,11 @@ export function useGpsPublisher() {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, gpsEnabled]);
 
   // Khôi phục lựa chọn chia sẻ cho booking đang mở (máy chủ thắng bản lưu trên máy).
   useEffect(() => {
-    if (activePublishBookingId == null) return;
+    if (activePublishBookingId == null || gpsEnabled !== true) return;
     const bookingId = activePublishBookingId;
     let cancelled = false;
     void (async () => {
@@ -177,17 +192,21 @@ export function useGpsPublisher() {
     return () => {
       cancelled = true;
     };
-  }, [activePublishBookingId]);
+  }, [activePublishBookingId, gpsEnabled]);
 
   // Không chia sẻ nữa (dừng/kết thúc/đổi chuyến) → tắt hẳn dịch vụ nền + thông báo.
+  // Lúc mở lại app store còn trống (null + idle) chưa phải là "đã dừng": giữ service
+  // đang chạy cho tới khi publisher khôi phục xong trạng thái chia sẻ.
   useEffect(() => {
-    if (activePublishBookingId != null && publishSharingState === "sharing") return;
+    if (activePublishBookingId == null && publishSharingState === "idle") return;
+    if (activePublishBookingId != null
+      && !["ended", "paused", "declined", "notShared"].includes(publishSharingState)) return;
     void stopGpsTask();
     void clearActivePublishTarget();
-  }, [activePublishBookingId, publishSharingState]);
+  }, [activePublishBookingId, publishSharingState, gpsEnabled]);
 
   useEffect(() => {
-    if (activePublishBookingId == null || publishSharingState !== "sharing") return;
+    if (activePublishBookingId == null || publishSharingState !== "sharing" || gpsEnabled !== true) return;
     const bookingId = activePublishBookingId;
     let cancelled = false;
     let subscription: Location.LocationSubscription | null = null;
@@ -282,12 +301,11 @@ export function useGpsPublisher() {
       subscription?.remove();
       clearInterval(retryTimer);
       appStateSub.remove();
-      // Rời trạng thái chia sẻ: gửi nốt điểm còn lại rồi tắt dịch vụ nền + thông báo.
+      // App bị đóng/đổi màn hình KHÔNG được tắt dịch vụ nền: task tự gửi tiếp bằng
+      // target đã lưu. Chỉ gửi nốt điểm còn trong buffer rồi thôi.
       void flushGpsBuffer(bookingId);
-      void stopGpsTask();
-      void clearActivePublishTarget();
     };
-  }, [activePublishBookingId, publishSharingState]);
+  }, [activePublishBookingId, publishSharingState, gpsEnabled]);
 
   return { activePublishBookingId, publishSharingState };
 }

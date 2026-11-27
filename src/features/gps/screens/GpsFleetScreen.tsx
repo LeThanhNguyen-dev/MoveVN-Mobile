@@ -7,6 +7,7 @@ import { ArrowLeft, Clock3, Crosshair, MapPin, Navigation, RefreshCw, TriangleAl
 import AppText from "@/components/AppText";
 import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
+import { useGpsTrackingEnabled } from "@/features/systemConfig/configService";
 import { useGpsStore } from "../gpsStore";
 import { useFleetTracking } from "../useFleetTracking";
 import { buildFleetMapHtml } from "../components/trackingMapHtml";
@@ -58,6 +59,7 @@ export default function GpsFleetScreen({
   const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const gpsEnabled = useGpsTrackingEnabled();
   // Source cố định giữa các render — WebView reload HTML mỗi khi source đổi identity.
   const mapSource = useMemo(() => ({ html: buildFleetMapHtml(theme.brand, theme.surfaceAlt) }), [theme.brand, theme.surfaceAlt]);
   const webRef = useRef<WebView<object>>(null);
@@ -118,6 +120,29 @@ export default function GpsFleetScreen({
   }, [onOpenTracking, rows]);
 
   const lastUpdated = updatedAt ? new Date(updatedAt).toLocaleTimeString("vi-VN") : null;
+
+  if (gpsEnabled !== true) {
+    return (
+      <View style={styles.screen}>
+        <View style={styles.header}>
+          <Pressable onPress={onBack} style={styles.headerButton} accessibilityLabel={t("mobile:gps.backAria")}>
+            <ArrowLeft color={theme.text} size={20} />
+          </Pressable>
+          <View style={styles.headerBody}>
+            <AppText numberOfLines={1} style={styles.headerTitle}>{t("mobile:gps.fleet.title")}</AppText>
+          </View>
+          <GpsInfoButton size={38} />
+        </View>
+        <View style={styles.disabledBox}>
+          {gpsEnabled === null
+            ? <ActivityIndicator size="small" color={theme.brand} />
+            : <MapPin size={26} color={theme.faint} />}
+          <AppText style={styles.disabledTitle}>{t("mobile:gps.disabled.title")}</AppText>
+          <AppText style={styles.disabledText}>{t("mobile:gps.disabled.message")}</AppText>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -248,6 +273,9 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   listContent: { padding: 12, gap: 8 },
   stateBox: { alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 22 },
   stateText: { color: theme.muted, fontSize: 12, textAlign: "center" },
+  disabledBox: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 32 },
+  disabledTitle: { color: theme.text, fontSize: 15, fontWeight: "800", textAlign: "center" },
+  disabledText: { color: theme.muted, fontSize: 12, textAlign: "center", lineHeight: 18 },
   retryButton: { backgroundColor: theme.brandSoft, borderWidth: 1, borderColor: theme.brandBorder, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7 },
   retryText: { color: theme.brand, fontSize: 12, fontWeight: "700" },
   row: { borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, borderRadius: 14, padding: 11, gap: 7 },

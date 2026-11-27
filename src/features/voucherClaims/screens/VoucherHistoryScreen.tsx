@@ -1,6 +1,6 @@
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
@@ -32,17 +32,19 @@ const HISTORY_TABS: { value: HistoryTab; labelKey: string }[] = [
 ];
 
 function isUsedVoucher(v: VoucherClaimResponse) {
-  return Boolean(v.usedAt);
+  return v.status === "Used" || Boolean(v.usedAt);
 }
 function isExpiredVoucher(v: VoucherClaimResponse) {
-  if (!v.endAt) return false;
-  return new Date(v.endAt).getTime() < Date.now();
+  const endAt = v.snapshotEndAt ?? v.endAt;
+  if (!endAt) return false;
+  return new Date(endAt).getTime() < Date.now();
 }
 function isExhaustedVoucher(v: VoucherClaimResponse) {
   return v.maxUsageCount > 0 && v.usageCount >= v.maxUsageCount;
 }
 function isInvalidVoucher(v: VoucherClaimResponse) {
-  return !isUsedVoucher(v) && (isExpiredVoucher(v) || isExhaustedVoucher(v));
+  if (v.status === "ExpiredUnused" || isExpiredVoucher(v)) return true;
+  return !isUsedVoucher(v) && isExhaustedVoucher(v);
 }
 
 function toCardData(voucher: VoucherClaimResponse): VoucherCardData {
@@ -57,8 +59,8 @@ function toCardData(voucher: VoucherClaimResponse): VoucherCardData {
     maxDiscountAmount: voucher.maxDiscountAmount,
     minOrderAmount: voucher.minOrderAmount,
     vehicleType: voucher.vehicleType,
-    startAt: voucher.startAt,
-    endAt: voucher.endAt,
+    startAt: voucher.snapshotStartAt ?? voucher.startAt,
+    endAt: voucher.snapshotEndAt ?? voucher.endAt,
     usageCount: voucher.usageCount,
     maxUsageCount: voucher.maxUsageCount,
     status: usedVoucher ? "used" : "ended",
@@ -80,8 +82,8 @@ function toDetailSlide(voucher: VoucherClaimResponse, warning: string | null): P
     discountType: voucher.discountType,
     discountValue: voucher.discountValue,
     vehicleType: voucher.vehicleType,
-    startAt: voucher.startAt,
-    endAt: voucher.endAt,
+    startAt: voucher.snapshotStartAt ?? voucher.startAt,
+    endAt: voucher.snapshotEndAt ?? voucher.endAt,
     minOrderAmount: voucher.minOrderAmount,
     maxDiscountAmount: voucher.maxDiscountAmount,
     usageCount: voucher.usageCount,
@@ -119,12 +121,17 @@ function VoucherHistoryScreen() {
     }
   }, [t]);
 
-  useEffect(() => {
-    void fetchWallet();
-  }, [fetchWallet]);
+  useFocusEffect(
+    useCallback(() => {
+      void fetchWallet();
+    }, [fetchWallet]),
+  );
 
   const invalid = useMemo(() => vouchers.filter(isInvalidVoucher), [vouchers]);
-  const used = useMemo(() => vouchers.filter(isUsedVoucher), [vouchers]);
+  const used = useMemo(
+    () => vouchers.filter((voucher) => isUsedVoucher(voucher) && !isInvalidVoucher(voucher)),
+    [vouchers],
+  );
   const counts: Record<HistoryTab, number> = { invalid: invalid.length, used: used.length };
   const displayed = tab === "used" ? used : invalid;
 
@@ -196,17 +203,17 @@ function VoucherHistoryScreen() {
               const usedVoucher = isUsedVoucher(voucher);
               const exhaustedVoucher = isExhaustedVoucher(voucher);
               const expiredVoucher = isExpiredVoucher(voucher);
-              const statusLabel = usedVoucher
-                ? t("promo:history.statusUsed")
-                : exhaustedVoucher
-                  ? t("promo:history.reasonOutOfUsage")
-                  : t("promo:history.reasonExpired");
-              const warning = usedVoucher
-                ? null
-                : exhaustedVoucher
-                  ? t("promo:history.warningOutOfUsage")
-                  : expiredVoucher
-                    ? t("promo:history.warningExpired")
+              const statusLabel = expiredVoucher
+                ? t("promo:history.reasonExpired")
+                : usedVoucher
+                  ? t("promo:history.statusUsed")
+                  : t("promo:history.reasonOutOfUsage");
+              const warning = expiredVoucher
+                ? t("promo:history.warningExpired")
+                : usedVoucher
+                  ? null
+                  : exhaustedVoucher
+                    ? t("promo:history.warningOutOfUsage")
                     : null;
 
               return (

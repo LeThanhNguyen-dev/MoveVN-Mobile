@@ -3,6 +3,10 @@
     "backAria": "Back",
     "errorTitle": "Error",
     "bookingFallback": "Booking #{{id}}",
+    "disabled": {
+      "title": "Location sharing is turned off",
+      "message": "Trip location sharing is currently disabled by the administrator. Route data from past trips is still kept and can be viewed in the booking details."
+    },
     "info": {
       "aria": "How GPS positions are read",
       "title": "How we read GPS",

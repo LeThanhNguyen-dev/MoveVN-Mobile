@@ -20,7 +20,7 @@ import {
   isExpiringSoon,
 } from "@/features/vouchers/voucherFormat";
 
-export type VoucherCardStatus = "active" | "upcoming" | "ended" | "used";
+export type VoucherCardStatus = "active" | "upcoming" | "ended" | "used" | "blocked";
 
 /** Dữ liệu chuẩn hoá cho thẻ voucher, dùng chung giữa các màn ưu đãi. */
 export type VoucherCardData = {
@@ -75,6 +75,7 @@ const STATUS_META: Record<VoucherCardStatus, StatusMeta> = {
   upcoming: { labelKey: "promo:voucherCard.status.upcoming", dot: "#3B82F6" },
   ended: { labelKey: "promo:voucherCard.status.ended", dot: "#94A3B8" },
   used: { labelKey: "promo:voucherCard.status.used", dot: "#94A3B8" },
+  blocked: { labelKey: "promo:voucherCard.status.blocked", dot: "#EF4444" },
 };
 
 /**
@@ -95,7 +96,7 @@ function VoucherTicketCard({
   const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const muted = data.status === "used" || data.status === "ended";
+  const muted = data.status === "used" || data.status === "ended" || data.status === "blocked";
   const status = STATUS_META[data.status];
   const expiringSoon = data.status === "active" && isExpiringSoon(data.endAt);
   const urgentColor = theme.mode === "dark" ? "#FBBF24" : "#B45309";

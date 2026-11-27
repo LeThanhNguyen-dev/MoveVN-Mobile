@@ -17,6 +17,9 @@ import {
   View,
 } from "react-native"
 import AppText from "@/components/AppText";
+import { formatTransmission } from "@/features/vehicles/transmission";
+import { formatFuelType } from "@/features/vehicles/fuel";
+import { getVehicleVariantFacts } from "@/features/vehicles/variantSpecifications";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type {
   CatalogArea,
@@ -797,23 +800,42 @@ export default function MyVehicleWizardScreen({ mode, vehicleId, onBack, onDone 
                   />
                 ) : null}
                 {modelId && variants.length > 0 ? (
-                  <FormDropdownSheet
-                    label={t("mobile:ownerVehicle.wizard.fields.variant")}
-                    placeholder={t("mobile:ownerVehicle.wizard.fields.variantPlaceholder")}
-                    value={variantId != null ? String(variantId) : ""}
-                    options={variants.map((v) => ({
-                      value: String(v.id),
-                      label: v.name,
-                      hint: [
-                        v.seatCount ? t("mobile:ownerVehicle.wizard.fields.seatCount", { count: v.seatCount }) : "",
-                        v.transmission ?? "",
-                        v.fuelType ?? "",
-                      ]
-                        .filter(Boolean)
-                        .join(" · "),
-                    }))}
-                    onChange={(v) => setVariantId(Number(v))}
-                  />
+                  <>
+                    <FormDropdownSheet
+                      label={t("mobile:ownerVehicle.wizard.fields.variant")}
+                      placeholder={t("mobile:ownerVehicle.wizard.fields.variantPlaceholder")}
+                      value={variantId != null ? String(variantId) : ""}
+                      options={variants.map((v) => ({
+                        value: String(v.id),
+                        label: v.name,
+                        hint: [
+                          v.seatCount ? t("mobile:ownerVehicle.wizard.fields.seatCount", { count: v.seatCount }) : "",
+                          vehicleType === "Car" ? formatTransmission(v.transmission) : "",
+                          formatFuelType(v.fuelType),
+                        ]
+                          .filter(Boolean)
+                          .join(" · "),
+                      }))}
+                      onChange={(v) => setVariantId(Number(v))}
+                    />
+                    {vehicleType === "Car" && variantId != null && (
+                      <AppText style={{ color: theme.muted, fontSize: 12 }}>
+                        {t("common:transmission.label")}: {formatTransmission(variants.find((v) => v.id === variantId)?.transmission)}
+                      </AppText>
+                    )}
+                    {variantId != null && (
+                      <AppText style={{ color: theme.muted, fontSize: 12 }}>
+                        {t("common:fuel.label")}: {formatFuelType(variants.find((v) => v.id === variantId)?.fuelType)}
+                      </AppText>
+                    )}
+                    {variants.filter((variant) => variant.id === variantId).flatMap((variant) =>
+                      getVehicleVariantFacts({ ...variant, vehicleType }).map((fact) => (
+                        <AppText key={fact.key} style={{ color: theme.muted, fontSize: 12 }}>
+                          {fact.label}: {fact.value}
+                        </AppText>
+                      )),
+                    )}
+                  </>
                 ) : null}
               </>
             )}

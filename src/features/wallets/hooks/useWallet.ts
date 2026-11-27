@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { showAppAlert } from "@/components/appDialog/dialogStore";
+import { showToast } from "@/features/notifications/toastStore";
 import i18n from "@/i18n";
 import {
   cancelWithdrawal,
@@ -20,9 +21,11 @@ import type {
 } from "@/features/wallets/types";
 import { VIETNAM_BANKS } from "@/features/wallets/data/banks";
 import {
+  cancelPaymentLink,
   checkPaymentStatus,
   createTopUpPaymentLink,
 } from "@/features/payments/services/paymentService";
+import type { PayOsSheetData } from "@/features/payments/components/PayOsQrSheet";
 import { getApiErrorMessage } from "@/services/apiClient";
 
 export const TX_PAGE_SIZE = 15;
@@ -66,8 +69,12 @@ export function useWallet() {
   const [accountNumber, setAccountNumber] = useState("");
   const [holderName, setHolderName] = useState("");
   const [bankOtp, setBankOtp] = useState("");
-  const [paySheet, setPaySheet] = useState<{ checkoutUrl: string; orderCode: number } | null>(null);
+  const [paySheet, setPaySheet] = useState<PayOsSheetData | null>(null);
   const [pendingOrderCode, setPendingOrderCode] = useState<number | null>(null);
+  const pendingOrderCodeRef = useRef<number | null>(null);
+  useEffect(() => {
+    pendingOrderCodeRef.current = pendingOrderCode;
+  }, [pendingOrderCode]);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const reload = useCallback(async () => {
@@ -134,6 +141,8 @@ export function useWallet() {
     };
   }, []);
 
+  // Poll xác nhận nạp ví: PayOS đối soát chuyển khoản VietQR có thể mất vài phút,
+  // nên poll liên tục tới khi có kết quả cuối (link tự Expired sau 30 phút).
   const pollTopUp = useCallback(
     (orderCode: number, attempt = 1) => {
       if (pollTimer.current) clearTimeout(pollTimer.current);
@@ -142,6 +151,7 @@ export function useWallet() {
           const res = await checkPaymentStatus(orderCode);
           if (res.isConfirmed) {
             setPendingOrderCode(null);
+            setPaySheet(null);
             showAppAlert(
               i18n.t("accountWallet:toasts.successTitle"),
               i18n.t("mobile:wallet.alerts.topUpDone"),
@@ -151,6 +161,7 @@ export function useWallet() {
           }
           if (["Cancelled", "Expired", "Failed"].includes(res.status)) {
             setPendingOrderCode(null);
+            setPaySheet(null);
             showAppAlert(
               i18n.t("mobile:wallet.alerts.noticeTitle"),
               res.message || i18n.t("mobile:wallet.alerts.paymentEnded"),
@@ -161,20 +172,39 @@ export function useWallet() {
         } catch {
           // Thử lại.
         }
-        if (attempt < 10) {
+        // Đọc ref để không kẹt closure cũ khi sheet đã đóng.
+        if (pendingOrderCodeRef.current !== null) {
           pollTopUp(orderCode, attempt + 1);
-        } else {
-          setPendingOrderCode(null);
-          showAppAlert(
-            i18n.t("mobile:wallet.alerts.timeoutTitle"),
-            i18n.t("mobile:wallet.alerts.checkBalanceHint"),
-          );
-          await reload();
         }
-      }, 3000);
+      }, attempt <= 10 ? 3000 : 10000);
     },
     [reload]
   );
+
+  const dismissPaySheet = useCallback(() => {
+    if (pollTimer.current) clearTimeout(pollTimer.current);
+    pendingOrderCodeRef.current = null;
+    setPendingOrderCode(null);
+    setPaySheet(null);
+  }, []);
+
+  // Lỗi hủy thì ném ra để sheet hiện chữ ngay trong Modal; thành công mới đóng
+  // sheet rồi báo toast (toast/alert nằm ngoài Modal nên phải đóng trước mới thấy).
+  const cancelPaySheet = useCallback(async () => {
+    const orderCode = paySheet?.orderCode;
+    if (!orderCode) {
+      dismissPaySheet();
+      return;
+    }
+    const res = await cancelPaymentLink(orderCode);
+    dismissPaySheet();
+    showToast({
+      type: "success",
+      title: i18n.t("mobile:wallet.alerts.noticeTitle"),
+      message: res.message || i18n.t("mobile:wallet.payment.cancelPaymentDone"),
+    });
+    void reload();
+  }, [paySheet, dismissPaySheet, reload]);
 
   useEffect(() => {
     if (pendingOrderCode == null) return;
@@ -216,9 +246,21 @@ export function useWallet() {
     try {
       const link = await createTopUpPaymentLink(Math.round(amount));
       setTopUpAmount("");
-      setPaySheet({ checkoutUrl: link.checkoutUrl, orderCode: link.orderCode });
       setPendingOrderCode(link.orderCode);
       pollTopUp(link.orderCode);
+      if (link.checkoutUrl) {
+        setPaySheet({
+          checkoutUrl: link.checkoutUrl,
+          qrCode: link.qrCode,
+          orderCode: link.orderCode,
+          amount: link.amount,
+          bin: link.bin,
+          accountNumber: link.accountNumber,
+          accountName: link.accountName,
+          expiredAt: link.expiredAt,
+          title: i18n.t("mobile:wallet.payment.topUpTitle"),
+        });
+      }
       onSuccess?.();
     } catch (err) {
       showAppAlert(
@@ -366,8 +408,9 @@ export function useWallet() {
     }
   }
 
-  async function handleSaveBank() {
-    if (bankOtp.trim().length < 6) {
+  async function handleSaveBank(otp = bankOtp) {
+    const code = otp.trim();
+    if (code.length < 6) {
       showAppAlert(
         i18n.t("mobile:wallet.alerts.missingOtpTitle"),
         i18n.t("mobile:wallet.alerts.otpRequired"),
@@ -379,7 +422,7 @@ export function useWallet() {
     try {
       const picked = VIETNAM_BANKS.find((b) => b.name === bankName.trim());
       await verifyBankAccountOtp({
-        otp: bankOtp.trim(),
+        otp: code,
         bankAccountNumber: accountNumber.trim(),
         bankName: bankName.trim(),
         bankAccountHolderName: holderName.trim(),
@@ -465,8 +508,10 @@ export function useWallet() {
     bankOtp,
     setBankOtp,
     paySheet,
-    setPaySheet,
+    dismissPaySheet,
+    cancelPaySheet,
     pendingOrderCode,
+    pollTopUp,
     reload,
     loadMoreTx,
     loadMoreWd,

@@ -118,9 +118,15 @@ export type GpsConnectionStatus = "offline" | "connecting" | "connected";
 
 export type GpsRoadPathResponse = {
   bookingId: number;
-  /** true: đã map matching theo đường phố (OSRM); false: fallback nối thẳng các điểm. */
+  /** true: đã map matching theo đường phố (OSRM) được ít nhất một đoạn; false: fallback. */
   matched: boolean;
+  /** Toàn bộ điểm nối liền (tương thích client cũ); client mới dùng segments. */
   path: { latitude: number; longitude: number }[];
+  /** Các đoạn liền mạch; giữa hai đoạn là gap mất tín hiệu — không nối thẳng. */
+  segments?: {
+    matched: boolean;
+    points: { latitude: number; longitude: number }[];
+  }[];
 };
 
 export type GpsTripSummaryResponse = {

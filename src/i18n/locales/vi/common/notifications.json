@@ -34,6 +34,8 @@
     "emptyHint": "Các cập nhật về chuyến thuê và hỗ trợ sẽ xuất hiện tại đây.",
     "unreadSuffix": ", chưa đọc",
     "viewAll": "Xem tất cả thông báo",
+    "viewBooking": "Xem đơn",
+    "openTrip": "Mở chuyến",
     "collapse": "Thu gọn",
     "paginationGroup": "Phân trang thông báo",
     "page": "Trang {{page}} / {{total}}",

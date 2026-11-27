@@ -30,6 +30,7 @@ import type { Theme } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import PinDigitInputs from "@/features/pin/components/PinDigitInputs";
 import { VIETNAM_BANKS } from "@/features/wallets/data/banks";
+import BankLogo from "@/features/wallets/components/BankLogo";
 import type { WalletState } from "@/features/wallets/hooks/useWallet";
 
 const RESEND_COUNTDOWN_SECONDS = 60;
@@ -56,6 +57,7 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
     setBankStep,
     bankName,
     setBankName,
+    bankBin,
     setBankBin,
     accountNumber,
     setAccountNumber,
@@ -103,8 +105,8 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
     setBankListOpen(false);
   }
 
-  async function save() {
-    const ok = await handleSaveBank();
+  async function save(otp?: string) {
+    const ok = await handleSaveBank(otp);
     if (ok) {
       setEditing(false);
       setResendSeconds(0);
@@ -142,11 +144,7 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
         <>
           <View style={styles.linkedCard}>
             <View style={styles.linkedTop}>
-              <View style={styles.bigAvatar}>
-                <AppText style={styles.bigAvatarText}>
-                  {(bank.bankName ?? "N").trim().charAt(0).toUpperCase()}
-                </AppText>
-              </View>
+              <BankLogo bin={bank.bankBin} name={bank.bankName} width={60} height={48} />
               <View style={styles.flexOne}>
                 <AppText style={styles.linkedBankName}>{bank.bankName}</AppText>
                 <AppText style={styles.linkedHolder}>{bank.bankAccountHolderName}</AppText>
@@ -201,13 +199,16 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
               onPress={() => setBankListOpen((v) => !v)}
               style={[styles.dropdownField, bankListOpen && styles.dropdownFieldOpen]}
             >
-              {bankName ? (
-                <AppText style={styles.dropdownValue}>{bankName}</AppText>
-              ) : (
-                <AppText style={styles.dropdownPlaceholder}>
-                  {t("mobile:wallet.bank.selectBank")}
-                </AppText>
-              )}
+              <View style={styles.dropdownSelection}>
+                {bankName ? <BankLogo bin={bankBin} name={bankName} width={52} height={34} /> : null}
+                {bankName ? (
+                  <AppText style={styles.dropdownValue} numberOfLines={1}>{bankName}</AppText>
+                ) : (
+                  <AppText style={styles.dropdownPlaceholder}>
+                    {t("mobile:wallet.bank.selectBank")}
+                  </AppText>
+                )}
+              </View>
                 {bankListOpen ? (
                   <ChevronUp color={theme.brand} size={19} />
                 ) : (
@@ -239,9 +240,7 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
                         }}
                         style={styles.bankRow}
                       >
-                        <View style={styles.bankAvatar}>
-                          <AppText style={styles.bankAvatarText}>{b.code}</AppText>
-                        </View>
+                        <BankLogo bin={b.bin} name={b.name} width={64} height={40} />
                         <AppText style={styles.bankText}>{b.name}</AppText>
                         <ChevronRight color={theme.faint} size={18} />
                       </Pressable>
@@ -334,7 +333,7 @@ export default function WalletBankScreen({ state }: { state: WalletState }) {
                 label={t("common:otp.label")}
                 value={bankOtp}
                 onChange={setBankOtp}
-                onComplete={() => void save()}
+                onComplete={(otp) => void save(otp)}
               />
               <Pressable
                 onPress={() => void save()}
@@ -404,17 +403,6 @@ const createStyles = (theme: Theme) =>
       gap: 12,
     },
     linkedTop: { flexDirection: "row", alignItems: "center", gap: 12 },
-    bigAvatar: {
-      width: 52,
-      height: 52,
-      borderRadius: 26,
-      backgroundColor: theme.brandSoft,
-      borderWidth: 1,
-      borderColor: theme.brandBorder,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    bigAvatarText: { color: theme.brand, fontSize: 20, fontWeight: "800" },
     linkedBankName: { color: theme.text, fontSize: 15, fontWeight: "800" },
     linkedHolder: { color: theme.muted, fontSize: 13 },
     verifiedChip: {
@@ -473,6 +461,7 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 13,
     },
     dropdownFieldOpen: { borderColor: theme.brand },
+    dropdownSelection: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
     dropdownPlaceholder: { color: theme.placeholder, fontSize: 14, flex: 1 },
     dropdownValue: { color: theme.text, fontSize: 14, fontWeight: "800", flex: 1 },
     bankListDropdown: { maxHeight: 300 },
@@ -496,18 +485,6 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 9,
       backgroundColor: theme.surfaceAlt,
     },
-    bankAvatar: {
-      minWidth: 46,
-      height: 40,
-      borderRadius: 10,
-      paddingHorizontal: 6,
-      backgroundColor: theme.brandSoft,
-      borderWidth: 1,
-      borderColor: theme.brandBorder,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    bankAvatarText: { color: theme.brand, fontSize: 12, fontWeight: "800" },
     bankText: { flex: 1, color: theme.text, fontSize: 14, fontWeight: "700" },
     // Form
     field: { gap: 6 },

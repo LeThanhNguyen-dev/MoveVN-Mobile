@@ -8,6 +8,7 @@ import { useTheme } from "@/theme/useTheme";
 import BalanceCard from "@/features/wallets/components/BalanceCard";
 import QuickActions from "@/features/wallets/components/QuickActions";
 import TxRow from "@/features/wallets/components/TxRow";
+import BankLogo from "@/features/wallets/components/BankLogo";
 import WalletPinUnlockModal from "@/features/wallets/components/WalletPinUnlockModal";
 import type { UseWalletPinGateResult } from "@/features/wallets/hooks/useWalletPinGate";
 import type { WalletState } from "@/features/wallets/hooks/useWallet";
@@ -124,11 +125,7 @@ export default function WalletHomeScreen({
         </Pressable>
       ) : (
         <Pressable onPress={onGoBank} style={styles.bankCard}>
-          <View style={styles.bankAvatar}>
-            <AppText style={styles.bankAvatarText}>
-              {(bank?.bankName ?? "N").trim().charAt(0).toUpperCase()}
-            </AppText>
-          </View>
+          <BankLogo bin={bank?.bankBin} name={bank?.bankName} width={48} height={42} />
           <View style={styles.flexOne}>
             <AppText style={styles.bankName} numberOfLines={1}>
               {bank?.bankName} · ****{(bank?.bankAccountNumber ?? "").slice(-4)}
@@ -202,16 +199,5 @@ const createStyles = (theme: Theme) =>
       borderRadius: 14,
       padding: 13,
     },
-    bankAvatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: theme.brandSoft,
-      borderWidth: 1,
-      borderColor: theme.brandBorder,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    bankAvatarText: { color: theme.brand, fontSize: 16, fontWeight: "800" },
     bankName: { color: theme.text, fontSize: 13.5, fontWeight: "800" },
   });

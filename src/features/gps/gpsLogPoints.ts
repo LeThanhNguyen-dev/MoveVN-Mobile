@@ -1,3 +1,5 @@
+import { haversineMeters } from "./playbackModel";
+
 /** Một điểm GPS đã nhận về (lịch sử từ API route hoặc realtime từ SignalR). */
 export type GpsLogPoint = {
   timestamp: string;
@@ -33,6 +35,21 @@ export function rewindPath(points: GpsLogPoint[], timestamp: string): [number, n
     .filter((point) => Date.parse(point.timestamp) <= limit)
     .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
     .map((point) => [point.latitude, point.longitude] as [number, number]);
+}
+
+/** Tách vệt tại khe hở mất tín hiệu; bỏ đoạn 1 điểm vì không vẽ được. */
+export function splitPathAtGaps(
+  points: [number, number][],
+  maxGapMeters = 250,
+): [number, number][][] {
+  if (points.length < 2) return [];
+  const out: [number, number][][] = [[points[0]!]];
+  for (let index = 1; index < points.length; index++) {
+    const current = points[index]!;
+    if (haversineMeters(points[index - 1]!, current) > maxGapMeters) out.push([current]);
+    else out[out.length - 1]!.push(current);
+  }
+  return out.filter((segment) => segment.length >= 2);
 }
 
 export function formatLogTime(timestamp: string) {

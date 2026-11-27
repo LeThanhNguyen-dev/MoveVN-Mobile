@@ -9,7 +9,7 @@ type PinDigitInputsProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  onComplete?: () => void;
+  onComplete?: (code: string) => void;
   showValue?: boolean;
   hasError?: boolean;
   autoFocus?: boolean;
@@ -36,7 +36,7 @@ const PinDigitInputs = forwardRef<PinDigitInputsHandle, PinDigitInputsProps>(fun
       label={label}
       value={value}
       onChange={onChange}
-      onComplete={() => onComplete?.()}
+      onComplete={(code) => onComplete?.(code)}
       length={PIN_DIGIT_COUNT}
       secure={!showValue}
       hasError={hasError}

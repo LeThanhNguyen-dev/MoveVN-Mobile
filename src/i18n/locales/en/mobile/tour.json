@@ -1,0 +1,72 @@
+{
+  "tour": {
+    "badge": "Step {{current}}/{{total}}",
+    "skip": "Skip",
+    "next": "Next",
+    "done": "Done",
+    "replay": "How to book",
+    "replayAria": "Open the booking walkthrough",
+    "nextHint": {
+      "title": "Tap SEARCH to see the results",
+      "body": "Once your pick-up and return dates are set, tap SEARCH to see the available vehicles."
+    },
+    "detailHint": {
+      "title": "Open a vehicle to see the details",
+      "body": "Tap a vehicle card in the list to see its details and book it."
+    },
+    "tripDetailHint": {
+      "title": "Open a trip to see the details",
+      "body": "Tap a trip in the list to see its status, vehicle handover and remaining payment."
+    },
+    "depositHint": {
+      "title": "Pay the deposit to hold the vehicle",
+      "body": "Tap the Deposit button in the trip details to open the bank transfer QR code."
+    },
+    "steps": {
+      "search": {
+        "title": "Find a suitable vehicle",
+        "body": "Choose a vehicle type and location, then tap SEARCH to see the available vehicles."
+      },
+      "dates": {
+        "title": "Pick pick-up and return dates",
+        "body": "Tap this field to choose your pick-up and return dates, then tap SEARCH to find vehicles for that period."
+      },
+      "vehicleList": {
+        "title": "Pick a vehicle",
+        "body": "Filters, sorting and map view live here. Tap Next, then choose a vehicle to see its details."
+      },
+      "vehicleDetail": {
+        "title": "Book the vehicle",
+        "body": "The bottom bar shows the rental price and the Book button. Adjust the dates if needed, then tap Book to continue to the deposit."
+      },
+      "bookingDates": {
+        "title": "Pick pick-up and return dates",
+        "body": "Tap this box to open the date & time picker for pick-up and return. Tap Next when you're done."
+      },
+      "bookingAddress": {
+        "title": "Enter the pick-up address",
+        "body": "This is where the vehicle gets delivered: type or pick an address. Tap Next when you're done."
+      },
+      "bookingVoucher": {
+        "title": "Apply a voucher or promo code",
+        "body": "Enter a promo code and tap Apply, or open Wallet to pick one of your vouchers. Tap Next when you're done."
+      },
+      "createBooking": {
+        "title": "Pay the deposit and create the booking",
+        "body": "Check the total and the deposit amount, then tap this button to create your booking."
+      },
+      "payment": {
+        "title": "Pay the deposit to hold the vehicle",
+        "body": "Scan the VietQR code or transfer with the details below. Your trip is confirmed automatically once the deposit arrives."
+      },
+      "trip": {
+        "title": "Trips tab",
+        "body": "After the deposit, your trip lives in this tab. Tap Next to open your trip list."
+      },
+      "tripDetail": {
+        "title": "Trip details and handover",
+        "body": "In the trip details, scroll down to the Handover section to review the check-in/check-out reports and confirm pick-up."
+      }
+    }
+  }
+}

@@ -96,6 +96,7 @@ export interface CreateBookingRequest {
   returnLongitude?: number;
   customerNote?: string;
   promotionCode?: string;
+  voucherClaimId?: number;
 }
 
 export interface ApproveBookingRequest {

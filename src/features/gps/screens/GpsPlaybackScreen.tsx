@@ -210,7 +210,7 @@ export default function GpsPlaybackScreen({
   useEffect(() => {
     if (!mapReady || !model) return;
     webRef.current?.injectJavaScript(
-      `window.setPath(${JSON.stringify(model.path)}); window.setRouteVisible(${routeVisible}); true;`,
+      `window.setRoutes(${JSON.stringify(model.segments)}); window.setRouteVisible(${routeVisible}); true;`,
     );
   }, [mapReady, model]);
 
@@ -443,9 +443,10 @@ export default function GpsPlaybackScreen({
             {...panResponder.panHandlers}
             accessibilityLabel={t("mobile:gps.playback.sliderAria")}
           >
-            <View style={styles.sliderTrack} />
-            <View style={[styles.sliderFill, { width: `${Math.round(progress * 100)}%` }]} />
-            <View style={[styles.sliderKnob, { left: `${Math.round(progress * 100)}%` }]} />
+            {/* Con bên trong không nhận touch: locationX của kéo phải tính theo khung thanh, không theo knob/fill. */}
+            <View style={styles.sliderTrack} pointerEvents="none" />
+            <View style={[styles.sliderFill, { width: `${Math.round(progress * 100)}%` }]} pointerEvents="none" />
+            <View style={[styles.sliderKnob, { left: `${Math.round(progress * 100)}%` }]} pointerEvents="none" />
           </View>
 
           <View style={styles.metaRow}>

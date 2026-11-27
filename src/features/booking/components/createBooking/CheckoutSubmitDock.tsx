@@ -1,8 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { CircleAlert, Send } from "lucide-react-native";
-import { useMemo } from "react";
+import { useMemo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View, type ViewInstance } from "react-native";
 import AppText from "@/components/AppText";
 import { formatMoney } from "@/features/booking/utils/format";
 import { checkoutFont, useCheckoutTheme } from "./checkoutTheme";
@@ -15,6 +15,7 @@ type Props = {
   error: string | null;
   bottomInset: number;
   onSubmit: () => void;
+  anchorRef?: RefObject<ViewInstance | null>;
 };
 
 export default function CheckoutSubmitDock({
@@ -25,6 +26,7 @@ export default function CheckoutSubmitDock({
   error,
   bottomInset,
   onSubmit,
+  anchorRef,
 }: Props) {
   const { p } = useCheckoutTheme();
   const { t } = useTranslation();
@@ -36,7 +38,7 @@ export default function CheckoutSubmitDock({
       : t("mobile:checkout.submit.hintDeposit", { amount: formatMoney(deposit ?? 0), days });
 
   return (
-    <View style={[styles.dock, { paddingBottom: Math.max(bottomInset, 10) }]}>
+    <View ref={anchorRef} collapsable={false} style={[styles.dock, { paddingBottom: Math.max(bottomInset, 10) }]}>
       {error ? (
         <View style={styles.errorRow}>
           <CircleAlert color={p.danger} size={14} strokeWidth={2.2} />

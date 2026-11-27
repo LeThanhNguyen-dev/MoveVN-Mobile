@@ -6,7 +6,8 @@ const CAR_SVG = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" str
 /**
  * HTML bản đồ Leaflet cho màn theo dõi xe (WebView) — cùng pattern với
  * vehicleSearchMapHtml: chỉ số học được đưa vào script, RN → map qua
- * injectJavaScript(window.updatePosition / window.setRoute), map → RN qua postMessage.
+ * injectJavaScript(window.updatePosition / window.setRoutes), map → RN qua postMessage.
+ * Live tracking chỉ ghim vị trí, không vẽ vệt; vệt chỉ hiện khi xem lại một mốc.
  */
 export function buildTrackingMapHtml(
   initial: TrackingMapInit,
@@ -38,8 +39,7 @@ html,body,#map{margin:0;width:100%;height:100%;background:${backgroundColor};ove
   L.tileLayer(${JSON.stringify(tileUrl)},{subdomains:'abcd',maxZoom:20}).addTo(map);
   var marker=null;
   var followed=true;
-  var routePts=[];
-  var routeLine=null;
+  var routeLines=[];
   var inspectMarker=null;
   function send(payload){if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(JSON.stringify(payload));}}
   function iconFor(state){
@@ -54,27 +54,32 @@ html,body,#map{margin:0;width:100%;height:100%;background:${backgroundColor};ove
       marker=L.marker([latitude,longitude],{icon:iconFor(state)}).addTo(map);
       map.setView([latitude,longitude],16,{animate:false});
     }
-    if(routeLine){
-      var last=routePts[routePts.length-1];
-      if(!last||last[0]!==latitude||last[1]!==longitude){
-        routePts.push([latitude,longitude]);
-        routeLine.addLatLng([latitude,longitude]);
-      }
-    }
     if(followed){map.panTo([latitude,longitude],{animate:true,duration:0.5});}
   };
-  window.setRoute=function(points,fit){
-    if(!Array.isArray(points)||points.length<1)return;
-    var doFit=fit!==false;
-    routePts=points.slice();
-    if(routeLine){
-      routeLine.setLatLngs(routePts);
-      if(doFit&&routePts.length>1){map.fitBounds(routeLine.getBounds(),{padding:[24,24]});}
-      return;
+  function clearRoute(){
+    for(var i=0;i<routeLines.length;i++){map.removeLayer(routeLines[i]);}
+    routeLines=[];
+  }
+  // Vệt chỉ hiện khi "tua ngược" (không vẽ lúc đang theo dõi trực tiếp).
+  // Nhận mảng đoạn [[[lat,lng],...],...] hoặc path phẳng cũ [[lat,lng],...].
+  window.setRoutes=function(input,fit){
+    clearRoute();
+    if(!Array.isArray(input)||input.length===0)return;
+    var first=input[0];
+    var flat=Array.isArray(first)&&first.length===2&&typeof first[0]==='number';
+    var segments=flat?[input]:input;
+    var bounds=[];
+    for(var s=0;s<segments.length;s++){
+      var points=(Array.isArray(segments[s])?segments[s]:[]).filter(function(p){
+        return Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1]);
+      });
+      if(points.length<2)continue;
+      routeLines.push(L.polyline(points,{color:${JSON.stringify(brandColor)},weight:4,opacity:0.8,interactive:false}).addTo(map));
+      for(var i=0;i<points.length;i++)bounds.push(points[i]);
     }
-    routeLine=L.polyline(routePts,{color:${JSON.stringify(brandColor)},weight:4,opacity:0.8,interactive:false}).addTo(map);
-    if(doFit&&routePts.length>1){map.fitBounds(routeLine.getBounds(),{padding:[24,24]});}
+    if(fit!==false&&bounds.length>1){map.fitBounds(L.latLngBounds(bounds),{padding:[24,24]});}
   };
+  window.clearRoute=clearRoute;
   window.setFollowed=function(value){followed=!!value;};
   // Ghim mốc đang xem lại (màu hổ phách) và đưa bản đồ tới đó.
   window.showPoint=function(latitude,longitude){

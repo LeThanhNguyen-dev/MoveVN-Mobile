@@ -78,6 +78,13 @@
       "exclude": [
         "expo-notifications"
       ]
+    },
+    "autolinking": {
+      "android": {
+        "buildFromSource": [
+          "expo-location"
+        ]
+      }
     }
   }
 }

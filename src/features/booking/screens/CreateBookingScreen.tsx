@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type ViewInstance,
 } from "react-native";
 import { showAppAlert } from "@/components/appDialog/dialogStore";
 import { ChevronLeft, ShieldCheck } from "lucide-react-native";
@@ -39,6 +40,8 @@ import CheckoutSubmitDock from "@/features/booking/components/createBooking/Chec
 import CheckoutTripCard from "@/features/booking/components/createBooking/CheckoutTripCard";
 import CheckoutVoucherSheet from "@/features/booking/components/createBooking/CheckoutVoucherSheet";
 import { checkoutFont, useCheckoutTheme } from "@/features/booking/components/createBooking/checkoutTheme";
+import TourOverlay from "@/features/onboarding/components/TourOverlay";
+import { useBookingTour } from "@/features/onboarding/bookingTour";
 import {
   calcDeliveryPreview,
   calcPricePreview,
@@ -47,8 +50,8 @@ import {
   type DeliveryConfig,
 } from "@/features/booking/utils/bookingPricing";
 import { validatePromotion } from "@/features/promotions/services/promotionService";
-import { getVoucherWallet } from "@/features/voucherClaims/services/voucherClaimService";
-import type { VoucherClaimResponse } from "@/features/voucherClaims/types";
+import { getEligibleVouchersForBooking } from "@/features/voucherClaims/services/voucherClaimService";
+import type { EligibleVoucherForBooking } from "@/features/voucherClaims/types";
 import { getApiErrorMessage } from "@/services/apiClient";
 
 type CreateRoute = RouteProp<ExploreStackParamList, "CreateBooking">;
@@ -94,13 +97,26 @@ export default function CreateBookingScreen({
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoResult, setPromoResult] = useState<{ discountAmount: number; code: string } | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [selectedVoucherClaimId, setSelectedVoucherClaimId] = useState<number | null>(null);
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [voucherModal, setVoucherModal] = useState(false);
-  const [vouchers, setVouchers] = useState<VoucherClaimResponse[]>([]);
+  const [vouchers, setVouchers] = useState<EligibleVoucherForBooking[]>([]);
   const [vouchersLoading, setVouchersLoading] = useState(false);
+
+  useEffect(() => {
+    setSelectedVoucherClaimId(null);
+    setPromoResult(null);
+    setPromoError(null);
+    setVouchers([]);
+  }, [startDate, endDate]);
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const datesRef = useRef<ViewInstance>(null);
+  const pickupRef = useRef<ViewInstance>(null);
+  const voucherRef = useRef<ViewInstance>(null);
+  const submitDockRef = useRef<ViewInstance>(null);
+  const tourStep = useBookingTour((state) => state.step);
   const fieldY = useRef<Record<string, number>>({});
 
   function scrollToField(key: string) {
@@ -111,10 +127,14 @@ export default function CreateBookingScreen({
 
   async function openVoucherPicker() {
     setVoucherModal(true);
+    if (!startDate || !endDate || days <= 0 || scheduleBlocked) {
+      setVouchers([]);
+      return;
+    }
     setVouchersLoading(true);
     try {
-      const wallet = await getVoucherWallet();
-      setVouchers(wallet.filter((v) => !v.usedAt));
+      const wallet = await getEligibleVouchersForBooking(vehicleId, startDate, endDate);
+      setVouchers(Array.isArray(wallet) ? wallet : []);
     } catch {
       setVouchers([]);
     } finally {
@@ -193,6 +213,17 @@ export default function CreateBookingScreen({
   useEffect(() => {
     getDeliveryConfig().then(setDeliveryConfig).catch(() => undefined);
   }, []);
+
+  // Tour đang chờ ở bước chọn xe; vừa tới trang đặt xe thì chuyển sang bước này.
+  useEffect(() => {
+    if (useBookingTour.getState().step === "vehicleDetail") useBookingTour.getState().next();
+  }, []);
+
+  // Bước tour trỏ tới địa chỉ/voucher (nằm dưới màn): cuộn sẵn để spotlight đo đúng chỗ.
+  useEffect(() => {
+    if (tourStep === "bookingAddress") scrollToField("handover");
+    else if (tourStep === "bookingVoucher") scrollToField("payment");
+  }, [tourStep]);
 
   const days = calculateRentalDays(startDate ?? "", endDate ?? "");
   const overlapped = useMemo(
@@ -336,6 +367,7 @@ export default function CreateBookingScreen({
         returnLongitude: sameReturn ? undefined : returnLng ?? undefined,
         customerNote: note.trim() || undefined,
         promotionCode: promoResult ? promoCode.trim().toUpperCase() : undefined,
+        voucherClaimId: selectedVoucherClaimId ?? undefined,
       });
       showAppAlert(t("booking:create.submitSuccessTitle"), t("mobile:checkout.create.successMessage", { code: created.bookingCode }), [
         { text: t("mobile:checkout.create.viewTrip"), onPress: () => onCreated?.(created.id) },
@@ -412,6 +444,7 @@ export default function CreateBookingScreen({
                 }}
                 onOpenPeriod={() => setPeriodOpen(true)}
                 overlapped={overlapped}
+                periodRef={datesRef}
                 startDate={startDate ?? ""}
                 vehicle={vehicle}
               />
@@ -439,6 +472,7 @@ export default function CreateBookingScreen({
                   onSelectReturn={handleSelectReturn}
                   onToggleSameReturn={setSameReturn}
                   pickupAddress={pickupAddress}
+                  pickupRef={pickupRef}
                   pickupUnpinned={pickupLat == null || pickupLng == null}
                   returnAddress={returnAddress}
                   returnUnpinned={returnLat == null || returnLng == null}
@@ -455,6 +489,7 @@ export default function CreateBookingScreen({
                   deliveryDistanceKm={deliveryPreview?.distanceKm ?? null}
                   onChangeCode={(text) => {
                     setPromoCode(text.toUpperCase());
+                    setSelectedVoucherClaimId(null);
                     setPromoResult(null);
                     setPromoError(null);
                   }}
@@ -462,6 +497,7 @@ export default function CreateBookingScreen({
                   onClearPromo={() => {
                     setPromoResult(null);
                     setPromoCode("");
+                    setSelectedVoucherClaimId(null);
                   }}
                   onFocusPromo={() => scrollToField("payment")}
                   onOpenWallet={() => void openVoucherPicker()}
@@ -469,6 +505,7 @@ export default function CreateBookingScreen({
                   promoCode={promoCode}
                   promoError={promoError}
                   promoLoading={promoLoading}
+                  promoRef={voucherRef}
                   security={{
                     required: Boolean(vehicle.securityRequiresDeposit),
                     amount: vehicle.securityDepositAmount ?? 0,
@@ -481,6 +518,7 @@ export default function CreateBookingScreen({
 
         {vehicle ? (
           <CheckoutSubmitDock
+            anchorRef={submitDockRef}
             bottomInset={insets.bottom}
             days={days}
             deposit={pricePreview?.deposit ?? null}
@@ -509,15 +547,32 @@ export default function CreateBookingScreen({
         bottomInset={insets.bottom}
         loading={vouchersLoading}
         onClose={() => setVoucherModal(false)}
-        onSelect={(code) => {
-          setPromoCode(code);
+        onSelect={(voucher) => {
+          setPromoCode(voucher.code);
+          setSelectedVoucherClaimId(voucher.id);
+          setPromoResult({ discountAmount: voucher.previewDiscount, code: voucher.code });
+          setPromoError(null);
           setVoucherModal(false);
-          void validateCode(code);
         }}
-        vehicleType={vehicle?.vehicleType}
         visible={voucherModal}
         vouchers={vouchers}
       />
+
+      {vehicle && tourStep === "bookingDates" ? (
+        <TourOverlay step="bookingDates" anchorRef={datesRef} />
+      ) : null}
+
+      {vehicle && tourStep === "bookingAddress" ? (
+        <TourOverlay step="bookingAddress" anchorRef={pickupRef} />
+      ) : null}
+
+      {vehicle && tourStep === "bookingVoucher" ? (
+        <TourOverlay step="bookingVoucher" anchorRef={voucherRef} />
+      ) : null}
+
+      {vehicle && tourStep === "createBooking" ? (
+        <TourOverlay step="createBooking" anchorRef={submitDockRef} />
+      ) : null}
     </View>
   );
 }

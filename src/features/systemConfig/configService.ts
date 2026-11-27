@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { bareApiClient } from "@/services/apiClient";
 import { endpoints } from "@/services/endpoints";
 import type { ApiResponse } from "@/features/auth/types";
@@ -10,6 +11,7 @@ interface PublicConfigResponse {
   withdrawalMinAmount: number;
   withdrawalMaxAmount: number;
   pendingAutoCancelHours?: number;
+  gpsTrackingEnabled?: boolean;
 }
 
 let cached: PublicConfigResponse | null = null;
@@ -24,6 +26,7 @@ export async function getPublicConfig(): Promise<PublicConfigResponse> {
       deliveryMaxRadiusKm: DEFAULT_DELIVERY_CONFIG.maxKm,
       withdrawalMinAmount: 5000,
       withdrawalMaxAmount: 100_000_000,
+      gpsTrackingEnabled: false,
       ...(res.data.data ?? {}),
     };
   } catch {
@@ -33,9 +36,29 @@ export async function getPublicConfig(): Promise<PublicConfigResponse> {
       deliveryMaxRadiusKm: DEFAULT_DELIVERY_CONFIG.maxKm,
       withdrawalMinAmount: 5000,
       withdrawalMaxAmount: 100_000_000,
+      gpsTrackingEnabled: false,
     };
   }
   return cached;
+}
+
+/** null = đang tải cấu hình; false = admin đang tắt chia sẻ vị trí. */
+export function useGpsTrackingEnabled(): boolean | null {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    getPublicConfig()
+      .then((config) => {
+        if (active) setEnabled(config.gpsTrackingEnabled === true);
+      })
+      .catch(() => {
+        if (active) setEnabled(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return enabled;
 }
 
 export async function getPendingAutoCancelHours(): Promise<number> {
